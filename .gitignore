@@ -22,6 +22,7 @@ logs/
 # Editor files
 .DS_Store
 Thumbs.db
+.obsidian/
 .vscode/
 .idea/
 *.swp
