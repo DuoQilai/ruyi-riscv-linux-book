@@ -1,23 +1,47 @@
 # Ruyi RISC-V Linux Book
 
-本仓库用于组织 Ruyi RISC-V Linux 课程的公开课程材料，包括课程大纲、讲义、实验指导书、PPT 清单、板卡参考资料和课程相关代码。
+Ruyi RISC-V Linux 嵌入式实践课公开材料（C + RuyiSDK + 开发板）。
+
+## 课程大纲
+
+[`docs/CourseOutline.html`](docs/CourseOutline.html) — 术语表、章节表、BOM、三项目递进。
 
 ## 仓库结构
 
 ```text
 ruyi-riscv-linux-book/
-├── README.md
-├── boards/
-├── chapters/
-├── code/
+├── README.md                 # 本文件（全仓唯一 README）
 ├── docs/
-└── slides/
+│   ├── CourseOutline.html    # 课程总大纲
+│   └── archive/              # 历史规范、模板、进度表等
+├── chapters/
+│   ├── ch01/                 # 第一章 开发环境篇
+│   │   ├── slides.html       # 整章幻灯片（1.1–1.5）
+│   │   ├── assets/
+│   │   └── 1.1/ … 1.5/       # 每节：lecture.md + lab.md
+│   └── ch02/                 # 第二章 工具链与工程
+│       ├── slides.html
+│       ├── code/             # hello、project-template
+│       ├── assets/
+│       └── 2.1/ … 2.6/
+└── boards/                   # 板卡参考资料
+    ├── licheepi4a/
+    └── k1/
 ```
 
-## 目录说明
+## 怎么读
 
-- `docs/`：课程大纲、制作计划、课程制作规范和文档模板。
-- `chapters/`：章节讲义、Class 文档、Lab 指导书和章节图片素材。
-- `slides/`：PPT 文件或 PPT 制作清单。
-- `boards/`：开发板参考资料、镜像说明、串口登录和板级差异记录。
-- `code/`：课程相关代码目录；后续按实际项目建立子目录。
+| 内容 | 路径 |
+| --- | --- |
+| 1.3 讲义 | `chapters/ch01/1.3/lecture.md` |
+| 1.3 实验 | `chapters/ch01/1.3/lab.md` |
+| 第一章幻灯片 | `chapters/ch01/slides.html` |
+| Hello 示例 | `chapters/ch02/code/hello/` |
+| LicheePi 4A | `boards/licheepi4a/reference.md` |
+
+## 当前进度
+
+- **ch01**：讲义与实验草稿（`chapters/ch01/`）
+- **ch02**：讲义/实验骨架 + 代码模板（`chapters/ch02/`）
+
+制作分支：`enzo`。
