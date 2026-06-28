@@ -42,6 +42,6 @@ ruyi-riscv-linux-book/
 ## 当前进度
 
 - **ch01**：讲义与实验草稿（`chapters/ch01/`）
-- **ch02**：讲义/实验骨架 + 代码模板（`chapters/ch02/`）
+- **ch02**：讲义与实验草稿（`chapters/ch02/`，2.6 选读无实验）
 
 制作分支：`enzo`。
