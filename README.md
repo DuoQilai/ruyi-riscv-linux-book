@@ -16,9 +16,9 @@ ruyi-riscv-linux-book/
 │   └── archive/              # 历史规范、模板、进度表等
 ├── chapters/
 │   ├── ch01/                 # 第一章 开发环境篇
-│   │   ├── slides.html       # 整章幻灯片（1.1–1.5）
+│   │   ├── slides.html       # 整章幻灯片（1.1–1.3）
 │   │   ├── assets/
-│   │   └── 1.1/ … 1.5/       # 每节：lecture.md + lab.md
+│   │   └── 1.1/ … 1.3/       # 每节：lecture.md + lab.md
 │   └── ch02/                 # 第二章 工具链与工程
 │       ├── slides.html
 │       ├── code/             # hello、project-template
