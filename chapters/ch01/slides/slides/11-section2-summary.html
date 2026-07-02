@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; flex: 1; }
+  .item { border: 1px solid #e8e3d8; padding: 24px 28px; }
+  .item h4 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .item p { font-size: 15px; color: #6b6358; line-height: 1.6; }
+  .trouble {
+    margin-top: 32px; padding: 24px 32px;
+    background: #fef8f2; border-left: 3px solid #c46b4a;
+    font-size: 16px; color: #5c5448; line-height: 1.7;
+  }
+  .trouble h4 { font-size: 18px; font-weight: 700; color: #c46b4a; margin-bottom: 12px; }
+  .trouble span { display: inline-block; background: #f0e8e0; padding: 2px 8px; margin: 2px 4px; font-size: 13px; }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.2 · 小结</div>
+    <div class="slide-title">本节成果：板卡启动就绪，三通道全部打通</div>
+    <div class="grid">
+      <div class="item"><h4>镜像校验记录</h4><p>镜像来源、文件名、版本和 sha256 校验值完整保存。</p></div>
+      <div class="item"><h4>烧录日志</h4><p>完整烧录日志与首次启动记录——工具明确报告成功。</p></div>
+      <div class="item"><h4>系统检查表</h4><p>RevyOS、内核、用户、网络、时间和 apt 源均已核实。</p></div>
+      <div class="item"><h4>串口通道</h4><p>USB-TTL 3.3V 接线已确认，终端参数已记录——断网时最后的保障。</p></div>
+      <div class="item"><h4>SSH 密钥登录</h4><p>Ed25519 密钥对已部署，免密登录板端，hostname + uname -m 验证通过。</p></div>
+      <div class="item"><h4>SCP 双向传输</h4><p>上传下载均通过 sha256sum 校验，哈希一致。</p></div>
+    </div>
+    <div class="trouble">
+      <h4>故障排查口诀：「五类原因法」</h4>
+      开发板无法启动 → 拆解为<span>镜像</span><span>烧录</span><span>供电</span><span>启动介质</span><span>显示通道</span>五类，每类一个验证方法。串口优先于 SSH：没有 IP → SSH 连接超时 → 先用串口看 ip addr 和 sshd 状态。
+    </div>
+  </div>
+</body>
+</html>

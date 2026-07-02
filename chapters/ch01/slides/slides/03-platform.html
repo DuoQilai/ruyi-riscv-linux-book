@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 80px; flex: 1; }
+  .left { flex: 1; }
+  .left .key-point { font-size: 20px; color: #5c5448; line-height: 1.6; margin-bottom: 32px; }
+  .left .level-list { list-style: none; }
+  .left .level-list li {
+    padding: 16px 0; border-bottom: 1px solid #e8e3d8;
+    font-size: 18px; display: flex; align-items: baseline; gap: 16px;
+  }
+  .left .level-list li .lvl { font-weight: 700; min-width: 140px; color: #2e6b6e; font-size: 16px; }
+  .left .level-list li .desc { color: #5c5448; }
+  .right { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .stack {
+    border: 1px solid #d4cfc4; padding: 40px 48px;
+    font-size: 15px; line-height: 2.2; color: #5c5448;
+  }
+  .stack .top { color: #2e6b6e; font-weight: 600; }
+  .stack .bot { color: #c46b4a; font-weight: 600; }
+  .stack .arr { color: #c4beb2; padding-left: 20px; }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.1 · RISC-V 平台认知与 ruyi 环境安装</div>
+    <div class="slide-title">从 ISA 到应用：课程平台的六个层次</div>
+    <div class="content">
+      <div class="left">
+        <p class="key-point">RISC-V 是开放指令集架构（ISA），不是一款芯片或开发板。建立分层思维是后续排查「镜像不支持」「工具链不匹配」等问题的基础。</p>
+        <ul class="level-list">
+          <li><span class="lvl">RISC-V ISA</span><span class="desc">开放指令集架构规范</span></li>
+          <li><span class="lvl">SoC · TH1520</span><span class="desc">处理器核与片上系统</span></li>
+          <li><span class="lvl">开发板</span><span class="desc">LicheePi 4A</span></li>
+          <li><span class="lvl">操作系统</span><span class="desc">RevyOS（Linux 发行版）</span></li>
+          <li><span class="lvl">开发工具</span><span class="desc">ruyi、GCC 工具链、SSH、串口</span></li>
+          <li><span class="lvl">课程应用</span><span class="desc">实验代码与综合项目</span></li>
+        </ul>
+      </div>
+      <div class="right">
+        <div class="stack">
+          <div class="top">RISC-V ISA</div>
+          <div class="arr">↓</div>
+          <div>处理器核 / SoC（TH1520）</div>
+          <div class="arr">↓</div>
+          <div>开发板（LicheePi 4A）</div>
+          <div class="arr">↓</div>
+          <div>操作系统（RevyOS）</div>
+          <div class="arr">↓</div>
+          <div>开发工具（ruyi、编译器、SSH、串口）</div>
+          <div class="arr">↓</div>
+          <div class="bot">课程应用与实验</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

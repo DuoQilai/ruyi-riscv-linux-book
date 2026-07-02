@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 48px; flex: 1; }
+  .card { flex: 1; border: 1px solid #d4cfc4; padding: 40px 36px; }
+  .card .icon { font-size: 48px; margin-bottom: 20px; }
+  .card h4 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
+  .card .role { font-size: 15px; color: #2e6b6e; margin-bottom: 16px; font-weight: 600; }
+  .card ul { padding-left: 20px; font-size: 16px; color: #5c5448; line-height: 2; }
+  .card ul li strong { color: #2d2a26; }
+  .key-msg {
+    margin-top: 32px; text-align: center;
+    font-size: 17px; color: #6b6358; line-height: 1.6;
+  }
+  .key-msg strong { color: #c46b4a; }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.2 · 镜像烧录、首次启动与开发通道建立</div>
+    <div class="slide-title">三条通道，三个角色：串口 · SSH · SCP</div>
+    <div class="content">
+      <div class="card">
+        <div class="icon">🔌</div>
+        <h4>串口（UART）</h4>
+        <div class="role">本地调试通道 · 最后保障线</div>
+        <ul>
+          <li><strong>不依赖网络</strong>，直接观察启动日志</li>
+          <li>适合修复网络配置、诊断启动失败</li>
+          <li>接线：GND-GND、TX→RX、RX→TX</li>
+          <li>波特率按板卡资料设定</li>
+          <li><strong>⚠ 3.3V 电平</strong>，禁用 5V 电源脚</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="icon">💻</div>
+        <h4>SSH</h4>
+        <div class="role">远程主工作通道 · 日常开发入口</div>
+        <ul>
+          <li><strong>加密网络终端</strong>，适合日常开发</li>
+          <li>首次连接须<strong>核对主机指纹</strong></li>
+          <li>推荐 Ed25519 密钥登录替代密码</li>
+          <li>登录后验证 hostname + uname -m</li>
+          <li>前提：网络可达 + sshd 运行</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="icon">📁</div>
+        <h4>SCP</h4>
+        <div class="role">文件传输通道 · 部署流水线</div>
+        <ul>
+          <li><strong>复用 SSH 连接</strong>传输文件</li>
+          <li>上传后板端 sha256sum 校验</li>
+          <li>下载板端文件到主机分析</li>
+          <li>传到用户有写权限的目录</li>
+          <li>双向传输，两端哈希一致 = 成功</li>
+        </ul>
+      </div>
+    </div>
+    <div class="key-msg"><strong>黄金组合：</strong>串口留着备用（断网时的救生索），SSH 做主通道，SCP 负责搬文件。</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 60px; flex: 1; }
+  .left { flex: 1.2; }
+  .left .intro { font-size: 20px; color: #5c5448; line-height: 1.6; margin-bottom: 32px; }
+  .left .capsule { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
+  .left .capsule span {
+    background: #f0ece5; padding: 10px 20px; font-size: 15px; color: #5c5448;
+  }
+  .left .what-it-is { font-size: 17px; color: #6b6358; line-height: 1.8; }
+  .right { flex: 0.8; }
+  .box {
+    border: 1px solid #d4cfc4; padding: 32px 28px;
+    font-size: 16px; color: #5c5448; line-height: 2;
+    background: #faf9f4;
+  }
+  .box .head { font-weight: 700; color: #2e6b6e; font-size: 18px; margin-bottom: 8px; }
+  .warn {
+    margin-top: 24px; padding: 20px 24px;
+    background: #fef8f2; font-size: 15px; color: #8c5440; line-height: 1.6;
+    border-left: 3px solid #c46b4a;
+  }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.3 · ruyi device provision 适用边界</div>
+    <div class="slide-title">provision 是什么：自动化设备准备</div>
+    <div class="content">
+      <div class="left">
+        <p class="intro">Device provision 是把设备准备成可使用状态的自动化过程——可能包括下载镜像、选择设备变体、写入存储介质或生成操作指引。</p>
+        <div class="capsule">
+          <span>下载镜像</span><span>选择变体</span><span>写入介质</span><span>生成指引</span>
+        </div>
+        <div class="what-it-is">
+          <strong>它做什么：</strong>将实验 1.2 中手工执行的多个步骤封装为一条命令，减少重复操作。<br><br>
+          <strong>它不做什么：</strong>不会消除误选磁盘、断电或版本不匹配的风险。自动化只降低重复成本，不消除风险——「能运行命令」≠「适合运行命令」。
+        </div>
+      </div>
+      <div class="right">
+        <div class="box">
+          <div class="head">provision 的前提</div>
+          ① 设备在软件源中<strong>明确列出</strong><br>
+          ② 变体与实物<strong>一致</strong><br>
+          ③ 写入目标<strong>唯一且可确认</strong><br>
+          ④ 重要数据<strong>已备份</strong><br>
+          ⑤ 供电和数据连接<strong>稳定</strong><br>
+          ⑥ 已准备串口或其他<strong>恢复通道</strong>
+        </div>
+        <div class="warn">
+          <strong>⚠ 关键认知：</strong>自动化写入仍可能覆盖错误存储设备。目标不唯一时应断开无关设备，或改用 1.2 的手工流程。
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

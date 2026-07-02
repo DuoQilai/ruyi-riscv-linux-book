@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 60px; flex: 1; }
+  .left { flex: 1; }
+  .left h4 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+  .checks { list-style: none; margin-bottom: 28px; }
+  .checks li {
+    padding: 14px 0; border-bottom: 1px solid #f0ece5;
+    font-size: 17px; color: #5c5448; display: flex; gap: 14px; align-items: baseline;
+  }
+  .checks li .n { font-weight: 700; color: #2e6b6e; min-width: 24px; }
+  .decision-flow {
+    margin-top: 20px; font-size: 16px; color: #5c5448; line-height: 2;
+    border: 1px solid #e8e3d8; padding: 24px 28px;
+  }
+  .decision-flow .q { font-weight: 700; color: #2d2a26; }
+  .decision-flow .yes { color: #2e6b6e; }
+  .decision-flow .no  { color: #c46b4a; }
+  .right { flex: 1; }
+  .scenario {
+    border: 1px solid #d4cfc4; padding: 24px 28px; margin-bottom: 20px;
+    font-size: 16px; line-height: 1.6;
+  }
+  .scenario .s-num { font-size: 13px; color: #b8b0a2; margin-bottom: 4px; }
+  .scenario .s-decision { font-weight: 700; margin-top: 8px; }
+  .principle {
+    margin-top: 20px; padding: 20px 24px;
+    background: #f2f0ea; font-size: 16px; color: #2d2a26; line-height: 1.6;
+    text-align: center;
+  }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.3 · ruyi device provision 适用边界</div>
+    <div class="slide-title">六项风险检查 + 决策路径</div>
+    <div class="content">
+      <div class="left">
+        <h4>在运行任何写入操作前必答</h4>
+        <ul class="checks">
+          <li><span class="n">①</span> 设备是否在当前软件源中明确列出？</li>
+          <li><span class="n">②</span> 变体是否与实物一致？</li>
+          <li><span class="n">③</span> 写入目标是否唯一且可确认？</li>
+          <li><span class="n">④</span> 重要数据是否已备份？</li>
+          <li><span class="n">⑤</span> 供电和数据连接是否稳定？</li>
+          <li><span class="n">⑥</span> 是否已准备串口或其他恢复通道？</li>
+        </ul>
+        <div class="decision-flow">
+          <span class="q">查询 ruyi 帮助与设备列表</span><br>
+          &nbsp;&nbsp;→ 设备与变体是否明确受支持？<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="yes">是 → 核对六项 → 全部通过 → 执行 provision 并验证</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="no">否 → 使用手工流程（1.2），记录不支持原因</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="no">任一项不确认 → 停止自动写入</span>
+        </div>
+        <p style="margin-top:16px;font-size:14px;color:#8c8276;">任一项不能确认，都应停止自动 provision。课程不要求在不安全条件下执行自动写入。</p>
+      </div>
+      <div class="right">
+        <div class="scenario">
+          <div class="s-num">场景 A</div>
+          设备完全匹配，<strong>但有重要数据</strong><br>
+          <div class="s-decision" style="color:#c46b4a;">→ 手工流程（先备份，再操作）</div>
+        </div>
+        <div class="scenario">
+          <div class="s-num">场景 B</div>
+          设备<strong>未列出</strong>但名称相似<br>
+          <div class="s-decision" style="color:#2e6b6e;">→ 手工流程，记录「该设备在 ruyi 版本 X 中未列出」</div>
+        </div>
+        <div class="scenario">
+          <div class="s-num">场景 C</div>
+          设备列出 + <strong>新空白存储</strong><br>
+          <div class="s-decision" style="color:#2e6b6e;">→ 可考虑 provision（六项检查通过后）</div>
+        </div>
+        <div class="principle">
+          <strong>核心原则：</strong>「提交不支持结论 + 手工替代方案」同样是有效的实验结论。不要为完成实验强行执行 provision。
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

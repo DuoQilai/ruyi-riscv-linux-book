@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 60px; flex: 1; }
+  .left { flex: 1; }
+  .left .intro { font-size: 20px; color: #5c5448; line-height: 1.6; margin-bottom: 28px; }
+  .flow { margin-top: 20px; }
+  .flow .step { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 24px; }
+  .flow .step .idx {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #2e6b6e; color: #fff; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .flow .step .txt { font-size: 17px; color: #5c5448; line-height: 1.5; }
+  .flow .step .txt strong { color: #2d2a26; }
+  .right { flex: 1; }
+  .img-placeholder {
+    width: 100%; height: 340px;
+    border: 1px dashed #d4cfc4; display: flex;
+    align-items: center; justify-content: center;
+    color: #b8b0a2; font-size: 15px;
+  }
+  .watch {
+    margin-top: 24px; padding: 20px 24px;
+    background: #fef8f2; font-size: 15px; color: #8c5440; line-height: 1.6;
+    border-left: 3px solid #c46b4a;
+  }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.2 · 镜像烧录、首次启动与开发通道建立</div>
+    <div class="slide-title">镜像烧录不是「复制文件」</div>
+    <div class="content">
+      <div class="left">
+        <p class="intro">烧录工具将引导程序、内核、设备树和根文件系统按分区结构写入目标介质。错误的镜像或错误的目标设备 = 无法启动，严重时可覆盖主机磁盘。</p>
+        <div class="flow">
+          <div class="step"><div class="idx">1</div><div class="txt"><strong>校验镜像</strong><br>sha256sum 与发布值比对，不一致 = 停止烧录</div></div>
+          <div class="step"><div class="idx">2</div><div class="txt"><strong>识别目标设备</strong><br>一次只连一块待烧录板，用烧录工具的设备列表命令确认</div></div>
+          <div class="step"><div class="idx">3</div><div class="txt"><strong>执行烧录</strong><br>严格按该镜像版本的发布说明操作，不拼接其他板卡/年份的命令</div></div>
+          <div class="step"><div class="idx">4</div><div class="txt"><strong>等待完成</strong><br>工具明确报告成功后再断电。首次启动可能因文件系统扩展耗时较长</div></div>
+        </div>
+      </div>
+      <div class="right">
+        <div class="img-placeholder">[ 镜像 → 引导程序 + 内核 + 设备树 + 根文件系统 → eMMC/SD ]</div>
+        <div class="watch">
+          <strong>首次启动警示</strong><br>
+          不要因短暂无输出立即断电——首次启动可能进行文件系统扩展、密钥生成或初始化。优先使用串口观察引导日志，屏幕无画面 ≠ 未启动。
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

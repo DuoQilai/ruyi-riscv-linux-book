@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .compare { display: flex; gap: 0; flex: 1; border: 1px solid #d4cfc4; }
+  .col { flex: 1; padding: 36px 32px; }
+  .col:first-child { border-right: 1px solid #d4cfc4; }
+  .col .header { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .col .sub { font-size: 14px; color: #8c8276; margin-bottom: 24px; }
+  .col .row { padding: 12px 0; border-bottom: 1px solid #f0ece5; font-size: 15px; color: #5c5448; line-height: 1.5; }
+  .col .row .dim { font-size: 13px; color: #b8b0a2; display: block; }
+  .verdict {
+    margin-top: 28px; display: flex; gap: 24px;
+  }
+  .verdict .v {
+    flex: 1; padding: 20px 24px; font-size: 15px; line-height: 1.6;
+    border-left: 3px solid;
+  }
+  .verdict .manual { background: #f2f0ea; border-color: #2e6b6e; color: #5c5448; }
+  .verdict .auto   { background: #f2f0ea; border-color: #c46b4a; color: #5c5448; }
+  .verdict .v strong { display: block; margin-bottom: 6px; font-size: 16px; }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.3 · ruyi device provision 适用边界</div>
+    <div class="slide-title">手工流程 vs 自动化 provision：六维对比</div>
+    <div class="compare">
+      <div class="col">
+        <div class="header">手工流程（1.2）</div>
+        <div class="sub">每步可控，最可调试</div>
+        <div class="row"><span class="dim">控制粒度</span>每步可控，可随时停止</div>
+        <div class="row"><span class="dim">适用条件</span>只要有镜像和烧录工具</div>
+        <div class="row"><span class="dim">误操作风险</span>人为确认每一步，可发现异常</div>
+        <div class="row"><span class="dim">可调试性</span>高，每步可单独验证</div>
+        <div class="row"><span class="dim">重复效率</span>低，需重复执行相同命令</div>
+        <div class="row"><span class="dim">建议场景</span>首次使用、设备未列出、数据风险高</div>
+      </div>
+      <div class="col">
+        <div class="header">自动化 provision</div>
+        <div class="sub">高效，但需严格前置确认</div>
+        <div class="row"><span class="dim">控制粒度</span>流程封装，中断后需恢复</div>
+        <div class="row"><span class="dim">适用条件</span>设备必须在软件源中明确列出</div>
+        <div class="row"><span class="dim">误操作风险</span>自动化写入可能跳过确认</div>
+        <div class="row"><span class="dim">可调试性</span>低，失败后需拆解自动化步骤</div>
+        <div class="row"><span class="dim">重复效率</span>高，一条命令完成多步</div>
+        <div class="row"><span class="dim">建议场景</span>设备明确支持、重复部署、空白介质</div>
+      </div>
+    </div>
+    <div class="verdict">
+      <div class="v manual"><strong>手工优先</strong>设备未在软件源中列出？名称相似但不完全匹配？存在重要数据？→ 走 1.2 手工流程。</div>
+      <div class="v auto"><strong>自动适用</strong>设备完全匹配 + 变体确认 + 新空白存储 + 六项风险检查全部通过 → 可考虑 provision。</div>
+    </div>
+  </div>
+</body>
+</html>

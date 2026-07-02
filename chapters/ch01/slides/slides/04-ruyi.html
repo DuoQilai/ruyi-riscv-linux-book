@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 60px; flex: 1; }
+  .left { flex: 1.2; }
+  .left .desc { font-size: 20px; color: #5c5448; line-height: 1.6; margin-bottom: 32px; }
+  .left h4 { font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #2d2a26; }
+  .left ul { padding-left: 20px; font-size: 17px; color: #6b6358; line-height: 2; }
+  .right { flex: 0.8; }
+  .box {
+    border: 1px solid #d4cfc4; padding: 36px 32px;
+    font-size: 15px; line-height: 2; color: #5c5448;
+    font-family: "SF Mono","Menlo",monospace;
+    background: #f7f5f0;
+  }
+  .box .prompt { color: #c46b4a; }
+  .box .cmd { color: #2e6b6e; }
+  .box .comment { color: #b8b0a2; }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.1 · RISC-V 平台认知与 ruyi 环境安装</div>
+    <div class="slide-title">ruyi：包管理入口，不是编译器</div>
+    <div class="content">
+      <div class="left">
+        <p class="desc"><code>ruyi</code> 是 RuyiSDK 的包管理与环境管理入口。它负责发现和获取工具链——真正编译代码的是 GCC / binutils。两者的关系类似「应用商店」与「应用程序」。</p>
+        <h4>ruyi 的四个核心能力</h4>
+        <ul>
+          <li><strong>软件源与包信息</strong> — 查询可用工具链、镜像与设备支持</li>
+          <li><strong>工具链获取</strong> — 下载并安装 RISC-V GNU Toolchain</li>
+          <li><strong>环境与配置管理</strong> — 管理不同项目的工具链环境</li>
+          <li><strong>设备支持查询</strong> — 查看受支持的开发板与 provision 方式</li>
+        </ul>
+        <p style="margin-top:28px;font-size:16px;color:#8c8276;">安装后第一步永远是 <code>ruyi --version</code> 和 <code>ruyi --help</code>——本机帮助输出是最可靠的命令入口。</p>
+      </div>
+      <div class="right">
+        <div class="box">
+          <span class="comment"># 安装验证</span><br>
+          <span class="prompt">$</span> <span class="cmd">command -v ruyi</span><br>
+          /home/user/.local/bin/ruyi<br><br>
+          <span class="prompt">$</span> <span class="cmd">ruyi --version</span><br>
+          ruyi x.y.z<br><br>
+          <span class="comment"># 更新软件源</span><br>
+          <span class="prompt">$</span> <span class="cmd">ruyi update</span><br><br>
+          <span class="comment"># 查询工具链</span><br>
+          <span class="prompt">$</span> <span class="cmd">ruyi list | grep toolchain</span><br><br>
+          <span class="comment"># 验证编译器</span><br>
+          <span class="prompt">$</span> <span class="cmd">riscv64-unknown-linux-gnu-gcc</span><br>
+          <span class="cmd">  -dumpmachine</span><br>
+          riscv64-unknown-linux-gnu
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

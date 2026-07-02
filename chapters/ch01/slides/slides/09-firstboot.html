@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 48px; flex: 1; }
+  .col { flex: 1; }
+  .col h4 { font-size: 20px; font-weight: 700; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e8e3d8; }
+  .cmd-box {
+    background: #f7f5f0; border: 1px solid #e8e3d8;
+    padding: 20px 24px; font-size: 14px; font-family: "SF Mono",Menlo,monospace;
+    color: #5c5448; line-height: 1.8; margin-bottom: 20px;
+  }
+  .cmd-box .c { color: #b8b0a2; }
+  .cmd-box .p { color: #c46b4a; }
+  .checklist { list-style: none; }
+  .checklist li {
+    padding: 10px 0; border-bottom: 1px solid #f0ece5;
+    font-size: 16px; color: #5c5448; display: flex; gap: 12px;
+  }
+  .checklist li .chk { color: #2e6b6e; font-weight: 700; }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.2 · 镜像烧录、首次启动与开发通道建立</div>
+    <div class="slide-title">首次启动：系统检查四步走</div>
+    <div class="content">
+      <div class="col">
+        <h4>启动后立即确认的五件事</h4>
+        <ul class="checklist">
+          <li><span class="chk">1</span> 系统版本 — cat /etc/os-release → 确认 RevyOS</li>
+          <li><span class="chk">2</span> 架构 — uname -m → riscv64</li>
+          <li><span class="chk">3</span> 账户 — id → 记录当前用户</li>
+          <li><span class="chk">4</span> 主机名 — hostnamectl → 记录与管理</li>
+          <li><span class="chk">5</span> 磁盘 — df -h → 确认存储空间</li>
+        </ul>
+        <h4 style="margin-top:28px;">网络与时间</h4>
+        <ul class="checklist">
+          <li><span class="chk">6</span> IP 地址 — ip -br addr</li>
+          <li><span class="chk">7</span> 路由 — ip route → 确认默认网关</li>
+          <li><span class="chk">8</span> 时间 — timedatectl → 时间错误会导致 TLS 和 apt 失败</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h4>apt 软件源检查</h4>
+        <div class="cmd-box">
+          <span class="c"># 查看当前软件源</span><br>
+          <span class="p">$</span> grep -R --no-filename -h '^deb ' \<br>
+          &nbsp;&nbsp;/etc/apt/sources.list \<br>
+          &nbsp;&nbsp;/etc/apt/sources.list.d 2>/dev/null<br><br>
+          <span class="c"># 更新（先确认链路/地址/路由/时间正常）</span><br>
+          <span class="p">$</span> sudo apt update
+        </div>
+        <p style="font-size:16px;color:#6b6358;line-height:1.6;margin-top:16px;">
+          <strong>apt update 失败 ≠ 需要立即换源。</strong><br>
+          先排查 DNS → 时间 → 网络 → 仓库可用性。<br>
+          系统时间严重错误时，TLS 证书和仓库元数据校验都会失败。
+        </p>
+        <div style="margin-top:20px;padding:20px 24px;background:#f2f0ea;font-size:15px;color:#5c5448;line-height:1.6;">
+          <strong>SSH 服务启用：</strong><br>
+          <code style="background:#e8e3d8;padding:2px 6px;">sudo systemctl enable --now ssh</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

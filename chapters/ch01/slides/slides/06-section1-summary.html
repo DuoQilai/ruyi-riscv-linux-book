@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 1920px; height: 1080px; overflow: hidden;
+    background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+    color: #2d2a26;
+  }
+  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
+  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; flex: 1; }
+  .item { border: 1px solid #e8e3d8; padding: 28px 32px; }
+  .item .num { font-size: 13px; color: #c4beb2; margin-bottom: 8px; }
+  .item h4 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .item p { font-size: 15px; color: #6b6358; line-height: 1.6; }
+  .takeaway {
+    margin-top: 36px; padding: 28px 36px;
+    background: #f2f0ea;
+    font-size: 18px; color: #2d2a26; line-height: 1.6;
+    border-left: 0;
+  }
+</style></head>
+<body>
+  <div class="page">
+    <div class="section-label">1.1 · 小结</div>
+    <div class="slide-title">本节成果：建立平台认知，工具链就绪</div>
+    <div class="grid">
+      <div class="item"><div class="num">01</div><h4>平台分层图</h4><p>能准确区分 ISA、SoC、开发板、OS、工具、应用六个层次。</p></div>
+      <div class="item"><div class="num">02</div><h4>接口标注</h4><p>能识别 LicheePi 4A 的供电、串口、网络和启动介质位置。</p></div>
+      <div class="item"><div class="num">03</div><h4>环境清单</h4><p>硬件、线缆、主机软件均已确认状态（已有 / 缺少 / 待确认）。</p></div>
+      <div class="item"><div class="num">04</div><h4>ruyi 环境</h4><p>ruyi 已安装，软件源可更新，工具链已查询并记录版本与三元组。</p></div>
+      <div class="item"><div class="num">05</div><h4>编译器验证</h4><p>目标三元组含 riscv64 + linux-gnu；最小程序 file 确认 RISC-V ELF。</p></div>
+      <div class="item"><div class="num">06</div><h4>实验日志</h4><p>实验 1.1 准备材料与完整终端日志齐备。</p></div>
+    </div>
+    <div class="takeaway">
+      <strong>关键认知：</strong>「LicheePi 4A 是 RISC-V」不准确。正确表述：LicheePi 4A 是基于 RISC-V 架构（ISA）、搭载 TH1520 SoC 的开发板，运行 RevyOS 操作系统。
+    </div>
+  </div>
+</body>
+</html>
