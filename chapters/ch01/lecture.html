@@ -119,8 +119,24 @@
     content: ''; flex: 1; height: 1px; background: var(--line);
   }
 
+  /* ── Sidebar TOC ── */
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.active { color: var(--accent); font-weight: 700; }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+
+  body { padding-left: 240px; }
+
   @media print {
-    body { background: #fff; }
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
     .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
     .content { max-width: none; padding: 0 36px; }
     section { padding: 36px 0; page-break-before: always; }
@@ -132,6 +148,33 @@
 </style>
 </head>
 <body>
+
+<!-- ═══ TOC Sidebar ═══ -->
+<nav class="toc">
+  <h4>目录</h4>
+  <a href="#overview">本章概览</a>
+  <div class="divider"></div>
+  <a href="#s1.1">1.1 平台认知与 ruyi 安装</a>
+  <a class="sub" href="#s1.1-objectives">学习目标</a>
+  <a class="sub" href="#s1.1-platform">平台分层</a>
+  <a class="sub" href="#s1.1-ruyi">ruyi 与工具链</a>
+  <a class="sub" href="#s1.1-prep">环境准备</a>
+  <a class="sub" href="#s1.1-steps">操作步骤</a>
+  <a class="sub" href="#s1.1-exercises">课堂练习</a>
+  <div class="divider"></div>
+  <a href="#s1.2">1.2 镜像烧录与开发通道</a>
+  <a class="sub" href="#s1.2-objectives">学习目标</a>
+  <a class="sub" href="#s1.2-flash">镜像烧录</a>
+  <a class="sub" href="#s1.2-channels">三条通道</a>
+  <a class="sub" href="#s1.2-firstboot">首次启动</a>
+  <a class="sub" href="#s1.2-ssh">SSH 与 SCP</a>
+  <div class="divider"></div>
+  <a href="#s1.3">1.3 provision 适用边界</a>
+  <a class="sub" href="#s1.3-objectives">学习目标</a>
+  <a class="sub" href="#s1.3-concept">provision 概念</a>
+  <a class="sub" href="#s1.3-compare">手工 vs 自动</a>
+  <a class="sub" href="#s1.3-risk">风险检查与决策</a>
+</nav>
 
 <!-- ═══════════════════════════════════════════ -->
 <div class="hero">
@@ -147,12 +190,50 @@
 
 <div class="content">
 
+<!-- ═══ 本章概览 ═══ -->
+<section id="overview">
+<h2>开始之前</h2>
+
+<div class="warn" style="margin-bottom:32px;">
+  <strong>本章三节是递进关系：</strong>1.1 搭建工具链 → 1.2 烧录系统并建立连接 → 1.3 理解自动化的适用边界。<strong>请按顺序完成，不要跳节。</strong>每节约需 90–120 分钟（含实验）。
+</div>
+
+<h3>你需要准备什么</h3>
+
+<div class="card-grid card-grid-3">
+  <div class="card">
+    <h4>🖥 主机</h4>
+    <p>Linux x86_64（推荐 Ubuntu 22.04+）。macOS / Windows 备选但课程命令以 Linux 为准。确保可联网并至少有 10GB 可用磁盘空间。</p>
+  </div>
+  <div class="card">
+    <h4>📦 开发板</h4>
+    <p>LicheePi 4A（TH1520 SoC）一块。配套：稳定电源适配器、USB 数据线（确认支持数据传输）、3.3V USB-TTL 串口模块、网线或 Wi-Fi。</p>
+  </div>
+  <div class="card">
+    <h4>💿 软件</h4>
+    <p>课程指定 RevyOS 镜像文件 + ruyi 包管理器 + RISC-V GNU Toolchain。本章全部安装步骤在 1.1–1.2 中详述。</p>
+  </div>
+</div>
+
+<h3>本章你会学到什么</h3>
+
+<div class="card-grid" style="margin-bottom:0;">
+  <div class="card"><h4>1.1 平台认知与环境安装</h4><p>理解 RISC-V 平台的六个层次，安装 ruyi 与交叉编译工具链，验证工具链可用性。</p></div>
+  <div class="card"><h4>1.2 镜像烧录与开发通道</h4><p>将 RevyOS 烧录到 LicheePi 4A，完成首次启动检查，建立串口 / SSH / SCP 三通道。</p></div>
+  <div class="card"><h4>1.3 provision 适用边界</h4><p>理解自动化设备准备的适用场景与风险，建立手工 vs 自动的决策框架。</p></div>
+</div>
+
+<div class="info" style="margin-top:28px;">
+  <strong>学习建议：</strong>每个操作步骤都有对应的验证方法（「你应该看到…」）。如果某步验证不通过，先查阅本节末尾的常见问题，不要跳过。完整终端日志是实验验收材料——从现在开始养成保存日志的习惯。
+</div>
+</section>
+
 <!-- ═══════════════════════════════════════════ -->
 <section>
 <div class="section-num">1.1</div>
 <h2>RISC-V 平台认知与 ruyi 开发环境安装</h2>
 
-<h3>学习目标</h3>
+<h3 id="s1.1-objectives">学习目标</h3>
 <div class="card-grid">
   <div class="card"><h4>平台分层</h4><p>区分 ISA、SoC、开发板、OS、工具链六个层次</p></div>
   <div class="card"><h4>接口识别</h4><p>识别 LicheePi 4A 电源、串口、网络和启动介质位置</p></div>
@@ -162,7 +243,7 @@
   <div class="card"><h4>架构认知</h4><p>理解 ruyi 管理工具链、GCC 执行编译的分工</p></div>
 </div>
 
-<h3>平台分层：从 ISA 到应用</h3>
+<h3 id="s1.1-platform">平台分层：从 ISA 到应用</h3>
 <p>RISC-V 是开放指令集架构（ISA），定义了处理器执行指令的接口。芯片和开发板是不同层次的概念。建立分层思维是后续排查「镜像与板卡不匹配」「工具链架构错误」等问题的基础。</p>
 
 <div class="diagram">RISC-V ISA (开放指令集架构规范)
@@ -177,7 +258,7 @@
     ↓
 课程应用与实验</div>
 
-<h3>ruyi：包管理与环境管理入口</h3>
+<h3 id="s1.1-ruyi">ruyi：包管理与环境管理入口</h3>
 <p><code>ruyi</code> 是 RuyiSDK 的包管理入口。它负责发现和获取 RISC-V 开发所需的软件包与工具链；真正编译代码的是 GCC。两者关系类似「应用商店」与「应用程序」。</p>
 
 <div class="diagram">ruyi 命令
@@ -188,7 +269,7 @@
             ↓
       GCC / binutils / sysroot</div>
 
-<h3>环境准备清单</h3>
+<h3 id="s1.1-prep">环境准备清单</h3>
 <table>
   <tr><th>项目</th><th>要求</th><th>检查方式</th></tr>
   <tr><td>主机环境</td><td>Linux x86_64（推荐），macOS / Windows 备选</td><td><code>uname -a</code></td></tr>
@@ -206,7 +287,7 @@
   · 工具链前缀应选 <code>linux-gnu</code>（Linux 应用）→ <code>unknown-elf</code> 是裸机工具链，不适用
 </div>
 
-<h3>操作步骤</h3>
+<h3 id="s1.1-steps">操作步骤</h3>
 
 <ol class="steps">
   <li><span class="step-num">1</span><div><strong>记录主机环境</strong><br><code>uname -a</code> / <code>uname -m</code> — 确认主机架构。主机与目标板架构可以不同，这正是交叉编译的原因。</div></li>
@@ -216,7 +297,7 @@
   <li><span class="step-num">5</span><div><strong>最小编译验证</strong><br>编译 <code>int main(void) { return 0; }</code> → <code>file</code> 检查产物为 RISC-V ELF。正确验收方式是确认目标架构——在主机上 <code>./a.out</code> 会因架构不同而报错。</div></li>
 </ol>
 
-<h3>课堂练习</h3>
+<h3 id="s1.1-exercises">课堂练习</h3>
 <ol>
   <li>解释「LicheePi 4A 是 RISC-V」表述的准确性问题，用 ISA、SoC、开发板三个术语重新表述。</li>
   <li>比较 <code>linux-gnu</code> 与 <code>unknown-elf</code> 两个目标三元组，说明各自适用场景（Linux 应用 vs 裸机程序）。</li>
@@ -232,7 +313,7 @@
 <div class="section-num">1.2</div>
 <h2>镜像烧录、首次启动与开发通道建立</h2>
 
-<h3>学习目标</h3>
+<h3 id="s1.2-objectives">学习目标</h3>
 <div class="card-grid">
   <div class="card"><h4>镜像烧录</h4><p>理解镜像结构与分区写入流程，安全烧录 RevyOS</p></div>
   <div class="card"><h4>系统检查</h4><p>启动后验证系统版本、架构、网络和时间</p></div>
@@ -242,7 +323,7 @@
   <div class="card"><h4>通道选择</h4><p>区分串口与 SSH 的适用场景，故障时选对工具</p></div>
 </div>
 
-<h3>镜像烧录：分区级数据写入</h3>
+<h3 id="s1.2-flash">镜像烧录：分区级数据写入</h3>
 <p>烧录工具将引导程序、内核、设备树和根文件系统按分区结构写入目标介质。建议的烧录流程：校验镜像 → 识别目标设备 → 严格按发布说明执行 → 确认工具有成功报告。</p>
 
 <div class="diagram">镜像发布包
@@ -254,7 +335,7 @@
           ↓ 上电启动
       串口日志 → 登录界面</div>
 
-<h3>三条通道，三个角色</h3>
+<h3 id="s1.2-channels">三条通道，三个角色</h3>
 <div class="card-grid card-grid-3">
   <div class="card">
     <h4>🔌 串口（UART）</h4>
@@ -273,7 +354,7 @@
   </div>
 </div>
 
-<h3>首次启动检查清单</h3>
+<h3 id="s1.2-firstboot">首次启动检查清单</h3>
 <table>
   <tr><th>检查项</th><th>命令</th><th>期望</th></tr>
   <tr><td>系统版本</td><td><code>cat /etc/os-release</code></td><td>RevyOS</td></tr>
@@ -286,7 +367,7 @@
   <tr><td>软件源</td><td><code>grep '^deb ' /etc/apt/sources.list ...</code></td><td><code>sudo apt update</code> 成功</td></tr>
 </table>
 
-<h3>SSH 密钥登录配置</h3>
+<h3 id="s1.2-ssh">SSH 密钥登录配置</h3>
 <pre><span class="c"># 板端启用 SSH 服务</span>
 <span class="p">$</span> sudo systemctl enable --now ssh
 
@@ -316,7 +397,7 @@
 <span class="c"># 下载</span>
 <span class="p">$</span> scp user@board-ip:/etc/os-release ./board-os-release.txt</pre>
 
-<h3>课堂练习</h3>
+<h3 id="s1.1-exercises">课堂练习</h3>
 <ol>
   <li>将「开发板无法启动」拆分为镜像、烧录、供电、启动介质和显示通道五类原因，每类写出一个验证方法。</li>
   <li>以下故障分别应优先使用串口还是 SSH：板端没有 IP？sshd 配置错误？系统启动失败？需要批量上传文件？</li>
@@ -332,7 +413,7 @@
 <div class="section-num">1.3</div>
 <h2>ruyi device provision 适用边界</h2>
 
-<h3>学习目标</h3>
+<h3 id="s1.3-objectives">学习目标</h3>
 <div class="card-grid">
   <div class="card"><h4>provision 概念</h4><p>理解自动化设备准备的目的、输入、输出和潜在风险</p></div>
   <div class="card"><h4>设备查询</h4><p>使用当前 ruyi 版本查询设备支持状态，不凭名称猜测</p></div>
@@ -340,10 +421,10 @@
   <div class="card"><h4>风险决策</h4><p>根据六项检查做出自动或手工的路径选择</p></div>
 </div>
 
-<h3>provision 是什么</h3>
+<h3 id="s1.3-concept">provision 是什么</h3>
 <p>Device provision 是把设备准备成可使用状态的自动化过程，可能包括下载镜像、选择设备变体、写入存储介质或生成操作指引。它的价值是减少重复步骤，但自动化不消除风险——误选磁盘、断电或版本不匹配的风险依然存在。<strong>「能运行命令」不等于「适合运行命令」。</strong></p>
 
-<h3>手工流程 vs 自动化：六维对比</h3>
+<h3 id="s1.3-compare">手工流程 vs 自动化：六维对比</h3>
 <table>
   <tr><th>维度</th><th>手工流程（§1.2）</th><th>自动化 provision</th></tr>
   <tr><td>控制粒度</td><td>每步可控，可随时停止</td><td>流程封装，中断后需恢复</td></tr>
@@ -354,7 +435,7 @@
   <tr><td>建议场景</td><td>首次使用、设备未列出、数据风险高</td><td>设备明确支持、重复部署、空白介质</td></tr>
 </table>
 
-<h3>六项风险检查</h3>
+<h3 id="s1.3-risk">六项风险检查</h3>
 <p>在运行任何写入操作前逐项确认：</p>
 <ol class="steps">
   <li><span class="step-num">①</span><div>设备是否在当前软件源中明确列出？</div></li>

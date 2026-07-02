@@ -88,7 +88,8 @@
     letter-spacing: 0.05em;
   }
   @media print {
-    body { background: #fff; }
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
     .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
     .content { max-width: none; padding: 0 36px; }
     section { padding: 36px 0; page-break-before: always; }
@@ -97,9 +98,44 @@
     .card-grid { grid-template-columns: 1fr 1fr; }
     .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
   }
+
+  /* ── Sidebar TOC ── */
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.active { color: var(--accent); font-weight: 700; }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+
+  body { padding-left: 240px; }
 </style>
 </head>
 <body>
+
+<!-- ═══ TOC Sidebar ═══ -->
+<nav class="toc">
+  <h4>目录</h4>
+  <a href="#overview">本章概览</a>
+  <div class="divider"></div>
+  <a href="#s2.1">2.1 交叉编译全流程</a>
+  <a class="sub" href="#s2.1-objectives">学习目标</a>
+  <a class="sub" href="#s2.1-concept">host/target/sysroot</a>
+  <a class="sub" href="#s2.1-steps">操作步骤</a>
+  <a class="sub" href="#s2.1-elf">ELF 分析</a>
+  <div class="divider"></div>
+  <a href="#s2.2">2.2 Makefile 与工程目录</a>
+  <a class="sub" href="#s2.2-objectives">学习目标</a>
+  <a class="sub" href="#s2.2-makefile">Makefile 基础</a>
+  <a class="sub" href="#s2.2-project">统一工程目录</a>
+  <a class="sub" href="#s2.2-steps">操作步骤</a>
+  <div class="divider"></div>
+  <a href="#s2.3">2.3 CoreMark 选读</a>
+</nav>
 
 <!-- ═══════════════════════════════════════════ -->
 <div class="hero">
@@ -114,12 +150,41 @@
 
 <div class="content">
 
+<!-- ═══ 本章概览 ═══ -->
+<section id="overview">
+<h2>开始之前</h2>
+
+<div class="warn" style="margin-bottom:32px;">
+  <strong>前置条件：</strong>本章假设你已完成第一章全部内容——ruyi 已安装、工具链已验证、开发板已启动且 SSH/SCP 通道可用。<strong>2.3 为选读内容，不阻塞实验验收。</strong>每节约需 90–120 分钟（含实验）。
+</div>
+
+<h3>你需要准备什么</h3>
+
+<div class="card-grid card-grid-3">
+  <div class="card"><h4>🖥 主机</h4><p>Linux x86_64，已安装 ruyi 与 RISC-V GNU Toolchain（交叉编译器前缀 <code>riscv64-unknown-linux-gnu-</code>）。</p></div>
+  <div class="card"><h4>📦 开发板</h4><p>LicheePi 4A，RevyOS 已启动，SSH/SCP 免密登录可用。本章所有代码在板端运行验证。</p></div>
+  <div class="card"><h4>💻 代码</h4><p>课程仓库 <code>chapters/ch02/code/</code> 下的 hello 和 project-template 工程模板。</p></div>
+</div>
+
+<h3>本章你会学到什么</h3>
+
+<div class="card-grid" style="margin-bottom:0;">
+  <div class="card"><h4>2.1 交叉编译全流程</h4><p>理解 host/target/sysroot，使用交叉编译器构建第一个 RISC-V 程序，部署到板端运行并用 readelf/ldd 分析二进制结构。</p></div>
+  <div class="card"><h4>2.2 Makefile 与工程目录</h4><p>编写 Makefile 规则与变量，理解增量构建与 clean，掌握 src/include/build 统一目录规范——后续实验的标准工程模板。</p></div>
+  <div class="card"><h4>2.3 选读：CoreMark</h4><p>了解 CPU 基准测试的用途与局限，在板端运行 CoreMark 并理性解读分数。</p></div>
+</div>
+
+<div class="info" style="margin-top:28px;">
+  <strong>学习建议：</strong>2.1 → 2.2 是递进关系——先用 hello 理解单文件编译部署，再用 project-template 掌握多文件工程化。每个操作步骤都有对应的验证方法。完整终端日志是实验验收材料——从现在开始养成保存日志的习惯。
+</div>
+</section>
+
 <!-- ═══════════════════════════════════════════ -->
 <section>
 <div class="section-num">2.1</div>
 <h2>交叉编译全流程：从源码到板端可执行文件</h2>
 
-<h3>学习目标</h3>
+<h3 id="s2.1-objectives">学习目标</h3>
 <div class="card-grid">
   <div class="card"><h4>host / target / sysroot</h4><p>区分编译主机、运行设备和目标根文件系统，理解交叉编译</p></div>
   <div class="card"><h4>工具链查询</h4><p>确认交叉编译器目标三元组，定位 sysroot 路径</p></div>
@@ -129,7 +194,7 @@
   <div class="card"><h4>两端验收</h4><p>区分 host 编译成功与 target 运行成功两个验收环节</p></div>
 </div>
 
-<h3>host、target、sysroot 与交叉编译</h3>
+<h3 id="s2.1-concept">host、target、sysroot 与交叉编译</h3>
 <p>嵌入式 Linux 开发很少在开发板上直接编译大型程序。更常见的流程是：在性能更好的 PC（host）上生成二进制，再部署到开发板（target）执行。当 host 与 target 的 CPU 架构不同时，称为<strong>交叉编译</strong>（cross compilation）。</p>
 <p>工具链除了编译器，还需要目标系统的头文件和库。这些文件按目标系统的目录结构组织，合称为 <strong>sysroot</strong>。编译时编译器在 sysroot 中查找头文件和库；链接时按目标 ABI 链接其中的库。</p>
 
@@ -154,7 +219,7 @@
   <strong>关键区分：</strong><code>riscv64-unknown-elf-gcc</code> 面向无操作系统环境（裸机）。本课程用户态程序应使用带 <code>linux-gnu</code> 的工具链。两者不可互换。
 </div>
 
-<h3>操作步骤</h3>
+<h3 id="s2.1-steps">操作步骤</h3>
 
 <ol class="steps">
   <li><span class="step-num">1</span><div><strong>确认 host 与 target</strong><br>主机 <code>uname -m</code>（x86_64），板端 <code>uname -m</code>（riscv64）——两者不同说明需要交叉编译。</div></li>
@@ -165,7 +230,7 @@
   <li><span class="step-num">6</span><div><strong>ELF 分析</strong><br><code>readelf -h hello</code>（Machine=RISC-V）、<code>readelf -l hello</code>（LOAD 段）、<code>ldd hello</code>（动态库依赖或注明静态链接）。</div></li>
 </ol>
 
-<h4>ELF 关键字段</h4>
+<h4 id="s2.1-elf">ELF 关键字段</h4>
 <table>
   <tr><th>字段</th><th>含义</th><th>期望</th></tr>
   <tr><td>Class</td><td>ELF 位数</td><td><code>ELF64</code></td></tr>
@@ -195,7 +260,7 @@
 <div class="section-num">2.2</div>
 <h2>Makefile 与工程目录规范</h2>
 
-<h3>学习目标</h3>
+<h3 id="s2.2-objectives">学习目标</h3>
 <div class="card-grid">
   <div class="card"><h4>规则与依赖</h4><p>理解目标、依赖、命令三要素与 Tab 缩进</p></div>
   <div class="card"><h4>变量管理</h4><p>使用 CC、CFLAGS、CROSS_COMPILE 避免硬编码</p></div>
@@ -205,7 +270,7 @@
   <div class="card"><h4>工程复用</h4><p>模板可扩展至后续 GPIO、MQTT、综合项目</p></div>
 </div>
 
-<h3>Makefile 基础</h3>
+<h3 id="s2.2-makefile">Makefile 基础</h3>
 <p>Makefile 描述「什么文件由什么文件生成、执行什么命令」。<code>make</code> 根据文件时间戳决定是否重新编译。<code>chapters/ch02/code/hello/Makefile</code> 是单文件示例，<code>project-template/Makefile</code> 在此基础上增加多源文件与 <code>build/</code> 目录。</p>
 
 <div class="diagram">Makefile
@@ -216,7 +281,7 @@
         ↓
   make / make clean</div>
 
-<h3>统一工程目录</h3>
+<h3 id="s2.2-project">统一工程目录</h3>
 <p>单文件 <code>hello</code> 适合入门，真实项目应将代码按职责分离：</p>
 
 <div class="diagram">project-template/
@@ -230,7 +295,7 @@
   src/greet.c ─┼──> build/src/*.o ──> build/app
   include/ ────┘</div>
 
-<h3>操作步骤</h3>
+<h3 id="s2.2-steps">操作步骤</h3>
 
 <h4>阶段 A：单文件 Makefile</h4>
 <pre><span class="p">$</span> cd chapters/ch02/code/hello
