@@ -1,120 +1,102 @@
-# 2.3 readelf、ldd 观察二进制
+# 2.3 选读：CoreMark 对比算力边界
 
 ## 本讲目标
 
-- 能使用 `readelf` 查看 ELF 头、程序头与节头中的关键字段。
-- 能使用 `ldd` 查看动态可执行文件的共享库依赖。
-- 能根据输出判断二进制是否面向 RISC-V Linux，并解释与交叉编译的关系。
+- 了解 CoreMark 嵌入式基准测试的用途与局限。
+- 能在板端获取、构建并运行 CoreMark，读懂分数含义。
+- 能说明基准分数与真实应用性能（I/O、外设、网络）之间的区别。
 
 ## 前置条件
 
-- 完成 2.2，已有板端可运行的 `hello` 或本机构建的同名文件。
-- 了解 ELF（Executable and Linkable Format）是 Linux 常用可执行文件格式。
+- 完成 2.2，熟悉交叉编译与板端部署。
+- 本讲为**选读**，不阻塞主线实验验收。
 
 ## 知识简介
 
-编译产物不仅是“能运行的文件”，还包含元数据：架构、字节序、入口地址、段布局、动态链接信息等。`readelf` 直接解析 ELF 结构；`ldd` 则针对动态链接程序，列出运行时需要的共享库。
+CoreMark 是 EEMBC 发布的轻量级 CPU 基准，主要测试列表操作、矩阵运算、状态机等核心逻辑，结果常以 **CoreMark/MHz** 或绝对 **CoreMark 分数** 报告。它适合粗略对比不同 MCU/SoC 或不同频率下的 CPU 效率，**不能**代表 GPIO 抖动、网络吞吐、存储速度等系统级表现。
 
-课程中常用场景：上传板端前在 host 用 `readelf -h` 确认 Machine 字段为 RISC-V；用 `ldd` 确认依赖的 `libc.so.6` 等是否能在板端找到。静态链接程序 `ldd` 可能显示 “not a dynamic executable”，这属于正常现象。
+在 LicheePi 4A 上运行 CoreMark 的价值：建立"这块板子 CPU 大概什么量级"的直觉，为后续是否用软解码、图像处理等留参考。课程综合项目验收不依赖 CoreMark 分数。
 
-图 2-3 建议展示：
+图 2-6：CoreMark 运行流程
 
 ```text
-hello (ELF)
- ├─ readelf -h   → Class, Machine, Type, Entry
- ├─ readelf -l   → LOAD 段、对齐、权限
- └─ ldd          → libc.so.6 => /lib/...
+CoreMark 源码
+   ├─ 交叉编译 → coremark.exe（板端）
+   ├─ 板端运行 → Iterations / Score
+   └─ 对比资料 → 仅作参考，非实验硬指标
 ```
 
 ## 环境准备
 
 | 项目 | 要求 | 检查方式 |
 | --- | --- | --- |
-| 示例二进制 | `chapters/ch02/code/hello/hello` | `test -f hello` |
-| 工具 | host 上有 `readelf`、`file` | `command -v readelf` |
-| 板端 | 可选，对比板端系统库 | SSH 可用 |
+| 源码 | 官方或课程提供的 CoreMark 压缩包 | 解压后含 `core_main.c` |
+| 工具链 | 与课程一致 | 能生成 RISC-V ELF |
+| 板端 | 可 SSH，运行时间数分钟可接受 | `ssh` 登录 |
 
 ## 操作步骤
 
-### 步骤 1：ELF 头信息
+### 步骤 1：获取源码
 
-在 `chapters/ch02/code/hello/` 目录：
+从 EEMBC 官方或课程镜像站获取 CoreMark。解压后进入源码目录，阅读 `README.md` 与 `core_main.c` 顶部说明。
 
-```bash
-readelf -h hello
-```
+### 步骤 2：选择编译方式
 
-重点关注：
-
-| 字段 | 含义 | 课程期望 |
-| --- | --- | --- |
-| Class | ELF 位数 | `ELF64` |
-| Data | 字节序 | 小端 `LSB` 常见 |
-| Machine | CPU 架构 | `RISC-V` |
-| Type | 文件类型 | `EXEC` 或 `DYN` |
-
-### 步骤 2：程序头（段布局）
+CoreMark 通常通过 `Makefile` 指定 `XCFLAGS`、`PORT_DIR`、`ITERATIONS` 等。课程板端为 Linux 用户态，应使用 Linux/POSIX 移植而非裸机移植。示例（以实际源码 Makefile 为准）：
 
 ```bash
-readelf -l hello | sed -n '1,25p'
+export CC=riscv64-unknown-linux-gnu-gcc
+# 按源码 README 执行，例如：
+make PORT_DIR=linux XCFLAGS="-O2" link
+file coremark.exe   # 或实际产物名
 ```
 
-观察 `LOAD` 段：哪些部分映射到内存、是否可执行、对齐方式。理解“文件中的段”与“运行时的内存区域”对应关系即可，不要求手工计算地址。
+具体目标文件名因版本而异，以本机 `make` 输出为准。
 
-### 步骤 3：节头（可选深入）
+### 步骤 3：部署到板端
 
 ```bash
-readelf -S hello | head -n 20
+scp coremark.exe <user>@<board-ip>:~/
+ssh <user>@<board-ip> 'chmod +x ~/coremark.exe && ./coremark.exe'
 ```
 
-找到 `.text`（代码）、`.data`（已初始化数据）、`.bss`（未初始化数据）等节，建立与 C 源码编译结果的对应概念。
+记录输出的 **Iterations**、**Total time**、**CoreMark** 分数。若支持多线程编译，可对比单线程与多线程（选做）。
 
-### 步骤 4：动态库依赖
+### 步骤 4：归一化理解（选做）
 
-```bash
-ldd hello
-file hello
-```
+若已知 CPU 频率 `f` MHz，可计算 CoreMark/MHz = 分数 / f。与公开资料对比时注意：编译选项、libc、散热、是否绑核都会影响结果。
 
-若 `file` 显示 “dynamically linked”，`ldd` 应列出 `libc.so.6` 等。若显示 “statically linked”，`ldd` 不适用，应在实验记录中注明链接方式。
+### 步骤 5：写简短结论
 
-### 步骤 5：与板端对比（可选）
-
-```bash
-ssh <user>@<board-ip> 'ldd ~/hello; ls -l /lib/libc.so.6 2>/dev/null || ls -l /lib64/libc.so.6'
-```
-
-确认板端存在 `ldd` 报告的库路径，或解释 musl/glibc 差异（以所用镜像为准）。
+用三五句话回答：CoreMark 高分是否意味着 MQTT 或 DHT22 实验一定更流畅？为什么？
 
 ## 课堂练习
 
-`readelf -h` 中 `Machine` 为 `Advanced Micro Devices X86-64` 时，说明构建过程哪里出了问题？应如何修正？
+列举三项**不会**被 CoreMark 单独反映、但在本课程实验中很重要的系统能力。
 
 ## 运行验证
 
 | 验证项 | 预期现象 | 记录 |
 | --- | --- | --- |
-| `readelf -h` | Machine 为 RISC-V | 保存关键行 |
-| `readelf -l` | 可见 LOAD 段 | 保存片段 |
-| `ldd` | 列出依赖或注明静态链接 | 保存输出 |
-| 判断 | 能说明架构与链接方式 | 书面结论 |
+| 交叉编译 | 生成板端可执行文件 | 保存 `file` 输出 |
+| 板端运行 | 打印 CoreMark 摘要 | 保存完整输出 |
+| 结论 | 能说明基准边界 | 书面 3–5 句 |
 
 ## 常见问题
 
-### host 的 `readelf` 能否分析 RISC-V 文件
+### 编译报错找不到 `time.h` 或 POSIX 接口
 
-可以。`readelf` 解析文件格式，不要求与本机架构相同。
+说明选错了 PORT（裸机而非 Linux）。改选 Linux/POSIX 移植目录。
 
-### `ldd` 在 host 上显示 “not found”
+### 板端运行极慢或 CPU 占用 100% 很久
 
-交叉编译的动态程序常链接到 sysroot 中的库，host 上 `ldd` 可能找不到目标路径。这不一定表示板端不能运行；应在板端再执行 `ldd`，或检查编译时 sysroot 是否正确。
+CoreMark 设计上会跑满 CPU 一段时间，属正常；若与他人共用板子，不要在共享时段长时间占用。
 
-### `readelf` 与 `objdump -f` 的区别
+### 分数与网上截图差很多
 
-两者都能查看头信息；课程统一用 `readelf` 观察 ELF 结构，`objdump -d` 则更多用于反汇编指令。
+编译器版本、`-O` 级别、glibc/musl、是否固定 CPU 频率都会导致差异。只作同环境前后对比，不追求绝对名次。
 
 ## 本讲成果
 
-- 一份 `readelf -h` / `readelf -l` 关键字段摘录。
-- 一份 `ldd` 或静态链接说明。
-- 对应实验 2.3 的观察记录。
+- 可选：一份 CoreMark 板端运行日志。
+- 可选：一段关于"算力基准 vs 课程应用"的简短评述。

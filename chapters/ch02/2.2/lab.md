@@ -1,4 +1,4 @@
-# 实验 2.2 Hello World 交叉编译与板端运行
+# 实验 2.2 Makefile 与工程目录规范
 
 ## 对应讲次
 
@@ -6,119 +6,187 @@
 | --- | --- |
 | 章节 | 第二章 工具链与工程 |
 | 讲次 | 2.2 |
-| 课程主题 | 第一个 C 程序：编译 → 传输 → 运行 |
+| 课程主题 | Makefile 与工程目录规范 |
 | 实验类型 | 必做实验 |
 
 ## 实验目标
 
-- 使用 `chapters/ch02/code/hello/` 完成交叉编译。
-- 将 `hello` 部署到 LicheePi 4A 并正确执行。
-- 保存 host 与 target 两侧的 `file` 输出作为验收证据。
+- 读懂并必要时微调 `chapters/ch02/code/hello/Makefile`，演示增量构建与 `make clean`。
+- 通过 `-Wall` 体验编译器警告与修复流程。
+- 基于 `chapters/ch02/code/project-template/` 完成多文件交叉编译，部署到板端并运行。
+- 验证 `make clean` 可删除 `build/` 且能完整重建。
 
 ## 对应知识点
 
 | # | 知识点 | 本实验中的验证方式 |
 | --- | --- | --- |
-| 1 | 交叉编译 | `make` 与主机侧 `file` |
-| 2 | 部署 | `scp` 上传 |
-| 3 | 板端验收 | `./hello` 输出 |
-| 4 | 可执行权限 | `chmod +x` |
-| 5 | 架构一致性 | 两端 `file` 对比 |
-| 6 | 与 1.2 衔接 | 复用 SSH/SCP 通道 |
+| 1 | 目标与依赖 | 修改 `main.c` 触发重编 |
+| 2 | 变量 | 解释 `CC`、`CFLAGS`、`CROSS_COMPILE` |
+| 3 | 自动变量 | 说明 `$@`、`$^` |
+| 4 | `.PHONY` | 说明 `clean` 为何是伪目标 |
+| 5 | `make clean` | 产物被删除 |
+| 6 | 命令行覆盖 | `make CFLAGS=...` |
+| 7 | 目录约定 | 提交 `find` 树状列表 |
+| 8 | 头文件路径 | `-Iinclude` 编译通过 |
+| 9 | 多源文件链接 | `main.c` + `greet.c` |
+| 10 | 产物隔离 | 仅 `build/` 含 `.o` 与二进制 |
+| 11 | 部署 | `scp` + 板端运行 |
+| 12 | 工程模板 | 说明如何复用到后续实验 |
 
 ## 实验环境
 
 | 项目 | 要求 |
 | --- | --- |
-| 主机环境 | Linux，已配置交叉工具链 |
+| 单文件工程 | `chapters/ch02/code/hello/` |
+| 多文件工程 | `chapters/ch02/code/project-template/` |
 | 目标板 | LicheePi 4A |
 | 目标系统 | 课程镜像（如 RevyOS） |
-| 硬件连接 | 网络、SSH |
-| 软件依赖 | `make`、`scp`、`ssh`、`file` |
-| 代码路径 | `chapters/ch02/code/hello/` |
+| 软件依赖 | GNU `make`、交叉 `gcc`、`scp`、`ssh` |
 
 ## 硬件连接或部署关系
 
 | 模块 | 引脚/接口 | 连接说明 | 注意事项 |
 | --- | --- | --- | --- |
-| 主机 | 网络 | 编译与 scp | 记录工作目录 |
-| 目标板 | 网络 | 接收并运行 `hello` | 确认 IP 与用户名 |
+| 主机 | — | 构建验证 | 单文件实验仅在主机完成 |
+| 主机 | 网络 | 多文件工程上传 | 工作目录为 project-template |
+| 目标板 | 网络 | 运行 `app` | 同实验 2.1 |
 
 ## 实验任务
 
-### 任务 1：构建
+### 任务 1：单文件 Makefile 构建与增量编译
 
-在工程目录执行 `make`，并检查 ELF 架构。
+记录连续两次 `make` 的输出差异；演示 `clean` 与重建；通过临时引入未使用变量体验 `-Wall` 警告。
 
-### 任务 2：部署
+### 任务 2：多文件工程构建与部署
 
-上传到板端用户家目录并设置可执行权限。
+基于 `project-template/` 完成 `make`，将 `build/app` 部署到板端并运行。
 
-### 任务 3：运行与记录
+### 任务 3：清理与重建验证
 
-板端执行程序，保存完整终端输出。
+证明 `build/` 可删且可重建。
 
 ## 实验步骤
 
-1. 进入工程目录：
+### 阶段 A：单文件 Makefile
+
+1. 阅读 Makefile：
 
 ```bash
 cd chapters/ch02/code/hello
+cat Makefile
 ```
 
-2. 编译：
+2. 完整构建流程：
 
 ```bash
 make clean
 make
+make
+touch main.c
+make
+```
+
+3. 清理：
+
+```bash
+make clean
+ls hello 2>&1
+make
+```
+
+4. 警告实验（修改 `main.c` 引入未使用变量，截图警告，然后恢复源码）：
+
+```bash
+make clean && make
+```
+
+5. 变量覆盖：
+
+```bash
+make clean
+make CFLAGS='-Wall -Wextra -O0 -g'
 file hello
 ```
 
-3. 上传（替换用户名与 IP）：
+6. 在实验报告中用三五句话解释：规则 `hello: main.c` 中三行的含义。
+
+### 阶段 B：多文件工程
+
+7. 查看结构：
 
 ```bash
-scp hello <user>@<board-ip>:~/
-ssh <user>@<board-ip> 'chmod +x ~/hello && file ~/hello'
+cd chapters/ch02/code/project-template
+find . -type f | sort
 ```
 
-4. 运行：
+8. 构建：
 
 ```bash
-ssh <user>@<board-ip> './hello'
+make clean
+make
+file build/app
 ```
 
-5. 可选：对比在主机执行 `./hello` 的错误信息，截图说明为何不能在 host 验证。
+9. 部署：
+
+```bash
+scp build/app <user>@<board-ip>:~/
+ssh <user>@<board-ip> 'chmod +x ~/app && ./app'
+```
+
+10. 清理重建：
+
+```bash
+make clean
+ls build 2>&1
+make
+```
+
+11. 在报告中用示意图或树状列表说明 `src/`、`include/`、`build/` 各自职责。
 
 ## 运行验证
 
 | 验证项 | 预期现象 | 是否通过 |
 | --- | --- | --- |
-| `make` | 成功 |  |
-| 主机 `file` | RISC-V ELF |  |
-| `scp` | 无错误 |  |
-| 板端 `file` | RISC-V ELF |  |
-| `./hello` | 输出 `Hello, RISC-V Linux!` |  |
+| 首次 build | 成功 |  |
+| 二次 `make` | 无重编或提示 up to date |  |
+| `touch` 后 | 重编 |  |
+| `clean` | `hello` 不存在 |  |
+| 警告 | 能触发并消除 |  |
+| 多文件 `make` | 成功 |  |
+| `build/app` | RISC-V ELF |  |
+| 板端 `./app` | `Hello, RISC-V Linux!` |  |
+| `make clean` | 无 `build/` |  |
+| 重建 | 再次成功 |  |
 
 ## 验收记录
 
 | 记录项 | 内容 |
 | --- | --- |
-| 运行命令 | `make`、`file`、`scp`、`./hello` |
-| 关键输出 | 两端 `file` 与程序 stdout |
-| 截图或照片 | 编译与板端运行截图 |
-| 异常处理 | 权限、架构或网络问题 |
+| 运行命令 | `make`、`make clean`、`CFLAGS` 覆盖、`scp`、板端执行 |
+| 关键输出 | 增量构建与 clean 前后 `ls`、`file`、程序 stdout |
+| 截图或照片 | 警告与修复（可选）、目录树与运行截图 |
+| 异常处理 | Tab/路径问题、头文件或 mkdir 问题 |
 
 ## 常见问题
 
 | 现象 | 可能原因 | 处理方式 |
 | --- | --- | --- |
-| `make` 找不到 gcc | `CROSS_COMPILE` 前缀错误 | 对照 1.2 工具链前缀修改 Makefile 或环境变量 |
-| 板端无法执行 | 架构错误或权限 | `file`、`chmod +x` |
-| 输出为空 | 连错机器 | 核对 `hostname` |
+| missing separator | 空格缩进 | 改 Tab |
+| clean 无效 | 路径或变量错误 | 对照 Makefile `rm` 行 |
+| 始终重编 | 依赖未写或时间戳异常 | 检查 `hello: main.c` |
+| 找不到 greet.h | 缺少 `-Iinclude` | 检查 Makefile `CFLAGS` |
+| 链接错误 | `SRCS` 漏文件 | 补全 `src/greet.c` |
+| 板端无法运行 | 架构或权限 | 同实验 2.1 排查 |
 
 ## 提交要求
 
-- `make` 与主机侧 `file hello` 输出。
-- `scp` 命令与板端 `file ~/hello` 输出。
-- 板端 `./hello` 完整输出截图。
-- 两三句话：为何必须在板端验收。
+- 当前使用的 `hello/Makefile` 全文（若未改则直接提交仓库版本）。
+- `make`、`make clean`、增量构建终端记录。
+- 对 `CC`/`CFLAGS`/`CROSS_COMPILE` 各一句说明。
+- 三道课堂练习题的简短答案。
+- 工程目录树（`find` 输出或等价图）。
+- `make` 与 `file build/app` 输出。
+- 板端运行截图。
+- `make clean` 前后对比。
+- 两三句话：后续实验如何基于此模板扩展。
