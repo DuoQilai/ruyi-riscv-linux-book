@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第一章 开发环境篇 · 实验</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  section { margin-bottom: 64px; }
+  section h2 {
+    font-size: 28px; font-weight: 700; margin-bottom: 8px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--line);
+  }
+  section h2 .num { color: var(--accent); font-size: 20px; margin-right: 10px; }
+  section h3 { font-size: 22px; font-weight: 700; margin: 28px 0 12px; }
+  section h4 { font-size: 18px; font-weight: 700; margin: 20px 0 8px; color: var(--muted); }
+  section p { font-size: 18px; color: var(--muted); margin-bottom: 14px; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 14px; }
+  section li { font-size: 18px; color: var(--muted); margin-bottom: 5px; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted);
+  }
+  .task-box {
+    border: 1px solid var(--line); padding: 20px 24px; margin: 18px 0;
+    background: #faf9f4;
+  }
+  .task-box h4 { margin-top: 0; color: var(--accent); }
+  @media print {
+    body { padding: 0; max-width: none; background: #fff; font-size: 10pt; }
+    .chapter-header { padding: 20px 0 30px; }
+    section { page-break-before: always; margin-bottom: 30px; }
+    section:first-of-type { page-break-before: avoid; }
+    pre { font-size: 9pt; }
+  }
+</style>
+</head>
+<body>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
+  <h1>实验：开发环境篇</h1>
+  <p class="meta">涵盖 1.1 / 1.2 / 1.3 全部实验任务 · 必做实验</p>
+</header>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="lab1.1">
+<h2><span class="num">实验 1.1</span> 平台认知与 ruyi 环境安装</h2>
+
+<h3>实验目标</h3>
+<ul>
+  <li>确认 host 与 target 的架构和系统信息</li>
+  <li>查询交叉编译器目标三元组与 sysroot 信息</li>
+  <li>完成 host / target / sysroot 三要素对照表</li>
+  <li>安装 ruyi，更新软件源，查询并验证工具链</li>
+</ul>
+
+<h3>实验环境</h3>
+<table>
+  <tr><th>项目</th><th>要求</th></tr>
+  <tr><td>主机环境</td><td>Linux x86_64（推荐），已安装 ruyi</td></tr>
+  <tr><td>目标板</td><td>LicheePi 4A</td></tr>
+  <tr><td>硬件连接</td><td>网络可达、USB 数据线、USB-TTL 串口模块</td></tr>
+  <tr><td>软件依赖</td><td><code>ssh</code>、<code>file</code>、<code>curl</code></td></tr>
+</table>
+
+<h3>任务 1：采集 host 与 target 信息</h3>
+<p>在主机执行：</p>
+<pre><span class="p">$</span> uname -m
+<span class="p">$</span> hostname</pre>
+<p>在板端执行：</p>
+<pre><span class="p">$</span> uname -m
+<span class="p">$</span> hostname
+<span class="p">$</span> head -n 5 /etc/os-release</pre>
+
+<h3>任务 2：安装 ruyi 并查询工具链</h3>
+<pre><span class="p">$</span> command -v ruyi
+<span class="p">$</span> ruyi --version
+<span class="p">$</span> ruyi update
+<span class="p">$</span> ruyi list | grep toolchain</pre>
+
+<h3>任务 3：查询工具链与 sysroot</h3>
+<pre><span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
+<span class="p">$</span> riscv64-unknown-linux-gnu-gcc --version | head -n 1
+<span class="p">$</span> riscv64-unknown-linux-gnu-gcc -print-sysroot</pre>
+<p>若 <code>-print-sysroot</code> 为空：</p>
+<pre><span class="p">$</span> riscv64-unknown-linux-gnu-gcc -v -E - &lt; /dev/null 2&gt;&amp;1 | head -n 30</pre>
+
+<h3>任务 4：最小编译验证</h3>
+<pre><span class="k">int</span> main(<span class="k">void</span>) { <span class="k">return</span> 0; }</pre>
+<p>编译后使用 <code>file</code> 检查输出文件架构，应显示 RISC-V ELF。</p>
+
+<h3>任务 5：填写对照表并回答问题</h3>
+<p>完成 host / target / sysroot 对照表（项目 / host / target / sysroot 四列），并回答课堂练习中的两句话判断题。</p>
+
+<h3>验收标准</h3>
+<table>
+  <tr><th>验证项</th><th>预期现象</th></tr>
+  <tr><td>host 架构</td><td>与板端不同（通常 x86_64）</td></tr>
+  <tr><td>target 架构</td><td><code>riscv64</code></td></tr>
+  <tr><td>三元组</td><td>含 <code>linux-gnu</code></td></tr>
+  <tr><td>sysroot</td><td>有路径或可查证的查找方式</td></tr>
+  <tr><td>对照表</td><td>完整无空项</td></tr>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="lab1.2">
+<h2><span class="num">实验 1.2</span> 镜像烧录、首次启动与开发通道</h2>
+
+<h3>实验目标</h3>
+<ul>
+  <li>校验镜像并执行安全烧录</li>
+  <li>完成首次启动后的系统、网络、时间检查</li>
+  <li>建立串口连接作为备用通道</li>
+  <li>配置 SSH 密钥登录并完成 SCP 双向传输</li>
+</ul>
+
+<h3>实验环境</h3>
+<table>
+  <tr><th>项目</th><th>要求</th></tr>
+  <tr><td>镜像</td><td>与 LicheePi 4A 匹配的课程指定 RevyOS 镜像</td></tr>
+  <tr><td>烧录工具</td><td>与镜像说明匹配</td></tr>
+  <tr><td>串口</td><td>3.3V USB-TTL 模块 + 终端程序</td></tr>
+  <tr><td>SSH</td><td>主机具备 <code>ssh</code>、<code>scp</code></td></tr>
+</table>
+
+<h3>任务 1：校验并烧录镜像</h3>
+<pre><span class="p">$</span> sha256sum &lt;image-file&gt;
+<span class="c"># 与发布方校验值比对，不一致则停止</span></pre>
+<p>按该镜像版本发布说明执行烧录。一次只连接一块待烧录板。保存完整日志直到工具明确报告成功。</p>
+
+<h3>任务 2：首次启动与系统检查</h3>
+<pre><span class="p">$</span> cat /etc/os-release       <span class="c"># 确认 RevyOS</span>
+<span class="p">$</span> uname -a                    <span class="c"># riscv64</span>
+<span class="p">$</span> id                          <span class="c"># 记录当前用户</span>
+<span class="p">$</span> hostnamectl                 <span class="c"># 主机名</span>
+<span class="p">$</span> df -h                       <span class="c"># 存储空间</span></pre>
+
+<h3>任务 3：检查网络和时间</h3>
+<pre><span class="p">$</span> ip -br addr
+<span class="p">$</span> ip route
+<span class="p">$</span> timedatectl</pre>
+
+<h3>任务 4：apt 软件源检查</h3>
+<pre><span class="p">$</span> grep -R --no-filename -h '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d 2&gt;/dev/null
+<span class="p">$</span> sudo apt update</pre>
+<p>先确认链路、地址、路由和时间正常，再执行更新。失败时按 DNS→时间→网络→仓库依次排查。</p>
+
+<h3>任务 5：建立串口连接</h3>
+<p>断电接线：GND-GND、TX→RX、RX→TX。打开终端工具，按板卡资料设置波特率。</p>
+
+<h3>任务 6：配置 SSH 密钥登录</h3>
+<pre><span class="c"># 板端启用 SSH</span>
+<span class="p">$</span> sudo systemctl enable --now ssh
+
+<span class="c"># 主机生成密钥对</span>
+<span class="p">$</span> ssh-keygen -t ed25519 -C "riscv-course"
+
+<span class="c"># 首次连接——核对指纹后确认</span>
+<span class="p">$</span> ssh user@board-ip
+
+<span class="c"># 部署公钥</span>
+<span class="p">$</span> ssh-copy-id user@board-ip</pre>
+
+<h3>任务 7：SCP 双向传输</h3>
+<pre><span class="c"># 上传并校验</span>
+<span class="p">$</span> printf 'transfer test\n' &gt; test.txt
+<span class="p">$</span> sha256sum test.txt
+<span class="p">$</span> scp test.txt user@board-ip:/tmp/
+<span class="p">$</span> ssh user@board-ip 'sha256sum /tmp/test.txt'
+
+<span class="c"># 从板端下载</span>
+<span class="p">$</span> scp user@board-ip:/etc/os-release ./board-os-release.txt</pre>
+
+<h3>验收标准</h3>
+<table>
+  <tr><th>验证项</th><th>预期现象</th></tr>
+  <tr><td>镜像校验</td><td>与发布值一致</td></tr>
+  <tr><td>烧录结果</td><td>工具报告成功</td></tr>
+  <tr><td><code>uname -m</code></td><td><code>riscv64</code></td></tr>
+  <tr><td>网络状态</td><td>有有效 IP 和默认路由</td></tr>
+  <tr><td>SSH 密钥登录</td><td>免密登录成功</td></tr>
+  <tr><td>SCP 双向</td><td>两端哈希一致</td></tr>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="lab1.3">
+<h2><span class="num">实验 1.3</span> ruyi device provision 适用边界</h2>
+
+<h3>实验目标</h3>
+<ul>
+  <li>查询当前 <code>ruyi</code> 版本的 device provision 支持状态</li>
+  <li>完成六项 risk 检查并做出有依据的决策</li>
+  <li>对比手工烧录流程与自动化 provision 的适用场景</li>
+</ul>
+
+<p>本实验的重要特点：不一定需要执行自动写入。「当前版本不支持该设备」并描述手工替代方案同样是合格的实验结论。</p>
+
+<h3>任务 1：读取当前版本帮助</h3>
+<pre><span class="p">$</span> ruyi device --help
+<span class="p">$</span> ruyi device provision --help</pre>
+<p>若当前版本没有这些子命令，记录版本与帮助输出——这本身就是「当前版本不具备该路径」的有效结论。</p>
+
+<h3>任务 2：查询设备与变体</h3>
+<p>使用帮助中提供的列表或查询命令，记录设备标识、变体、支持的镜像和 provision 方式。板卡商品名相同但硬件版本或配置不同，可能需要不同变体。</p>
+
+<h3>任务 3：执行六项风险检查</h3>
+<ol>
+  <li>设备是否在当前软件源中明确列出？</li>
+  <li>变体是否与实物一致？</li>
+  <li>写入目标是否唯一且可确认？</li>
+  <li>重要数据是否已备份？</li>
+  <li>供电和数据连接是否稳定？</li>
+  <li>是否已准备串口或其他恢复通道？</li>
+</ol>
+
+<div class="warn">
+  <strong>六项全部确认后，方可执行自动 provision。</strong>任一项存疑都应停止自动写入，改用 1.2 手工流程。课程接受任何有依据的决策路径。
+</div>
+
+<h3>任务 4：场景决策</h3>
+<p>分别对以下场景写出决策理由：</p>
+<ol>
+  <li>设备完全匹配且有重要数据 → 手工流程</li>
+  <li>设备未列出但名称相似 → 手工流程，记录不支持原因</li>
+  <li>设备列出且为新空白存储 → 可考虑 provision</li>
+</ol>
+
+<h3>验收标准</h3>
+<table>
+  <tr><th>验证项</th><th>预期现象</th></tr>
+  <tr><td>帮助检查</td><td>确认当前版本能力</td></tr>
+  <tr><td>设备查询</td><td>明确支持或不支持的结论</td></tr>
+  <tr><td>风险清单</td><td>六项均有答案</td></tr>
+  <tr><td>路径选择</td><td>决策理由清楚，与手工流程对比明确</td></tr>
+</table>
+</section>
+
+</article>
+</body>
+</html>

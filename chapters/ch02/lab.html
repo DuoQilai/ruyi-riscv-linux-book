@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第二章 工具链与工程 · 实验</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  section { margin-bottom: 64px; }
+  section h2 {
+    font-size: 28px; font-weight: 700; margin-bottom: 8px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--line);
+  }
+  section h2 .num { color: var(--accent); font-size: 20px; margin-right: 10px; }
+  section h3 { font-size: 22px; font-weight: 700; margin: 28px 0 12px; }
+  section h4 { font-size: 18px; font-weight: 700; margin: 20px 0 8px; color: var(--muted); }
+  section p { font-size: 18px; color: var(--muted); margin-bottom: 14px; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 14px; }
+  section li { font-size: 18px; color: var(--muted); margin-bottom: 5px; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted);
+  }
+  @media print {
+    body { padding: 0; max-width: none; background: #fff; font-size: 10pt; }
+    .chapter-header { padding: 20px 0 30px; }
+    section { page-break-before: always; margin-bottom: 30px; }
+    section:first-of-type { page-break-before: avoid; }
+    pre { font-size: 9pt; }
+  }
+</style>
+</head>
+<body>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
+  <h1>实验：工具链与工程</h1>
+  <p class="meta">涵盖 2.1 / 2.2 实验任务 · 2.3 为选读内容</p>
+</header>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="lab2.1">
+<h2><span class="num">实验 2.1</span> 交叉编译全流程</h2>
+
+<h3>实验目标</h3>
+<ul>
+  <li>确认 host 与 target 的架构和系统信息，完成三要素对照表</li>
+  <li>查询交叉编译器目标三元组与 sysroot 信息</li>
+  <li>使用 <code>chapters/ch02/code/hello/</code> 完成交叉编译，部署到 LicheePi 4A 并正确执行</li>
+  <li>对构建产物执行 <code>readelf -h</code>、<code>readelf -l</code>、<code>ldd</code>，摘录关键字段并判断链接方式</li>
+</ul>
+
+<h3>实验环境</h3>
+<table>
+  <tr><th>项目</th><th>要求</th></tr>
+  <tr><td>主机环境</td><td>Linux，已安装 RISC-V Linux 交叉工具链</td></tr>
+  <tr><td>目标板</td><td>LicheePi 4A / RevyOS</td></tr>
+  <tr><td>软件依赖</td><td><code>make</code>、<code>ssh</code>、<code>scp</code>、<code>file</code>、<code>readelf</code>、<code>ldd</code></td></tr>
+  <tr><td>代码路径</td><td><code>chapters/ch02/code/hello/</code></td></tr>
+</table>
+
+<h3>任务 1：采集 host 与 target 信息</h3>
+<pre><span class="c"># 主机</span>
+<span class="p">$</span> uname -m; hostname
+<span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
+<span class="p">$</span> riscv64-unknown-linux-gnu-gcc --version | head -n 1
+<span class="p">$</span> riscv64-unknown-linux-gnu-gcc -print-sysroot
+
+<span class="c"># 板端</span>
+<span class="p">$</span> uname -m; hostname; head -n 5 /etc/os-release</pre>
+<p>若 <code>-print-sysroot</code> 为空：</p>
+<pre><span class="p">$</span> riscv64-unknown-linux-gnu-gcc -v -E - &lt; /dev/null 2&gt;&amp;1 | head -n 30</pre>
+<p>填写 host / target / sysroot 三要素对照表，用三到五句话描述从编辑 C 源码到板端运行的完整路径。</p>
+
+<h3>任务 2：交叉编译与部署</h3>
+<pre><span class="p">$</span> cd chapters/ch02/code/hello
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file hello          <span class="c"># 应显示 RISC-V ELF</span>
+
+<span class="p">$</span> scp hello user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip 'chmod +x ~/hello && file ~/hello && ./hello'
+<span class="c"># 预期输出：Hello, RISC-V Linux!</span></pre>
+
+<div class="info">
+  <strong>可选验证：</strong>在主机执行 <code>./hello</code>，观察错误信息并截图——说明为何不能在 host 验证。
+</div>
+
+<h3>任务 3：ELF 分析</h3>
+<pre><span class="p">$</span> readelf -h hello    <span class="c"># 关注 Class、Machine、Type</span>
+<span class="p">$</span> readelf -l hello    <span class="c"># 观察 LOAD 段</span>
+<span class="p">$</span> readelf -S hello | head -n 15   <span class="c"># 浏览节头</span>
+<span class="p">$</span> ldd hello           <span class="c"># 动态库依赖（静态链接则注明）</span>
+
+<span class="c"># 可选：板端对比</span>
+<span class="p">$</span> ssh user@board-ip 'ldd ~/hello'</pre>
+<p>用表格归纳：Class、Machine、Type、是否动态链接、主要依赖库。</p>
+
+<h3>验收标准</h3>
+<table>
+  <tr><th>验证项</th><th>预期现象</th></tr>
+  <tr><td>host 架构</td><td>与板端不同</td></tr>
+  <tr><td>target 架构</td><td><code>riscv64</code></td></tr>
+  <tr><td>三元组</td><td>含 <code>linux-gnu</code></td></tr>
+  <tr><td><code>make</code></td><td>成功生成 <code>hello</code></td></tr>
+  <tr><td>主机 <code>file</code></td><td>RISC-V ELF</td></tr>
+  <tr><td>板端运行</td><td><code>Hello, RISC-V Linux!</code></td></tr>
+  <tr><td><code>readelf -h</code></td><td>Machine = RISC-V</td></tr>
+  <tr><td><code>ldd</code></td><td>列出依赖或注明静态链接</td></tr>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="lab2.2">
+<h2><span class="num">实验 2.2</span> Makefile 与工程目录规范</h2>
+
+<h3>实验目标</h3>
+<ul>
+  <li>读懂并演示 <code>chapters/ch02/code/hello/Makefile</code> 的增量构建与 <code>clean</code></li>
+  <li>通过 <code>-Wall</code> 体验编译器警告与修复</li>
+  <li>基于 <code>chapters/ch02/code/project-template/</code> 完成多文件交叉编译</li>
+  <li>部署 <code>build/app</code> 到板端并运行，验证 <code>make clean</code> 可删除 <code>build/</code></li>
+</ul>
+
+<h3>实验环境</h3>
+<table>
+  <tr><th>项目</th><th>要求</th></tr>
+  <tr><td>单文件工程</td><td><code>chapters/ch02/code/hello/</code></td></tr>
+  <tr><td>多文件工程</td><td><code>chapters/ch02/code/project-template/</code></td></tr>
+  <tr><td>软件依赖</td><td>GNU <code>make</code>、交叉 <code>gcc</code>、<code>scp</code>、<code>ssh</code></td></tr>
+</table>
+
+<h3>任务 1：单文件 Makefile</h3>
+<pre><span class="p">$</span> cd chapters/ch02/code/hello
+<span class="p">$</span> cat Makefile
+
+<span class="c"># 完整构建流程</span>
+<span class="p">$</span> make clean && make
+<span class="p">$</span> make                <span class="c"># 第二次应提示 up to date</span>
+<span class="p">$</span> touch main.c
+<span class="p">$</span> make                <span class="c"># 应重新编译</span>
+
+<span class="c"># 清理</span>
+<span class="p">$</span> make clean
+<span class="p">$</span> ls hello 2&gt;&amp;1      <span class="c"># hello 应不存在</span>
+<span class="p">$</span> make</pre>
+
+<div class="warn">
+  <strong>警告实验：</strong>在 <code>main.c</code> 中临时引入未使用变量（<code>int unused = 0;</code>），执行 <code>make</code> 观察 <code>-Wall</code> 警告，修复后恢复原代码。
+</div>
+
+<h3>任务 2：命令行覆盖变量</h3>
+<pre><span class="p">$</span> make clean && make CFLAGS='-Wall -Wextra -O0 -g'
+<span class="p">$</span> file hello</pre>
+<p>说明 Makefile 变量可被命令行覆盖，便于临时调试。</p>
+
+<h3>任务 3：多文件工程</h3>
+<pre><span class="p">$</span> cd chapters/ch02/code/project-template
+<span class="p">$</span> find . -type f | sort
+
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file build/app      <span class="c"># RISC-V ELF</span>
+
+<span class="c"># 部署到板端</span>
+<span class="p">$</span> scp build/app user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip 'chmod +x ~/app && ./app'
+<span class="c"># 预期输出：Hello, RISC-V Linux!</span>
+
+<span class="c"># 清理重构</span>
+<span class="p">$</span> make clean
+<span class="p">$</span> ls build 2&gt;&amp;1      <span class="c"># build/ 应不存在</span>
+<span class="p">$</span> make                <span class="c"># 一键重建</span></pre>
+
+<p>在实验报告中用示意图或树状列表说明 <code>src/</code>、<code>include/</code>、<code>build/</code> 各自职责。用三五句话解释规则 <code>hello: main.c</code> 中三行的含义。</p>
+
+<h3>验收标准</h3>
+<table>
+  <tr><th>验证项</th><th>预期现象</th></tr>
+  <tr><td>首次 build</td><td>成功</td></tr>
+  <tr><td>二次 make</td><td>无重编或提示 up to date</td></tr>
+  <tr><td><code>touch</code> 后</td><td>触发重编</td></tr>
+  <tr><td><code>clean</code></td><td><code>hello</code> 不存在</td></tr>
+  <tr><td>警告</td><td>能触发并消除</td></tr>
+  <tr><td>多文件 make</td><td>成功生成 <code>build/app</code></td></tr>
+  <tr><td>板端 <code>./app</code></td><td><code>Hello, RISC-V Linux!</code></td></tr>
+  <tr><td>清理重构</td><td><code>build/</code> 消失后一键重建</td></tr>
+</table>
+</section>
+
+</article>
+</body>
+</html>

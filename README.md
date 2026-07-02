@@ -12,26 +12,24 @@ ruyi-riscv-linux-book/
 │   └── CourseOutline.html     # 课程总大纲
 ├── chapters/
 │   ├── ch01/                  # 第一章 开发环境篇
-│   │   ├── lecture.html       # 讲义（阅读材料 + 投屏两用）
-│   │   ├── lecture.pdf        # 讲义 PDF
-│   │   ├── lab.html           # 合并实验（对应 1.1–1.3）
-│   │   ├── lab.pdf            # 实验 PDF
-│   │   └── slides/            # HTML slide deck（1920×1080）
+│   │   ├── lecture.html       # 讲义（阅读 + 投屏）
+│   │   ├── lecture.pdf
+│   │   ├── lab.html           # 实验
+│   │   └── lab.pdf
 │   └── ch02/                  # 第二章 工具链与工程
-│       ├── lecture.html       # 讲义
+│       ├── lecture.html       # 讲义（含 2.3 选读）
 │       ├── lecture.pdf
-│       ├── lab.html           # 合并实验（对应 2.1–2.2）
+│       ├── lab.html           # 实验
 │       ├── lab.pdf
-│       ├── slides/            # HTML slide deck
 │       └── code/              # hello、project-template
 ├── misc/
 │   ├── boards/                # 板卡参考资料
 │   │   ├── licheepi4a/
 │   │   ├── k1/
 │   │   └── riscv-ai-boards-2025-2026.md
-│   └── archive/               # 历史规范、模板、进度表
+│   └── archive/               # 旧 .md 文件、历史规范、模板
 └── assets/
-    └── styles.css             # 全局样式
+    └── styles.css             # 全局样式（规划中）
 ```
 
 ## 怎么读
@@ -40,7 +38,6 @@ ruyi-riscv-linux-book/
 | --- | --- |
 | 第一章讲义 | `chapters/ch01/lecture.html` |
 | 第一章实验 | `chapters/ch01/lab.html` |
-| 第一章幻灯片 Deck | `chapters/ch01/slides/` |
 | 第二章讲义 | `chapters/ch02/lecture.html` |
 | 第二章实验 | `chapters/ch02/lab.html` |
 | Hello 示例 | `chapters/ch02/code/hello/` |
@@ -49,7 +46,7 @@ ruyi-riscv-linux-book/
 
 ## 当前进度
 
-- **ch01**：讲义、实验框架待迁移为 HTML；幻灯片 Deck 已完成（15 页）
-- **ch02**：讲义、实验框架待迁移为 HTML；幻灯片待制作
+- **ch01**：lecture.html + lab.html + PDF 全部完成
+- **ch02**：lecture.html + lab.html + PDF 全部完成
 
 制作分支：`enzo`。

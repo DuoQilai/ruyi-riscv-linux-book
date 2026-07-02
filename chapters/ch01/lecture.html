@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第一章 开发环境篇 · 讲义</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  /* ── Chapter header ── */
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 12px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  /* ── Section blocks ── */
+  section { margin-bottom: 64px; }
+  section h2 {
+    font-size: 30px; font-weight: 700; margin-bottom: 8px;
+    padding-bottom: 12px; border-bottom: 2px solid var(--line);
+  }
+  section h2 .num { color: var(--accent); font-size: 22px; margin-right: 12px; }
+  section h3 { font-size: 22px; font-weight: 700; margin: 32px 0 12px; color: var(--text); }
+  section h4 { font-size: 18px; font-weight: 700; margin: 24px 0 8px; color: var(--muted); }
+  section p { font-size: 18px; color: var(--muted); margin-bottom: 16px; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 16px; }
+  section li { font-size: 18px; color: var(--muted); margin-bottom: 6px; }
+  section li strong { color: var(--text); }
+  /* ── Code ── */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 20px 24px; margin: 16px 0 24px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  /* ── Callouts ── */
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 18px 22px; margin: 20px 0; font-size: 17px; color: #8c5440;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 18px 22px; margin: 20px 0; font-size: 17px; color: var(--muted);
+  }
+  .warn strong, .info strong { color: inherit; }
+  /* ── Diagrams ── */
+  .diagram {
+    font-family: var(--mono); font-size: 14px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 20px 24px; margin: 16px 0 24px; line-height: 1.6;
+    white-space: pre; overflow-x: auto;
+  }
+  .diagram .hl { color: var(--accent); font-weight: 600; }
+  .diagram .hl2 { color: var(--warm); font-weight: 600; }
+  /* ── Print ── */
+  @media print {
+    body { padding: 0; max-width: none; background: #fff; font-size: 11pt; }
+    .chapter-header { padding: 20px 0 30px; }
+    section { page-break-before: always; margin-bottom: 30px; }
+    section:first-of-type { page-break-before: avoid; }
+    pre, .diagram { font-size: 9pt; }
+    .warn, .info { font-size: 10pt; }
+  }
+</style>
+</head>
+<body>
+
+<article>
+
+<!-- ═══════════════════════════════════════════ -->
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
+  <h1>开发环境篇</h1>
+  <p class="meta">目标平台：LicheePi 4A / TH1520 · 操作系统：RevyOS · 工具链：ruyi + GNU Toolchain</p>
+</header>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="s1.1">
+<h2><span class="num">1.1</span> RISC-V 平台认知与 ruyi 开发环境安装</h2>
+
+<h3>学习目标</h3>
+<ul>
+  <li>区分 RISC-V ISA、处理器核、SoC、开发板、操作系统和开发工具链六个层次</li>
+  <li>识别 LicheePi 4A 的主要接口并说明实验用途</li>
+  <li>形成个人课程环境清单，确认硬件、线缆和主机软件</li>
+  <li>说明 <code>ruyi</code> 在 RISC-V 开发环境中的作用，完成安装与版本检查</li>
+  <li>更新软件源、查询可用工具链，记录所选工具链信息</li>
+  <li>使用编译器版本、目标三元组和简单编译结果验证工具链</li>
+</ul>
+
+<h3>平台分层：从 ISA 到应用</h3>
+<p>RISC-V 是开放指令集架构（ISA）——定义了处理器执行指令的接口。芯片和开发板是不同层次的概念。建立分层思维是后续排查「镜像与板卡不匹配」「工具链架构错误」等问题的基础。</p>
+
+<div class="diagram">RISC-V ISA (开放指令集架构规范)
+    ↓
+处理器核 / SoC（TH1520）
+    ↓
+开发板（LicheePi 4A）
+    ↓
+操作系统（RevyOS）
+    ↓
+开发工具（ruyi、编译器、SSH、串口工具）
+    ↓
+课程应用与实验</div>
+
+<h3>ruyi 与工具链</h3>
+<p><code>ruyi</code> 是 RuyiSDK 的包管理与环境管理入口。它负责发现和获取 RISC-V 开发所需的软件包与工具链——真正编译代码的是 GCC。两者关系类似「应用商店」与「应用程序」。</p>
+
+<div class="diagram">ruyi 命令
+  ├─ 软件源与包信息
+  ├─ 工具链获取
+  ├─ 环境或配置管理
+  └─ 设备支持查询
+            ↓
+      GCC / binutils / sysroot
+            ↓
+        目标程序</div>
+
+<h3>环境准备</h3>
+<table>
+  <tr><th>项目</th><th>要求</th><th>检查方式</th></tr>
+  <tr><td>主机环境</td><td>Linux、macOS 或 Windows；课程命令以 Linux 为主</td><td><code>uname -a</code></td></tr>
+  <tr><td>目标平台</td><td>LicheePi 4A 与可用启动介质</td><td>核对板卡丝印和包装型号</td></tr>
+  <tr><td>连接工具</td><td>USB 数据线、USB-TTL 串口模块、网线或 Wi-Fi</td><td>确认线缆支持数据传输</td></tr>
+  <tr><td>网络</td><td>可访问 RuyiSDK 软件源</td><td>浏览器或连通性检查</td></tr>
+  <tr><td>基础工具</td><td><code>curl</code> 或 <code>wget</code>、文件校验工具</td><td><code>command -v curl</code></td></tr>
+  <tr><td>安装权限</td><td>用户目录可写</td><td><code>test -w "$HOME"</code></td></tr>
+</table>
+
+<div class="warn">
+  <strong>常见陷阱</strong><br>
+  · 部分 USB-C 线仅供电、无数据通道 → 无法识别设备时先换线<br>
+  · 串口电平必须为 3.3V → 5V 可能损坏板卡<br>
+  · 工具链需选 <code>linux-gnu</code> 而非 <code>unknown-elf</code>（裸机工具链）
+</div>
+
+<h3>操作步骤</h3>
+
+<h4>步骤 1：记录主机环境</h4>
+<pre><span class="p">$</span> uname -a
+<span class="p">$</span> uname -m</pre>
+<p><code>uname -m</code> 确认主机架构。主机架构与目标板架构可以不同——这正是需要交叉编译的原因。</p>
+
+<h4>步骤 2：识别课程平台层次</h4>
+<table>
+  <tr><th>层次</th><th>本课程对象</th></tr>
+  <tr><td>ISA</td><td>RISC-V 64 位</td></tr>
+  <tr><td>SoC</td><td>TH1520</td></tr>
+  <tr><td>开发板</td><td>LicheePi 4A</td></tr>
+  <tr><td>操作系统</td><td>RevyOS</td></tr>
+  <tr><td>工具入口</td><td><code>ruyi</code>、GNU Toolchain、SSH/SCP、串口终端</td></tr>
+</table>
+
+<h4>步骤 3：安装 ruyi 并确认命令位置</h4>
+<pre><span class="p">$</span> command -v ruyi
+<span class="p">$</span> ruyi --version</pre>
+<p>第一条命令确认 shell 实际调用的文件路径，第二条记录版本号。若刚修改 <code>PATH</code>，可重新打开终端或执行 <code>hash -r</code>。</p>
+
+<h4>步骤 4：更新软件源并查询工具链</h4>
+<pre><span class="p">$</span> ruyi --help
+<span class="c"># 根据帮助信息执行软件源更新与包搜索</span>
+<span class="p">$</span> ruyi update
+<span class="p">$</span> ruyi list | grep toolchain</pre>
+<p>搜索关键词 <code>toolchain</code>、<code>gcc</code> 或 <code>riscv</code>。记录候选包名称、版本、目标架构和 ABI。</p>
+
+<h4>步骤 5：安装并验证编译器</h4>
+<pre><span class="p">$</span> riscv64-unknown-linux-gnu-gcc --version
+<span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine</pre>
+<p><code>-dumpmachine</code> 应显示 RISC-V 目标三元组。再编译最小程序验证：</p>
+
+<pre><span class="k">int</span> main(<span class="k">void</span>) { <span class="k">return</span> 0; }</pre>
+
+<p>使用 <code>file</code> 检查输出文件架构。正确验收方式：用 <code>file</code> 确认目标架构为 RISC-V ELF。在主机上 <code>./a.out</code> 会因架构不同而报错——这不是正确的验收方法。</p>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>解释「LicheePi 4A 是 RISC-V」这句话为什么不够准确，并用 ISA、SoC、开发板三个术语重新表述。</li>
+  <li>比较包含 <code>linux-gnu</code> 与包含 <code>unknown-elf</code> 的两个目标三元组，说明它们分别更适合 Linux 应用还是裸机程序。</li>
+</ol>
+
+<h3>本节成果</h3>
+<ul>
+  <li>课程平台分层图</li>
+  <li>LicheePi 4A 接口标注记录</li>
+  <li>个人软硬件环境清单</li>
+  <li><code>ruyi</code> 安装路径和版本记录</li>
+  <li>软件源更新与工具链查询记录</li>
+  <li>工具链目标三元组、版本和最小编译验证结果</li>
+</ul>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="s1.2">
+<h2><span class="num">1.2</span> 镜像烧录、首次启动与开发通道建立</h2>
+
+<h3>学习目标</h3>
+<ul>
+  <li>说明镜像、启动介质、引导程序和根文件系统之间的关系</li>
+  <li>在确认板卡型号、镜像版本和目标介质后完成安全烧录</li>
+  <li>首次启动后检查用户、网络、时间和 apt 软件源状态</li>
+  <li>说明串口登录与 SSH 登录的差异，为故障排查选择合适通道</li>
+  <li>完成 SSH 首次连接、主机指纹核对和密钥登录配置</li>
+  <li>使用 SCP 在主机与开发板之间双向传输文件并校验内容</li>
+</ul>
+
+<h3>镜像烧录：分区级数据写入</h3>
+<p>烧录工具将引导程序、内核、设备树和根文件系统按分区结构写入目标介质。错误的镜像或错误的目标设备可能导致无法启动，严重时可覆盖主机磁盘。</p>
+
+<div class="diagram">镜像发布包
+  ├─ 引导程序
+  ├─ Linux 内核与设备树
+  └─ RevyOS 根文件系统
+          ↓ 烧录
+   eMMC / SD / 其他启动介质
+          ↓ 上电启动
+      串口日志 / 登录界面</div>
+
+<h3>三条通道，三个角色</h3>
+<table>
+  <tr><th>通道</th><th>角色</th><th>依赖</th><th>适用场景</th></tr>
+  <tr><td>串口（UART）</td><td>本地调试 · 最后保障线</td><td>USB-TTL 3.3V</td><td>观察启动日志、修复网络配置</td></tr>
+  <tr><td>SSH</td><td>远程主工作通道</td><td>网络 + sshd</td><td>日常开发、远程命令执行</td></tr>
+  <tr><td>SCP</td><td>文件传输通道</td><td>复用 SSH 连接</td><td>程序部署、日志下载</td></tr>
+</table>
+
+<div class="info">
+  <strong>黄金组合：</strong>串口留着备用（断网时的救生索），SSH 做主通道，SCP 负责搬文件。
+</div>
+
+<h3>操作步骤</h3>
+
+<h4>步骤 1：记录并校验镜像</h4>
+<pre><span class="p">$</span> sha256sum &lt;image-file&gt;</pre>
+<p>将计算结果与发布方提供的校验值比对。校验不一致时停止烧录，重新下载。</p>
+
+<h4>步骤 2：识别目标设备并执行烧录</h4>
+<p>一次只连接一块待烧录板，使用烧录工具的设备列表命令确认目标。严格使用该镜像版本的发布说明，不拼接其他板卡或其他年份的命令。保存完整日志，等待工具明确报告成功后再断电。</p>
+
+<h4>步骤 3：观察首次启动</h4>
+<p>首次启动可能进行文件系统扩展、密钥生成等初始化操作，耗时可能长于后续启动。请耐心等待，优先使用串口观察引导日志——屏幕无画面时串口仍可确认启动状态。</p>
+
+<h4>步骤 4：检查系统与账户</h4>
+<pre><span class="p">$</span> cat /etc/os-release      <span class="c"># 确认 RevyOS</span>
+<span class="p">$</span> uname -a                   <span class="c"># riscv64</span>
+<span class="p">$</span> id                         <span class="c"># 记录当前用户</span>
+<span class="p">$</span> hostnamectl                <span class="c"># 主机名</span></pre>
+
+<h4>步骤 5：检查网络、时间和软件源</h4>
+<pre><span class="p">$</span> ip -br addr
+<span class="p">$</span> ip route
+<span class="p">$</span> timedatectl
+<span class="p">$</span> grep -R --no-filename -h '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null
+<span class="p">$</span> sudo apt update</pre>
+<p>先检查链路、地址、路由和时间，再执行 <code>apt update</code>。系统时间严重错误时，TLS 证书和仓库元数据校验都会失败——<code>apt update</code> 报错应先排查时间而非立即换源。</p>
+
+<h4>步骤 6：建立串口连接</h4>
+<p>断电接线：GND-GND、主机模块 TX 到板端 RX、主机模块 RX 到板端 TX。接线前核对板卡资料的波特率和电平要求。</p>
+
+<h4>步骤 7：配置 SSH 密钥登录</h4>
+<pre><span class="c"># 板端启用 SSH</span>
+<span class="p">$</span> sudo systemctl enable --now ssh
+
+<span class="c"># 主机生成密钥对</span>
+<span class="p">$</span> ssh-keygen -t ed25519 -C "riscv-course"
+
+<span class="c"># 首次连接——核对主机指纹</span>
+<span class="p">$</span> ssh user@board-ip
+<span class="c"># 看到指纹时通过串口或受信任渠道核对，确认无误后再输入 yes</span>
+
+<span class="c"># 部署公钥</span>
+<span class="p">$</span> ssh-copy-id user@board-ip
+
+<span class="c"># 免密验证</span>
+<span class="p">$</span> ssh user@board-ip 'hostname; uname -m'</pre>
+<p>私钥留在主机，不复制给他人。公钥写入板端 <code>~/.ssh/authorized_keys</code>。</p>
+
+<h4>步骤 8：SCP 双向传输并校验</h4>
+<pre><span class="p">$</span> printf 'RISC-V course transfer test\n' &gt; transfer-test.txt
+<span class="p">$</span> sha256sum transfer-test.txt
+<span class="p">$</span> scp transfer-test.txt user@board-ip:/tmp/
+<span class="p">$</span> ssh user@board-ip 'sha256sum /tmp/transfer-test.txt'
+
+<span class="c"># 从板端下载</span>
+<span class="p">$</span> scp user@board-ip:/etc/os-release ./board-os-release.txt</pre>
+<p>主机和板端哈希一致 = 传输无损坏。</p>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>将「开发板无法启动」拆分为镜像、烧录、供电、启动介质和显示通道五类原因，每类写出一个验证方法。</li>
+  <li>分别说明以下故障应优先使用串口还是 SSH：板端没有 IP、sshd 配置错误、系统启动失败、需要批量上传文件。</li>
+</ol>
+
+<div class="warn">
+  <strong>指纹变更警告：</strong>可能是开发板重装系统，也可能连错了设备。先核对 IP 和串口中的主机指纹，再清理 <code>known_hosts</code> 旧记录。
+</div>
+
+<h3>本节成果</h3>
+<ul>
+  <li>镜像来源、文件名、版本和校验记录</li>
+  <li>完整烧录日志与首次启动记录</li>
+  <li>RevyOS、内核、用户、网络、时间和 apt 软件源检查表</li>
+  <li>串口接线与终端参数记录</li>
+  <li>SSH 服务状态、板端 IP 和主机指纹记录</li>
+  <li>SSH 密钥登录验证 + SCP 双向传输与哈希校验结果</li>
+</ul>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="s1.3">
+<h2><span class="num">1.3</span> ruyi device provision 适用边界</h2>
+
+<h3>学习目标</h3>
+<ul>
+  <li>解释 device provision 的目的、输入、输出和潜在风险</li>
+  <li>使用当前 <code>ruyi</code> 版本查询设备支持信息</li>
+  <li>对比手工烧录流程（1.2）与自动化 provision 的适用场景与风险差异</li>
+  <li>根据设备、镜像、连接方式和数据风险选择自动 provision 或手工准备流程</li>
+</ul>
+
+<h3>provision 是什么</h3>
+<p>Device provision 是把设备准备成可使用状态的自动化过程，可能包括下载镜像、选择设备变体、写入存储介质或生成操作指引。它的价值是减少重复步骤，但自动化不消除风险——「能运行命令」不等于「适合运行命令」。</p>
+
+<h3>手工流程 vs 自动化 provision：六维对比</h3>
+<table>
+  <tr><th>维度</th><th>手工流程（1.2）</th><th>自动化 provision</th></tr>
+  <tr><td>控制粒度</td><td>每步可控，可随时停止</td><td>流程封装，中断后需恢复</td></tr>
+  <tr><td>适用条件</td><td>只要有镜像和烧录工具即可</td><td>设备必须在软件源中明确列出</td></tr>
+  <tr><td>误操作风险</td><td>人为确认每一步，可发现异常</td><td>自动化写入可能跳过确认</td></tr>
+  <tr><td>可调试性</td><td>高，每步可单独验证</td><td>低，失败后需拆解自动化步骤</td></tr>
+  <tr><td>重复效率</td><td>低，需重复执行相同命令</td><td>高，一条命令完成多步</td></tr>
+  <tr><td>建议场景</td><td>首次使用、设备未列出、数据风险高</td><td>设备明确支持、重复部署、空白介质</td></tr>
+</table>
+
+<h3>六项风险检查</h3>
+<p>在运行任何写入操作前逐项确认：</p>
+<ol>
+  <li>设备是否在当前软件源中明确列出？</li>
+  <li>变体是否与实物一致？</li>
+  <li>写入目标是否唯一且可确认？</li>
+  <li>重要数据是否已备份？</li>
+  <li>供电和数据连接是否稳定？</li>
+  <li>是否已准备串口或其他恢复通道？</li>
+</ol>
+
+<div class="warn">
+  <strong>关键原则：</strong>六项检查全部确认后，方可执行自动 provision。在不安全条件下应选用手工流程——课程接受任何有依据的决策路径。提交「当前版本不支持该设备」并描述手工替代方案同样是合格的实验结论。
+</div>
+
+<h3>决策流程</h3>
+<div class="diagram">查询当前 ruyi 帮助与设备列表
+            ↓
+设备与变体是否明确受支持？
+       ┌────┴────┐
+      是          否
+      ↓           ↓
+核对六项风险检查   使用手工流程（见 1.2）
+      ↓           并记录不支持原因
+六项全部通过？
+   ┌────┴────┐
+  是          否
+  ↓           ↓
+执行 provision  停止自动写入，
+并验证        选用更可控的流程</div>
+
+<h3>课堂练习</h3>
+<p>给出三个场景并作决策，说明选择自动或手工流程的理由：</p>
+<ol>
+  <li>设备完全匹配且有重要数据</li>
+  <li>设备未列出但名称相似</li>
+  <li>设备列出且为新空白存储</li>
+</ol>
+
+<h3>本节成果</h3>
+<ul>
+  <li>当前 <code>ruyi</code> 版本的 device/provision 帮助记录</li>
+  <li>课程目标板设备支持查询结果</li>
+  <li>provision 风险检查表</li>
+  <li>自动或手工准备路径的决策记录与验证结果</li>
+</ul>
+</section>
+
+</article>
+</body>
+</html>
