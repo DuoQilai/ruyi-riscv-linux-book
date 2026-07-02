@@ -7,18 +7,18 @@
     background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
     color: #2d2a26;
   }
-  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .page { width: 100%; height: 100%; padding: 64px 100px; display: flex; flex-direction: column; }
   .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
-  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
-  .content { display: flex; gap: 48px; flex: 1; }
+  .slide-title { font-size: 46px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 40px; flex: 1; }
   .col { flex: 1; }
-  .col h4 { font-size: 20px; font-weight: 700; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e8e3d8; }
-  .col ul { padding-left: 20px; font-size: 16px; color: #5c5448; line-height: 2.1; }
+  .col h4 { font-size: 24px; font-weight: 700; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e8e3d8; }
+  .col ul { padding-left: 20px; font-size: 20px; color: #5c5448; line-height: 2.1; }
   .col ul li strong { color: #2d2a26; }
   .warning {
     margin-top: 36px; padding: 24px 32px;
     background: #fef8f2; border-left: 3px solid #c46b4a;
-    font-size: 16px; color: #8c5440; line-height: 1.6;
+    font-size: 20px; color: #8c5440; line-height: 1.6;
   }
   .warning strong { color: #c46b4a; }
 </style></head>
@@ -39,7 +39,7 @@
         </ul>
         <div class="warning">
           <strong>⚠ 常见陷阱</strong><br>
-          · 部分 USB-C 线只能供电不能传数据 → 无法识别设备时先换线<br>
+          · 部分 USB-C 线仅供电、无数据通道 → 无法识别设备时先换线<br>
           · 串口电平必须为 3.3V → 5V 可能损坏板卡<br>
           · 工具链需选 <code>linux-gnu</code> 而非 <code>unknown-elf</code>（裸机）
         </div>
@@ -56,7 +56,7 @@
         <h4 style="margin-top:28px;">最小验证程序</h4>
         <pre style="background:#f7f5f0;padding:16px 20px;font-size:14px;color:#5c5448;font-family:'SF Mono',Menlo,monospace;border:1px solid #e8e3d8;">int main(void) { return 0; }
         <span style="color:#b8b0a2;"># 编译后 file 输出应含 RISC-V ELF</span></pre>
-        <p style="margin-top:16px;font-size:16px;color:#6b6358;">不要用主机 ./a.out 验证 → 架构不同，必报错。正确验收 = <code>file</code> 确认目标架构。</p>
+        <p style="margin-top:16px;font-size:16px;color:#6b6358;">正确验收方式：用 <code>file</code> 确认目标架构为 RISC-V ELF。在主机上 <code>./a.out</code> 会因架构不同而报错——这不是正确验收方法。</p>
       </div>
     </div>
   </div>

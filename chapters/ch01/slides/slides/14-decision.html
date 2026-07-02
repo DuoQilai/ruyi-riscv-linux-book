@@ -7,35 +7,35 @@
     background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
     color: #2d2a26;
   }
-  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .page { width: 100%; height: 100%; padding: 64px 100px; display: flex; flex-direction: column; }
   .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
-  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
-  .content { display: flex; gap: 60px; flex: 1; }
+  .slide-title { font-size: 46px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 40px; flex: 1; }
   .left { flex: 1; }
-  .left h4 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+  .left h4 { font-size: 24px; font-weight: 700; margin-bottom: 20px; }
   .checks { list-style: none; margin-bottom: 28px; }
   .checks li {
     padding: 14px 0; border-bottom: 1px solid #f0ece5;
-    font-size: 17px; color: #5c5448; display: flex; gap: 14px; align-items: baseline;
+    font-size: 21px; color: #5c5448; display: flex; gap: 14px; align-items: baseline;
   }
   .checks li .n { font-weight: 700; color: #2e6b6e; min-width: 24px; }
   .decision-flow {
-    margin-top: 20px; font-size: 16px; color: #5c5448; line-height: 2;
-    border: 1px solid #e8e3d8; padding: 24px 28px;
+    margin-top: 20px; font-size: 20px; color: #5c5448; line-height: 2;
+    border: 1px solid #e8e3d8; padding: 22px 26px;
   }
   .decision-flow .q { font-weight: 700; color: #2d2a26; }
   .decision-flow .yes { color: #2e6b6e; }
   .decision-flow .no  { color: #c46b4a; }
   .right { flex: 1; }
   .scenario {
-    border: 1px solid #d4cfc4; padding: 24px 28px; margin-bottom: 20px;
-    font-size: 16px; line-height: 1.6;
+    border: 1px solid #d4cfc4; padding: 22px 26px; margin-bottom: 20px;
+    font-size: 20px; line-height: 1.6;
   }
   .scenario .s-num { font-size: 13px; color: #b8b0a2; margin-bottom: 4px; }
   .scenario .s-decision { font-weight: 700; margin-top: 8px; }
   .principle {
-    margin-top: 20px; padding: 20px 24px;
-    background: #f2f0ea; font-size: 16px; color: #2d2a26; line-height: 1.6;
+    margin-top: 20px; padding: 18px 22px;
+    background: #f2f0ea; font-size: 20px; color: #2d2a26; line-height: 1.6;
     text-align: center;
   }
 </style></head>
@@ -61,7 +61,7 @@
           &nbsp;&nbsp;&nbsp;&nbsp;<span class="no">否 → 使用手工流程（1.2），记录不支持原因</span><br>
           &nbsp;&nbsp;&nbsp;&nbsp;<span class="no">任一项不确认 → 停止自动写入</span>
         </div>
-        <p style="margin-top:16px;font-size:14px;color:#8c8276;">任一项不能确认，都应停止自动 provision。课程不要求在不安全条件下执行自动写入。</p>
+        <p style="margin-top:16px;font-size:14px;color:#8c8276;">六项检查全部确认后，方可执行自动 provision。在不安全条件下应选用手工流程——课程接受任何有依据的决策路径。</p>
       </div>
       <div class="right">
         <div class="scenario">
@@ -80,7 +80,7 @@
           <div class="s-decision" style="color:#2e6b6e;">→ 可考虑 provision（六项检查通过后）</div>
         </div>
         <div class="principle">
-          <strong>核心原则：</strong>「提交不支持结论 + 手工替代方案」同样是有效的实验结论。不要为完成实验强行执行 provision。
+          <strong>核心原则：</strong>提交决策理由与手工替代方案同样是合格的实验结论。在任何条件下，安全优先于自动化。
         </div>
       </div>
     </div>

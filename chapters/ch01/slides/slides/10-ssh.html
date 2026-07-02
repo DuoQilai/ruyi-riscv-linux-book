@@ -7,31 +7,31 @@
     background: #fbfaf5; font-family: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
     color: #2d2a26;
   }
-  .page { width: 100%; height: 100%; padding: 80px 120px; display: flex; flex-direction: column; }
+  .page { width: 100%; height: 100%; padding: 64px 100px; display: flex; flex-direction: column; }
   .section-label { font-size: 14px; letter-spacing: 0.12em; color: #2e6b6e; margin-bottom: 8px; }
-  .slide-title { font-size: 36px; font-weight: 700; margin-bottom: 48px; }
-  .content { display: flex; gap: 60px; flex: 1; }
+  .slide-title { font-size: 46px; font-weight: 700; margin-bottom: 48px; }
+  .content { display: flex; gap: 40px; flex: 1; }
   .left { flex: 1; }
-  .left h4 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  .left h4 { font-size: 24px; font-weight: 700; margin-bottom: 16px; }
   .left .flow-item { display: flex; gap: 20px; margin-bottom: 24px; align-items: flex-start; }
   .left .flow-item .num {
     width: 32px; height: 32px; border-radius: 50%;
     background: #2e6b6e; color: #fff; font-size: 13px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .left .flow-item .txt { font-size: 16px; color: #5c5448; line-height: 1.5; }
+  .left .flow-item .txt { font-size: 20px; color: #5c5448; line-height: 1.5; }
   .left .flow-item .txt code { background: #f0ece5; padding: 2px 6px; font-size: 14px; }
   .right { flex: 1; }
   .cmd-box {
     background: #f7f5f0; border: 1px solid #e8e3d8;
-    padding: 24px 28px; font-size: 14px; font-family: "SF Mono",Menlo,monospace;
+    padding: 22px 26px; font-size: 14px; font-family: "SF Mono",Menlo,monospace;
     color: #5c5448; line-height: 1.9; margin-bottom: 20px;
   }
   .cmd-box .c { color: #b8b0a2; }
   .cmd-box .p { color: #c46b4a; }
   .note {
-    padding: 16px 20px; background: #fef8f2; border-left: 3px solid #c46b4a;
-    font-size: 15px; color: #8c5440; line-height: 1.6;
+    padding: 15px 19px; background: #fef8f2; border-left: 3px solid #c46b4a;
+    font-size: 19px; color: #8c5440; line-height: 1.6;
   }
 </style></head>
 <body>
@@ -41,7 +41,7 @@
     <div class="content">
       <div class="left">
         <h4>从密码到密钥：三步建立安全通道</h4>
-        <div class="flow-item"><div class="num">1</div><div class="txt"><strong>首次连接 — 核对指纹</strong><br>ssh user@board-ip → 看到主机指纹时<strong>必须通过串口或受信任渠道核对</strong>，不要习惯性输入 yes</div></div>
+        <div class="flow-item"><div class="num">1</div><div class="txt"><strong>首次连接 — 核对指纹</strong><br>ssh user@board-ip → 看到主机指纹时<strong>通过串口或受信任渠道核对</strong>，确认无误后再输入 yes</div></div>
         <div class="flow-item"><div class="num">2</div><div class="txt"><strong>生成密钥对</strong><br><code>ssh-keygen -t ed25519 -C "riscv-course"</code><br>私钥留在主机，绝不复制给他人</div></div>
         <div class="flow-item"><div class="num">3</div><div class="txt"><strong>部署公钥</strong><br><code>ssh-copy-id user@board-ip</code><br>写入板端 ~/.ssh/authorized_keys</div></div>
         <h4 style="margin-top:32px;">SCP 双向传输</h4>
