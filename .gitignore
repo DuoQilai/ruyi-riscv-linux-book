@@ -47,6 +47,5 @@ venv/
 ~$*
 *.tmp
 
-# Generated course artifacts
-chapters/**/slides.pdf
-chapters/**/*.pdf
+# Dependencies
+node_modules/
