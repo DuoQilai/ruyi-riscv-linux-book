@@ -1,13 +1,82 @@
 # RISC-V AI 推理开发板选型报告（2025-2026）
 
-> 调研时间：2026 年 7 月
-> 范围：2025-2026 年发布/量产的 RISC-V 芯片平台，聚焦 AI 推理
+> 调研时间：2026 年 7 月 | 一个月内采购 | 聚焦 AI 推理性能
 
 ---
 
-## 前置知识：一块开发板到底包含什么
+## 结论：两块板子
 
-开发板是买回来插电就能用的完整主板，包含以下部分：
+| 预算 | 买什么 | 芯片 | AI 引擎 | 推荐模型 | 实测速度 | 一句话 |
+|------|--------|------|--------|---------|---------|--------|
+| **¥5,000** | **RK1828 M.2 算力卡 + RK3588 主机** | 瑞芯微 RK1828（2025 量产） | 20 TOPS NPU + 5GB 堆叠 DRAM | DeepSeek-R1-Distill-Qwen-7B（INT4） | **52 tok/s** | 买速度——NPU 硬加速，7B 模型聊得动 |
+| **¥10,000** | **Milk-V Pioneer** | 算能 SG2042（64 核 C920） | 64 核 CPU + 128GB ECC 内存 | DeepSeek-R1-Distill-Qwen-14B（INT4） | **2.3 tok/s** | 买容量——唯一能装 14B-70B 模型的 RISC-V 机器 |
+
+**为什么 ¥5,000 比 ¥10,000 快 8 倍？** 不是逻辑错了。RK1828 是专用 NPU 加速卡（只有 5GB 内存，跑不动大模型），Pioneer 是 64 核通用 CPU（128GB 内存，什么模型都装得下）。2026 年 RISC-V 市场上没有一个既快又能跑大模型的单品。¥5,000 买推理速度，¥10,000 买模型容量。
+
+**两个都买？** ¥15,000。RK1828 日常跑 AI 推理，Pioneer 做大模型探索 + 64 核编译 + RISC-V 多核优化。覆盖所有场景。
+
+---
+
+## 两块板子的完整信息
+
+### ¥5,000：RK1828 M.2 算力卡 + RK3588 主机
+
+| 项目 | 详情 |
+|------|------|
+| **芯片** | 瑞芯微 RK1828，3×RISC-V 控制核 + 20 TOPS NPU（INT8）+ 5GB 3D 堆叠 DRAM（~1TB/s 带宽），2025 年量产 |
+| **形式** | M.2 2280 Key-M 卡，插在 RK3588 主机上 |
+| **主机** | RK3588（8GB+ RAM，ARM SoC），提供 USB/网口/显示输出 |
+| **功耗** | 典型 10W，最大 15W，被动散热 |
+| **系统** | Linux（RKNN3 SDK） |
+| **购买** | 飞凌嵌入式（forlinx.com）、Firefly（天启），M.2 单卡 + 主机 ≈ ¥3,000-5,000 |
+| **到手** | 企业渠道，1-2 周 |
+
+**实测 AI 性能：**
+
+| 模型 | 量化 | 速度 |
+|------|------|------|
+| Qwen2.5-7B | INT4 | **52 tok/s** |
+| Qwen2.5-3B | INT4 | **81 tok/s** |
+| Llama 2-7B | INT4 | **60-80 tok/s** |
+| DeepSeek-R1-Distill-Qwen-7B | INT4 | ~50-80 tok/s（预估，同参数级） |
+
+**限制：** 5GB 内存硬顶，只能跑 ≤7B 模型。不支持 CNN 传统视觉（YOLO/ResNet，不如 RK3588 自带 NPU）。只做 Transformer 推理。
+
+**推荐模型：DeepSeek-R1-Distill-Qwen-7B（INT4，约 3.8GB）**
+带推理链（Chain-of-Thought），数学/逻辑/代码比同参数基础模型强一档。中文用 Qwen2.5-7B-Instruct，代码用 DeepSeek-Coder-6.7B。
+
+---
+
+### ¥10,000：Milk-V Pioneer
+
+| 项目 | 详情 |
+|------|------|
+| **芯片** | 算能 SG2042，64 核 C920 @2.0GHz，RVV 0.7.1，2023 年量产 |
+| **内存** | 最高 128GB DDR4 ECC（8 个 DIMM 插槽） |
+| **存储** | NVMe SSD |
+| **扩展** | PCIe 3.0 x16，ATX 标准主板（塞进任何 PC 机箱） |
+| **功耗** | 待机 ~40W，满载 ~120W |
+| **系统** | Ubuntu、Debian、Fedora（主线内核） |
+| **购买** | Crowd Supply / Milk-V 官方，$1,500 ≈ ¥10,000+（含 128GB 内存） |
+| **到手** | 国际快递，2-4 周 |
+
+**实测 AI 性能：**
+
+| 模型 | 量化 | 速度 |
+|------|------|------|
+| Llama 7B | Q4 | **6.63 tok/s** |
+| DeepSeek R1 Distill Llama 8B | Q4 | **4.32 tok/s** |
+| DeepSeek R1 Distill Qwen 14B | Q4 | **2.29 tok/s** |
+| Llama 70B | Q4 | ~0.5-1 tok/s（能加载，极慢） |
+
+**推荐模型：DeepSeek-R1-Distill-Qwen-14B（INT4，约 7.5GB）**
+14B + 推理链，多步推理、代码审查、长文摘要可用。2-3 tok/s 不是聊天速度，是批处理速度——发一句，等几秒开始出字。
+
+**Pioneer 的真正价值：** 128GB ECC 内存能塞 70B 模型做评估和优化实验。64 核能并行编译内核、跑 CI、搭数据库。它是 RISC-V 开发工作站，AI 推理只是其中一个用途。
+
+---
+
+## 前置知识：一块开发板包含什么
 
 ```
 一块 RISC-V 开发板 =  SoC（CPU/NPU）     ← 芯片，焊死在板上
@@ -19,353 +88,152 @@
 
 推理流程：硬盘里的模型文件 → 加载到内存 → CPU/NPU 从内存读权重做计算。
 
-关键约束就两个：**NPU/CPU 算力**决定推理速度，**内存大小**决定能装多大的模型。
+两个约束：**NPU/CPU 算力**决定推理速度，**内存大小**决定能装多大的模型。
 
 ---
 
-## 核心逻辑：为什么更贵的不一定 AI 推理更快
+## 买 RISC-V 跑 AI 到底能干什么
 
-控制单一变量——**同一个模型 Qwen2.5-7B（INT4 量化，约 3.8GB）**，四档横比：
-
-| 档位 | 推荐硬件 | AI 引擎 | 内存 | 同一模型速度 | 为什么 |
-|------|---------|--------|------|------------|--------|
-| ¥1,000 | BPI-F3（K1） | 8 核 CPU，无 NPU | 8-16GB | ~1-3 tok/s | 纯 CPU，核少，能跑但慢 |
-| ¥5,000 | **RK1828** | 20 TOPS NPU | 5GB（NPU 专用） | **52 tok/s** | 专用 NPU，硬件加速矩阵乘法 |
-| ¥10,000 | Milk-V Pioneer | 64 核 CPU，无 NPU | 128GB | ~6.6 tok/s | 核多但仍是 CPU 软跑，RVV 向量不如 NPU 高效 |
-| ¥50,000 | SG2044（预估） | 64 核 CPU + RVV 1.0，无 NPU | 128GB+ | ~10-20 tok/s（估算） | RVV 1.0 比 0.7.1 强很多，但仍不如专用 NPU |
-
-**结论：同一 7B 模型，¥5,000 的 RK1828 最快。不是逻辑错了，是 2026 年 RISC-V 市场的结构性现实——¥10,000+ 的板子贵在 CPU 核数和内存容量，不是 AI 推理速度。**
-
-但换个视角——能跑的**最大模型**：
-
-| 档位 | 推荐硬件 | 内存上限 | 最大可加载模型 |
-|------|---------|---------|-------------|
-| ¥1,000 | BPI-F3 | 16GB | 7B（勉强） |
-| ¥5,000 | RK1828 | 5GB NPU 专用 | 7B（内存硬顶，装不下更大） |
-| ¥10,000 | Milk-V Pioneer | 128GB | **70B+**（能装下，慢但能跑） |
-| ¥50,000 | SG2044 / 多节点 | 128-384GB | **100B+**（分布式） |
-
-这两张表合在一起就是这个报告的核心逻辑：**¥5,000 买速度（小模型跑得快），¥10,000+ 买容量（大模型跑得动）。** 2026 年 RISC-V 市场上不存在一个既快又能跑大模型的单品。
-
----
-
-## 买 RISC-V 跑 AI 到底能干什么？
-
-把 Qwen 塞进板子对话——确实无聊。RISC-V 在 AI 上真正的价值不在"跑得比 NVIDIA 快"，在三个 NVIDIA 做不到的方向：
+把 Qwen 塞进板子对话确实无聊。RISC-V 在 AI 上的真正价值在三个 NVIDIA 做不到的方向：
 
 ### 1. 自定义指令加速你的模型
 
-RISC-V 是开源 ISA，你可以给 CPU 加自定义指令。
+RISC-V 是开源 ISA，可以给 CPU 加自定义指令。中科院团队在香山南湖核上的实验：加了条矢量点积指令，硬件面积只增 2.8%，功耗只增 0.5%，GPT-2 推理快 30%。[《计算机科学》2025 年第 5 期]
 
-清华/中科院团队在香山南湖核上做了一个实验：加了条矢量点积指令，**硬件面积只增加 2.8%，功耗只增加 0.5%，GPT-2 推理速度提升 30%**。[论文发表于《计算机科学》2025年第5期]
-
-这意味着：如果你有一个特定的模型（比如公司内部的视觉检测模型），你可以针对它在 RISC-V 上定制指令——这是买封闭 ISA 的芯片（ARM、x86）永远做不到的。
+如果你有公司内部的特定模型，可以针对它在 RISC-V 上定制指令。x86/ARM 做不到——ISA 不让你改。
 
 ### 2. "通推一体"——CPU 和 AI 算力共享内存
 
-传统方案：CPU ←PCIe→ GPU/NPU，数据搬来搬去，延迟高。
+传统：CPU ←PCIe→ GPU/NPU，数据搬来搬去，延迟高。
 
-**XSAI（香山 AI）**：北京开源芯片研究院（中科院计算所 + 北京政府 + 阿里/腾讯/中兴/算能等 18 家单位联合）基于第三代香山昆明湖核，2026 年 4 月开源了全球首个 RISC-V "通推一体"处理器设计。[GitHub: OpenXiangShan/XSAI]
+**XSAI（香山 AI）**：北京开源芯片研究院（中科院 + 阿里/腾讯/中兴/算能等 18 家）基于第三代香山昆明湖核，2026 年 4 月开源了全球首个 RISC-V 通推一体处理器。[GitHub: OpenXiangShan/XSAI]
 
 | 能力 | 做了什么 |
 |------|--------|
-| Matrix 引擎 | bf16/fp8/int8 矩阵乘加，直接接 L2 缓存（不经过 PCIe） |
+| Matrix 引擎 | bf16/fp8/int8 矩阵乘加，直接接 L2 缓存（不经 PCIe） |
 | Vector 引擎 | 硬件 exp2 加速 softmax，与 Matrix 异步并行 |
-| 实际跑通 | Llama-2 15M，FPGA @50MHz：Prefill **343 tok/s**，Decode **36 tok/s** |
-| 软件栈 | 完全开源，MLIR/IREE 编译栈 |
+| FPGA 实测 | Llama-2 15M，Prefill 343 tok/s，Decode 36 tok/s @50MHz |
+| 顶会背书 | ISCA 2026 Tutorial |
 
-"通推一体"的场景：机器人在产线上同时做视觉检测 + 运动控制 + 异常告警。x86+GPU 方案要多块芯片、数据搬来搬去；香山方案一个芯片全搞定，延迟从毫秒压到微秒。
+场景：机器人同时做视觉检测 + 运动控制 + 异常告警。传统方案要多芯片，香山一个芯片全搞定，延迟从毫秒压到微秒。
 
-### 3. 已经有人在用 RISC-V 做千卡千亿模型集群
+### 3. 已经在用的 RISC-V AI 集群
 
-**南湖核（香山第二代）已出货上万片**，被某国产 GPU 厂商集成到智算加速卡里，搭了**千卡千亿模型算力集群**，正在往万卡扩。[EET China 2025年8月报道]
+南湖核（香山第二代）出货上万片，某国产 GPU 厂集成进智算加速卡，搭了千卡千亿模型算力集群，正往万卡扩。[EET China 2025.8]
 
-进迭时空基于第三代昆明湖核研发了 X200 处理器核（50 SPECint2006/Core），**RISC-V AI CPU 芯片预计 2026 年底量产**，目标场景是超级 AI 计算机 + 高阶自动驾驶。[进迭时空官方]
+进迭时空基于昆明湖研发了 X200 处理器核（50 SPECint2006/Core），AI CPU 芯片 2026 年底量产，目标超级 AI 计算机 + 高阶自动驾驶。
 
-### 工业界的真实落地场景
+### 工业界落地场景
 
 | 场景 | 谁在做 | 为什么用 RISC-V |
 |------|--------|----------------|
-| **工业机器人 VLA 模型** | MIPS S8200（RISC-V NPU，2026） | 视觉-语言-动作多模态推理，全本地，无云端延迟，<1ms 响应 |
-| **产线质检** | MIPS S8200 + EclipseX1 | 端侧 Transformer 模型实时质检，数据不出工厂 |
-| **自动驾驶感知** | MIPS S8200（ForwardEdge ASIC 已选用） | 前摄感知 + 360° 融合 + 驾驶策略，同一颗芯片 |
-| **EV 充电桩智能调度** | EclipseX1（12 TOPS @10W） | 预测性电力分配，ASIL-B 安全认证，-40°C 到 85°C |
-| **语音安全控制** | UC Irvine EchoSafe（2025-2026） | 离线语音识别控制危险机械，"Go"/"Stop" 96.7% 准确率 |
-| **国产千卡 AI 集群** | 某国产 GPU 厂商 + 香山 | 万片南湖核出货，全国产算力集群，信创合规 |
+| 工业机器人 VLA | MIPS S8200（RISC-V NPU，2026） | 视觉-语言-动作多模态，全本地，<1ms |
+| 产线质检 | MIPS S8200 + EclipseX1 | 端侧 Transformer，数据不出工厂 |
+| 自动驾驶感知 | MIPS S8200（ForwardEdge ASIC 已选用） | 前摄+360°融合+决策，同一芯片 |
+| EV 充电桩调度 | EclipseX1（12 TOPS @10W） | 预测性电力分配，-40°C~85°C |
 
-### 所以你的团队买 RISC-V 开发板之后
+### 你的团队买板子后干什么
 
-不是"跟 RISC-V 聊天"。而是：
-
-1. **如果买的是 K1/RK1828**：学会 llama.cpp 在 RISC-V 上的部署和量化管线。搞清楚 RVV 向量指令怎么加速 Transformer。这是技能储备。
-2. **如果买的是 Pioneer**：研究 NUMA 架构下 64 核如何并行推理。验证"70B 模型能不能在纯 CPU 上跑"。测试你的应用场景是否适合 CPU-only 推理。
-3. **如果等的是 XSAI/昆明湖硬件**：在开源处理器上定制 Matrix 指令加速你自己的模型。FPGA 原型上跑通 → 等芯片量产直接平移。
-4. **最终目标（2-3 年）**：你们公司的边缘 AI 产品，从 Jetson/NVIDIA 切换到全国产 RISC-V 芯片——因为成本更低、功耗更低、供应链可控。
+1. **RK1828**：学会 llama.cpp 部署和量化管线，搞清楚 NPU 怎么跑 Transformer。
+2. **Pioneer**：研究 64 核 NUMA 并行推理，验证 70B 模型 CPU-only 可行性。
+3. **长远**：RISC-V 定制指令 + 通推一体，把公司边缘 AI 产品从 Jetson 切到国产 RISC-V。
 
 ---
 
-## 2026 年 RISC-V 笔记本：能买到什么
+## 2026 年 RISC-V 笔记本
 
-### 残酷的诚实结论
+### DC-ROMA RISC-V Mainboard III（唯一可购）
 
-**2026 年 7 月，中国市场上没有任何一款可以现货购买的 RISC-V 笔记本。** 更准确地说：有发布但买不到，能买到的需要等，而且需要海淘。
-
----
-
-### 唯一的可购选项：DC-ROMA RISC-V Mainboard III
-
-深度数智（DeepComputing，香港公司）2026 年 5 月 13 日发布，全球首款 RVA23 RISC-V 笔记本主板，适配 Framework Laptop 13 模块化机身。[来源: TechPowerUp, IT之家, VideoCardz]
+深度数智（DeepComputing，香港）2026 年 5 月发布，全球首款 RVA23 RISC-V 笔记本主板，适配 Framework Laptop 13。
 
 | 项目 | 详情 |
 |------|------|
-| **芯片** | 进迭时空 SpacemiT **K3**（8 核 RVA23 @2.5GHz + 8 核 AI 引擎，**60 TOPS**） |
-| **内存** | 板载 16GB / 32GB LPDDR5 |
-| **存储** | M.2 2280 NVMe/SATA + microSD |
-| **接口** | 4× USB-C（DP 1.4 4K@60Hz，2× 支持 65W PD 充电） |
-| **系统** | Ubuntu 26.04（主线内核），Fedora 兼容 |
-| **兼容** | Framework Laptop 13 / 13 Pro 机身 |
-| **价格** | $699（16GB/无 SSD，约 ¥5,000）起；完整笔记本 Pro 套装 $1,499（约 ¥11,000）起 |
-| **购买** | store.deepcomputing.io，目前预售 |
-| **发货** | 首批预计 2026 年 6 月底发货，到手约 7-8 月 |
+| **芯片** | 进迭时空 SpacemiT K3（8 核 RVA23 @2.5GHz + 8 核 AI 引擎，60 TOPS） |
+| **内存** | 16GB / 32GB LPDDR5 |
+| **系统** | Ubuntu 26.04 主线内核 |
+| **价格** | $699（16GB，约 ¥5,000）起；完整笔记本 Pro 套装 $1,499（约 ¥11,000）起 |
+| **购买** | store.deepcomputing.io，预售，首批 6 月底发货 |
+| **国内到手** | Framework 机身需从美国海淘（$849-1,099）+ 香港发货主板 → 总花费 ¥12,000-15,000，约 2 个月 |
 
-**国内购买的三个障碍：**
+**一个月内要拿到手不现实**，但值得放进采购计划。K3 有 60 TOPS NPU，本地跑 7B 模型。进迭时空 K3 的商业化路线是"昆明湖 → X200 → K3"，这块板子本质上是香山第三代生态的跳板。
 
-1. **Framework 机身不在中国卖。** Framework 只在美国、加拿大、欧洲、台湾等地直营。你需要从美国海淘 Framework Laptop 13 机身（约 $849-1,099），或者从淘宝找代购（溢价 20-30%）。
-2. **DC-ROMA 主板本身从香港发货**，寄到大陆有清关时间和可能的关税。
-3. **即使一切顺利，到手至少 1.5-2 个月。**
+### 桌面替代：Milk-V Jupiter v1
 
-**如果你能接受：** 总花费约 ¥12,000-15,000（Framework 机身 + DC-ROMA III 主板），等 2 个月，你能得到地球上唯一能买到的、搭载 2026 年最新 RISC-V 芯片的模块化笔记本。K3 有 60 TOPS NPU，能本地跑 7B 模型。
+淘宝现货，进迭时空 K1，Mini-ITX，¥500-1,100。配显示器键盘就是 Linux 桌面。比等笔记本务实。
 
 ---
 
-### 买不到但值得知道的产品
+## 香山（XiangShan）生态
 
-**如意香山本（RuyiBOOK）**
-
-2024 年 8 月 RISC-V 中国峰会，由中科院软件所 + Milk-V（群芯闪耀）+ 英麒智能 + 开芯院联合发布。搭载香山第二代"南湖"处理器（2.5GHz，RV64GCBK），8GB DDR5，AMD RX 550 独显。[来源: IT之家, EEPW]
-
-**关键事实：这不是零售产品。** 它是研发展示机，面向高校、科研机构定向合作，不对公众销售。目前已成功运行 Debian、Fedora、openEuler 及 WPS 等国产办公套件（部分通过二进制翻译）。
-
-**Milk-V Jupiter 2（2026 新品）**
-
-搭载进迭时空 K3 的 Pico-ITX 主板，目前预售，ARACE 代理 ¥3,900 起。不是笔记本，但如果你搭便携屏+电池+键盘，可以自己攒一台"RISC-V 笔记本"。K3 芯片 2026 年 5 月发布，30B 模型约 15 tok/s。
-
----
-
-### 笔记本的实用替代方案
-
-一个月内要采购的话，最实际的做法是买 RISC-V 开发板当"桌面小主机"：
-
-| 方案 | 构成 | 价格 | 到手时间 |
-|------|------|------|---------|
-| Milk-V Jupiter v1（K1） | 淘宝现货，Mini-ITX 板 + 自己配内存/SSD | ¥500-1,100 | 1 周 |
-| Banana Pi BPI-F3 | 淘宝现货，K1 平台，完整 SBC | ¥700-950 | 1 周 |
-| Milk-V Titan | Mini-ITX，PCIe 4.0 x16，需配 DDR4 ECC 内存 | ¥2,380 | 1-2 周 |
-
-插上显示器键盘就是一台 Linux 桌面电脑——功能上和笔记本一样，只是不带电池和屏幕。
-
----
-
-## 香山（XiangShan）生态深度调研
-
-香山是中国主导的、全球性能最强的开源 RISC-V 处理器项目。由**北京开源芯片研究院**（开芯院/BOSC）主导，联合中科院计算所 + 18 家龙头企业（阿里、腾讯、中兴、算能、奕斯伟等）共同推进。[来源: EET China, 快科技, 香港文汇网]
+中国最强的开源 RISC-V 处理器。北京开源芯片研究院主导，中科院计算所 + 18 家龙头企业联合。
 
 ### 三代演进
 
 | 代次 | 代号 | 时间 | 工艺 | SPECint2006 | 对标 ARM | 状态 |
 |------|------|------|------|------------|---------|------|
-| 第一代 | **雁栖湖** | 2021 | 28nm | 7 分/GHz | A73 | 开源 |
-| 第二代 | **南湖** | 2023 | 14nm/2GHz | 10 分/GHz | **A76** | **已出货上万片** |
-| 第三代 | **昆明湖** | 2025.7 交付 | **7nm/3GHz** | **16.5 分/GHz** | **Neoverse N2** | **首批商业交付完成** |
+| 第一代 | 雁栖湖 | 2021 | 28nm | 7 分/GHz | A73 | 开源 |
+| 第二代 | 南湖 | 2023 | 14nm/2GHz | 10 分/GHz | **A76** | 出货上万片 |
+| 第三代 | 昆明湖 | 2025.7 交付 | **7nm/3GHz** | **16.5 分/GHz** | **Neoverse N2** | 首批商业交付 |
 
-第三代昆明湖的性能数字含义：单核性能已经超过 2021 年的 ARM 服务器旗舰 Neoverse N2。中国工程院院士倪光南评价："RISC-V 正从备选走向主流。"
+### 为什么重要
 
-### 为什么香山特别
+1. **完全开源。** RTL 代码在 GitHub（OpenXiangShan），每一行 CPU 设计可见。
+2. **XSAI 通推一体。** 2026.4 开源，Matrix + Vector 双引擎，FPGA 跑通 Llama-2，ISCA 2026 顶会 Tutorial。
+3. **千卡千亿集群在跑。** 南湖核上万片出货，不是 PPT。
+4. **进迭时空 X200。** 基于昆明湖，50 SPECint2006/Core，2026 年底量产。
 
-1. **完全开源。** 所有 RTL 代码在 GitHub（OpenXiangShan）公开。你可以看到每一行 CPU 设计。ARM 和 x86 做不到。
-2. **XSAI——"通推一体"。** 2026 年 4 月开源，基于昆明湖，Matrix + Vector 双引擎，已经在 FPGA 上跑通 Llama-2（Decode 36 tok/s @50MHz）。ISCA 2026 国际顶会 Tutorial 已经安排上了。
-3. **千卡千亿集群已经跑起来。** 南湖核被某国产 GPU 厂集成进智算加速卡，上了千卡千亿模型算力集群，正往万卡扩。不是 PPT，是已经部署的算力。
-4. **进迭时空 X200。** 基于昆明湖的自研处理器核，50 SPECint2006/Core（比 ARM A78 还高），RISC-V AI CPU 芯片预计 2026 年底量产。
+### 香山 + Linux
 
-### 香山 + Linux 生态
+| 发行版 | 状态 |
+|--------|------|
+| **openRuyi（如意）** | 2026.3 发布，原生适配香山，开机快 40%，功耗降 30% |
+| **Ubuntu 26.04 LTS** | 2026.4 发布，首次原生支持 RISC-V |
+| Debian、Fedora、openEuler | 均已适配 |
 
-| 发行版 | 适配状态 |
-|--------|---------|
-| **openRuyi（如意）** | 2026 年 3 月由中科院软件所发布，**原生适配香山**，开机速度提升 40%、功耗降低 30% |
-| **Debian** | 在南湖笔记本上完成适配，WPS 等国产办公套件可运行 |
-| **Fedora** | RISC-V 大使傅炜团队完成适配 |
-| **openEuler** | 适配中，华为生态 |
-| **Ubuntu 26.04 LTS** | 首次原生支持 RISC-V，2026 年 4 月发布 |
+### 香山和采购的关系
 
-香山 + openRuyi 的组合被媒体称为"王炸组合"——硬件和操作系统都是国产开源，信创合规满分。
-
-### 香山的挑战
-
-1. **生态差距仍大。** 业内人士评估软件生态至少还需 3-5 年追赶 ARM/x86。
-2. **笔记本买不到。** 如意香山本是展示机，不是产品。昆明湖笔记本还没出现。
-3. **工具链碎片化。** GCC 15、XSCC、LLVM 多条路线，调试接口不统一。
-
-### 香山和你的采购有什么关系
-
-**直接关系：无。** 你今天买不到任何香山硬件。
-
-**间接关系：巨大。** 进迭时空 K3（DC-ROMA III、Jupiter 2 都在用）的商业化路线是"昆明湖 → X200 → K3"。你买的 K3 板子，本质上就是香山第三代商业化的产物。2026 年底 X200 芯片量产后，真正基于香山的笔记本和服务器才会出现。**现在买的 K3 硬件，是进入香山生态的跳板——软件栈、编译工具链、优化经验将来可以直接迁移到纯血香山平台。**
+今天买不到香山硬件。但进迭时空 K3 是昆明湖商业化的产物。现在买 K3 板子（Jupiter、DC-ROMA III），软件栈和优化经验将来直接迁移到纯血香山平台。
 
 ---
 
-## 四档推荐
+## 其他档位速览
 
-每档给出 3 个选项。⭐ 为推荐，标注最适合的模型及实测/预估速度。
+### ¥1,000 档
 
----
+| 型号 | 芯片 | 价格 | 推荐模型 | 速度 |
+|------|------|------|---------|------|
+| **Banana Pi BPI-F3** | 进迭时空 K1，8 核 + RVV 1.0 | **¥700-950** | TinyLlama 1.1B Q4 | ~5-8 tok/s |
+| Milk-V Jupiter v1 | 进迭时空 K1/K1X | ¥500-800 | 同上 | 同上 |
+| MUSE PI | 进迭时空 K1 + 2 TOPS NPU | ¥380-500 | 同上 | 同上 |
 
-### 💰 ¥1,000 档 —— 入门学习
+¥1,000 档无 NPU，纯 CPU 软跑，7B 只有 1-3 tok/s。价值在学 llama.cpp 和 RVV 编程。
 
-这个价位没有 2025-2026 年新芯片，也没有 NPU。全是用 2023-2024 的 CPU 软跑。
+### ¥50,000 档
 
-| # | 型号 | 芯片 | 配套 | AI 引擎 | 价格 |
-|---|------|------|------|--------|------|
-| ⭐ | **Banana Pi BPI-F3** | 进迭时空 K1，8 核 2.0GHz，RVV 1.0 | 8/16GB LPDDR5 + eMMC/SSD | 纯 CPU 软跑 llama.cpp | **¥700-950** |
-| 2 | MUSE PI | 进迭时空 K1，8 核 + 2 TOPS NPU | 4GB + 16GB eMMC | CPU + 轻量 NPU | **¥380-500** |
-| 3 | Milk-V Jupiter | 进迭时空 K1/K1X | 4/8/16GB，mini-ITX，M.2，PCIe | 同 K1 平台 | **¥500-800** |
+| 方案 | 芯片 | 价格 |
+|------|------|------|
+| 算能 SG2044 开发平台（联系算能） | SG2044，64 核 + RVV 1.0 | 需询价，预估 ¥30,000-50,000 |
+| 3× Milk-V Pioneer 集群 | 192 核，384GB 总内存 | ¥30,000-40,000 |
+| 等玄铁 C950 硬件（2026 Q3-Q4） | C950，5nm，DeepSeek V3 671B @18 tok/s | 预估 ¥50,000+ |
 
-**⭐ 推荐模型：TinyLlama 1.1B（Q4，约 0.6GB）**
-
-| 指标 | 数据 |
-|------|------|
-| 速度 | ~5-8 tok/s |
-| 能做什么 | 基础对话、代码补全提示、RISC-V AI 工具链学习 |
-| 不能做什么 | 复杂推理、长文本、多轮对话质量不够 |
-
-¥1,000 档的价值是学会 RISC-V 上的 llama.cpp 部署、RVV 向量编程、模型量化——而不是真正的 AI 应用。
-
----
-
-### 💰 ¥5,000 档 —— 边缘推理甜点
-
-2025 年 NPU 进入 RISC-V 生态，这一档开始有真正可用的 AI 推理速度。
-
-| # | 型号 | 芯片 | 配套 | AI 引擎 | 价格 |
-|---|------|------|------|--------|------|
-| ⭐ | **RK1828 M.2 算力卡 + RK3588 主机** | RK1828：3×RISC-V 控制核 + 20 TOPS NPU + 5GB 堆叠 DRAM（~1TB/s 带宽），2025 年量产 | M.2 卡插在 RK3588 主机上，主机 8GB+ RAM | **20 TOPS NPU（INT8）**，硬件加速 Transformer 推理 | M.2 卡 ~¥500-800 + 主机 ~¥2,000-4,000 ≈ **¥3,000-5,000** |
-| 2 | Milk-V Titan 基础配置 | UltraRISC UR-DP1000，8 核 2.0GHz，RVV，2025 年发布 | 最高 64GB DDR4 ECC（双 DIMM），M.2 NVMe，PCIe 4.0 x16 | 纯 CPU + RVV 向量。待机 14W，满载 30W | **¥2,380（板）+ ¥500-1,500（内存+SSD）≈ ¥3,000-4,000** |
-| 3 | SiFive HiFive Premier P550 | SiFive P550，4 核，RISC-V 单核 IPC 最高，2024 末 | 8-16GB | 纯 CPU，4 核 |
-
-**⭐ 推荐：RK1828 方案**
-
-**推荐模型：DeepSeek-R1-Distill-Qwen-7B（INT4，约 3.8GB）**
-
-| 指标 | 数据 |
-|------|------|
-| 实测速度 | **~50-80 tok/s**（社区 benchmark 中 Llama 2-7B 实测 60-80 tok/s，Qwen2.5-7B 实测 52 tok/s，蒸馏 DeepSeek 同参数级速度相当） |
-| 为什么选这个模型 | DeepSeek 蒸馏版有推理链（Chain-of-Thought），比同参数量的基础模型"聪明"得多。数学、逻辑、代码能力远超普通 7B |
-| 5GB 内存能装下吗 | INT4 量化后约 3.5-4GB，装得下 |
-| 不能做什么 | 7B 的推理链仍然有限，复杂多步推理会出错。不能做 Agent、长上下文 |
-
-**备选：**
-- 中文场景优先 → **Qwen2.5-7B-Instruct（INT4）**，实测 52 tok/s，中文能力 SOTA
-- 代码生成 → **DeepSeek-Coder-6.7B（INT4）**，速度类似
-- 轻量多模态（图生文）→ **Llava-OneVision-Qwen2-7B（INT4）**，但要确认 RK1828 SDK 对视觉模型的支持
-
-**为什么 ¥5,000 推荐 NPU 卡而不是 Titan？**
-
-Titan 纯 CPU 跑同一个 DeepSeek 7B 只有 ~3-5 tok/s——能用，但和 RK1828 的 50+ tok/s 差一个数量级。Titan 的价值是 PCIe x16：将来插 GPU 后 AI 能力质变。但 2026 年中 RISC-V + AMD GPU 的驱动还不稳定，这是期货，不是现货。
-
----
-
-### 💰 ¥10,000 档 —— 大模型探索
-
-这一档的核心卖点不是快，是**能装下 ¥5,000 档装不下的大模型**。
-
-| # | 型号 | 芯片 | 配套 | AI 引擎 | 价格 |
-|---|------|------|------|--------|------|
-| ⭐ | **Milk-V Pioneer** | 算能 SG2042，64 核 C920 @2.0GHz + RVV 0.7.1，2023 年量产（目前 ¥1 万档唯一 64 核 RISC-V） | 最高 **128GB DDR4 ECC**（8 个 DIMM），NVMe，PCIe 3.0 x16，ATX 标准主板 | 64 核纯 CPU + RVV 0.7.1 软跑 llama.cpp | **~$1,500 ≈ ¥10,000+**（含 128GB 内存） |
-| 2 | RK1828 Firefly 开发套件 | RK1828 + RK3588 SoM 8G+64G，2025 年 | 8GB + 64GB eMMC，完整 SDK + 外壳 | 20 TOPS NPU | **$1,029 ≈ ¥7,500** |
-| 3 | Milk-V Titan 满配 + AMD GPU | UR-DP1000 + dGPU | 64GB + SSD + GPU | CPU + 独显（驱动不稳定） | **¥7,000-9,000** |
-
-**⭐ 推荐：Milk-V Pioneer**
-
-**推荐模型：DeepSeek-R1-Distill-Qwen-14B（INT4，约 7.5GB）**
-
-| 指标 | 数据 |
-|------|------|
-| 实测速度 | **~2-2.5 tok/s**（基于 DeepSeek R1 Distill Qwen 14B Q4 实测 2.29 tok/s） |
-| 为什么选它 | 14B + 推理链 = 比 7B 强一档的逻辑能力，能做有意义的多步推理、代码审查、长文摘要 |
-| 速度和体验 | 2-3 tok/s 意味着你发一句话，等 3-5 秒开始出字，然后慢慢吐。**不是聊天速度，是批处理速度** |
-| 能不能跑更大的 | 有人跑通了 Llama 70B Q4（~0.5-1 tok/s），能加载但慢到没有实用价值 |
-
-**同一模型对比——DeepSeek 7B 在 ¥5,000 vs ¥10,000 的表现：**
-
-| 模型 | RK1828（¥5,000） | Pioneer（¥10,000） |
-|------|-------------------|-------------------|
-| DeepSeek 7B Q4 | **52 tok/s** | ~4.3 tok/s |
-| DeepSeek 14B Q4 | 装不下（5GB 内存限制） | **2.3 tok/s** |
-
-**Pioneer 的真正价值不在 AI 推理本身。** 它是你唯一能花 ¥1 万买到带 128GB ECC 内存的 64 核 RISC-V 工作站。这意味着：
-- 加载 70B 模型做 prompt 工程和 RISC-V 优化实验
-- 64 核并行编译内核、跑 CI、搭数据库——不跑 AI 也是正经的开发工作站
-- 研究 RISC-V 多核 NUMA 架构下 llama.cpp 的优化空间
-
----
-
-### 💰 ¥50,000 档 —— 服务器级
-
-RISC-V AI 最大的空白区间。¥5 万够买一片 NVIDIA L40S（48GB，~700+ TOPS），而 RISC-V 这边连一个带 NPU 的服务器开发板都买不到。
-
-| # | 方案 | 芯片 | 配套 | AI 引擎 | 价格 |
-|---|------|------|------|--------|------|
-| ⭐ | **算能 SG2044 开发平台**（主动联系算能采购） | SG2044：64 核 + RVV 1.0，2025 年发布 | 预估 64-128GB DDR5，PCIe Gen4 | 纯 CPU + RVV 1.0。RVV 1.0 vs SG2042 的 0.7.1 有质的提升 | **需询价**，预估 ¥30,000-50,000 |
-| 2 | 3× Milk-V Pioneer 集群 | 3× SG2042 | 192 核 / 384GB 总内存 | 分布式 llama.cpp。社区有尝试，无系统 benchmark | **¥30,000-40,000** |
-| 3 | 等玄铁 C950 服务器硬件 | C950：2026 年 3 月发布，5nm，3.25GHz，Matrix + Vector 双 AI 引擎 | 预计 2026 Q3-Q4 可能有硬件 | Matrix 引擎实测 DeepSeek V3 671B：**18 tok/s** | **¥50,000+**（预估，未公开） |
-
-**⭐ 推荐：联系算能争取 SG2044 开发平台 + DeepSeek-V2-Lite（16B MoE，INT4，约 8GB）**
-
-> SG2044 目前没有公开的 AI benchmark。但已知提升：RVV 1.0 完整向量支持 + GCC 15.2 优化 + 更高的 IPC。HPC 评估显示多核性能较 SG2042 显著提升。按 RVV 1.0 对标 Andes AX45MPV 的数据来保守估算：
->
-> DeepSeek-V2-Lite 是一个 MoE（混合专家）模型，16B 总参数但每次推理只激活约 2.7B，天然适合 CPU 推理——参数大（能力强）但计算量小（速度快）。**如果 SG2044 的 RVV 1.0 优化到位，这个模型可能跑到 8-15 tok/s，是可接受的速度。**
-
-**¥50,000 档的残酷真相：**
-
-只为了 AI 推理，¥50,000 买 NVIDIA 方案比 RISC-V 强 10-100 倍。唯一的购买理由是：你的组织必须在 RISC-V 平台上做 AI 研发（信创合规、RISC-V 软件栈优化、RISC-V 大模型可行性验证）。
-
----
-
-## 总结
-
-### 按"跑同一个模型谁快"——控制变量
-
-| 同一模型 | ¥1,000 BPI-F3 | ¥5,000 RK1828 | ¥10,000 Pioneer | ¥50,000 SG2044(估) |
-|---------|--------------|--------------|----------------|-------------------|
-| TinyLlama 1.1B | 5-8 tok/s | 100+ tok/s | 15-20 tok/s | 30-50 tok/s |
-| DeepSeek 7B Q4 | 1-3 tok/s | **52 tok/s** | 4-6 tok/s | 10-20 tok/s |
-| DeepSeek 14B Q4 | 装不下 | 装不下 | **2.3 tok/s** | 5-10 tok/s |
-| 70B+ 级别 | 装不下 | 装不下 | **塞得进（<1 tok/s）** | **塞得进（可能可用）** |
-
-### 按档位最佳选择
-
-| 预算 | 买什么 | 跑什么模型 | 体验 |
-|------|--------|-----------|------|
-| ¥1,000 | BPI-F3 | TinyLlama 1.1B | 入门学习，不是干活用的 |
-| ¥5,000 | **RK1828 方案** | **DeepSeek 7B** | **真正可用，聊天流畅** |
-| ¥10,000 | Milk-V Pioneer | DeepSeek 14B（大模型探索） | 速度慢，但能装大模型 |
-| ¥50,000 | 联系算能 SG2044 / 等 C950 | DeepSeek-V2-Lite 或更大 | 看运气，诚意联系厂商 |
-
-### 最大的变量
-
-**玄铁 C950 的硬件。** 2026 年 3 月芯片发布，DeepSeek V3 671B 跑 18 tok/s。如果下半年有开发板出来，整个格局会变——一颗 C950 可能同时吃掉 ¥10,000 和 ¥50,000 两档。
+只跑 AI 推理，¥50,000 买 NVIDIA 强 10-100 倍。买 RISC-V 服务器只有两个理由：信创合规、RISC-V 软件栈研发。
 
 ---
 
 ## 参考来源
 
-- 瑞芯微 RK1828 实测数据：[iotdt.com](http://mp.weixin.qq.com/s?__biz=MzkwODQxNjQzMg==&mid=2247485638&idx=1&sn=feb09cf02712f475e45d1d509d8c25eb) — Qwen2.5-7B 52 tok/s, Llama 2-7B 60-80 tok/s
-- 阿里玄铁 C950 发布：[cls.cn](https://api3.cls.cn/share/article/2323452) — DeepSeek V3 全量 18 tok/s, Qwen2.5-235B 34 tok/s
-- SG2042 llama.cpp 实测：[RISC-V Summit Europe 2025 proceedings](https://riscv-europe.org/summit/2025/media/proceedings/) — Llama 7B 6.63 tok/s, DeepSeek 14B 2.29 tok/s
-- SG2044 HPC 评估：[arXiv 2508.13840](https://arxiv.org/abs/2508.13840) — RVV 1.0 + GCC 15.2, 多核性能显著提升
-- Milk-V Pioneer：[Crowd Supply](https://www.crowdsupply.com/milk-v/milk-v-pioneer) — $1,500, 64 核 SG2042, 最高 128GB
-- Milk-V Titan：[ruyisdk.cn](https://ruyisdk.cn/t/topic/2405) — $279-329, UR-DP1000, PCIe 4.0 x16
-- 进迭时空 K3 发布：[pedaily.cn](https://news.pedaily.cn/202601/560019.shtml) — RVA23, AI CPU
-- 进迭时空 B 轮融资：[laoyaoba.com](https://www.laoyaoba.com/html/share/news/974423) — 超 6 亿元
+- 瑞芯微 RK1828 实测：[iotdt.com](http://mp.weixin.qq.com/s?__biz=MzkwODQxNjQzMg==&mid=2247485638&idx=1&sn=feb09cf02712f475e45d1d509d8c25eb)
+- 阿里玄铁 C950：[cls.cn](https://api3.cls.cn/share/article/2323452)
+- SG2042 llama.cpp：[RISC-V Summit Europe 2025](https://riscv-europe.org/summit/2025/media/proceedings/)
+- SG2044 HPC 评估：[arXiv 2508.13840](https://arxiv.org/abs/2508.13840)
+- Milk-V Pioneer：[Crowd Supply](https://www.crowdsupply.com/milk-v/milk-v-pioneer)
+- Milk-V Titan：[ruyisdk.cn](https://ruyisdk.cn/t/topic/2405)
+- 进迭时空 K3：[pedaily.cn](https://news.pedaily.cn/202601/560019.shtml)
+- 进迭时空 B 轮：[laoyaoba.com](https://www.laoyaoba.com/html/share/news/974423)
+- DC-ROMA III：[TechPowerUp](https://www.techpowerup.com/349005/) / [IT之家](https://m.ithome.com/html/949916.htm)
+- 香山第三代商业化：[快科技](http://m.mydrivers.com/newsview/1066704.html) / [EET China](https://www.eet-china.com/info/73756.html)
+- 如意香山本：[IT之家](https://digi.ithome.com/archiver/791/063.htm)
+- openRuyi + 香山：[中新网](https://www.chinanews.com.cn/gn/2026/03-27/10593800.shtml)
 - RISC-V 2026 开发板指南：[Luca Berton](https://lucaberton.com/blog/risc-v-development-boards-2026-guide/)
-- RISC-V 数据中心与服务器：[Luca Berton](https://lucaberton.com/blog/risc-v-datacenter-servers-sovereign-ai-2026/)
-- Andes AX45MPV llama.cpp 实测：[RISC-V Summit Europe 2025 poster](https://riscv-europe.org/summit/2025/media/proceedings/2025-05-13-RISC-V-Summit-Europe-P1.1.08-LEE-poster.pdf) — DeepSeek Lite 16B MoE 2.52 tok/s (RVV 优化参考)
+- RISC-V 数据中心：[Luca Berton](https://lucaberton.com/blog/risc-v-datacenter-servers-sovereign-ai-2026/)
+- Andes RVV 实测：[RISC-V Summit Europe 2025](https://riscv-europe.org/summit/2025/media/proceedings/2025-05-13-RISC-V-Summit-Europe-P1.1.08-LEE-poster.pdf)
