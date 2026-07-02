@@ -3,118 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第二章 工具链与工程 · 讲义</title>
+<title>第二章 工具链与工程 · 讲义 — RISC-V Linux 课程</title>
 <style>
   :root {
-    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
     --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
     --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
-    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
-    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: var(--bg); color: var(--text);
+    background: var(--paper); color: var(--text);
     font-family: var(--sans); line-height: 1.7;
-    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
   }
-  .chapter-header {
-    text-align: center; padding: 60px 0 48px;
-    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 80px 40px; border-bottom: 1px solid var(--line);
   }
-  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
-  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 12px; }
-  .chapter-header .meta { font-size: 17px; color: var(--faint); }
-  section { margin-bottom: 64px; }
-  section h2 {
-    font-size: 30px; font-weight: 700; margin-bottom: 8px;
-    padding-bottom: 12px; border-bottom: 2px solid var(--line);
+  .hero .chapter-tag {
+    font-size: 16px; letter-spacing: 0.15em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 32px;
   }
-  section h2 .num { color: var(--accent); font-size: 22px; margin-right: 12px; }
-  section h3 { font-size: 22px; font-weight: 700; margin: 32px 0 12px; color: var(--text); }
-  section h4 { font-size: 18px; font-weight: 700; margin: 24px 0 8px; color: var(--muted); }
-  section p { font-size: 18px; color: var(--muted); margin-bottom: 16px; }
-  section ul, section ol { padding-left: 24px; margin-bottom: 16px; }
-  section li { font-size: 18px; color: var(--muted); margin-bottom: 6px; }
+  .hero h1 { font-size: 56px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+  .hero .subtitle { font-size: 22px; color: var(--muted); line-height: 1.6; max-width: 700px; }
+  .hero .meta { margin-top: 48px; display: flex; gap: 40px; font-size: 17px; color: var(--faint); }
+  .content { max-width: 1000px; margin: 0 auto; padding: 0 48px 120px; }
+  section { padding: 80px 0; border-bottom: 1px solid var(--line-light); }
+  section:last-of-type { border-bottom: none; }
+  .section-num { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+  section h2 { font-size: 40px; font-weight: 700; margin-bottom: 40px; line-height: 1.3; }
+  section h3 { font-size: 24px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  section h4 { font-size: 19px; font-weight: 700; margin: 28px 0 10px; color: var(--muted); }
+  section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
+  section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
   section li strong { color: var(--text); }
   pre {
     background: var(--code-bg); border: 1px solid var(--line-light);
-    padding: 20px 24px; margin: 16px 0 24px; overflow-x: auto;
-    font-family: var(--mono); font-size: 15px; line-height: 1.7; color: var(--muted);
+    padding: 24px 28px; margin: 20px 0 28px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.75; color: var(--muted);
   }
   pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
   code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
   pre code { background: none; padding: 0; }
-  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
-  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 17px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-light); }
   th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
   td { color: var(--muted); }
   .warn {
     background: var(--warn-bg); border-left: 3px solid var(--warm);
-    padding: 18px 22px; margin: 20px 0; font-size: 17px; color: #8c5440;
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: #8c5440; line-height: 1.7;
   }
   .info {
     background: var(--info-bg); border-left: 3px solid var(--accent);
-    padding: 18px 22px; margin: 20px 0; font-size: 17px; color: var(--muted);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
   }
   .diagram {
-    font-family: var(--mono); font-size: 14px; color: var(--muted);
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
     background: var(--code-bg); border: 1px solid var(--line-light);
-    padding: 20px 24px; margin: 16px 0 24px; line-height: 1.6;
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
     white-space: pre; overflow-x: auto;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 1px solid var(--line); padding: 28px 30px; }
+  .card h4 { font-size: 20px; font-weight: 700; margin: 0 0 10px; color: var(--text); }
+  .card p { font-size: 17px; margin: 0; }
+  .steps { list-style: none; padding: 0; }
+  .steps li {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--line-light);
+    font-size: 18px; color: var(--muted); line-height: 1.6;
+  }
+  .steps li .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .opt-tag {
     display: inline-block; background: #e8e3d8; color: var(--faint);
-    font-size: 13px; padding: 2px 10px; border-radius: 4px; margin-left: 8px;
-    vertical-align: middle; letter-spacing: 0.05em;
+    font-size: 14px; padding: 3px 12px; margin-left: 12px; vertical-align: middle;
+    letter-spacing: 0.05em;
   }
   @media print {
-    body { padding: 0; max-width: none; background: #fff; font-size: 11pt; }
-    .chapter-header { padding: 20px 0 30px; }
-    section { page-break-before: always; margin-bottom: 30px; }
+    body { background: #fff; }
+    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
+    .content { max-width: none; padding: 0 36px; }
+    section { padding: 36px 0; page-break-before: always; }
     section:first-of-type { page-break-before: avoid; }
-    pre, .diagram { font-size: 9pt; }
-    .warn, .info { font-size: 10pt; }
+    pre, .diagram { font-size: 11pt; }
+    .card-grid { grid-template-columns: 1fr 1fr; }
+    .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
   }
 </style>
 </head>
 <body>
 
-<article>
-
-<header class="chapter-header">
+<!-- ═══════════════════════════════════════════ -->
+<div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
   <h1>工具链与工程</h1>
-  <p class="meta">host/target/sysroot → 交叉编译 → ELF 分析 → Makefile → 工程目录规范</p>
-</header>
+  <p class="subtitle">host / target / sysroot → 交叉编译 → ELF 分析<br>Makefile 工程化 → 统一目录规范<br>— 2.1 / 2.2 / 2.3 —</p>
+  <div class="meta">
+    <span>工程模板：hello + project-template</span>
+    <span>工具链：riscv64-linux-gnu-gcc</span>
+  </div>
+</div>
+
+<div class="content">
 
 <!-- ═══════════════════════════════════════════ -->
-<section id="s2.1">
-<h2><span class="num">2.1</span> 交叉编译全流程：从源码到板端可执行文件</h2>
+<section>
+<div class="section-num">2.1</div>
+<h2>交叉编译全流程：从源码到板端可执行文件</h2>
 
 <h3>学习目标</h3>
-<ul>
-  <li>区分 host（编译主机）、target（运行设备）和 sysroot（目标根文件系统）</li>
-  <li>说明交叉编译与本地编译的差异，以及课程为何在主机上编译、在板端运行</li>
-  <li>查询交叉编译器目标三元组与 sysroot 路径，填写三要素对照表</li>
-  <li>使用交叉编译器构建最小 C 程序，确认产物为 RISC-V ELF，SCP 部署到开发板并运行</li>
-  <li>使用 <code>readelf</code> 查看 ELF 头、程序头中的关键字段</li>
-  <li>使用 <code>ldd</code> 查看动态可执行文件的共享库依赖</li>
-</ul>
+<div class="card-grid">
+  <div class="card"><h4>host / target / sysroot</h4><p>区分编译主机、运行设备和目标根文件系统，理解交叉编译</p></div>
+  <div class="card"><h4>工具链查询</h4><p>确认交叉编译器目标三元组，定位 sysroot 路径</p></div>
+  <div class="card"><h4>编译→传输→运行</h4><p>使用 hello 工程完成首个交叉编译闭环</p></div>
+  <div class="card"><h4>ELF 分析</h4><p>使用 readelf / ldd 查看二进制结构与动态库依赖</p></div>
+  <div class="card"><h4>架构验证</h4><p>用 file + readelf 确认产物为 RISC-V ELF</p></div>
+  <div class="card"><h4>两端验收</h4><p>区分 host 编译成功与 target 运行成功两个验收环节</p></div>
+</div>
 
 <h3>host、target、sysroot 与交叉编译</h3>
-<p>嵌入式 Linux 开发很少在开发板上直接编译大型程序。更常见的流程是：在性能更好的 PC（host）上生成二进制，再部署到开发板（target）执行。当 host 与 target 的 CPU 架构不同时，称为交叉编译（cross compilation）。</p>
-<p>工具链除了编译器，还需要目标系统的头文件和库。这些文件按目标系统的目录结构组织，合称为 sysroot。编译时编译器在 sysroot 中查找头文件和库；链接时按目标 ABI 链接其中的库。</p>
+<p>嵌入式 Linux 开发很少在开发板上直接编译大型程序。更常见的流程是：在性能更好的 PC（host）上生成二进制，再部署到开发板（target）执行。当 host 与 target 的 CPU 架构不同时，称为<strong>交叉编译</strong>（cross compilation）。</p>
+<p>工具链除了编译器，还需要目标系统的头文件和库。这些文件按目标系统的目录结构组织，合称为 <strong>sysroot</strong>。编译时编译器在 sysroot 中查找头文件和库；链接时按目标 ABI 链接其中的库。</p>
 
-<div class="diagram">host（x86_64 Linux PC）
-  ├─ 编辑器、make、ruyi
-  ├─ riscv64-unknown-linux-gnu-gcc
-  └─ sysroot（RISC-V 根文件系统片段）
-            ↓ 交叉编译
-      RISC-V ELF 可执行文件
-            ↓ scp 部署
-target（LicheePi 4A + 课程镜像如 RevyOS）
-  └─ ./your-program 在板端运行</div>
+<div class="diagram">host（x86_64 Linux PC）           target（LicheePi 4A + RevyOS）
+  ├─ 编辑器、make、ruyi               └─ ./your-program 在板端运行
+  ├─ riscv64-unknown-linux-gnu-gcc              ↑
+  └─ sysroot（RISC-V 根文件系统片段）             │
+            ↓ 交叉编译                    scp 部署
+      RISC-V ELF 可执行文件 ─────────────────┘</div>
 
 <h3>环境准备</h3>
 <table>
@@ -123,96 +147,66 @@ target（LicheePi 4A + 课程镜像如 RevyOS）
   <tr><td>target 架构</td><td>板端为 RISC-V 64 位</td><td><code>ssh user@board-ip uname -m</code></td></tr>
   <tr><td>交叉编译器</td><td>前缀 <code>riscv64-unknown-linux-gnu-</code></td><td><code>command -v riscv64-unknown-linux-gnu-gcc</code></td></tr>
   <tr><td>工程目录</td><td><code>chapters/ch02/code/hello/</code></td><td><code>ls main.c Makefile</code></td></tr>
+  <tr><td>分析工具</td><td>host 有 <code>readelf</code>、<code>file</code></td><td><code>command -v readelf</code></td></tr>
 </table>
 
 <div class="warn">
-  <strong>关键区分：</strong><code>riscv64-unknown-elf-gcc</code> 面向无操作系统环境（裸机）。本课程用户态程序应使用带 <code>linux-gnu</code> 的工具链。
+  <strong>关键区分：</strong><code>riscv64-unknown-elf-gcc</code> 面向无操作系统环境（裸机）。本课程用户态程序应使用带 <code>linux-gnu</code> 的工具链。两者不可互换。
 </div>
 
 <h3>操作步骤</h3>
 
-<h4>步骤 1：确认 host 与 target</h4>
-<pre><span class="c"># 主机</span>
-<span class="p">$</span> uname -m; hostname
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>确认 host 与 target</strong><br>主机 <code>uname -m</code>（x86_64），板端 <code>uname -m</code>（riscv64）——两者不同说明需要交叉编译。</div></li>
+  <li><span class="step-num">2</span><div><strong>查看交叉编译器目标三元组与 sysroot</strong><br><code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code> 应含 <code>riscv64</code> 和 <code>linux-gnu</code>。<code>-print-sysroot</code> 查 sysroot 路径。</div></li>
+  <li><span class="step-num">3</span><div><strong>对比 host 与 target 运行环境</strong><br>两端分别执行 <code>file /bin/bash</code> 和 <code>ldd /bin/bash | head -n 3</code>，观察动态链接器路径与架构差异。</div></li>
+  <li><span class="step-num">4</span><div><strong>交叉编译第一个程序</strong><br><code>cd chapters/ch02/code/hello && make clean && make && file hello</code> — 应显示 RISC-V ELF。</div></li>
+  <li><span class="step-num">5</span><div><strong>部署到板端并运行</strong><br><code>scp hello user@board-ip:~/ && ssh user@board-ip './hello'</code> — 预期输出 <code>Hello, RISC-V Linux!</code></div></li>
+  <li><span class="step-num">6</span><div><strong>ELF 分析</strong><br><code>readelf -h hello</code>（Machine=RISC-V）、<code>readelf -l hello</code>（LOAD 段）、<code>ldd hello</code>（动态库依赖或注明静态链接）。</div></li>
+</ol>
 
-<span class="c"># 板端</span>
-<span class="p">$</span> uname -m; hostname; head -n 5 /etc/os-release</pre>
-<p>主机常见结果为 <code>x86_64</code>，板端为 <code>riscv64</code>。两者不同，说明需要交叉编译。</p>
-
-<h4>步骤 2：查看交叉编译器目标三元组与 sysroot</h4>
-<pre><span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
-<span class="p">$</span> riscv64-unknown-linux-gnu-gcc --version | head -n 1
-<span class="p">$</span> riscv64-unknown-linux-gnu-gcc -print-sysroot</pre>
-<p>若 <code>-print-sysroot</code> 为空，工具链可能使用内置默认路径——用 <code>gcc -v</code> 输出查找，不要因此改用主机 gcc。</p>
-
-<h4>步骤 3：对比 host 与 target 运行环境</h4>
-<pre><span class="p">$</span> file /bin/bash
-<span class="p">$</span> ldd /bin/bash | head -n 3</pre>
-<p>分别在主机和板端执行。观察动态链接器路径、库目录与架构差异。</p>
-
-<h4>步骤 4：交叉编译第一个程序</h4>
-<pre><span class="p">$</span> cd chapters/ch02/code/hello
-<span class="p">$</span> make clean && make
-<span class="p">$</span> file hello    <span class="c"># 应显示 RISC-V ELF</span></pre>
-<p>若 <code>file hello</code> 显示 <code>x86-64</code>，说明调用了错误的编译器。检查 <code>CROSS_COMPILE</code> 变量。</p>
-
-<h4>步骤 5：部署到板端并运行</h4>
-<pre><span class="p">$</span> scp hello user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip 'chmod +x ~/hello && file ~/hello'
-<span class="p">$</span> ssh user@board-ip './hello'</pre>
-<p>预期输出：<code>Hello, RISC-V Linux!</code></p>
-
-<div class="info">
-  <strong>为什么不在主机验证：</strong>x86_64 主机无法运行 RISC-V 二进制。正确验收必须在板端执行。
-</div>
-
-<h4>步骤 6：ELF 分析</h4>
-<pre><span class="p">$</span> readelf -h hello    <span class="c"># Machine = RISC-V？</span>
-<span class="p">$</span> readelf -l hello    <span class="c"># LOAD 段布局</span>
-<span class="p">$</span> ldd hello           <span class="c"># 动态库依赖（静态链接则注明）</span></pre>
-
+<h4>ELF 关键字段</h4>
 <table>
   <tr><th>字段</th><th>含义</th><th>期望</th></tr>
   <tr><td>Class</td><td>ELF 位数</td><td><code>ELF64</code></td></tr>
+  <tr><td>Data</td><td>字节序</td><td>小端，<code>LSB</code></td></tr>
   <tr><td>Machine</td><td>CPU 架构</td><td><code>RISC-V</code></td></tr>
   <tr><td>Type</td><td>文件类型</td><td><code>EXEC</code> 或 <code>DYN</code></td></tr>
 </table>
 
-<p>可选：在板端执行 <code>ldd ~/hello</code> 与 host 结果对比。</p>
+<div class="info">
+  <strong>为什么不在主机验证：</strong>x86_64 主机无法执行 RISC-V 二进制。<code>./hello</code> 在主机必然报错——正确验收是在板端执行。用 <code>file</code> 确认架构，用板端运行确认逻辑。
+</div>
 
 <h3>课堂练习</h3>
 <ol>
-  <li>判断对错并改正：「在 x86_64 笔记本上 <code>gcc hello.c</code> 得到的程序，可以直接 scp 到 LicheePi 4A 运行。」</li>
+  <li>「在 x86_64 笔记本上 <code>gcc hello.c</code> 得到的程序，可以直接 scp 到 LicheePi 4A 运行。」——这句话是否正确？为什么？</li>
   <li>若 <code>scp</code> 成功但板端提示 <code>cannot execute binary file</code>，依次检查哪些项目？</li>
-  <li><code>readelf -h</code> 中 <code>Machine</code> 为 <code>X86-64</code> 时，构建过程哪里出了问题？</li>
+  <li><code>readelf -h</code> 中 <code>Machine</code> 显示 <code>X86-64</code> 时，构建过程哪里出了问题？</li>
 </ol>
 
-<h3>本节成果</h3>
-<ul>
-  <li>host / target / sysroot 对照表</li>
-  <li>交叉编译器目标三元组与 sysroot 路径记录</li>
-  <li>板端可运行的 Hello World</li>
-  <li>可复用的「编译 → scp → 运行」命令链</li>
-  <li><code>readelf -h</code> / <code>readelf -l</code> 关键字段摘录</li>
-  <li><code>ldd</code> 或静态链接说明</li>
-</ul>
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>host/target/sysroot 对照表 · 交叉编译器三元组与 sysroot 路径 · 板端可运行的 Hello World · 可复用的「编译→scp→运行」命令链 · readelf/ldd 分析记录。
+</div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<section id="s2.2">
-<h2><span class="num">2.2</span> Makefile 与工程目录规范</h2>
+<section>
+<div class="section-num">2.2</div>
+<h2>Makefile 与工程目录规范</h2>
 
 <h3>学习目标</h3>
-<ul>
-  <li>编写包含目标、依赖、命令的基本 Makefile 规则，理解 Tab 缩进</li>
-  <li>使用变量定义 <code>CC</code>、<code>CFLAGS</code>、<code>CROSS_COMPILE</code>，避免硬编码</li>
-  <li>实现 <code>make</code>、<code>make clean</code> 及 <code>.PHONY</code> 伪目标</li>
-  <li>将源码、头文件与构建产物分别放入 <code>src/</code>、<code>include/</code>、<code>build/</code></li>
-  <li>使用多文件工程 Makefile 完成编译、清理与板端部署</li>
-</ul>
+<div class="card-grid">
+  <div class="card"><h4>规则与依赖</h4><p>理解目标、依赖、命令三要素与 Tab 缩进</p></div>
+  <div class="card"><h4>变量管理</h4><p>使用 CC、CFLAGS、CROSS_COMPILE 避免硬编码</p></div>
+  <div class="card"><h4>增量构建</h4><p>make 时间戳判断 + clean + .PHONY</p></div>
+  <div class="card"><h4>目录约定</h4><p>src/（源码）+ include/（头文件）+ build/（产物分离）</p></div>
+  <div class="card"><h4>多文件链接</h4><p>模式规则将多 .c 编译到 build/ 下统一链接</p></div>
+  <div class="card"><h4>工程复用</h4><p>模板可扩展至后续 GPIO、MQTT、综合项目</p></div>
+</div>
 
 <h3>Makefile 基础</h3>
-<p>Makefile 描述「什么文件由什么文件生成、执行什么命令」。<code>make</code> 根据文件时间戳决定是否重新编译。</p>
+<p>Makefile 描述「什么文件由什么文件生成、执行什么命令」。<code>make</code> 根据文件时间戳决定是否重新编译。<code>chapters/ch02/code/hello/Makefile</code> 是单文件示例，<code>project-template/Makefile</code> 在此基础上增加多源文件与 <code>build/</code> 目录。</p>
 
 <div class="diagram">Makefile
   CROSS_COMPILE, CC, CFLAGS
@@ -223,111 +217,110 @@ target（LicheePi 4A + 课程镜像如 RevyOS）
   make / make clean</div>
 
 <h3>统一工程目录</h3>
-<p>单文件 <code>hello</code> 适合入门，真实项目需拆分多个 <code>.c</code> 与公共头文件：</p>
+<p>单文件 <code>hello</code> 适合入门，真实项目应将代码按职责分离：</p>
 
 <div class="diagram">project-template/
 ├── Makefile
-├── include/          ← 对外头文件
-├── src/              ← 源文件
-└── build/            ← 产物（.o、可执行文件），可删可重建</div>
+├── include/          ← 对外头文件（greet.h）
+├── src/              ← 源文件（main.c + greet.c）
+└── build/            ← 产物（.o + app），可删可重建
 
-<p>课程模板位于 <code>chapters/ch02/code/project-template/</code>。<code>make</code> 后生成 <code>build/app</code>；<code>make clean</code> 删除整个 <code>build/</code>。</p>
-
-<div class="diagram">include/greet.h
-src/main.c ──┐
-src/greet.c ─┼──> build/src/*.o ──> build/app
-Makefile ────┘</div>
+编译流程：
+  src/main.c ──┐
+  src/greet.c ─┼──> build/src/*.o ──> build/app
+  include/ ────┘</div>
 
 <h3>操作步骤</h3>
 
 <h4>阶段 A：单文件 Makefile</h4>
 <pre><span class="p">$</span> cd chapters/ch02/code/hello
-<span class="p">$</span> cat -A Makefile    <span class="c"># 可见行尾与 Tab（^I）</span>
+<span class="p">$</span> cat Makefile
 
+<span class="c"># 完整构建流程</span>
 <span class="p">$</span> make clean && make
-<span class="p">$</span> make               <span class="c"># 第二次应提示已是最新</span>
+<span class="p">$</span> make               <span class="c"># 第二次应提示 up to date</span>
 <span class="p">$</span> touch main.c
 <span class="p">$</span> make               <span class="c"># 应重新编译</span>
 
-<span class="p">$</span> make clean && ls hello 2&gt;&amp;1  <span class="c"># hello 应不存在</span>
-<span class="p">$</span> make CFLAGS='-Wall -Wextra -O0 -g'  <span class="c"># 命令行覆盖变量</span></pre>
+<span class="c"># 清理</span>
+<span class="p">$</span> make clean && ls hello 2&gt;&amp;1   <span class="c"># hello 应已删除</span>
+
+<span class="c"># 命令行覆盖变量</span>
+<span class="p">$</span> make CFLAGS='-Wall -Wextra -O0 -g'</pre>
+
+<div class="warn">
+  <strong>警告实验：</strong>在 <code>main.c</code> 中临时引入 <code>int unused = 0;</code>，执行 <code>make</code> 观察 <code>-Wall</code> 警告，修复后恢复原代码。<strong>命令行必须以 Tab 开头——用空格替代会触发 <code>missing separator</code> 错误。</strong>
+</div>
 
 <h4>阶段 B：多文件工程</h4>
 <pre><span class="p">$</span> cd chapters/ch02/code/project-template
 <span class="p">$</span> find . -type f | sort
 
 <span class="p">$</span> make clean && make
-<span class="p">$</span> file build/app     <span class="c"># RISC-V ELF</span>
+<span class="p">$</span> file build/app                <span class="c"># RISC-V ELF</span>
 
+<span class="c"># 部署并运行</span>
 <span class="p">$</span> scp build/app user@board-ip:~/
 <span class="p">$</span> ssh user@board-ip 'chmod +x ~/app && ./app'
 <span class="c"># 预期输出：Hello, RISC-V Linux!</span>
 
+<span class="c"># 清理重构</span>
 <span class="p">$</span> make clean && test ! -d build && echo "build removed"</pre>
 
 <div class="info">
-  <strong>工程习惯：</strong><code>build/</code> 可安全删除且能一键重建——这为后续实验的版本管理打下基础。将 <code>build/</code> 加入 <code>.gitignore</code>，<code>src/</code> 和 <code>include/</code> 纳入版本库。
+  <strong>工程习惯：</strong><code>build/</code> 应加入 <code>.gitignore</code>（可删除、可重建），<code>src/</code> 和 <code>include/</code> 纳入版本库。不要把 <code>.o</code> 文件提交到 Git——它们是派生产物，不是源码。
 </div>
 
 <h3>课堂练习</h3>
 <ol>
-  <li>解释以下错误为何导致 <code>make</code> 失败：命令行前用空格而非 Tab；目标未声明依赖且产物已存在；<code>clean</code> 未标记 <code>.PHONY</code> 且目录下有同名文件。</li>
-  <li>为何 <code>build/</code> 加入 <code>.gitignore</code>，而 <code>src/</code> 和 <code>include/</code> 纳入版本库？</li>
+  <li>以下 Makefile 错误分别导致什么现象：命令行前用空格而非 Tab；目标未声明依赖且产物已存在；<code>clean</code> 未标记 <code>.PHONY</code> 且目录下有同名文件？</li>
+  <li>为何 <code>build/</code> 加入 <code>.gitignore</code>，<code>src/</code> 和 <code>include/</code> 纳入版本库？</li>
 </ol>
 
-<h3>本节成果</h3>
-<ul>
-  <li>能解释 <code>hello</code> Makefile 各变量与规则含义</li>
-  <li><code>make</code> / <code>make clean</code> / 增量构建演示记录</li>
-  <li>符合 <code>src/include/build</code> 约定的可运行工程</li>
-  <li>板端运行 <code>app</code> 的记录</li>
-  <li>可复用的 Makefile 模板路径：<code>chapters/ch02/code/project-template/</code></li>
-</ul>
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>Makefile 变量与规则解释 · make / make clean / 增量构建演示 · 符合 src/include/build 约定的可运行工程 · 板端运行 app 记录 · 可复用模板路径 <code>chapters/ch02/code/project-template/</code>。
+</div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<section id="s2.3">
-<h2><span class="num">2.3</span> 选读：CoreMark 算力基准 <span class="opt-tag">选读</span></h2>
+<section>
+<div class="section-num">2.3 <span class="opt-tag">选读</span></div>
+<h2>CoreMark 算力基准</h2>
 
 <h3>学习目标</h3>
-<ul>
-  <li>了解 CoreMark 嵌入式基准测试的用途与局限</li>
-  <li>在板端获取、构建并运行 CoreMark，读懂分数含义</li>
-  <li>说明基准分数与真实应用性能（I/O、外设、网络）之间的区别</li>
-</ul>
+<div class="card-grid">
+  <div class="card"><h4>基准认知</h4><p>了解 CoreMark 的测试范围与局限性</p></div>
+  <div class="card"><h4>板端运行</h4><p>获取源码、交叉编译、部署到板端并解读分数</p></div>
+  <div class="card"><h4>理性解读</h4><p>区分 CPU 算力与真实应用性能（I/O、外设、网络）</p></div>
+</div>
 
 <div class="info">
-  <strong>本讲为选读，不阻塞主线实验验收。</strong>课程综合项目验收不依赖 CoreMark 分数。价值在于建立「这块板子 CPU 大概什么量级」的直觉。
+  <strong>本讲为选读，不阻塞主线实验验收。</strong>课程综合项目验收不依赖 CoreMark 分数。价值在于建立「这块板子 CPU 大概什么量级」的直觉，为后续是否使用软解码、图像处理等提供参考。
 </div>
 
 <h3>CoreMark 是什么</h3>
-<p>CoreMark 是 EEMBC 发布的轻量级 CPU 基准，测试列表操作、矩阵运算、状态机等核心逻辑，结果以 CoreMark 分数或 CoreMark/MHz 报告。它衡量 CPU 纯算力——不代表 GPIO 抖动、网络吞吐或存储速度。</p>
+<p>CoreMark 是 EEMBC 发布的轻量级 CPU 基准测试，主要测试列表操作、矩阵运算、状态机等核心逻辑。结果以 CoreMark 分数或 CoreMark/MHz 报告。它衡量的是 CPU 纯算力——不代表 GPIO 抖动、网络吞吐或存储速度等系统级表现。</p>
 
 <h3>操作步骤</h3>
-<pre><span class="c"># 获取源码（从 EEMBC 官方或课程镜像站）</span>
-<span class="c"># 选择 Linux/POSIX 移植，不是裸机移植</span>
-
-<span class="p">$</span> export CC=riscv64-unknown-linux-gnu-gcc
-<span class="p">$</span> make PORT_DIR=linux XCFLAGS="-O2" link
-<span class="p">$</span> file coremark.exe
-
-<span class="p">$</span> scp coremark.exe user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip 'chmod +x ~/coremark.exe && ./coremark.exe'
-<span class="c"># 记录 Iterations、Total time、CoreMark 分数</span></pre>
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>获取源码</strong><br>从 EEMBC 官方或课程镜像站获取 CoreMark，解压后阅读 <code>README.md</code>。</div></li>
+  <li><span class="step-num">2</span><div><strong>选择编译方式</strong><br>板端为 Linux 用户态，应使用 Linux/POSIX 移植（非裸机移植）。<br><code>export CC=riscv64-unknown-linux-gnu-gcc</code><br><code>make PORT_DIR=linux XCFLAGS="-O2" link</code><br><code>file coremark.exe</code></div></li>
+  <li><span class="step-num">3</span><div><strong>部署与运行</strong><br><code>scp coremark.exe user@board-ip:~/ && ssh user@board-ip './coremark.exe'</code><br>记录 Iterations、Total time、CoreMark 分数。</div></li>
+  <li><span class="step-num">4</span><div><strong>写简短结论</strong><br>CoreMark 高分意味着 MQTT 或传感器实验一定更流畅吗？为什么？</div></li>
+</ol>
 
 <h3>理解分数</h3>
-<p>编译器版本、<code>-O</code> 级别、glibc/musl、是否固定 CPU 频率都会导致分数差异。只作同环境前后对比，不追求绝对名次。CoreMark 高分并不意味着 MQTT 或传感器实验一定更流畅——I/O 和网络延迟不在基准测试范围内。</p>
+<p>编译器版本、<code>-O</code> 优化级别、glibc/musl、是否固定 CPU 频率都会导致分数差异。只作同环境前后对比，不追求绝对名次。</p>
 
 <h3>课堂练习</h3>
 <p>列举三项不会被 CoreMark 单独反映、但在本课程实验中很重要的系统能力。</p>
 
-<h3>本节成果</h3>
-<ul>
-  <li>可选：CoreMark 板端运行日志</li>
-  <li>可选：关于「算力基准 vs 课程应用」的简短评述</li>
-</ul>
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果（可选）：</strong>CoreMark 板端运行日志 · 关于「算力基准 vs 课程应用」的简短评述。
+</div>
 </section>
 
-</article>
+</div>
+
 </body>
 </html>
