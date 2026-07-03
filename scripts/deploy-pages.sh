@@ -14,10 +14,10 @@ git clone --depth 1 "$PAGES_REPO" "$PAGES_DIR"
 
 echo "==> Syncing course content..."
 DST="$PAGES_DIR/$COURSE_PATH"
-mkdir -p "$DST"/{chapters/ch01,chapters/ch02,docs}
+mkdir -p "$DST"/{chapters/ch01,chapters/ch02}
 
-# CourseOutline
-cp docs/CourseOutline.html "$DST/docs/"
+# CourseOutline (at root level for easy access)
+cp docs/CourseOutline.html "$DST/CourseOutline.html"
 
 # ch01
 cp chapters/ch01/lecture.html "$DST/chapters/ch01/"

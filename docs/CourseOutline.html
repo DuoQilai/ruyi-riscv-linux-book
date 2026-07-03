@@ -50,22 +50,79 @@
       padding: 16px;
       margin-bottom: 12px;
     }
-    .flow {
-      display: grid;
-      grid-template-columns: repeat(9, 1fr);
-      gap: 8px;
+    .ch-exp-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-    .flow-step {
-      padding: 12px 8px;
+    .ch-exp-header {
+      display: flex;
+      gap: 12px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .ch-exp-header span:first-child { flex: 1; }
+    .ch-exp-header span:last-child { flex: 1; }
+    .ch-exp-row {
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .ch-exp-ch {
+      flex: 1;
+      padding: 12px;
       border: 1px solid var(--border);
       border-radius: 6px;
-      min-height: 92px;
     }
-    .flow-step.mod-env { background: var(--mod-env); }
-    .flow-step.mod-board { background: var(--mod-board); }
-    .flow-step.mod-linux { background: var(--mod-linux); }
-    .flow-step.mod-lab { background: var(--mod-lab); border-style: dashed; }
-    .flow-step.mod-cap { background: var(--mod-cap); }
+    .ch-exp-ch.mod-env { background: var(--mod-env); }
+    .ch-exp-ch.mod-board { background: var(--mod-board); }
+    .ch-exp-ch.mod-linux { background: var(--mod-linux); }
+    .ch-exp-ch.mod-lab { background: var(--mod-lab); }
+    .ch-exp-arrow {
+      display: flex;
+      align-items: center;
+      font-size: 1.3rem;
+      color: #999;
+      flex-shrink: 0;
+    }
+    .ch-exp-lab {
+      flex: 1;
+      padding: 12px;
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .ch-exp-lab.mod-lab { background: var(--mod-lab); border-style: solid; }
+    .exp-tag {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      align-self: flex-start;
+    }
+    .exp-tag.todo {
+      background: #eee;
+      color: #888;
+    }
+    .exp-tag.done {
+      background: #ffe8b0;
+      color: #8a6d14;
+    }
+    .ch-exp-cap {
+      margin-top: 4px;
+      padding: 16px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+    }
+    .ch-exp-cap.mod-cap { background: var(--mod-cap); }
     .flow-ch {
       display: block;
       font-size: 0.9rem;
@@ -110,6 +167,12 @@
     .legend i.mod-linux { background: var(--mod-linux); }
     .legend i.mod-lab { background: var(--mod-lab); }
     .legend i.mod-cap { background: var(--mod-cap); }
+    .legend i.exp-tag.done { background: #ffe8b0; }
+    .legend i.exp-tag.todo { background: #eee; }
+    @media (max-width: 640px) {
+      .ch-exp-row { flex-direction: column; }
+      .ch-exp-arrow { transform: rotate(90deg); align-self: center; }
+    }
     .table-wrap {
       overflow-x: auto;
       background: #fff;
@@ -206,60 +269,95 @@
   </p>
 
   <div class="flow-wrap">
-    <div class="flow">
-      <div class="flow-step mod-env">
-        <span class="flow-ch">ch01</span>
-        <p class="flow-title">环境与开发板</p>
-        <p class="flow-desc">RuyiSDK、烧录、SSH/串口</p>
+    <div class="ch-exp-grid">
+      <div class="ch-exp-header"><span>章节</span><span>配套实验</span></div>
+      <div class="ch-exp-row">
+        <div class="ch-exp-ch mod-env">
+          <span class="flow-ch">ch01</span>
+          <p class="flow-title">环境与开发板</p>
+          <p class="flow-desc">RuyiSDK、烧录、SSH/串口</p>
+        </div>
+        <span class="ch-exp-arrow">→</span>
+        <div class="ch-exp-lab">
+          <span class="exp-tag todo">待开发</span>
+          <p class="flow-desc">环境搭建实验（规划中）</p>
+        </div>
       </div>
-      <div class="flow-step mod-env">
-        <span class="flow-ch">ch02</span>
-        <p class="flow-title">工具链与工程</p>
-        <p class="flow-desc">交叉编译、Makefile、首个 C 程序</p>
+      <div class="ch-exp-row">
+        <div class="ch-exp-ch mod-env">
+          <span class="flow-ch">ch02</span>
+          <p class="flow-title">工具链与工程</p>
+          <p class="flow-desc">交叉编译、Makefile、首个 C 程序</p>
+        </div>
+        <span class="ch-exp-arrow">→</span>
+        <div class="ch-exp-lab">
+          <span class="exp-tag todo">待开发</span>
+          <p class="flow-desc">编译部署实验（已实现，待整合）</p>
+        </div>
       </div>
-      <div class="flow-step mod-board">
-        <span class="flow-ch">ch03</span>
-        <p class="flow-title">GPIO / UART / 外设</p>
-        <p class="flow-desc">LED、串口、温湿度、PWM</p>
+      <div class="ch-exp-row">
+        <div class="ch-exp-ch mod-board">
+          <span class="flow-ch">ch03</span>
+          <p class="flow-title">GPIO / UART / 外设</p>
+          <p class="flow-desc">LED、串口、温湿度、PWM</p>
+        </div>
+        <span class="ch-exp-arrow">→</span>
+        <div class="ch-exp-lab mod-lab">
+          <span class="exp-tag done">实验 1</span>
+          <p class="flow-title">温控风扇</p>
+          <p class="flow-desc">采集 → 阈值 → 风扇</p>
+        </div>
       </div>
-      <div class="flow-step mod-lab">
-        <span class="flow-ch">实验 1</span>
-        <p class="flow-title">温控风扇</p>
-        <p class="flow-desc">采集 → 阈值 → 风扇</p>
+      <div class="ch-exp-row">
+        <div class="ch-exp-ch mod-linux">
+          <span class="flow-ch">ch04</span>
+          <p class="flow-title">文件 / 配置 / 日志</p>
+          <p class="flow-desc">数据落盘、可配置启动</p>
+        </div>
+        <span class="ch-exp-arrow">→</span>
+        <div class="ch-exp-lab">
+          <span class="exp-tag todo">待开发</span>
+          <p class="flow-desc">配置与日志实验（规划中）</p>
+        </div>
       </div>
-      <div class="flow-step mod-linux">
-        <span class="flow-ch">ch04</span>
-        <p class="flow-title">文件 / 配置 / 日志</p>
-        <p class="flow-desc">数据落盘、可配置启动</p>
+      <div class="ch-exp-row">
+        <div class="ch-exp-ch mod-linux">
+          <span class="flow-ch">ch05</span>
+          <p class="flow-title">网络与 MQTT</p>
+          <p class="flow-desc">Broker、订阅发布、远程控设备</p>
+        </div>
+        <span class="ch-exp-arrow">→</span>
+        <div class="ch-exp-lab mod-lab">
+          <span class="exp-tag done">实验 2</span>
+          <p class="flow-title">MQTT 远程控灯</p>
+          <p class="flow-desc">手机 → 网络 → LED</p>
+        </div>
       </div>
-      <div class="flow-step mod-linux">
-        <span class="flow-ch">ch05</span>
-        <p class="flow-title">网络与 MQTT</p>
-        <p class="flow-desc">Broker、订阅发布、远程控设备</p>
+      <div class="ch-exp-row">
+        <div class="ch-exp-ch mod-linux">
+          <span class="flow-ch">ch06</span>
+          <p class="flow-title">线程与协同</p>
+          <p class="flow-desc">采集 / MQTT / 控制解耦</p>
+        </div>
+        <span class="ch-exp-arrow">→</span>
+        <div class="ch-exp-lab">
+          <span class="exp-tag todo">待开发</span>
+          <p class="flow-desc">多线程实验（规划中）</p>
+        </div>
       </div>
-      <div class="flow-step mod-lab">
-        <span class="flow-ch">实验 2</span>
-        <p class="flow-title">MQTT 远程控灯</p>
-        <p class="flow-desc">手机 → 网络 → LED</p>
-      </div>
-      <div class="flow-step mod-linux">
-        <span class="flow-ch">ch06</span>
-        <p class="flow-title">线程与协同</p>
-        <p class="flow-desc">采集 / MQTT / 控制解耦</p>
-      </div>
-      <div class="flow-step mod-cap">
-        <span class="flow-ch">综合项目</span>
-        <p class="flow-title">智能环境终端</p>
-        <p class="flow-desc">整合 + 时序异常检测推理</p>
-      </div>
+    </div>
+    <div class="ch-exp-cap mod-cap">
+      <span class="flow-ch">综合项目</span>
+      <p class="flow-title">智能环境终端</p>
+      <p class="flow-desc">整合 ch01–ch06 + 实验 1/2 + 时序异常检测推理</p>
     </div>
   </div>
   <div class="legend">
     <span><i class="mod-env"></i>开发环境篇</span>
     <span><i class="mod-board"></i>开发板基础篇</span>
     <span><i class="mod-linux"></i>Linux 应用篇</span>
-    <span><i class="mod-lab"></i>阶段实验</span>
-    <span><i class="mod-cap"></i>综合大项目</span>
+    <span><i class="exp-tag done"></i>实验已有</span>
+    <span><i class="exp-tag todo"></i>待开发</span>
   </div>
 
   <h2>术语表</h2>
