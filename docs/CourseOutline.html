@@ -648,13 +648,13 @@
 
         <!-- ch03 -->
         <tr class="mod-board">
-          <td rowspan="8" class="merge">ch03</td>
-          <td rowspan="8" class="merge">开发板基础篇</td>
+          <td rowspan="12" class="merge">ch03</td>
+          <td rowspan="12" class="merge">开发板基础篇</td>
           <td class="section">3.1 GPIO 输出：LED 闪烁</td>
-          <td rowspan="8" class="merge section">板级读—算—控能力</td>
-          <td rowspan="8" class="merge section">Blink；UART Echo；DHT22；PWM 风扇</td>
-          <td rowspan="8" class="merge section">外设驱动 + 串口框架</td>
-          <td rowspan="8" class="merge glossary section"><dl>
+          <td rowspan="12" class="merge section">板级读—算—控能力</td>
+          <td rowspan="12" class="merge section">Blink；UART Echo；DHT22；PWM 风扇</td>
+          <td rowspan="12" class="merge section">外设驱动 + 串口框架</td>
+          <td rowspan="12" class="merge glossary section"><dl>
             <dt>GPIO</dt><dd>可由软件设为输入/输出的芯片引脚。</dd>
             <dt>UART</dt><dd>按波特率逐字节收发的硬件串口。</dd>
             <dt>DHT22</dt><dd>单总线温湿度传感器，需严格时序读取。</dd>
@@ -669,23 +669,11 @@
         <tr class="mod-board"><td class="section">3.6 PWM 控制风扇或 LED 亮度</td></tr>
         <tr class="mod-board"><td class="section">3.7 选读：OLED 显示实时温湿度</td></tr>
         <tr class="mod-board"><td class="section">3.8 状态机组织「采集—判断—输出」逻辑</td></tr>
-
-        <!-- lab1 -->
-        <tr class="mod-lab">
-          <td rowspan="4" class="merge">实验1</td>
-          <td rowspan="4" class="merge">阶段实验</td>
-          <td class="section">L1.1 接线：温湿度传感器 + 风扇驱动</td>
-          <td rowspan="4" class="merge section">本地自动化闭环</td>
-          <td rowspan="4" class="merge section">阈值可配置；串口打印温度与风扇状态</td>
-          <td rowspan="4" class="merge section">温控风扇可演示</td>
-          <td rowspan="4" class="merge glossary section"><dl>
-            <dt>阈值控制</dt><dd>温度高于上限开风扇，低于下限关风扇；可加滞回避免抖动。</dd>
-            <dt>继电器 / MOSFET</dt><dd>用低压 GPIO 控制风扇等大电流负载的开关模块。</dd>
-          </dl></td>
-        </tr>
-        <tr class="mod-lab"><td class="section">L1.2 周期性采样与环境温度读取</td></tr>
-        <tr class="mod-lab"><td class="section">L1.3 阈值判断与风扇 PWM/开关控制</td></tr>
-        <tr class="mod-lab"><td class="section">L1.4 串口打印与简单异常（传感器读失败）</td></tr>
+        <!-- 实验1：温控风扇，归属 ch03 -->
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 实验 1 温控风扇</strong>：L1.1 接线：温湿度传感器 + 风扇驱动</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;">L1.2 周期性采样与环境温度读取</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;">L1.3 阈值判断与风扇 PWM/开关控制</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;">L1.4 串口打印与简单异常（传感器读失败）</td></tr>
 
         <!-- ch04 -->
         <tr class="mod-linux">
@@ -707,13 +695,13 @@
 
         <!-- ch05 -->
         <tr class="mod-linux">
-          <td rowspan="6" class="merge">ch05</td>
-          <td rowspan="6" class="merge">Linux 应用篇</td>
+          <td rowspan="10" class="merge">ch05</td>
+          <td rowspan="10" class="merge">Linux 应用篇</td>
           <td class="section">5.1 TCP/IP 与开发板联网基础</td>
-          <td rowspan="6" class="merge section">实现 MQTT 订阅发布控外设</td>
-          <td rowspan="6" class="merge section">连接 Broker；订阅 <code>home/led</code>；解析 JSON/文本 payload</td>
-          <td rowspan="6" class="merge section">可复用 MQTT 客户端模块</td>
-          <td rowspan="6" class="merge glossary section"><dl>
+          <td rowspan="10" class="merge section">实现 MQTT 订阅发布控外设</td>
+          <td rowspan="10" class="merge section">连接 Broker；订阅 <code>home/led</code>；解析 JSON/文本 payload</td>
+          <td rowspan="10" class="merge section">可复用 MQTT 客户端模块</td>
+          <td rowspan="10" class="merge glossary section"><dl>
             <dt>MQTT</dt><dd>轻量发布/订阅消息协议；设备与手机通过 Broker 间接通信，无需直连。</dd>
             <dt>Broker</dt><dd>消息中转（如 Mosquitto）；发布者发主题，订阅者收主题。</dd>
             <dt>主题（topic）</dt><dd>消息频道名，如 <code>home/led</code>、<code>sensor/alert</code>。</dd>
@@ -726,19 +714,11 @@
         <tr class="mod-linux"><td class="section">5.5 发布状态主题（温度、LED 状态）</td></tr>
         <tr class="mod-linux"><td class="section">5.6 选读：TLS / 用户名密码（生产环境）</td></tr>
 
-        <!-- lab2 -->
-        <tr class="mod-lab">
-          <td rowspan="4" class="merge">实验2</td>
-          <td rowspan="4" class="merge">阶段实验</td>
-          <td class="section">L2.1 Broker 与手机 MQTT App 联调</td>
-          <td rowspan="4" class="merge section">远程控制闭环</td>
-          <td rowspan="4" class="merge section">手机发 <code>on</code>/<code>off</code>；板端 LED 响应；状态回传</td>
-          <td rowspan="4" class="merge section">MQTT 控灯可演示</td>
-          <td rowspan="4" class="merge glossary section">无</td>
-        </tr>
-        <tr class="mod-lab"><td class="section">L2.2 板端订阅 LED 控制主题</td></tr>
-        <tr class="mod-lab"><td class="section">L2.3 GPIO 驱动 LED；发布当前状态</td></tr>
-        <tr class="mod-lab"><td class="section">L2.4 与实验 1 代码目录对齐（为综合项目做准备）</td></tr>
+        <!-- 实验2：MQTT 远程控灯，归属 ch05 -->
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 实验 2 MQTT 远程控灯</strong>：L2.1 Broker 与手机 MQTT App 联调</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;">L2.2 板端订阅 LED 控制主题</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;">L2.3 GPIO 驱动 LED；发布当前状态</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;">L2.4 与实验 1 代码目录对齐（为综合项目做准备）</td></tr>
 
         <!-- ch06 -->
         <tr class="mod-linux">
