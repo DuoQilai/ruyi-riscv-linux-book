@@ -51,48 +51,36 @@
       margin-bottom: 12px;
     }
     .ch-exp-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .ch-exp-cell {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-    }
-    .ch-exp-header {
-      display: flex;
-      gap: 12px;
-      padding: 8px 12px;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--muted);
-    }
-    .ch-exp-header span:first-child { flex: 1; }
-    .ch-exp-header span:last-child { flex: 1; }
-    .ch-exp-row {
-      display: flex;
-      gap: 12px;
-      align-items: stretch;
+      gap: 8px;
     }
     .ch-exp-ch {
-      flex: 1;
-      padding: 12px;
+      padding: 14px 10px;
       border: 1px solid var(--border);
       border-radius: 6px;
+      text-align: center;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .ch-exp-ch.mod-env { background: var(--mod-env); }
     .ch-exp-ch.mod-board { background: var(--mod-board); }
     .ch-exp-ch.mod-linux { background: var(--mod-linux); }
-    .ch-exp-ch.mod-lab { background: var(--mod-lab); }
-    .ch-exp-arrow {
-      display: flex;
-      align-items: center;
-      font-size: 1.3rem;
-      color: #999;
-      flex-shrink: 0;
-    }
     .ch-exp-lab {
-      flex: 1;
-      padding: 12px;
+      padding: 14px 10px;
       border: 1px dashed var(--border);
       border-radius: 6px;
       background: #fafafa;
+      text-align: center;
+      min-height: 90px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -269,85 +257,71 @@
   </p>
 
   <div class="flow-wrap">
+    <!-- Row 1: Chapters -->
     <div class="ch-exp-grid">
-      <div class="ch-exp-header"><span>章节</span><span>配套实验</span></div>
-      <div class="ch-exp-row">
-        <div class="ch-exp-ch mod-env">
-          <span class="flow-ch">ch01</span>
-          <p class="flow-title">环境与开发板</p>
-          <p class="flow-desc">RuyiSDK、烧录、SSH/串口</p>
-        </div>
-        <span class="ch-exp-arrow">→</span>
-        <div class="ch-exp-lab mod-lab">
-          <span class="exp-tag done">已开发</span>
-          <p class="flow-title">环境搭建与开发通道</p>
-          <p class="flow-desc">ruyi 安装 → 镜像烧录 → SSH/SCP → 首次启动验证</p>
-        </div>
+      <div class="ch-exp-ch mod-env">
+        <span class="flow-ch">ch01</span>
+        <p class="flow-title">环境与开发板</p>
+        <p class="flow-desc">RuyiSDK、烧录、SSH/串口</p>
       </div>
-      <div class="ch-exp-row">
-        <div class="ch-exp-ch mod-env">
-          <span class="flow-ch">ch02</span>
-          <p class="flow-title">工具链与工程</p>
-          <p class="flow-desc">交叉编译、Makefile、首个 C 程序</p>
-        </div>
-        <span class="ch-exp-arrow">→</span>
-        <div class="ch-exp-lab mod-lab">
-          <span class="exp-tag done">已开发</span>
-          <p class="flow-title">交叉编译与工程构建</p>
-          <p class="flow-desc">Hello World → ELF 分析 → Makefile → 统一工程目录</p>
-        </div>
+      <div class="ch-exp-ch mod-env">
+        <span class="flow-ch">ch02</span>
+        <p class="flow-title">工具链与工程</p>
+        <p class="flow-desc">交叉编译、Makefile、首个 C 程序</p>
       </div>
-      <div class="ch-exp-row">
-        <div class="ch-exp-ch mod-board">
-          <span class="flow-ch">ch03</span>
-          <p class="flow-title">GPIO / UART / 外设</p>
-          <p class="flow-desc">LED、串口、温湿度、PWM</p>
-        </div>
-        <span class="ch-exp-arrow">→</span>
-        <div class="ch-exp-lab mod-lab">
-          <span class="exp-tag done">实验 1</span>
-          <p class="flow-title">温控风扇</p>
-          <p class="flow-desc">采集 → 阈值 → 风扇</p>
-        </div>
+      <div class="ch-exp-ch mod-board">
+        <span class="flow-ch">ch03</span>
+        <p class="flow-title">GPIO / UART / 外设</p>
+        <p class="flow-desc">LED、串口、温湿度、PWM</p>
       </div>
-      <div class="ch-exp-row">
-        <div class="ch-exp-ch mod-linux">
-          <span class="flow-ch">ch04</span>
-          <p class="flow-title">文件 / 配置 / 日志</p>
-          <p class="flow-desc">数据落盘、可配置启动</p>
-        </div>
-        <span class="ch-exp-arrow">→</span>
-        <div class="ch-exp-lab">
-          <span class="exp-tag todo">待开发</span>
-          <p class="flow-desc">配置与日志实验（规划中）</p>
-        </div>
+      <div class="ch-exp-ch mod-linux">
+        <span class="flow-ch">ch04</span>
+        <p class="flow-title">文件 / 配置 / 日志</p>
+        <p class="flow-desc">数据落盘、可配置启动</p>
       </div>
-      <div class="ch-exp-row">
-        <div class="ch-exp-ch mod-linux">
-          <span class="flow-ch">ch05</span>
-          <p class="flow-title">网络与 MQTT</p>
-          <p class="flow-desc">Broker、订阅发布、远程控设备</p>
-        </div>
-        <span class="ch-exp-arrow">→</span>
-        <div class="ch-exp-lab mod-lab">
-          <span class="exp-tag done">实验 2</span>
-          <p class="flow-title">MQTT 远程控灯</p>
-          <p class="flow-desc">手机 → 网络 → LED</p>
-        </div>
+      <div class="ch-exp-ch mod-linux">
+        <span class="flow-ch">ch05</span>
+        <p class="flow-title">网络与 MQTT</p>
+        <p class="flow-desc">Broker、订阅发布、远程控设备</p>
       </div>
-      <div class="ch-exp-row">
-        <div class="ch-exp-ch mod-linux">
-          <span class="flow-ch">ch06</span>
-          <p class="flow-title">线程与协同</p>
-          <p class="flow-desc">采集 / MQTT / 控制解耦</p>
-        </div>
-        <span class="ch-exp-arrow">→</span>
-        <div class="ch-exp-lab">
-          <span class="exp-tag todo">待开发</span>
-          <p class="flow-desc">多线程实验（规划中）</p>
-        </div>
+      <div class="ch-exp-ch mod-linux">
+        <span class="flow-ch">ch06</span>
+        <p class="flow-title">线程与协同</p>
+        <p class="flow-desc">采集 / MQTT / 控制解耦</p>
       </div>
     </div>
+    <!-- Row 2: Experiments -->
+    <div class="ch-exp-grid">
+      <div class="ch-exp-lab mod-lab">
+        <span class="exp-tag done">已开发</span>
+        <p class="flow-title">环境搭建与开发通道</p>
+        <p class="flow-desc">ruyi 安装 → 烧录 → SSH/SCP → 验证</p>
+      </div>
+      <div class="ch-exp-lab mod-lab">
+        <span class="exp-tag done">已开发</span>
+        <p class="flow-title">交叉编译与工程构建</p>
+        <p class="flow-desc">Hello → ELF → Makefile → 工程目录</p>
+      </div>
+      <div class="ch-exp-lab mod-lab">
+        <span class="exp-tag done">实验 1</span>
+        <p class="flow-title">温控风扇</p>
+        <p class="flow-desc">采集 → 阈值 → 风扇</p>
+      </div>
+      <div class="ch-exp-lab">
+        <span class="exp-tag todo">待开发</span>
+        <p class="flow-desc">配置与日志实验</p>
+      </div>
+      <div class="ch-exp-lab mod-lab">
+        <span class="exp-tag done">实验 2</span>
+        <p class="flow-title">MQTT 远程控灯</p>
+        <p class="flow-desc">手机 → 网络 → LED</p>
+      </div>
+      <div class="ch-exp-lab">
+        <span class="exp-tag todo">待开发</span>
+        <p class="flow-desc">多线程协同实验</p>
+      </div>
+    </div>
+    <!-- Capstone: full width -->
     <div class="ch-exp-cap mod-cap">
       <span class="flow-ch">综合项目</span>
       <p class="flow-title">智能环境终端</p>
@@ -537,7 +511,7 @@
   </div>
 
   <h2>章节总览</h2>
-  <p class="note">每章一行：目标、实验、成果。阶段实验与综合项目单独列出。</p>
+  <p class="note">每章一行：目标、实验、成果。实验归属对应章节（ch03=实验1, ch05=实验2）。综合项目单独列出。</p>
   <div class="table-wrap">
     <table class="summary">
       <thead>
@@ -575,14 +549,6 @@
           <td>Blink/按键；UART Echo；DHT22 读取；PWM 驱动风扇/LED</td>
           <td>可复用的外设驱动与串口调试框架</td>
         </tr>
-        <tr class="mod-lab">
-          <td>实验 1</td>
-          <td>阶段实验</td>
-          <td>温度传感器 + 风扇</td>
-          <td>完成第一个本地嵌入式控制闭环</td>
-          <td>读温度 → 与阈值比较 → 控制风扇；串口打印状态</td>
-          <td>可演示的温控风扇程序（C）</td>
-        </tr>
         <tr class="mod-linux">
           <td>ch04</td>
           <td>Linux 应用篇</td>
@@ -598,14 +564,6 @@
           <td>理解物联网消息模型，实现订阅与发布</td>
           <td>连接 Broker；订阅控制主题；解析 payload 驱动 GPIO</td>
           <td>可复用的 MQTT 客户端模块（C）</td>
-        </tr>
-        <tr class="mod-lab">
-          <td>实验 2</td>
-          <td>阶段实验</td>
-          <td>MQTT 远程控灯</td>
-          <td>完成「手机 → 网络 → 板子 → LED」远程闭环</td>
-          <td>Mosquitto + 手机 App 发 <code>on</code>/<code>off</code>；板端订阅并控灯</td>
-          <td>可演示的远程控灯（C + MQTT）</td>
         </tr>
         <tr class="mod-linux">
           <td>ch06</td>
