@@ -134,7 +134,7 @@
   <a class="sub" href="#s2.2-project">统一工程目录</a>
   <a class="sub" href="#s2.2-steps">操作步骤</a>
   <div class="divider"></div>
-  <a href="#s2.3">2.3 CoreMark 选读</a>
+  <a href="#s2.3">2.3 CoreMark 算力基准</a>
 </nav>
 
 <!-- ═══════════════════════════════════════════ -->
@@ -144,7 +144,7 @@
   <p class="subtitle">host / target / sysroot → 交叉编译 → ELF 分析<br>Makefile 工程化 → 统一目录规范<br>— 2.1 / 2.2 / 2.3 —</p>
   <div class="meta">
     <span>工程模板：hello + project-template</span>
-    <span>工具链：riscv64-linux-gnu-gcc</span>
+    <span>工具链：riscv64-unknown-linux-gnu-gcc</span>
   </div>
 </div>
 
@@ -155,7 +155,7 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置条件：</strong>本章假设你已完成第一章全部内容——ruyi 已安装、工具链已验证、开发板已启动且 SSH/SCP 通道可用。<strong>2.3 为选读内容，不阻塞实验验收。</strong>每节约需 90–120 分钟（含实验）。
+  <strong>前置条件：</strong>本章假设你已完成第一章全部内容——ruyi 已安装、工具链已验证、开发板已启动且 SSH/SCP 通道可用。每节约需 90–120 分钟（含本章 <code>lab.html</code>）。
 </div>
 
 <h3>你需要准备什么</h3>
@@ -171,7 +171,7 @@
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>2.1 交叉编译全流程</h4><p>理解 host/target/sysroot，使用交叉编译器构建第一个 RISC-V 程序，部署到板端运行并用 readelf/ldd 分析二进制结构。</p></div>
   <div class="card"><h4>2.2 Makefile 与工程目录</h4><p>编写 Makefile 规则与变量，理解增量构建与 clean，掌握 src/include/build 统一目录规范——后续实验的标准工程模板。</p></div>
-  <div class="card"><h4>2.3 选读：CoreMark</h4><p>了解 CPU 基准测试的用途与局限，在板端运行 CoreMark 并理性解读分数。</p></div>
+  <div class="card"><h4>2.3 CoreMark 算力基准</h4><p>了解 CPU 基准测试的用途与局限；动手跑分见本章 <code>lab.html</code>。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
@@ -180,7 +180,7 @@
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<section>
+<section id="s2.1">
 <div class="section-num">2.1</div>
 <h2>交叉编译全流程：从源码到板端可执行文件</h2>
 
@@ -256,7 +256,7 @@
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<section>
+<section id="s2.2">
 <div class="section-num">2.2</div>
 <h2>Makefile 与工程目录规范</h2>
 
@@ -314,7 +314,7 @@
 <span class="p">$</span> make CFLAGS='-Wall -Wextra -O0 -g'</pre>
 
 <div class="warn">
-  <strong>警告实验：</strong>在 <code>main.c</code> 中临时引入 <code>int unused = 0;</code>，执行 <code>make</code> 观察 <code>-Wall</code> 警告，修复后恢复原代码。<strong>命令行必须以 Tab 开头——用空格替代会触发 <code>missing separator</code> 错误。</strong>
+  <strong>课堂提示：</strong>跟做时可在 <code>main.c</code> 临时加入未使用变量，观察 <code>-Wall</code> 警告。<strong>Makefile 命令行必须以 Tab 缩进</strong>，用空格会触发 <code>missing separator</code>。
 </div>
 
 <h4>阶段 B：多文件工程</h4>
@@ -348,40 +348,35 @@
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<section>
-<div class="section-num">2.3 <span class="opt-tag">选读</span></div>
+<section id="s2.3">
+<div class="section-num">2.3</div>
 <h2>CoreMark 算力基准</h2>
 
 <h3>学习目标</h3>
 <div class="card-grid">
-  <div class="card"><h4>基准认知</h4><p>了解 CoreMark 的测试范围与局限性</p></div>
-  <div class="card"><h4>板端运行</h4><p>获取源码、交叉编译、部署到板端并解读分数</p></div>
-  <div class="card"><h4>理性解读</h4><p>区分 CPU 算力与真实应用性能（I/O、外设、网络）</p></div>
-</div>
-
-<div class="info">
-  <strong>本讲为选读，不阻塞主线实验验收。</strong>课程综合项目验收不依赖 CoreMark 分数。价值在于建立「这块板子 CPU 大概什么量级」的直觉，为后续是否使用软解码、图像处理等提供参考。
+  <div class="card"><h4>基准认知</h4><p>CoreMark 测什么、不测什么</p></div>
+  <div class="card"><h4>分数解读</h4><p>CoreMark 分数与 CoreMark/MHz 的含义与局限</p></div>
+  <div class="card"><h4>与课程关系</h4><p>算力直觉如何帮助评估后续算法与外设实验，而非替代真实场景测试</p></div>
 </div>
 
 <h3>CoreMark 是什么</h3>
-<p>CoreMark 是 EEMBC 发布的轻量级 CPU 基准测试，主要测试列表操作、矩阵运算、状态机等核心逻辑。结果以 CoreMark 分数或 CoreMark/MHz 报告。它衡量的是 CPU 纯算力——不代表 GPIO 抖动、网络吞吐或存储速度等系统级表现。</p>
+<p>CoreMark 是 EEMBC 发布的轻量级 CPU 基准，主要覆盖列表、矩阵、状态机等核心逻辑。结果常以绝对分数或 CoreMark/MHz 报告。它反映 CPU 纯算力，<strong>不能</strong>代表 GPIO 时序、网络、存储 I/O 等系统能力。</p>
 
-<h3>操作步骤</h3>
-<ol class="steps">
-  <li><span class="step-num">1</span><div><strong>获取源码</strong><br>从 EEMBC 官方或课程镜像站获取 CoreMark，解压后阅读 <code>README.md</code>。</div></li>
-  <li><span class="step-num">2</span><div><strong>选择编译方式</strong><br>板端为 Linux 用户态，应使用 Linux/POSIX 移植（非裸机移植）。<br><code>export CC=riscv64-unknown-linux-gnu-gcc</code><br><code>make PORT_DIR=linux XCFLAGS="-O2" link</code><br><code>file coremark.exe</code></div></li>
-  <li><span class="step-num">3</span><div><strong>部署与运行</strong><br><code>scp coremark.exe user@board-ip:~/ && ssh user@board-ip './coremark.exe'</code><br>记录 Iterations、Total time、CoreMark 分数。</div></li>
-  <li><span class="step-num">4</span><div><strong>写简短结论</strong><br>CoreMark 高分意味着 MQTT 或传感器实验一定更流畅吗？为什么？</div></li>
-</ol>
+<h3>为什么要学</h3>
+<p>交叉编译与 Makefile 解决「程序能跑」；CoreMark 帮助建立「这块板子算力大概什么量级」的直觉，便于判断软解码、图像处理等是否现实。本章动手在板端跑分——步骤在 <code>lab.html</code>。</p>
 
-<h3>理解分数</h3>
-<p>编译器版本、<code>-O</code> 优化级别、glibc/musl、是否固定 CPU 频率都会导致分数差异。只作同环境前后对比，不追求绝对名次。</p>
+<h3>理解分数时注意</h3>
+<ul>
+  <li>编译器版本、<code>-O</code> 级别、glibc/musl、CPU 频率都会影响结果。</li>
+  <li>只宜同环境前后对比，不宜盲目攀比网上截图。</li>
+  <li>MQTT、传感器类实验是否流畅，还取决于 I/O 与延迟，不能只看 CoreMark。</li>
+</ul>
 
 <h3>课堂练习</h3>
-<p>列举三项不会被 CoreMark 单独反映、但在本课程实验中很重要的系统能力。</p>
+<p>列举三项 CoreMark <strong>无法单独反映</strong>、但在本课程实验中很重要的系统能力。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果（可选）：</strong>CoreMark 板端运行日志 · 关于「算力基准 vs 课程应用」的简短评述。
+  <strong>本节成果：</strong>能口头说明 CoreMark 用途与局限 · 板端跑分与简短评述见 <code>lab.html</code>。
 </div>
 </section>
 

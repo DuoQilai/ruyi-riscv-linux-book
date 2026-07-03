@@ -169,9 +169,9 @@
   <a class="sub" href="#s1.2-firstboot">首次启动</a>
   <a class="sub" href="#s1.2-ssh">SSH 与 SCP</a>
   <div class="divider"></div>
-  <a href="#s1.3">1.3 provision 适用边界</a>
+  <a href="#s1.3">1.3 开发板一键准备</a>
   <a class="sub" href="#s1.3-objectives">学习目标</a>
-  <a class="sub" href="#s1.3-concept">provision 概念</a>
+  <a class="sub" href="#s1.3-concept">一键准备是什么</a>
   <a class="sub" href="#s1.3-compare">手工 vs 自动</a>
   <a class="sub" href="#s1.3-risk">风险检查与决策</a>
 </nav>
@@ -220,7 +220,7 @@
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>1.1 平台认知与环境安装</h4><p>理解 RISC-V 平台的六个层次，安装 ruyi 与交叉编译工具链，验证工具链可用性。</p></div>
   <div class="card"><h4>1.2 镜像烧录与开发通道</h4><p>将 RevyOS 烧录到 LicheePi 4A，完成首次启动检查，建立串口 / SSH / SCP 三通道。</p></div>
-  <div class="card"><h4>1.3 provision 适用边界</h4><p>理解自动化设备准备的适用场景与风险，建立手工 vs 自动的决策框架。</p></div>
+  <div class="card"><h4>1.3 开发板一键准备</h4><p>理解 ruyi 自动装板子的适用场景与风险，建立手工烧录 vs 一键准备的决策框架。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
@@ -229,7 +229,7 @@
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<section>
+<section id="s1.1">
 <div class="section-num">1.1</div>
 <h2>RISC-V 平台认知与 ruyi 开发环境安装</h2>
 
@@ -265,7 +265,7 @@
   ├─ 软件源与包信息        → 查询可用工具链、镜像与设备支持
   ├─ 工具链获取            → 下载并安装 RISC-V GNU Toolchain
   ├─ 环境与配置管理        → 管理不同项目的工具链环境
-  └─ 设备支持查询          → 查看受支持的开发板与 provision 方式
+  └─ 设备支持查询          → 查看受支持的开发板与一键准备方式
             ↓
       GCC / binutils / sysroot</div>
 
@@ -290,11 +290,12 @@
 <h3 id="s1.1-steps">操作步骤</h3>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>记录主机环境</strong><br><code>uname -a</code> / <code>uname -m</code> — 确认主机架构。主机与目标板架构可以不同，这正是交叉编译的原因。</div></li>
+  <li><span class="step-num">1</span><div><strong>记录主机环境</strong><br><code>uname -a</code> / <code>uname -m</code> — 确认主机架构，记入个人环境清单。</div></li>
   <li><span class="step-num">2</span><div><strong>安装 ruyi 并确认命令位置</strong><br><code>command -v ruyi</code> 确认 shell 实际调用的文件。<code>ruyi --version</code> 记录版本号。</div></li>
   <li><span class="step-num">3</span><div><strong>更新软件源并查询工具链</strong><br><code>ruyi update</code> 更新源。<code>ruyi list | grep toolchain</code> 搜索可用工具链。</div></li>
   <li><span class="step-num">4</span><div><strong>安装并验证编译器</strong><br><code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code> 应返回 <code>riscv64-unknown-linux-gnu</code>。</div></li>
-  <li><span class="step-num">5</span><div><strong>最小编译验证</strong><br>编译 <code>int main(void) { return 0; }</code> → <code>file</code> 检查产物为 RISC-V ELF。正确验收方式是确认目标架构——在主机上 <code>./a.out</code> 会因架构不同而报错。</div></li>
+  <li><span class="step-num">5</span><div><strong>最小编译验证</strong><br>编译 <code>int main(void) { return 0; }</code> → <code>file</code> 检查产物为 RISC-V ELF。在主机上 <code>./a.out</code> 可能因架构不同而无法运行——用 <code>file</code> 验收即可。</div></li>
+  <li><span class="step-num">6</span><div><strong>平台分层图与接口标注</strong><br>按上文分层图绘制个人版本，在 LicheePi 4A 资料上标出电源、串口、网络与启动介质——详见本章 <code>lab.html</code> 环节一。</div></li>
 </ol>
 
 <h3 id="s1.1-exercises">课堂练习</h3>
@@ -309,7 +310,7 @@
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<section>
+<section id="s1.2">
 <div class="section-num">1.2</div>
 <h2>镜像烧录、首次启动与开发通道建立</h2>
 
@@ -397,7 +398,7 @@
 <span class="c"># 下载</span>
 <span class="p">$</span> scp user@board-ip:/etc/os-release ./board-os-release.txt</pre>
 
-<h3 id="s1.1-exercises">课堂练习</h3>
+<h3 id="s1.2-exercises">课堂练习</h3>
 <ol>
   <li>将「开发板无法启动」拆分为镜像、烧录、供电、启动介质和显示通道五类原因，每类写出一个验证方法。</li>
   <li>以下故障分别应优先使用串口还是 SSH：板端没有 IP？sshd 配置错误？系统启动失败？需要批量上传文件？</li>
@@ -409,31 +410,37 @@
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<section>
+<section id="s1.3">
 <div class="section-num">1.3</div>
-<h2>ruyi device provision 适用边界</h2>
+<h2>开发板一键准备：适用边界与风险</h2>
 
 <h3 id="s1.3-objectives">学习目标</h3>
 <div class="card-grid">
-  <div class="card"><h4>provision 概念</h4><p>理解自动化设备准备的目的、输入、输出和潜在风险</p></div>
+  <div class="card"><h4>一键准备是什么</h4><p>理解 ruyi 自动下载镜像、写入板卡、生成指引等流程的目的与风险</p></div>
   <div class="card"><h4>设备查询</h4><p>使用当前 ruyi 版本查询设备支持状态，不凭名称猜测</p></div>
-  <div class="card"><h4>六维对比</h4><p>对比手工烧录流程与自动化 provision 的优劣</p></div>
-  <div class="card"><h4>风险决策</h4><p>根据六项检查做出自动或手工的路径选择</p></div>
+  <div class="card"><h4>六维对比</h4><p>对比手工烧录（§1.2）与一键准备的优劣</p></div>
+  <div class="card"><h4>风险决策</h4><p>根据六项检查做出用手工或尝试一键准备的路径选择</p></div>
 </div>
 
-<h3 id="s1.3-concept">provision 是什么</h3>
-<p>Device provision 是把设备准备成可使用状态的自动化过程，可能包括下载镜像、选择设备变体、写入存储介质或生成操作指引。它的价值是减少重复步骤，但自动化不消除风险——误选磁盘、断电或版本不匹配的风险依然存在。<strong>「能运行命令」不等于「适合运行命令」。</strong></p>
+<h3 id="s1.3-concept">开发板一键准备是什么</h3>
+<p>通过 <code>ruyi</code> 把开发板准备成可上手状态的一整套自动化流程，可能包括下载镜像、选择板卡型号、写入存储介质或给出操作指引。价值是少重复劳动；但误选磁盘、断电、版本不匹配等风险仍在。<strong>「命令能跑」不等于「适合现在跑」。</strong></p>
 
-<h3 id="s1.3-compare">手工流程 vs 自动化：六维对比</h3>
+<h3 id="s1.3-compare">手工烧录 vs 一键准备：六维对比</h3>
 <table>
-  <tr><th>维度</th><th>手工流程（§1.2）</th><th>自动化 provision</th></tr>
+  <tr><th>维度</th><th>手工流程（§1.2）</th><th>一键准备</th></tr>
   <tr><td>控制粒度</td><td>每步可控，可随时停止</td><td>流程封装，中断后需恢复</td></tr>
   <tr><td>适用条件</td><td>有镜像和烧录工具即可</td><td>设备必须在软件源中明确列出</td></tr>
-  <tr><td>误操作风险</td><td>人为确认每一步，可发现异常</td><td>自动化写入可能跳过确认步骤</td></tr>
+  <tr><td>误操作风险</td><td>人为确认每一步，可发现异常</td><td>自动写入可能跳过确认步骤</td></tr>
   <tr><td>可调试性</td><td>高，每步可单独验证</td><td>低，失败后需拆解自动化步骤</td></tr>
   <tr><td>重复效率</td><td>低，需重复执行相同命令</td><td>高，一条命令完成多步</td></tr>
   <tr><td>建议场景</td><td>首次使用、设备未列出、数据风险高</td><td>设备明确支持、重复部署、空白介质</td></tr>
 </table>
+
+<h3 id="s1.3-query">如何查询「能不能一键准备」</h3>
+<pre><span class="c"># 以你本机 ruyi 版本帮助为准</span>
+<span class="p">$</span> ruyi device --help
+<span class="p">$</span> ruyi device provision --help</pre>
+<p>若当前版本没有相关子命令，记录版本与帮助输出即可——「当前路径不支持一键准备」是有效结论。具体决策练习见 <code>lab.html</code> 环节三。</p>
 
 <h3 id="s1.3-risk">六项风险检查</h3>
 <p>在运行任何写入操作前逐项确认：</p>
@@ -447,7 +454,7 @@
 </ol>
 
 <div class="warn">
-  <strong>关键原则：</strong>六项检查全部确认后，方可执行自动 provision。任一项存疑都应停止自动写入，改用 §1.2 手工流程。提交「当前版本不支持该设备」并描述手工替代方案，同样是合格的实验结论。安全优先于自动化。
+  <strong>关键原则：</strong>六项检查全部确认后，方可尝试一键准备。任一项存疑都应停用手动写入以外的自动流程，改用 §1.2 手工烧录。记录「当前版本不支持该设备」并说明手工替代路径，同样是合格结论。安全优先于省事。
 </div>
 
 <h3>决策路径</h3>
@@ -463,18 +470,18 @@
    ┌────┴────┐
   是          否
   ↓           ↓
-执行 provision  停止自动写入，
+执行一键准备  停止自动写入，
 并验证        选用更可控的流程</div>
 
 <h3>场景决策练习</h3>
 <div class="card-grid card-grid-3">
   <div class="card"><h4>场景 A</h4><p>设备完全匹配，<strong>有重要数据</strong></p><p style="color:var(--warm);font-weight:700;margin-top:8px;">→ 手工流程（先备份）</p></div>
   <div class="card"><h4>场景 B</h4><p>设备<strong>未列出</strong>，名称相似</p><p style="color:var(--accent);font-weight:700;margin-top:8px;">→ 手工流程，记录不支持原因</p></div>
-  <div class="card"><h4>场景 C</h4><p>设备列出 + <strong>空白介质</strong></p><p style="color:var(--accent);font-weight:700;margin-top:8px;">→ 可考虑 provision</p></div>
+  <div class="card"><h4>场景 C</h4><p>设备列出 + <strong>空白介质</strong></p><p style="color:var(--accent);font-weight:700;margin-top:8px;">→ 可尝试一键准备</p></div>
 </div>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>当前 ruyi 版本 device/provision 帮助记录 · 设备支持查询结果 · 六项风险检查表 · 自动或手工路径的决策记录与理由。
+  <strong>本节成果：</strong>当前 ruyi 版本设备/一键准备相关帮助记录 · 设备支持查询结果 · 六项风险检查表 · 手工或一键准备的路径选择及理由（详见 <code>lab.html</code> 环节三）。
 </div>
 </section>
 
