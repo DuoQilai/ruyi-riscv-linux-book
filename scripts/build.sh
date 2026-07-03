@@ -57,6 +57,7 @@ git clone --depth 1 "$PAGES_REPO" "$PAGES_DIR" 2>/dev/null
 DST="$PAGES_DIR/$COURSE_PATH"
 mkdir -p "$DST"/{chapters/ch01,chapters/ch02}
 
+cp docs/index.html "$DST/index.html"
 cp docs/CourseOutline.html "$DST/CourseOutline.html"
 cp chapters/ch01/lecture.html "$DST/chapters/ch01/"
 cp chapters/ch01/lecture.pdf  "$DST/chapters/ch01/"
@@ -81,6 +82,7 @@ rm -rf "$PAGES_DIR"
 
 echo ""
 echo "━━━ Done ━━━"
+echo "  入口:          https://enzoding-rgb.github.io/$COURSE_PATH/"
 echo "  CourseOutline: https://enzoding-rgb.github.io/$COURSE_PATH/CourseOutline.html"
 echo "  ch01 lecture:  https://enzoding-rgb.github.io/$COURSE_PATH/chapters/ch01/lecture.html"
 echo "  ch01 lab:      https://enzoding-rgb.github.io/$COURSE_PATH/chapters/ch01/lab.html"

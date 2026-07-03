@@ -32,7 +32,7 @@ bash scripts/build.sh "update message"
 2. `git commit` 并 `push origin enzo`  
 3. 将 `CourseOutline.html` 与章节 HTML/PDF（及 `ch02/code/`）同步到 Pages 仓库  
 
-线上路径前缀：`https://enzoding-rgb.github.io/ruyi-riscv-book/`
+线上入口（`index.html` → 大纲）：`https://enzoding-rgb.github.io/ruyi-riscv-book/`
 
 ## 仓库结构
 
