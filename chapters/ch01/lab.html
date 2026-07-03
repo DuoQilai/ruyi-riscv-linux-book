@@ -62,8 +62,23 @@
     background: #faf9f4;
   }
   .task-box h4 { margin-top: 0; color: var(--accent); }
+  /* ── Sidebar TOC ── */
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+
+  body { padding-left: 240px; }
+
   @media print {
-    body { padding: 0; max-width: none; background: #fff; font-size: 10pt; }
+    body { padding-left: 0; background: #fff; font-size: 10pt; }
+    .toc { display: none; }
     .chapter-header { padding: 20px 0 30px; }
     section { page-break-before: always; margin-bottom: 30px; }
     section:first-of-type { page-break-before: avoid; }
@@ -72,6 +87,19 @@
 </style>
 </head>
 <body>
+
+<!-- ═══ TOC Sidebar ═══ -->
+<nav class="toc">
+  <h4>目录</h4>
+  <a href="#lab1.1">实验 1.1 平台认知与 ruyi 安装</a>
+  <a class="sub" href="#lab1.1-tasks">实验任务</a>
+  <div class="divider"></div>
+  <a href="#lab1.2">实验 1.2 镜像烧录与开发通道</a>
+  <a class="sub" href="#lab1.2-tasks">实验任务</a>
+  <div class="divider"></div>
+  <a href="#lab1.3">实验 1.3 provision 适用边界</a>
+  <a class="sub" href="#lab1.3-tasks">实验任务</a>
+</nav>
 
 <article>
 
