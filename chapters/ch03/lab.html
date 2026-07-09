@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第三章 开发板基础篇 · 实验</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  section { margin-bottom: 48px; }
+  section h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+  section h3 { font-size: 22px; font-weight: 700; margin: 24px 0 12px; }
+  section p, section li { font-size: 18px; color: var(--muted); margin-bottom: 8px; }
+  section ol, section ul { padding-left: 24px; margin-bottom: 16px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7;
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { color: var(--accent); font-weight: 700; }
+  td { color: var(--muted); }
+  .warn { background: var(--warn-bg); border-left: 3px solid var(--warm); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440; }
+  .info { background: var(--info-bg); border-left: 3px solid var(--accent); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted); }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line); padding: 40px 20px;
+  }
+  .toc h4 { font-size: 14px; color: var(--accent); margin-bottom: 16px; }
+  .toc a { display: block; padding: 5px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  body { padding-left: 220px; }
+  @media print { body { padding-left: 0; } .toc { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>本章实验</h4>
+  <a href="#intro">说明</a>
+  <a href="#wire">接线</a>
+  <a href="#build">构建与运行</a>
+  <a href="#accept">验收</a>
+  <a href="#report">记录与评述</a>
+</nav>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
+  <h1>实验 1：温控风扇</h1>
+  <p class="meta">整合讲义 3.1–3.3 · 不重复 blink / uart-echo 单项练习</p>
+</header>
+
+<section id="intro">
+<h2>实验目的</h2>
+<p>讲义已分别练过 GPIO、串口日志思路、DHT22/开/关概念。本实验把它们<strong>组装</strong>成一条可演示闭环：</p>
+<ul>
+  <li>周期性读取环境温度</li>
+  <li>高于上限 → 风扇开；低于下限 → 风扇关</li>
+  <li>读失败时打印错误并继续跑（不崩溃）</li>
+</ul>
+<div class="info">
+  <strong>前置：</strong>讲义 3.1–3.3 跟做过；SSH 可用；课程套件含 DHT22、风扇 + 驱动模块、杜邦线。<strong>风扇由课程提供，学生不必自购。</strong>
+</div>
+<div class="warn">
+  <strong>与讲义的区分：</strong>不要再逐步抄 blink 的编译命令当正文。默认你会交叉编译与 <code>scp</code>。本页只写<strong>接线检查、temp-fan 工程、验收标准</strong>。
+</div>
+</section>
+
+<section id="wire">
+<h2>L1.1 接线（课程套件）</h2>
+<p>按下表连接；<strong>具体脚位以当堂接线表为准</strong>，并与 <code>temp-fan</code> 源码中的宏一致。</p>
+<table>
+  <tr><th>模块</th><th>接到哪里</th><th>注意</th></tr>
+  <tr><td>DHT22</td><td>VCC、GND、DATA→某 GPIO</td><td>DATA 按模块说明是否需上拉</td></tr>
+  <tr><td>风扇驱动（继电器/开关模块）</td><td>信号端→某 GPIO；电源按套件说明</td><td>GPIO <strong>不</strong>直接驱动风扇电机</td></tr>
+  <tr><td>共地</td><td>板与模块 GND 相连</td><td>漏接 GND 是常见故障</td></tr>
+</table>
+<p>接线完成后，在源码中确认例如：</p>
+<pre>GPIO_CHIP_PATH / DHT_LINE / FAN_LINE / T_HIGH / T_LOW / SAMPLE_MS</pre>
+</section>
+
+<section id="build">
+<h2>L1.2–L1.4 构建、运行与观察</h2>
+
+<h3>1. 编译部署</h3>
+<p>默认工程 <code>SIMULATE_SENSOR=1</code>：无 DHT 也可演示阈值开/关逻辑。接好套件后改为 <code>0</code> 再编译。用户态读 DHT22 可能偶发失败——程序应打 <code>[ERR]</code> 并继续，勿崩溃。</p>
+<pre><span class="p">$</span> cd chapters/ch03/code/temp-fan
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file temp-fan          <span class="c"># 应为 RISC-V ELF</span>
+<span class="p">$</span> scp temp-fan user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip './temp-fan'</pre>
+
+<h3>2. 预期行为</h3>
+<ul>
+  <li>终端周期性打印温度（及湿度，若实现）。</li>
+  <li>用手捂传感器或靠近热源使温度升过 <code>T_HIGH</code> → 风扇转。</li>
+  <li>移开冷却至低于 <code>T_LOW</code> → 风扇停。</li>
+  <li>故意松 DATA 线一次 → 出现 <code>[ERR]</code> 类日志，程序<strong>不退出</strong>，恢复接线后继续采样。</li>
+</ul>
+
+<h3>3. 阈值与滞回</h3>
+<p>使用 <code>T_HIGH</code> / <code>T_LOW</code> 两档（滞回），避免温度在临界值附近风扇狂抖。默认值可在源码宏中改；改完重新编译部署。</p>
+
+<div class="warn">
+  运行中勿带电拔插电源线。演示加热时注意模块与手指安全，勿短路引脚。
+</div>
+</section>
+
+<section id="accept">
+<h2>验收标准</h2>
+<table>
+  <tr><th>项</th><th>通过条件</th></tr>
+  <tr><td>编译</td><td>主机交叉编译成功，<code>file</code> 为 RISC-V</td></tr>
+  <tr><td>采样</td><td>板端能稳定打印温度（允许偶发一次重试）</td></tr>
+  <tr><td>控制</td><td>可演示「超温开 / 降温关」</td></tr>
+  <tr><td>异常</td><td>读失败有日志且进程继续</td></tr>
+</table>
+</section>
+
+<section id="report">
+<h2>结果记录与评述</h2>
+
+<h3>记录表（自填）</h3>
+<table>
+  <tr><th>项</th><th>你的结果</th></tr>
+  <tr><td>DHT / 风扇所用 GPIO（chip + line）</td><td></td></tr>
+  <tr><td>T_HIGH / T_LOW / 采样周期</td><td></td></tr>
+  <tr><td>超温时风扇是否动作</td><td></td></tr>
+  <tr><td>读失败时的日志原文（一行）</td><td></td></tr>
+</table>
+
+<h3>简答（各 2–4 句）</h3>
+<ol>
+  <li>本实验相对讲义 3.1 的 blink，多出来的「系统行为」是什么？</li>
+  <li>若只有 <code>T_HIGH</code> 一档阈值、没有 <code>T_LOW</code>，可能出现什么现象？</li>
+  <li>第四章若把阈值放进配置文件，程序哪几处需要改？（概念即可）</li>
+</ol>
+
+<h3>完成标志</h3>
+<ul>
+  <li>验收表四项均能演示或说明；</li>
+  <li>记录表与简答写完。</li>
+</ul>
+</section>
+
+</article>
+</body>
+</html>

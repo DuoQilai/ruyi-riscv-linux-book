@@ -501,11 +501,6 @@
           <td>实验 2 MQTT 控灯；综合项目状态指示</td>
           <td class="provider">课程提供</td>
         </tr>
-        <tr>
-          <td>OLED 小屏（可选）</td>
-          <td>ch03 显示温湿度；综合项目本地状态（非必需）</td>
-          <td class="provider">课程提供</td>
-        </tr>
       </tbody>
     </table>
   </div>
@@ -546,7 +541,7 @@
           <td>开发板基础篇</td>
           <td>GPIO、UART 与常用外设控制</td>
           <td>形成「读传感器—算结果—控执行器」的板级能力</td>
-          <td>Blink/按键；UART Echo；DHT22 读取；PWM 驱动风扇/LED</td>
+          <td>讲义 3.1–3.3；实验 1：温控风扇（阈值开/关）</td>
           <td>可复用的外设驱动与串口调试框架</td>
         </tr>
         <tr class="mod-linux">
@@ -646,33 +641,28 @@
         <tr class="mod-env"><td class="section">2.2 Makefile 与工程目录规范</td></tr>
         <tr class="mod-env"><td class="section">2.3 CoreMark 算力基准</td></tr>
 
-        <!-- ch03 -->
+        <!-- ch03：三节讲义 + 实验 1 -->
         <tr class="mod-board">
-          <td rowspan="12" class="merge">ch03</td>
-          <td rowspan="12" class="merge">开发板基础篇</td>
-          <td class="section">3.1 GPIO 输出：LED 闪烁</td>
-          <td rowspan="12" class="merge section">板级读—算—控能力</td>
-          <td rowspan="12" class="merge section">Blink；UART Echo；DHT22；PWM 风扇</td>
-          <td rowspan="12" class="merge section">外设驱动 + 串口框架</td>
-          <td rowspan="12" class="merge glossary section"><dl>
+          <td rowspan="7" class="merge">ch03</td>
+          <td rowspan="7" class="merge">开发板基础篇</td>
+          <td class="section">3.1 GPIO 输入输出：LED 与按键</td>
+          <td rowspan="7" class="merge section">板级读—算—控能力</td>
+          <td rowspan="7" class="merge section">讲义 3.1–3.3；实验 1 温控风扇</td>
+          <td rowspan="7" class="merge section">外设驱动 + 串口调试框架</td>
+          <td rowspan="7" class="merge glossary section"><dl>
             <dt>GPIO</dt><dd>可由软件设为输入/输出的芯片引脚。</dd>
             <dt>UART</dt><dd>按波特率逐字节收发的硬件串口。</dd>
             <dt>DHT22</dt><dd>单总线温湿度传感器，需严格时序读取。</dd>
-            <dt>PWM</dt><dd>改变方波占空比调节风扇/LED 平均功率。</dd>
+            <dt>PWM</dt><dd>改变方波占空比调节风扇/LED 平均功率（讲义概念；实验 1 主线为开/关）。</dd>
             <dt>gpiod</dt><dd>Linux 上通过字符设备控制 GPIO 的库（推荐于 sysfs）。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-board"><td class="section">3.2 GPIO 输入：按键与消抖</td></tr>
-        <tr class="mod-board"><td class="section">3.3 UART 配置、收发与 Echo</td></tr>
-        <tr class="mod-board"><td class="section">3.4 串口输出调试日志</td></tr>
-        <tr class="mod-board"><td class="section">3.5 读取 DHT22 温湿度</td></tr>
-        <tr class="mod-board"><td class="section">3.6 PWM 控制风扇或 LED 亮度</td></tr>
-        <tr class="mod-board"><td class="section">3.7 OLED 显示实时温湿度</td></tr>
-        <tr class="mod-board"><td class="section">3.8 状态机组织「采集—判断—输出」逻辑</td></tr>
+        <tr class="mod-board"><td class="section">3.2 UART 与串口调试日志</td></tr>
+        <tr class="mod-board"><td class="section">3.3 传感与执行：DHT22 与 PWM / 开关输出</td></tr>
         <!-- 实验1：温控风扇，归属 ch03 -->
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 实验 1 温控风扇</strong>：L1.1 接线：温湿度传感器 + 风扇驱动</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 实验 1 温控风扇</strong>：L1.1 接线：温湿度传感器 + 风扇驱动（课程套件）</td></tr>
         <tr class="mod-lab"><td class="section" style="padding-left:24px;">L1.2 周期性采样与环境温度读取</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;">L1.3 阈值判断与风扇 PWM/开关控制</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;">L1.3 阈值判断与风扇开/关控制</td></tr>
         <tr class="mod-lab"><td class="section" style="padding-left:24px;">L1.4 串口打印与简单异常（传感器读失败）</td></tr>
 
         <!-- ch04 -->

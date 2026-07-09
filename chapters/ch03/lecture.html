@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第三章 开发板基础篇 · 讲义 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+  }
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 80px 40px; border-bottom: 1px solid var(--line);
+  }
+  .hero .chapter-tag {
+    font-size: 42px; letter-spacing: 0.12em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero h1 { font-size: 64px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+  .hero .subtitle { font-size: 22px; color: var(--muted); line-height: 1.6; max-width: 700px; }
+  .hero .meta { margin-top: 48px; display: flex; gap: 40px; font-size: 17px; color: var(--faint); }
+  .content { max-width: 1000px; margin: 0 auto; padding: 0 48px 120px; }
+  section { padding: 80px 0; border-bottom: 1px solid var(--line-light); }
+  section:last-of-type { border-bottom: none; }
+  .section-num { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+  section h2 { font-size: 40px; font-weight: 700; margin-bottom: 40px; line-height: 1.3; }
+  section h3 { font-size: 24px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  section h4 { font-size: 19px; font-weight: 700; margin: 28px 0 10px; color: var(--muted); }
+  section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
+  section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 24px 28px; margin: 20px 0 28px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.75; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 17px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-light); }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: #8c5440; line-height: 1.7;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
+  }
+  .diagram {
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
+    white-space: pre; overflow-x: auto;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 1px solid var(--line); padding: 28px 30px; }
+  .card h4 { font-size: 20px; font-weight: 700; margin: 0 0 10px; color: var(--text); }
+  .card p { font-size: 17px; margin: 0; }
+  .steps { list-style: none; padding: 0; }
+  .steps li {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--line-light);
+    font-size: 18px; color: var(--muted); line-height: 1.6;
+  }
+  .steps li .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  @media print {
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
+    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
+    .content { max-width: none; padding: 0 36px; }
+    section { padding: 36px 0; page-break-before: always; }
+    section:first-of-type { page-break-before: avoid; }
+    pre, .diagram { font-size: 11pt; }
+  }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+  body { padding-left: 240px; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>目录</h4>
+  <a href="#overview">本章概览</a>
+  <div class="divider"></div>
+  <a href="#s3.1">3.1 GPIO 输入输出</a>
+  <a class="sub" href="#s3.1-objectives">学习目标</a>
+  <a class="sub" href="#s3.1-concept">GPIO 与 gpiod</a>
+  <a class="sub" href="#s3.1-steps">操作步骤</a>
+  <div class="divider"></div>
+  <a href="#s3.2">3.2 UART 与串口日志</a>
+  <a class="sub" href="#s3.2-objectives">学习目标</a>
+  <a class="sub" href="#s3.2-concept">UART 角色</a>
+  <a class="sub" href="#s3.2-steps">操作步骤</a>
+  <div class="divider"></div>
+  <a href="#s3.3">3.3 传感与执行</a>
+  <a class="sub" href="#s3.3-objectives">学习目标</a>
+  <a class="sub" href="#s3.3-dht">DHT22</a>
+  <a class="sub" href="#s3.3-pwm">PWM 与开/关</a>
+</nav>
+
+<div class="hero">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
+  <h1>GPIO / UART / 外设</h1>
+  <p class="subtitle">GPIO 读写 → 串口调试 → 读传感器、控执行器<br>为实验 1「温控风扇」铺路<br>— 3.1 / 3.2 / 3.3 —</p>
+  <div class="meta">
+    <span>示例：blink · uart-echo</span>
+    <span>API：libgpiod · termios</span>
+  </div>
+</div>
+
+<div class="content">
+
+<section id="overview">
+<h2>开始之前</h2>
+
+<div class="warn" style="margin-bottom:32px;">
+  <strong>前置条件：</strong>已完成第一、二章——交叉编译、Makefile、SSH/SCP 可用。本章在<strong>板端用户态</strong>用 C 控制外设；每节约 90–120 分钟。整合闭环见本章 <code>lab.html</code>（实验 1 温控风扇）。
+</div>
+
+<h3>你需要准备什么</h3>
+
+<div class="card-grid card-grid-3">
+  <div class="card"><h4>主机 + 工具链</h4><p>与第二章相同：<code>riscv64-unknown-linux-gnu-gcc</code>；板端 SSH 可用。</p></div>
+  <div class="card"><h4>开发板 + 套件</h4><p>课程提供的 LED、按键（或板载）、杜邦线；3.3 起用到 DHT22 与风扇模块（课程套件，学生不必自购）。</p></div>
+  <div class="card"><h4>代码</h4><p><code>chapters/ch03/code/blink/</code>、<code>uart-echo/</code>。温控风扇完整程序在 lab 的 <code>temp-fan/</code>。</p></div>
+</div>
+
+<h3>本章你会学到什么</h3>
+
+<div class="card-grid" style="margin-bottom:0;">
+  <div class="card"><h4>3.1 GPIO 输入输出</h4><p>用 libgpiod 点亮 LED、读取按键并做简单消抖；理解「引脚号以板卡/课程接线表为准」。</p></div>
+  <div class="card"><h4>3.2 UART 与串口日志</h4><p>配置串口、Echo 回显；把调试信息打到串口，为现场排错打基础。</p></div>
+  <div class="card"><h4>3.3 传感与执行</h4><p>读 DHT22 温湿度；理解 PWM 与「开/关」两种控风扇方式；阈值判断逻辑（组装见 lab）。</p></div>
+</div>
+
+<div class="info" style="margin-top:28px;">
+  <strong>讲义 vs 实验：</strong>讲义分节练<strong>单项能力</strong>（闪灯、Echo、读一次温度）。实验 1 把传感 + 阈值 + 风扇开/关 + 异常日志<strong>串成一条可演示闭环</strong>，不重复讲义里的整段命令块。
+</div>
+</section>
+
+<!-- ═══ 3.1 ═══ -->
+<section id="s3.1">
+<div class="section-num">3.1</div>
+<h2>GPIO 输入输出：LED 与按键</h2>
+
+<h3 id="s3.1-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>GPIO 角色</h4><p>区分输出（驱动 LED）与输入（读按键）</p></div>
+  <div class="card"><h4>libgpiod</h4><p>用字符设备接口申请、读写引脚（优于旧 sysfs）</p></div>
+  <div class="card"><h4>消抖直觉</h4><p>机械按键抖动时如何简单过滤</p></div>
+  <div class="card"><h4>可移植配置</h4><p>chip 名与 line 号用宏/参数，不写死「某板某脚」</p></div>
+</div>
+
+<h3 id="s3.1-concept">GPIO 与 gpiod</h3>
+<p><strong>GPIO</strong>（General-Purpose Input/Output）是可由软件配置为输入或输出的芯片引脚。输出可驱动 LED、继电器；输入可读按键、部分传感器电平。</p>
+<p>在现代 Linux 上，推荐通过 <strong>libgpiod</strong>（字符设备 <code>/dev/gpiochipN</code>）访问 GPIO，而不是已弃用的 <code>/sys/class/gpio</code>。板端需安装开发包（如 <code>libgpiod-dev</code>）与运行库；交叉编译时链接 <code>-lgpiod</code>。</p>
+
+<div class="diagram">应用（C）
+    │  gpiod_chip_open / gpiod_line_request_*
+    ▼
+libgpiod  ──►  /dev/gpiochip0（或 chip1…）
+    │
+    ▼
+内核 GPIO 控制器 ──► 物理引脚 ──► LED / 按键</div>
+
+<h3>引脚怎么定？</h3>
+<p>不同板卡的「丝印脚号」与 <code>gpiochip</code> 的 line 编号<strong>不是同一套数字</strong>。本课示例用宏占位：</p>
+<pre><span class="k">#define</span> GPIO_CHIP_PATH  <span class="c">"/dev/gpiochip0"</span>
+<span class="k">#define</span> LED_LINE        17   <span class="c">/* 以课程接线表 / 板卡文档为准 */</span>
+<span class="k">#define</span> BTN_LINE        27</pre>
+<p>LicheePi 4A 等板的具体对应关系，以课程当堂接线表或厂商外设文档为准；改宏后重新交叉编译即可，不必改逻辑。</p>
+
+<div class="warn">
+  <strong>安全：</strong>先确认电压（多为 3.3 V 逻辑）。不要把 GPIO 直接接到市电或大电流负载；风扇等执行器必须经<strong>课程提供的驱动模块</strong>（继电器/MOSFET），由 GPIO 只控「信号端」。
+</div>
+
+<h3 id="s3.1-steps">操作步骤</h3>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>确认板端有 gpiochip</strong><br><code>ssh user@board-ip 'ls /dev/gpiochip*'</code>；可选安装 <code>gpiodetect</code> / <code>gpioinfo</code> 查看 line 名称。</div></li>
+  <li><span class="step-num">2</span><div><strong>按接线表改宏</strong><br>编辑 <code>chapters/ch03/code/blink/main.c</code> 中的 <code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>（及按键示例中的 <code>BTN_LINE</code>）。</div></li>
+  <li><span class="step-num">3</span><div><strong>交叉编译并部署</strong><br><code>cd chapters/ch03/code/blink && make clean && make</code>，再 <code>scp</code> 到板端运行。预期：LED 周期性闪烁。</div></li>
+  <li><span class="step-num">4</span><div><strong>按键消抖（课堂扩展）</strong><br>读输入时，连续两次采样间隔约 20–50 ms 且电平一致再认定「按下」，避免抖动误触发。</div></li>
+</ol>
+
+<pre><span class="c"># 主机</span>
+<span class="p">$</span> cd chapters/ch03/code/blink
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file blink
+<span class="p">$</span> scp blink user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip './blink'</pre>
+
+<div class="info">
+  <strong>权限：</strong>若提示无法打开 <code>/dev/gpiochip*</code>，将用户加入 <code>gpio</code> 组，或以课程说明的方式授权；课堂可用临时方案，但勿养成长期 <code>sudo</code> 跑业务程序的习惯。
+</div>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>为何讲义用 <code>LED_LINE</code> 宏，而不是在代码里写死「LicheePi 4A 的某某脚」？</li>
+  <li>按键消抖：若采样间隔过短，可能出现什么现象？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能说明 GPIO 输入/输出差异 · 用 blink 工程点亮 LED · 知道引脚以接线表为准 · 了解简单消抖思路。
+</div>
+</section>
+
+<!-- ═══ 3.2 ═══ -->
+<section id="s3.2">
+<div class="section-num">3.2</div>
+<h2>UART 与串口调试日志</h2>
+
+<h3 id="s3.2-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>UART 用途</h4><p>区分「系统控制台串口」与「应用自开的串口设备」</p></div>
+  <div class="card"><h4>termios</h4><p>设置波特率、原始模式，完成 Echo</p></div>
+  <div class="card"><h4>调试日志</h4><p>用串口或标准输出打印带标签的运行信息</p></div>
+</div>
+
+<h3 id="s3.2-concept">UART 角色</h3>
+<p><strong>UART</strong> 按约定波特率逐字节收发。第一章用 USB 转串口登录系统，那是<strong>控制台</strong>。本章示例打开的是板端某个 <code>/dev/tty*</code>（如 <code>ttyS1</code>、<code>ttyUSB0</code>），做应用层收发——具体设备名以板卡文档与课程接线为准。</p>
+
+<div class="diagram">PC 串口工具 / 另一端设备
+        │  TX/RX 交叉 + GND
+        ▼
+  /dev/ttyS?（板端）
+        │  open + termios
+        ▼
+  你的 C 程序（Echo / 打日志）</div>
+
+<p>实验与综合项目里，更常见的是：程序把日志打到 <strong>stdout</strong>（SSH 终端可见），或同时写文件（第四章）。串口 Echo 训练的是「会配 termios、会读写设备节点」——排错时同样有用。</p>
+
+<h3 id="s3.2-steps">操作步骤</h3>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>确认设备节点</strong><br>板端 <code>ls /dev/ttyS* /dev/ttyUSB*</code>；不要占用正在当系统控制台的那一路，除非课程明确要求。</div></li>
+  <li><span class="step-num">2</span><div><strong>编译 uart-echo</strong><br><code>cd chapters/ch03/code/uart-echo && make</code>。源码里 <code>UART_DEV</code>、<code>BAUD</code>（默认 115200）按实际修改。</div></li>
+  <li><span class="step-num">3</span><div><strong>板端运行并回显</strong><br>一端跑程序，另一端用串口工具发字符，应原样回显。无第二路串口时，可先把程序改为「读 stdin、写 stdout」验证逻辑，再换真串口。</div></li>
+  <li><span class="step-num">4</span><div><strong>日志习惯</strong><br>关键行带前缀，例如 <code>[INFO]</code>、<code>[ERR]</code>；温度、阈值、风扇状态各打一行，方便实验 1 对照。</div></li>
+</ol>
+
+<pre><span class="p">$</span> cd chapters/ch03/code/uart-echo
+<span class="p">$</span> make clean && make
+<span class="p">$</span> scp uart-echo user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip './uart-echo'   <span class="c"># 或按课程说明接好第二路串口再跑</span></pre>
+
+<div class="warn">
+  <strong>接线：</strong>TX↔RX 交叉，GND 共地。波特率两端必须一致。电平多为 3.3 V，勿接 RS-232 高压口。
+</div>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>SSH 已经能看 <code>printf</code> 输出时，为什么还要学配置 <code>/dev/tty*</code>？</li>
+  <li>Echo 正常但乱码，优先检查哪两项？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能打开并配置一路串口 · 完成 Echo 或等价验证 · 养成带标签的调试打印习惯。
+</div>
+</section>
+
+<!-- ═══ 3.3 ═══ -->
+<section id="s3.3">
+<div class="section-num">3.3</div>
+<h2>传感与执行：DHT22 与 PWM / 开关输出</h2>
+
+<h3 id="s3.3-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>DHT22</h4><p>理解单总线读温湿度的时序约束与失败重试</p></div>
+  <div class="card"><h4>PWM 概念</h4><p>占空比如何改变平均功率（调光/调速）</p></div>
+  <div class="card"><h4>开/关控制</h4><p>用 GPIO 驱动继电器/模块实现风扇启停（实验 1 主线）</p></div>
+  <div class="card"><h4>阈值逻辑</h4><p>温度高于上限开、低于下限关；组装见 lab</p></div>
+</div>
+
+<h3 id="s3.3-dht">DHT22 温湿度</h3>
+<p><strong>DHT22</strong>（AM2302）用一根数据线与主机通信，对时序要求严。用户态用 GPIO 位bang 时，可能受调度影响导致偶发读失败——正常现象；应<strong>重试</strong>并打 <code>[ERR]</code> 日志，而不是静默忽略。</p>
+<p>讲义阶段：能调用课程提供的读取函数（或 <code>temp-fan</code> 中的封装）打印一次温度、湿度即可。周期采样、阈值控风扇放在 <strong>lab</strong>。</p>
+
+<div class="diagram">DHT22 ──单总线──► GPIO（输入/输出切换）
+                      │
+                      ▼
+                 温度 T、湿度 H（浮点或定点）
+                      │
+                      ▼
+              讲义：打印一次
+              实验：循环采样 + 阈值判断</div>
+
+<h3 id="s3.3-pwm">PWM 与开/关：两种「控风扇」</h3>
+<table>
+  <tr><th>方式</th><th>做法</th><th>本课用法</th></tr>
+  <tr><td><strong>开/关</strong></td><td>GPIO 高/低 → 驱动模块接通或断开风扇电源</td><td><strong>实验 1 主线</strong>：实现简单、验收清晰</td></tr>
+  <tr><td><strong>PWM</strong></td><td>快速开关，用占空比调平均电压 → 转速/亮度变化</td><td>讲义建立概念；综合项目可再扩展调速</td></tr>
+</table>
+<p>风扇与驱动模块由<strong>课程套件提供</strong>。GPIO 只接到模块的信号端；电源按套件说明接，勿用 GPIO 直接灌大电流。</p>
+<p>Linux 上 PWM 常通过 <code>/sys/class/pwm/</code> 导出通道；若板卡未启用对应 overlay，课堂以开/关为主即可，不必强行调通 PWM。</p>
+
+<h3>阈值控制（逻辑，不在此节写完整程序）</h3>
+<pre><span class="c">/* 伪代码：实验 1 主循环核心 */</span>
+<span class="k">if</span> (读温度失败) { 打日志; 继续下一轮; }
+<span class="k">else if</span> (T &gt; T_HIGH) 风扇_开();
+<span class="k">else if</span> (T &lt; T_LOW)  风扇_关();
+<span class="c">/* T_LOW ~ T_HIGH 之间保持上一状态，避免临界抖动 */</span></pre>
+<p>完整接线检查、周期、异常处理与验收表 → <code>lab.html</code> + <code>code/temp-fan/</code>。</p>
+
+<div class="info">
+  <strong>与后续章节：</strong>阈值目前可写死在源码宏里；第四章再改为配置文件。串口/<code>printf</code> 日志在第四章升级为文件日志。
+</div>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>为何实验 1 主线选「开/关」而不是一上来就 PWM 调速？</li>
+  <li>DHT22 偶发读失败时，程序应如何表现才算「可诊断」？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能说明 DHT22 与开/关控风扇的数据流 · 理解 PWM 与开/关差异 · 阈值逻辑清楚，可进入实验 1 组装。
+</div>
+</section>
+
+</div>
+</body>
+</html>

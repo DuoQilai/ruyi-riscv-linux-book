@@ -17,6 +17,8 @@ PDF_LIST=(
   "$ROOT/chapters/ch01/lab.html"
   "$ROOT/chapters/ch02/lecture.html"
   "$ROOT/chapters/ch02/lab.html"
+  "$ROOT/chapters/ch03/lecture.html"
+  "$ROOT/chapters/ch03/lab.html"
 )
 for f in "${PDF_LIST[@]}"; do
   node -e "
@@ -55,19 +57,24 @@ echo "━━━ 3/3 部署 GitHub Pages ━━━"
 PAGES_DIR=$(mktemp -d)
 git clone --depth 1 "$PAGES_REPO" "$PAGES_DIR" 2>/dev/null
 DST="$PAGES_DIR/$COURSE_PATH"
-mkdir -p "$DST"/{chapters/ch01,chapters/ch02}
+mkdir -p "$DST"/{chapters/ch01,chapters/ch02,chapters/ch03}
 
 cp docs/index.html "$DST/index.html"
 cp docs/CourseOutline.html "$DST/CourseOutline.html"
 cp chapters/ch01/lecture.html "$DST/chapters/ch01/"
-cp chapters/ch01/lecture.pdf  "$DST/chapters/ch01/"
+cp chapters/ch01/lecture.pdf  "$DST/chapters/ch01/" 2>/dev/null || true
 cp chapters/ch01/lab.html     "$DST/chapters/ch01/"
-cp chapters/ch01/lab.pdf      "$DST/chapters/ch01/"
+cp chapters/ch01/lab.pdf      "$DST/chapters/ch01/" 2>/dev/null || true
 cp chapters/ch02/lecture.html "$DST/chapters/ch02/"
-cp chapters/ch02/lecture.pdf  "$DST/chapters/ch02/"
+cp chapters/ch02/lecture.pdf  "$DST/chapters/ch02/" 2>/dev/null || true
 cp chapters/ch02/lab.html     "$DST/chapters/ch02/"
-cp chapters/ch02/lab.pdf      "$DST/chapters/ch02/"
+cp chapters/ch02/lab.pdf      "$DST/chapters/ch02/" 2>/dev/null || true
 cp -r chapters/ch02/code      "$DST/chapters/ch02/" 2>/dev/null || true
+cp chapters/ch03/lecture.html "$DST/chapters/ch03/"
+cp chapters/ch03/lecture.pdf  "$DST/chapters/ch03/" 2>/dev/null || true
+cp chapters/ch03/lab.html     "$DST/chapters/ch03/"
+cp chapters/ch03/lab.pdf      "$DST/chapters/ch03/" 2>/dev/null || true
+cp -r chapters/ch03/code      "$DST/chapters/ch03/" 2>/dev/null || true
 
 cd "$PAGES_DIR"
 git add -A
@@ -88,3 +95,5 @@ echo "  ch01 lecture:  https://enzoding-rgb.github.io/$COURSE_PATH/chapters/ch01
 echo "  ch01 lab:      https://enzoding-rgb.github.io/$COURSE_PATH/chapters/ch01/lab.html"
 echo "  ch02 lecture:  https://enzoding-rgb.github.io/$COURSE_PATH/chapters/ch02/lecture.html"
 echo "  ch02 lab:      https://enzoding-rgb.github.io/$COURSE_PATH/chapters/ch02/lab.html"
+echo "  ch03 lecture:  https://enzoding-rgb.github.io/$COURSE_PATH/chapters/ch03/lecture.html"
+echo "  ch03 lab:      https://enzoding-rgb.github.io/$COURSE_PATH/chapters/ch03/lab.html"
