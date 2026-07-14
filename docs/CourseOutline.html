@@ -311,7 +311,7 @@
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">配置化温控</p>
-        <p class="flow-desc">阈值进配置文件 + 日志</p>
+        <p class="flow-desc">C：读配置 + 写历史/告警</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
@@ -321,7 +321,7 @@
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">多线程协同</p>
-        <p class="flow-desc">采集与控制并行、干净退出</p>
+        <p class="flow-desc">采集∥控制真风扇 + Ctrl+C 干净停</p>
       </div>
     </div>
     <!-- Capstone: full width -->
@@ -493,23 +493,23 @@
         <tr>
           <td>ch04 本章实验</td>
           <td>配置化温控</td>
-          <td>改配置文件里的阈值/周期，不重编译也能改变行为；日志可翻</td>
-          <td>文件、配置、日志</td>
-          <td>把 ch03 成果升级成可维护小应用。</td>
+          <td>板上 C 半成品：读配置（坏配置可观测）；追加温度历史；超阈值写告警行；改配置不重编译则行为变；能翻文件验收</td>
+          <td>文件读写 C、配置、历史/告警落盘</td>
+          <td>可配置、可留档的温控（不是脚本）。</td>
         </tr>
         <tr>
           <td>ch05 本章实验</td>
           <td>MQTT 远程控灯</td>
-          <td>手机发消息 → 板上 LED 亮灭</td>
+          <td>手机发消息 → 板上 LED 亮灭；板子可回传状态</td>
           <td>网络、MQTT、GPIO 输出</td>
           <td>远程控制；与温控故事分开验收。</td>
         </tr>
         <tr>
           <td>ch06 本章实验</td>
           <td>多线程协同</td>
-          <td>采集与控制并行；Ctrl+C 能干净退出</td>
-          <td>pthread、锁、队列</td>
-          <td>为综合项目打并发骨架。</td>
+          <td>采集∥控制同时跑，捂热/模拟升温风扇仍按阈值转停；Ctrl+C 后关风扇并干净退出</td>
+          <td>pthread、共享状态保护、硬件收尾</td>
+          <td>双线程温控骨架；不写 Shell。</td>
         </tr>
         <tr>
           <td>综合项目</td>
@@ -621,25 +621,25 @@
           <td>ch04</td>
           <td>Linux 应用篇</td>
           <td>文件、配置与日志</td>
-          <td>程序可配置、可落盘、可排错</td>
-          <td>配置化温控（阈值进文件 + 日志）</td>
-          <td>可维护的小应用结构</td>
+          <td>会用 C 做文件读写；配置外置；历史/告警能落盘</td>
+          <td>配置化温控（C：配置+历史+告警）</td>
+          <td>可配置、可留档的温控程序</td>
         </tr>
         <tr class="mod-linux">
           <td>ch05</td>
           <td>Linux 应用篇</td>
           <td>网络通信与 MQTT</td>
-          <td>理解发布/订阅，用 C 客户端控外设</td>
-          <td>MQTT 远程控灯</td>
-          <td>可复用的 MQTT 模块</td>
+          <td>理解发布/订阅；用 C 客户端控灯</td>
+          <td>MQTT 远程控灯（手机联调）</td>
+          <td>可复用的 MQTT 控灯模块</td>
         </tr>
         <tr class="mod-linux">
           <td>ch06</td>
           <td>Linux 应用篇</td>
           <td>线程与任务协同</td>
-          <td>采集、通信、控制分开跑且稳定</td>
-          <td>多线程协同（并行 + 干净退出）</td>
-          <td>多线程骨架（供综合复用）</td>
+          <td>一个进程里采集∥控制；共享状态不乱；能干净停</td>
+          <td>多线程协同（真风扇 + Ctrl+C）</td>
+          <td>双线程温控骨架（供综合复用）</td>
         </tr>
         <tr class="mod-cap">
           <td>综合</td>
@@ -654,7 +654,7 @@
   </div>
 
   <h2>章节小节</h2>
-  <p class="note">每章讲义固定三节（x.1–x.3）；本章实验单独一行整块描述。讲义加深原理与接口；实验写场景与硬验收。最右栏为本章名词。ch04–06 / 综合暂维持原目录，后续再按「三节+一块实验」收束。</p>
+  <p class="note">每章讲义固定三节（x.1–x.3）；本章实验单独一行整块描述。讲义加深原理与接口；实验给 <strong>C 脚手架</strong>，学生按讲义往后补，且<strong>必须结合板上硬件看到现象</strong>（有别于纯 CSAPP 式系统软件作业）。最右栏为本章名词。</p>
   <div class="table-wrap">
     <table class="detail">
       <colgroup>
@@ -735,64 +735,59 @@
         <tr class="mod-board"><td class="section">3.3 UART、传感与执行：概念与数据流</td></tr>
         <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 温控风扇</strong>：套件接线；半成品上补全周期采样 + 阈值开/关 + 主循环；读失败打日志且不崩；模拟升温或真捂热均可验收</td></tr>
 
-        <!-- ch04（暂未按三节收束） -->
+        <!-- ch04：三节讲义 + 一块实验 -->
         <tr class="mod-linux">
-          <td rowspan="6" class="merge">ch04</td>
-          <td rowspan="6" class="merge">Linux 应用篇</td>
-          <td class="section">4.1 文件 I/O：保存传感历史</td>
-          <td rowspan="6" class="merge section">可配置、可落盘、可排错</td>
-          <td rowspan="6" class="merge section">配置化温控</td>
-          <td rowspan="6" class="merge section">可维护应用结构</td>
-          <td rowspan="6" class="merge glossary section"><dl>
-            <dt>配置文件</dt><dd>改阈值/周期不必重编译。</dd>
-            <dt>日志</dt><dd>带时间戳的运行记录。</dd>
+          <td rowspan="4" class="merge">ch04</td>
+          <td rowspan="4" class="merge">Linux 应用篇</td>
+          <td class="section">4.1 程序和「管家」：文件编号与读写</td>
+          <td rowspan="4" class="merge section">用 C 做文件读写；配置外置；历史/告警能落盘</td>
+          <td rowspan="4" class="merge section">配置化温控</td>
+          <td rowspan="4" class="merge section">可配置、可留档的温控</td>
+          <td rowspan="4" class="merge glossary section"><dl>
+            <dt>文件编号</dt><dd>打开后用编号读/写，不必每次报路径。</dd>
+            <dt>配置文件</dt><dd>阈值/周期外置，改文件即可改行为。</dd>
+            <dt>历史 / 告警</dt><dd>采样追加落盘；超阈值另写痕迹。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-linux"><td class="section">4.2 读取配置文件</td></tr>
-        <tr class="mod-linux"><td class="section">4.3 分级日志：控制台 + 文件</td></tr>
-        <tr class="mod-linux"><td class="section">4.4 错误处理与退出码</td></tr>
-        <tr class="mod-linux"><td class="section">4.5 目录布局：配置 / 数据 / 日志分离</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 配置化温控</strong>：阈值与周期进配置；能翻日志验收</td></tr>
+        <tr class="mod-linux"><td class="section">4.2 文件就是字节串；设备也可当文件用</td></tr>
+        <tr class="mod-linux"><td class="section">4.3 配置外置与出错留痕</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 配置化温控</strong>：C 半成品上补全读配置、追加温度历史、超阈值写告警；坏配置可观测且不瞎崩；改配置不重编译则风扇阈值/周期行为变；能翻文件验收</td></tr>
 
-        <!-- ch05 -->
+        <!-- ch05：三节讲义 + 一块实验 -->
         <tr class="mod-linux">
-          <td rowspan="8" class="merge">ch05</td>
-          <td rowspan="8" class="merge">Linux 应用篇</td>
-          <td class="section">5.1 联网基础（接口层）</td>
-          <td rowspan="8" class="merge section">MQTT 订阅发布控外设</td>
-          <td rowspan="8" class="merge section">MQTT 远程控灯</td>
-          <td rowspan="8" class="merge section">可复用 MQTT 模块</td>
-          <td rowspan="8" class="merge glossary section"><dl>
-            <dt>MQTT / Broker / 主题 / payload</dt><dd>发布订阅消息模型的基本零件。</dd>
+          <td rowspan="4" class="merge">ch05</td>
+          <td rowspan="4" class="merge">Linux 应用篇</td>
+          <td class="section">5.1 联网也是跟外面说话</td>
+          <td rowspan="4" class="merge section">发布/订阅；C 客户端控灯</td>
+          <td rowspan="4" class="merge section">MQTT 远程控灯</td>
+          <td rowspan="4" class="merge section">可复用 MQTT 控灯</td>
+          <td rowspan="4" class="merge glossary section"><dl>
+            <dt>Broker</dt><dd>消息中转站。</dd>
+            <dt>主题</dt><dd>频道名；发布往这发，订阅盯这听。</dd>
+            <dt>payload</dt><dd>消息正文，如 <code>on</code>/<code>off</code>。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-linux"><td class="section">5.2 Mosquitto 与命令行联调</td></tr>
-        <tr class="mod-linux"><td class="section">5.3 C 客户端连接与回调</td></tr>
-        <tr class="mod-linux"><td class="section">5.4 订阅控制主题并解析命令</td></tr>
-        <tr class="mod-linux"><td class="section">5.5 发布状态主题</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · MQTT 远程控灯</strong>：手机 App 联调</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;">板端订阅并驱动 LED</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;">发布当前状态（与温控实验分开验收）</td></tr>
+        <tr class="mod-linux"><td class="section">5.2 主题、Broker 与命令行联调</td></tr>
+        <tr class="mod-linux"><td class="section">5.3 C 里接到开/关命令（单项小例子）</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · MQTT 远程控灯</strong>：C 半成品补全订阅→驱 LED→回传状态；手机 App 联调；与温控分开验收</td></tr>
 
-        <!-- ch06 -->
+        <!-- ch06：三节讲义 + 一块实验 -->
         <tr class="mod-linux">
-          <td rowspan="6" class="merge">ch06</td>
-          <td rowspan="6" class="merge">Linux 应用篇</td>
-          <td class="section">6.1 pthread 创建与管理</td>
-          <td rowspan="6" class="merge section">多任务稳定并发</td>
-          <td rowspan="6" class="merge section">多线程协同</td>
-          <td rowspan="6" class="merge section">多线程骨架</td>
-          <td rowspan="6" class="merge glossary section"><dl>
-            <dt>pthread</dt><dd>POSIX 线程。</dd>
-            <dt>互斥锁</dt><dd>保护共享状态。</dd>
-            <dt>队列</dt><dd>采集线程入队，控制/推理线程出队。</dd>
+          <td rowspan="4" class="merge">ch06</td>
+          <td rowspan="4" class="merge">Linux 应用篇</td>
+          <td class="section">6.1 为啥一条线不够</td>
+          <td rowspan="4" class="merge section">采集∥控制；共享状态不乱；能干净停</td>
+          <td rowspan="4" class="merge section">多线程协同</td>
+          <td rowspan="4" class="merge section">双线程温控骨架</td>
+          <td rowspan="4" class="merge glossary section"><dl>
+            <dt>线程</dt><dd>一个进程里多条执行线。</dd>
+            <dt>共享状态</dt><dd>温度等数据两边都碰；要有规矩（锁）。</dd>
+            <dt>干净退出</dt><dd>Ctrl+C 后关风扇再退；不写 Shell。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-linux"><td class="section">6.2 互斥锁保护共享状态</td></tr>
-        <tr class="mod-linux"><td class="section">6.3 采集 / 通信 / 控制拆分</td></tr>
-        <tr class="mod-linux"><td class="section">6.4 环形缓冲传递样本</td></tr>
-        <tr class="mod-linux"><td class="section">6.5 信号处理与优雅退出</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 多线程协同</strong>：并行跑稳 + Ctrl+C 干净退出</td></tr>
+        <tr class="mod-linux"><td class="section">6.2 拆开跑、别抢同一份状态</td></tr>
+        <tr class="mod-linux"><td class="section">6.3 怎么干净停下来</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 多线程协同</strong>：C 脚手架（采集线/控制线空壳）；学生补采样入盒、阈值控风扇、保护共享数据；捂热/模拟升温风扇仍听话；Ctrl+C 关风扇并干净退出（非 CSAPP Shell 课）</td></tr>
 
         <!-- capstone -->
         <tr class="mod-cap">
@@ -838,6 +833,7 @@
     <li>模型权重由<strong>老师提供</strong>；学生做<strong>板端手写 tiny 前向与部署</strong>；不在板上训练；不以大模型板上推理为主线</li>
     <li>原理讲到<strong>接口层</strong>（会用 fd / gpiod / socket 等）；需要时交代 MMIO 等心智；不讲成操作系统内核课，不讲成 RISC-V 指令集课</li>
     <li><strong>一条线顺序学</strong>；不设选修双轨；每章讲义<strong>固定三节</strong> + <strong>一个完整本章实验</strong></li>
+    <li>实验默认给 <strong>C 脚手架</strong>，学生按讲义往后写；验收必须结合<strong>板上硬件可见现象</strong>；不把 Shell/作业控制当主线（有别于 CSAPP 式系统软件课）</li>
     <li>OpenCV、YOLO、Buildroot 等不进主线</li>
   </ul>
 
