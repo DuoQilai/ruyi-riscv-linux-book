@@ -296,7 +296,7 @@
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">上板通道验收</p>
-        <p class="flow-desc">CoreMark 交叉编译上板跑分（硬性）</p>
+        <p class="flow-desc">CoreMark 交叉编译上板跑分</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
@@ -658,12 +658,12 @@
         <tr class="mod-env">
           <td rowspan="3" class="merge">ch02</td>
           <td rowspan="3" class="merge">基础篇</td>
-          <td class="section">2.1 类型、变量、控制流（够用）</td>
+          <td class="section">2.1 类型、变量、控制流</td>
           <td rowspan="3" class="merge section">读懂、改得动本课 C 代码</td>
           <td rowspan="3" class="merge section"><strong>改代码闯关</strong>：假温控半成品（结构体/指针/阈值故意有坑）；按关卡改到行为符合表</td>
           <td rowspan="3" class="merge section">语言门槛过关</td>
           <td rowspan="3" class="merge glossary section"><dl>
-            <dt>指针（皮毛）</dt><dd>能看懂函数参数里的指针用法即可。</dd>
+            <dt>指针</dt><dd>能看懂函数参数里的指针用法即可。</dd>
             <dt>结构体</dt><dd>把一组相关数据捆在一起。</dd>
             <dt>头文件</dt><dd>声明接口，供多个 .c 共用。</dd>
             <dt>假温控</dt><dd>用半成品练改阈值与错误分支。</dd>
@@ -714,7 +714,7 @@
           <td class="section">5.1 联网也是跟外面说话</td>
           <td rowspan="3" class="merge section">发布/订阅；C 控灯；板子 publish 状态</td>
           <td rowspan="3" class="merge section"><strong>MQTT 远程控灯</strong>：订阅→驱外接 LED；含 publish 状态/告警小例子；手机 App 联调</td>
-          <td rowspan="3" class="merge section">可复用 MQTT（下行+上行种子）</td>
+          <td rowspan="3" class="merge section">可复用 MQTT：下行控灯 + 上行状态</td>
           <td rowspan="3" class="merge glossary section"><dl>
             <dt>Broker</dt><dd>消息中转站。</dd>
             <dt>主题</dt><dd>频道名；发布往这发，订阅盯这听。</dd>
@@ -729,7 +729,7 @@
         <tr class="mod-linux">
           <td rowspan="3" class="merge">ch06</td>
           <td rowspan="3" class="merge">Linux 应用篇</td>
-          <td class="section">6.1 为啥一条线不够（已有 MQTT 监听）</td>
+          <td class="section">6.1 为啥一条线不够：已有 MQTT 监听</td>
           <td rowspan="3" class="merge section">采集∥控制∥通信(MQTT) 三线程；共享状态有序；干净停</td>
           <td rowspan="3" class="merge section"><strong>三线程协同</strong>：C 脚手架（采集∥控制∥通信）；接入 ch05 订阅/发布循环；阈值控风扇；共享状态有序；Ctrl+C 关风扇干净退出</td>
           <td rowspan="3" class="merge section">三线程骨架（供综合复用）</td>
@@ -746,7 +746,7 @@
         <tr class="mod-cap">
           <td rowspan="7" class="merge">综合</td>
           <td rowspan="7" class="merge">综合大项目</td>
-          <td class="section">P.1 需求与模块图（复用 ch06 三线程）</td>
+          <td class="section">P.1 需求与模块图：复用 ch06 三线程</td>
           <td rowspan="7" class="merge section">复用 ch06 三线程骨架；规则/模型或逻辑仲裁风扇；载入老师权重 + 手写 tiny 前向</td>
           <td rowspan="7" class="merge section"><strong>异常联动总验收</strong>：异常时告警红灯 + 风扇 + MQTT 上行告警几乎同时；日志能看出触发源</td>
           <td rowspan="7" class="merge section">可答辩作品</td>
@@ -760,8 +760,8 @@
         <tr class="mod-cap"><td class="section">P.2 接入配置日志 + 外接灯远程控 + 告警红灯本地</td></tr>
         <tr class="mod-cap"><td class="section">P.3 在三线程骨架上挂规则与模型输出</td></tr>
         <tr class="mod-cap"><td class="section">P.4 载入老师 <code>weights.h</code></td></tr>
-        <tr class="mod-cap"><td class="section">P.5 滑动窗口 + 手写 C 前向（TinyML 方案待定，此处占位保留）</td></tr>
-        <tr class="mod-cap"><td class="section">P.6 风扇或逻辑仲裁 + 异常联动（红灯 + 风扇 + MQTT 上行）；日志记触发源</td></tr>
+        <tr class="mod-cap"><td class="section">P.5 滑动窗口 + 手写 C 前向 · TinyML 方案待定</td></tr>
+        <tr class="mod-cap"><td class="section">P.6 风扇或逻辑仲裁 + 异常联动：红灯 + 风扇 + MQTT 上行；日志记触发源</td></tr>
         <tr class="mod-cap"><td class="section">P.7 演示与验收</td></tr>
       </tbody>
     </table>

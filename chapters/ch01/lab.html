@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第一章 开发环境篇 · 实验</title>
+<title>第一章 · 本章实验 · 上板通道验收</title>
 <style>
   :root {
     --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -78,103 +78,111 @@
   <h4>本章实验</h4>
   <a href="#intro">说明</a>
   <div class="divider"></div>
-  <a href="#phase1">环节一 · 接 1.1</a>
-  <a href="#phase2">环节二 · 接 1.2</a>
-  <a href="#phase3">环节三 · 接 1.3</a>
+  <a href="#prep">前提自检</a>
+  <a href="#coremark">CoreMark 上板</a>
+  <a href="#channel">通道与工具链自证</a>
+  <a href="#accept">验收清单</a>
 </nav>
 
 <article>
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
-  <h1>实验：开发环境连通与准备决策</h1>
-  <p class="meta">一章一篇 · 递进于 <code>lecture.html</code> 的 1.1 / 1.2 / 1.3</p>
+  <h1>本章实验 · 上板通道验收</h1>
+  <p class="meta">一整块实验 · 接讲义 1.1 / 1.2 / 1.3 · 硬性目标：CoreMark 上板跑分</p>
 </header>
 
 <section id="intro">
 <h2>怎么用本章实验</h2>
-<p>先按 <code>lecture.html</code> 完成 1.1 → 1.2 → 1.3 的跟做与理解，再在本页做<strong>整合验收</strong>和<strong>多一步思考</strong>。这里不重复讲义里的完整命令清单。</p>
+<p>先按 <code>lecture.html</code> 完成 1.1 → 1.2 → 1.3 的跟做，再回到本页做<strong>整合验收</strong>。本页只写差量步骤与记录要求：安装 ruyi、手工烧录、SSH/SCP、Makefile、CoreMark 交叉编译命令以讲义为准，不在此重复完整教程。</p>
 <div class="info">
-  <strong>递进关系：</strong>环节一巩固平台与工具链认知 → 环节二证明板子「能稳定开发」 → 环节三对真板做一键准备决策。
+  <strong>本章实验硬性目标：</strong>交叉编译 CoreMark → SCP 上板 → 跑出分数并记录；同时自证 SSH、<code>uname</code>、工具链三元组可用。烧录可用手工完成，不必依赖一键准备。
 </div>
 </section>
 
-<section id="phase1">
-<h2>环节一 · 接 1.1（平台与工具链）</h2>
-<p><strong>前提：</strong>你已按讲义安装 ruyi、验证交叉工具链。</p>
-
-<h3>任务 A：平台分层与个人清单</h3>
-<ul>
-  <li>自绘分层图（ISA → SoC → 开发板 → OS → 工具 → 应用），标出你课程中的具体实例。</li>
-  <li>在板卡资料上标注电源、串口、网络、启动介质接口，形成<strong>个人环境清单</strong>（硬件/线缆/主机软件各一项状态）。</li>
-</ul>
-
-<h3>任务 B：主机 gcc vs 交叉 gcc（对比实验）</h3>
-<p>同一源文件 <code>mini.c</code>（<code>return 0</code> 即可），分别编译：</p>
-<pre><span class="p">$</span> gcc mini.c -o mini-host && file mini-host
-<span class="p">$</span> riscv64-unknown-linux-gnu-gcc mini.c -o mini-riscv && file mini-riscv</pre>
-<p>用一两句话说明：为何不能把 <code>mini-host</code> 直接 scp 到 LicheePi 运行？（呼应讲义 1.1 课堂练习。）</p>
-
-<h3>本环节自检</h3>
+<section id="prep">
+<h2>前提自检</h2>
+<p>开始前确认讲义成果已就绪。缺哪一项，先回对应小节补齐，再继续实验。</p>
 <table>
-  <tr><th>项</th><th>完成</th></tr>
-  <tr><td>分层图 + 环境清单</td><td>□</td></tr>
-  <tr><td>两次 <code>file</code> 输出已保存</td><td>□</td></tr>
-  <tr><td>能解释架构差异</td><td>□</td></tr>
+  <tr><th>前提</th><th>对应讲义</th><th>□</th></tr>
+  <tr><td>ruyi 与交叉工具链已安装，<code>-dumpmachine</code> 可用</td><td>1.1</td><td></td></tr>
+  <tr><td>板卡已手工烧录并可启动</td><td>1.2</td><td></td></tr>
+  <tr><td>串口或 SSH 至少一种可登录板端</td><td>1.2</td><td></td></tr>
+  <tr><td>主机已交叉编译出 RISC-V 的 CoreMark 可执行文件，<code>file</code> 确认架构</td><td>1.3</td><td></td></tr>
 </table>
 </section>
 
-<section id="phase2">
-<h2>环节二 · 接 1.2（烧录与通道）</h2>
-<p><strong>前提：</strong>板子已烧录可启动，讲义中 SSH/SCP 流程已跟做至少一次。</p>
+<section id="coremark">
+<h2>CoreMark 上板跑分</h2>
+<p><strong>目标：</strong>把讲义 1.3 编好的 CoreMark 传到板端，运行并记下分数。分数高低不是评分重点；走通「编译 → 传输 → 运行 → 读数」才是。</p>
 
-<h3>任务 C：开发通道连通验收</h3>
-<p>在下列项中逐项自证（勾选 + 保留关键输出或截图）：</p>
-<table>
-  <tr><th>验收项</th><th>□</th></tr>
-  <tr><td>镜像校验与烧录成功有记录</td><td></td></tr>
-  <tr><td><code>uname -m</code> 为 <code>riscv64</code></td><td></td></tr>
-  <tr><td>网络：有效 IP + 默认路由</td><td></td></tr>
-  <tr><td>串口<strong>或</strong> SSH 至少一种可用</td><td></td></tr>
-  <tr><td>SCP 上传后两端 <code>sha256sum</code> 一致</td><td></td></tr>
-  <tr><td>已从板端下载 <code>/etc/os-release</code> 片段</td><td></td></tr>
-</table>
-
-<h3>任务 D：排错一题（动脑）</h3>
-<p>情景：主机 <code>ssh user@192.168.1.50</code> 超时，但串口能登录板子。按讲义 1.2 思路，列出你会检查的 <strong>3 个方向</strong>（不必真故障）。</p>
-<p>再答：若「批量传 20 个文件到板子」，优先 SSH/SCP 还是串口？一句话理由。</p>
-</section>
-
-<section id="phase3">
-<h2>环节三 · 接 1.3（一键准备决策）</h2>
-<p><strong>前提：</strong>已读讲义 1.3 六维对比与六项风险。</p>
-
-<h3>任务 E：对你这块 LicheePi 做决策</h3>
+<h3>步骤</h3>
 <ol>
-  <li>运行 <code>ruyi device --help</code> 及一键准备相关帮助（以本机为准），记录：是否列出你的板卡/变体。</li>
-  <li>填写六项风险检查表（是/否/不适用 + 一句备注）。</li>
-  <li>写出结论（三选一并说明理由）：
-    <ul>
-      <li><strong>继续用手工烧录</strong>（§1.2）</li>
-      <li><strong>可尝试一键准备</strong>（仅在六项全过、空白介质时）</li>
-      <li><strong>当前 ruyi 不支持</strong> — 说明依据与手工路径</li>
-    </ul>
+  <li>在主机确认产物为 RISC-V ELF（讲义已做过则保留原日志即可）：
+<pre><span class="p">$</span> file coremark.exe
+<span class="c"># 应含 UCB RISC-V / RISC-V 字样</span></pre>
   </li>
+  <li>SCP 上传到板端（用户名与 IP 换成你的板子）：
+<pre><span class="p">$</span> scp coremark.exe user@board-ip:/tmp/
+<span class="p">$</span> ssh user@board-ip 'sha256sum /tmp/coremark.exe'
+<span class="c"># 与主机 sha256sum 对照，确认传输完整</span></pre>
+  </li>
+  <li>SSH 登录板端，赋予执行权限并运行：
+<pre><span class="p">$</span> ssh user@board-ip
+<span class="p">$</span> chmod +x /tmp/coremark.exe
+<span class="p">$</span> /tmp/coremark.exe</pre>
+  </li>
+  <li>从输出中抄录 CoreMark 分数（常见字段为 iterations/sec 或 CoreMark 总分）。把完整终端输出另存为日志文件或截图。</li>
 </ol>
 
 <div class="warn">
-  <strong>安全：</strong>本实验<strong>不强制</strong>真实执行写入。做出有依据的「不执行一键准备」同样完成实验。
+  <strong>排错提示：</strong>若板端报「Exec format error」或无法执行，先回主机用 <code>file</code> 核对是否误用了主机 GCC；再核对 SCP 路径与权限。命令细节见讲义 1.2 / 1.3。
 </div>
 
-<h3>任务 F：场景判断（简答）</h3>
-<p>讲义 1.3 三个场景（有重要数据 / 设备未列出 / 空白介质），各用一句话说明你会选手工还是一键准备。</p>
+<h3>必记字段</h3>
+<table>
+  <tr><th>字段</th><th>你的记录</th></tr>
+  <tr><td>产物文件名</td><td></td></tr>
+  <tr><td>主机 <code>file</code> 一行摘要</td><td></td></tr>
+  <tr><td>板端路径</td><td></td></tr>
+  <tr><td>CoreMark 分数</td><td></td></tr>
+  <tr><td>运行日期 / 板卡型号</td><td></td></tr>
+</table>
+</section>
 
-<h3>本章实验完成标志</h3>
-<ul>
-  <li>三个环节自检表均勾完；</li>
-  <li>保留 host vs riscv 的 <code>file</code> 对比；</li>
-  <li>有一份一键准备决策记录（可不含真实写入日志）。</li>
-</ul>
+<section id="channel">
+<h2>通道与工具链自证</h2>
+<p>在完成跑分的同时，用下列命令自证开发通道与工具链可用。每条保留一行真实输出即可。</p>
+
+<h3>板端：SSH 与架构</h3>
+<pre><span class="p">$</span> ssh user@board-ip 'hostname; uname -m'
+<span class="c"># uname -m 应为 riscv64</span></pre>
+
+<h3>主机：工具链三元组</h3>
+<pre><span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
+<span class="c"># 应为 riscv64-unknown-linux-gnu</span></pre>
+
+<h3>烧录说明</h3>
+<p>本章实验允许并推荐用讲义 1.2 的<strong>手工烧录</strong>完成「板子可启动」。一键准备是讲义必讲能力，不是本实验的硬性步骤；手工烧录成功即满足烧录验收。</p>
+</section>
+
+<section id="accept">
+<h2>验收清单</h2>
+<p>全部勾选且材料齐全，即完成本章实验。</p>
+<table>
+  <tr><th>验收项</th><th>证据</th><th>□</th></tr>
+  <tr><td>手工烧录后板卡可启动</td><td>启动日志或串口/SSH 登录截图</td><td></td></tr>
+  <tr><td>SSH 可登录板端</td><td><code>ssh … 'hostname; uname -m'</code> 输出</td><td></td></tr>
+  <tr><td><code>uname -m</code> 为 <code>riscv64</code></td><td>同上日志中的架构行</td><td></td></tr>
+  <tr><td>工具链三元组正确</td><td><code>-dumpmachine</code> → <code>riscv64-unknown-linux-gnu</code></td><td></td></tr>
+  <tr><td>CoreMark 交叉编译产物为 RISC-V</td><td>主机 <code>file</code> 输出</td><td></td></tr>
+  <tr><td>SCP 上板成功</td><td>两端 <code>sha256sum</code> 一致，或板端 <code>ls</code> 可见</td><td></td></tr>
+  <tr><td>板端跑出 CoreMark 分数并已记录</td><td>完整运行日志 + 上方「必记字段」表</td><td></td></tr>
+</table>
+
+<div class="info">
+  <strong>完成标志：</strong>验收清单全部勾选；CoreMark 分数与三项自证输出已归档。可进入下一章。
+</div>
 </section>
 
 </article>

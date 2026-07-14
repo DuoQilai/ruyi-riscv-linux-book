@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第三章 开发板基础篇 · 实验</title>
+<title>第三章 外设篇 · 本章实验 — RISC-V Linux 课程</title>
 <style>
   :root {
     --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -68,20 +68,20 @@
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
-  <h1>实验 1：温控风扇</h1>
+  <h1>本章实验 · 温控风扇</h1>
   <p class="meta">整合讲义 3.1–3.3 · 不重复 blink / uart-echo 单项练习</p>
 </header>
 
 <section id="intro">
 <h2>实验目的</h2>
-<p>讲义已分别练过 GPIO、串口日志思路、DHT22/开/关概念。本实验把它们<strong>组装</strong>成一条可演示闭环：</p>
+<p>讲义已建立 I/O 心智、练过 GPIO 闪灯，并理清 UART 日志与传感执行数据流。本实验把它们<strong>组装</strong>成一条可演示闭环：</p>
 <ul>
   <li>周期性读取环境温度</li>
   <li>高于上限 → 风扇开；低于下限 → 风扇关</li>
-  <li>读失败时打印错误并继续跑（不崩溃）</li>
+  <li>读失败时打印 <code>[ERR]</code>，<strong>程序继续跑</strong></li>
 </ul>
 <div class="info">
-  <strong>前置：</strong>讲义 3.1–3.3 跟做过；SSH 可用；课程套件含 DHT22、风扇 + 驱动模块、杜邦线。<strong>风扇由课程提供，学生不必自购。</strong>
+  <strong>前置：</strong>讲义 3.1–3.3 跟做过；SSH 可用；课程套件含 DHT22、风扇 + 驱动模块、杜邦线。<strong>风扇由课程提供，不必自购。</strong>
 </div>
 <div class="warn">
   <strong>与讲义的区分：</strong>不要再逐步抄 blink 的编译命令当正文。默认你会交叉编译与 <code>scp</code>。本页只写<strong>接线检查、temp-fan 工程、验收标准</strong>。
@@ -89,39 +89,45 @@
 </section>
 
 <section id="wire">
-<h2>L1.1 接线（课程套件）</h2>
-<p>按下表连接；<strong>具体脚位以当堂接线表为准</strong>，并与 <code>temp-fan</code> 源码中的宏一致。</p>
+<h2>接线（课程套件）</h2>
+<p>按下表连接；<strong>具体脚位以当堂接线表为准</strong>，并与 <code>chapters/ch03/code/temp-fan/main.c</code> 中的宏一致。</p>
 <table>
   <tr><th>模块</th><th>接到哪里</th><th>注意</th></tr>
-  <tr><td>DHT22</td><td>VCC、GND、DATA→某 GPIO</td><td>DATA 按模块说明是否需上拉</td></tr>
-  <tr><td>风扇驱动（继电器/开关模块）</td><td>信号端→某 GPIO；电源按套件说明</td><td>GPIO <strong>不</strong>直接驱动风扇电机</td></tr>
+  <tr><td>DHT22</td><td>VCC、GND、DATA→某 GPIO</td><td>DATA 按模块说明是否需上拉；对应宏 <code>DHT_LINE</code></td></tr>
+  <tr><td>风扇驱动（继电器/开关模块）</td><td>信号端→某 GPIO；电源按套件说明</td><td>GPIO <strong>不</strong>直接驱动风扇电机；对应宏 <code>FAN_LINE</code></td></tr>
   <tr><td>共地</td><td>板与模块 GND 相连</td><td>漏接 GND 是常见故障</td></tr>
 </table>
 <p>接线完成后，在源码中确认例如：</p>
-<pre>GPIO_CHIP_PATH / DHT_LINE / FAN_LINE / T_HIGH / T_LOW / SAMPLE_MS</pre>
+<pre>GPIO_CHIP_PATH / DHT_LINE / FAN_LINE / T_HIGH / T_LOW / SAMPLE_MS / SIMULATE_SENSOR</pre>
+<p>脚手架默认示例：<code>T_HIGH=28.0</code>、<code>T_LOW=26.0</code>、<code>SAMPLE_MS=2000</code>。两档阈值形成滞回，避免温度在临界附近风扇狂抖。</p>
 </section>
 
 <section id="build">
-<h2>L1.2–L1.4 构建、运行与观察</h2>
+<h2>构建、运行与观察</h2>
 
-<h3>1. 编译部署</h3>
-<p>默认工程 <code>SIMULATE_SENSOR=1</code>：无 DHT 也可演示阈值开/关逻辑。接好套件后改为 <code>0</code> 再编译。用户态读 DHT22 可能偶发失败——程序应打 <code>[ERR]</code> 并继续，勿崩溃。</p>
+<h3>1. 模拟或真传感器</h3>
+<p>工程默认 <code>SIMULATE_SENSOR=1</code>：不读 DHT，用假温度在约 24–31 °C 间缓慢升降，便于无硬件时演示阈值开/关。接好套件并要用真传感器时，改为 <code>0</code> 再编译。用户态读 DHT22 可能偶发失败——程序应打 <code>[ERR]</code> 并进入下一周期，让程序继续跑。</p>
+
+<h3>2. 编译部署</h3>
 <pre><span class="p">$</span> cd chapters/ch03/code/temp-fan
 <span class="p">$</span> make clean && make
 <span class="p">$</span> file temp-fan          <span class="c"># 应为 RISC-V ELF</span>
 <span class="p">$</span> scp temp-fan user@board-ip:~/
 <span class="p">$</span> ssh user@board-ip './temp-fan'</pre>
+<p>Makefile 与 blink 相同思路：交叉前缀 <code>riscv64-unknown-linux-gnu-</code>，链接 <code>-lgpiod</code>，产物名 <code>temp-fan</code>。</p>
 
-<h3>2. 预期行为</h3>
+<h3>3. 预期行为</h3>
 <ul>
-  <li>终端周期性打印温度（及湿度，若实现）。</li>
-  <li>用手捂传感器或靠近热源使温度升过 <code>T_HIGH</code> → 风扇转。</li>
-  <li>移开冷却至低于 <code>T_LOW</code> → 风扇停。</li>
-  <li>故意松 DATA 线一次 → 出现 <code>[ERR]</code> 类日志，程序<strong>不退出</strong>，恢复接线后继续采样。</li>
+  <li>启动时打印阈值与采样周期；模拟模式下有 <code>SIMULATE_SENSOR=1</code> 提示。</li>
+  <li>终端周期性打印 <code>[INFO] temp=… hum=… fan=ON|OFF</code>。</li>
+  <li>模拟升温越过 <code>T_HIGH</code>，或用手捂传感器 / 靠近热源使真温度升过上限 → 出现 <code>[INFO] fan ON</code>，风扇转。</li>
+  <li>温度降到低于 <code>T_LOW</code> → <code>[INFO] fan OFF</code>，风扇停。</li>
+  <li>真机模式下故意松 DATA 线一次 → 出现 <code>[ERR] DHT22 read failed — retry next cycle</code>，进程不退出，恢复接线后继续采样。</li>
 </ul>
 
-<h3>3. 阈值与滞回</h3>
-<p>使用 <code>T_HIGH</code> / <code>T_LOW</code> 两档（滞回），避免温度在临界值附近风扇狂抖。默认值可在源码宏中改；改完重新编译部署。</p>
+<div class="info">
+  <strong>验收路径任选其一即可：</strong><code>SIMULATE_SENSOR=1</code> 看假温度穿越阈值；或 <code>SIMULATE_SENSOR=0</code> 接好 DHT 后捂热 / 降温。两种都能证明闭环逻辑。
+</div>
 
 <div class="warn">
   运行中勿带电拔插电源线。演示加热时注意模块与手指安全，勿短路引脚。
@@ -133,9 +139,9 @@
 <table>
   <tr><th>项</th><th>通过条件</th></tr>
   <tr><td>编译</td><td>主机交叉编译成功，<code>file</code> 为 RISC-V</td></tr>
-  <tr><td>采样</td><td>板端能稳定打印温度（允许偶发一次重试）</td></tr>
+  <tr><td>采样</td><td>板端能周期打印温度；模拟升温或真捂热均可</td></tr>
   <tr><td>控制</td><td>可演示「超温开 / 降温关」</td></tr>
-  <tr><td>异常</td><td>读失败有日志且进程继续</td></tr>
+  <tr><td>异常</td><td>读失败有 <code>[ERR]</code> 日志且程序继续跑</td></tr>
 </table>
 </section>
 
@@ -146,16 +152,17 @@
 <table>
   <tr><th>项</th><th>你的结果</th></tr>
   <tr><td>DHT / 风扇所用 GPIO（chip + line）</td><td></td></tr>
-  <tr><td>T_HIGH / T_LOW / 采样周期</td><td></td></tr>
+  <tr><td>T_HIGH / T_LOW / SAMPLE_MS</td><td></td></tr>
+  <tr><td>验收方式（模拟 / 真捂热）</td><td></td></tr>
   <tr><td>超温时风扇是否动作</td><td></td></tr>
   <tr><td>读失败时的日志原文（一行）</td><td></td></tr>
 </table>
 
 <h3>简答（各 2–4 句）</h3>
 <ol>
-  <li>本实验相对讲义 3.1 的 blink，多出来的「系统行为」是什么？</li>
+  <li>相对讲义 3.2 的 blink，本实验多出来的「系统行为」是什么？</li>
   <li>若只有 <code>T_HIGH</code> 一档阈值、没有 <code>T_LOW</code>，可能出现什么现象？</li>
-  <li>第四章若把阈值放进配置文件，程序哪几处需要改？（概念即可）</li>
+  <li>第四章若把阈值放进配置文件，程序哪几处需要改？概念即可。</li>
 </ol>
 
 <h3>完成标志</h3>

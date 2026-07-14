@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第一章 开发环境篇 · 讲义 — RISC-V Linux 课程</title>
+<title>第一章 环境与工具链 · 讲义 — RISC-V Linux 课程</title>
 <style>
   :root {
     --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -154,7 +154,7 @@
   <h4>目录</h4>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
-  <a href="#s1.1">1.1 平台认知与 ruyi 安装</a>
+  <a href="#s1.1">1.1 RISC-V 平台与 ruyi 环境</a>
   <a class="sub" href="#s1.1-objectives">学习目标</a>
   <a class="sub" href="#s1.1-platform">平台分层</a>
   <a class="sub" href="#s1.1-ruyi">ruyi 与工具链</a>
@@ -162,25 +162,27 @@
   <a class="sub" href="#s1.1-steps">操作步骤</a>
   <a class="sub" href="#s1.1-exercises">课堂练习</a>
   <div class="divider"></div>
-  <a href="#s1.2">1.2 镜像烧录与开发通道</a>
+  <a href="#s1.2">1.2 烧录、开发通道与一键准备/一键编译</a>
   <a class="sub" href="#s1.2-objectives">学习目标</a>
   <a class="sub" href="#s1.2-flash">镜像烧录</a>
   <a class="sub" href="#s1.2-channels">三条通道</a>
   <a class="sub" href="#s1.2-firstboot">首次启动</a>
   <a class="sub" href="#s1.2-ssh">SSH 与 SCP</a>
+  <a class="sub" href="#s1.2-oneclick">一键准备与一键编译</a>
   <div class="divider"></div>
-  <a href="#s1.3">1.3 开发板一键准备</a>
+  <a href="#s1.3">1.3 交叉编译、Makefile 与 CoreMark</a>
   <a class="sub" href="#s1.3-objectives">学习目标</a>
-  <a class="sub" href="#s1.3-concept">一键准备是什么</a>
-  <a class="sub" href="#s1.3-compare">手工 vs 自动</a>
-  <a class="sub" href="#s1.3-risk">风险检查与决策</a>
+  <a class="sub" href="#s1.3-cross">交叉编译工作流</a>
+  <a class="sub" href="#s1.3-makefile">Makefile 模板</a>
+  <a class="sub" href="#s1.3-coremark">CoreMark 基准</a>
+  <a class="sub" href="#s1.3-build">构建 CoreMark</a>
 </nav>
 
 <!-- ═══════════════════════════════════════════ -->
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
-  <h1>开发环境篇</h1>
-  <p class="subtitle">RISC-V 平台认知 · 开发环境安装 · 镜像烧录与启动<br>— 1.1 / 1.2 / 1.3 —</p>
+  <h1>环境与工具链</h1>
+  <p class="subtitle">RISC-V 平台认知 · ruyi 环境 · 烧录与开发通道 · 交叉编译与 CoreMark<br>— 1.1 / 1.2 / 1.3 —</p>
   <div class="meta">
     <span>目标平台：LicheePi 4A / TH1520</span>
     <span>操作系统：RevyOS</span>
@@ -195,22 +197,22 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>本章三节是递进关系：</strong>1.1 搭建工具链 → 1.2 烧录系统并建立连接 → 1.3 理解自动化的适用边界。<strong>请按顺序完成，不要跳节。</strong>每节约需 90–120 分钟（含实验）。
+  <strong>本章三节是递进关系：</strong>1.1 认识平台并装好 ruyi → 1.2 烧录系统并打通开发通道 → 1.3 学会交叉编译并跑出 CoreMark 分数。<strong>请按顺序完成，不要跳节。</strong>每节约需 90–120 分钟（含跟做命令）。
 </div>
 
 <h3>你需要准备什么</h3>
 
 <div class="card-grid card-grid-3">
   <div class="card">
-    <h4>🖥 主机</h4>
+    <h4>主机</h4>
     <p>Linux x86_64（推荐 Ubuntu 22.04+）。macOS / Windows 备选但课程命令以 Linux 为准。确保可联网并至少有 10GB 可用磁盘空间。</p>
   </div>
   <div class="card">
-    <h4>📦 开发板</h4>
+    <h4>开发板</h4>
     <p>LicheePi 4A（TH1520 SoC）一块。配套：稳定电源适配器、USB 数据线（确认支持数据传输）、3.3V USB-TTL 串口模块、网线或 Wi-Fi。</p>
   </div>
   <div class="card">
-    <h4>💿 软件</h4>
+    <h4>软件</h4>
     <p>课程指定 RevyOS 镜像文件 + ruyi 包管理器 + RISC-V GNU Toolchain。本章全部安装步骤在 1.1–1.2 中详述。</p>
   </div>
 </div>
@@ -218,24 +220,24 @@
 <h3>本章你会学到什么</h3>
 
 <div class="card-grid" style="margin-bottom:0;">
-  <div class="card"><h4>1.1 平台认知与环境安装</h4><p>理解 RISC-V 平台的六个层次，安装 ruyi 与交叉编译工具链，验证工具链可用性。</p></div>
-  <div class="card"><h4>1.2 镜像烧录与开发通道</h4><p>将 RevyOS 烧录到 LicheePi 4A，完成首次启动检查，建立串口 / SSH / SCP 三通道。</p></div>
-  <div class="card"><h4>1.3 开发板一键准备</h4><p>理解 ruyi 自动装板子的适用场景与风险，建立手工烧录 vs 一键准备的决策框架。</p></div>
+  <div class="card"><h4>1.1 RISC-V 平台与 ruyi 环境</h4><p>理解 RISC-V 平台的分层结构，安装 ruyi 与交叉编译工具链，验证工具链可用性。</p></div>
+  <div class="card"><h4>1.2 烧录、开发通道与一键准备/一键编译</h4><p>将 RevyOS 烧录到 LicheePi 4A，建立串口 / SSH / SCP 三通道，认识 ruyi 一键准备与一键编译能力。</p></div>
+  <div class="card"><h4>1.3 交叉编译、Makefile 与 CoreMark</h4><p>掌握交叉编译工作流与 Makefile 模板，交叉编译 CoreMark 并理解其作为算力基准的意义。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>学习建议：</strong>每个操作步骤都有对应的验证方法（「你应该看到…」）。如果某步验证不通过，先查阅本节末尾的常见问题，不要跳过。完整终端日志是实验验收材料——从现在开始养成保存日志的习惯。
+  <strong>学习建议：</strong>每个操作步骤都有对应的验证方法（「你应该看到…」）。如果某步验证不通过，先重新核对命令与路径，不要跳过。完整终端日志是本章实验（<code>lab.html</code>）的验收材料——从现在开始养成保存日志的习惯。
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
 <section id="s1.1">
 <div class="section-num">1.1</div>
-<h2>RISC-V 平台认知与 ruyi 开发环境安装</h2>
+<h2>RISC-V 平台与 ruyi 环境</h2>
 
 <h3 id="s1.1-objectives">学习目标</h3>
 <div class="card-grid">
-  <div class="card"><h4>平台分层</h4><p>区分 ISA、SoC、开发板、OS、工具链六个层次</p></div>
+  <div class="card"><h4>平台分层</h4><p>区分 ISA、SoC、开发板、OS、工具链五个层次</p></div>
   <div class="card"><h4>接口识别</h4><p>识别 LicheePi 4A 电源、串口、网络和启动介质位置</p></div>
   <div class="card"><h4>环境清单</h4><p>确认硬件、线缆、主机软件状态</p></div>
   <div class="card"><h4>ruyi 安装</h4><p>安装 ruyi 包管理器，更新软件源，查询工具链</p></div>
@@ -246,7 +248,7 @@
 <h3 id="s1.1-platform">平台分层：从 ISA 到应用</h3>
 <p>RISC-V 是开放指令集架构（ISA），定义了处理器执行指令的接口。芯片和开发板是不同层次的概念。建立分层思维是后续排查「镜像与板卡不匹配」「工具链架构错误」等问题的基础。</p>
 
-<div class="diagram">RISC-V ISA (开放指令集架构规范)
+<div class="diagram">RISC-V ISA（开放指令集架构规范）
     ↓
 处理器核 / SoC（TH1520）
     ↓
@@ -254,12 +256,10 @@
     ↓
 操作系统（RevyOS）
     ↓
-开发工具（ruyi、编译器、SSH、串口工具）
-    ↓
-课程应用与实验</div>
+开发工具（ruyi、编译器、SSH、串口工具）</div>
 
 <h3 id="s1.1-ruyi">ruyi：包管理与环境管理入口</h3>
-<p><code>ruyi</code> 是 RuyiSDK 的包管理入口。它负责发现和获取 RISC-V 开发所需的软件包与工具链；真正编译代码的是 GCC。两者关系类似「应用商店」与「应用程序」。</p>
+<p><code>ruyi</code> 是 RuyiSDK 的包管理入口，负责发现和获取 RISC-V 开发所需的软件包、镜像与工具链；真正编译代码的是 GCC。两者关系类似「应用商店」与「应用程序」。ruyi 之下还有一层自动化能力——一键准备（写镜像）与一键编译（便捷构建），1.2 与 1.3 会分别引入。</p>
 
 <div class="diagram">ruyi 命令
   ├─ 软件源与包信息        → 查询可用工具链、镜像与设备支持
@@ -293,10 +293,31 @@
   <li><span class="step-num">1</span><div><strong>记录主机环境</strong><br><code>uname -a</code> / <code>uname -m</code> — 确认主机架构，记入个人环境清单。</div></li>
   <li><span class="step-num">2</span><div><strong>安装 ruyi 并确认命令位置</strong><br><code>command -v ruyi</code> 确认 shell 实际调用的文件。<code>ruyi --version</code> 记录版本号。</div></li>
   <li><span class="step-num">3</span><div><strong>更新软件源并查询工具链</strong><br><code>ruyi update</code> 更新源。<code>ruyi list | grep toolchain</code> 搜索可用工具链。</div></li>
-  <li><span class="step-num">4</span><div><strong>安装并验证编译器</strong><br><code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code> 应返回 <code>riscv64-unknown-linux-gnu</code>。</div></li>
-  <li><span class="step-num">5</span><div><strong>最小编译验证</strong><br>编译 <code>int main(void) { return 0; }</code> → <code>file</code> 检查产物为 RISC-V ELF。在主机上 <code>./a.out</code> 可能因架构不同而无法运行——用 <code>file</code> 验收即可。</div></li>
-  <li><span class="step-num">6</span><div><strong>平台分层图与接口标注</strong><br>按上文分层图绘制个人版本，在 LicheePi 4A 资料上标出电源、串口、网络与启动介质——详见本章 <code>lab.html</code> 环节一。</div></li>
+  <li><span class="step-num">4</span><div><strong>安装并验证编译器</strong><br><code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code> 应返回 <code>riscv64-unknown-linux-gnu</code>，这就是本课统一使用的目标三元组。</div></li>
+  <li><span class="step-num">5</span><div><strong>最小编译验证</strong><br>编译 <code>int main(void) { return 0; }</code> → <code>file</code> 检查产物为 RISC-V ELF。在主机上 <code>./a.out</code> 会因架构不同而无法运行——用 <code>file</code> 验收即可。</div></li>
+  <li><span class="step-num">6</span><div><strong>平台分层图与接口标注</strong><br>按上文分层图绘制个人版本，在 LicheePi 4A 资料上标出电源、串口、网络与启动介质。</div></li>
 </ol>
+
+<pre><span class="c"># 主机架构</span>
+<span class="p">$</span> uname -a
+
+<span class="c"># ruyi 安装位置与版本</span>
+<span class="p">$</span> command -v ruyi
+<span class="p">$</span> ruyi --version
+
+<span class="c"># 更新源并查询工具链</span>
+<span class="p">$</span> ruyi update
+<span class="p">$</span> ruyi list | grep toolchain
+
+<span class="c"># 工具链三元组</span>
+<span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
+riscv64-unknown-linux-gnu
+
+<span class="c"># 最小编译验证</span>
+<span class="p">$</span> printf 'int main(void) { return 0; }\n' &gt; mini.c
+<span class="p">$</span> riscv64-unknown-linux-gnu-gcc mini.c -o mini-riscv
+<span class="p">$</span> file mini-riscv
+mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 
 <h3 id="s1.1-exercises">课堂练习</h3>
 <ol>
@@ -312,7 +333,7 @@
 <!-- ═══════════════════════════════════════════ -->
 <section id="s1.2">
 <div class="section-num">1.2</div>
-<h2>镜像烧录、首次启动与开发通道建立</h2>
+<h2>烧录、开发通道与一键准备/一键编译</h2>
 
 <h3 id="s1.2-objectives">学习目标</h3>
 <div class="card-grid">
@@ -321,7 +342,7 @@
   <div class="card"><h4>串口通道</h4><p>建立 USB-TTL 本地调试连接作为备用保障</p></div>
   <div class="card"><h4>SSH 登录</h4><p>配置 Ed25519 密钥登录替代密码认证</p></div>
   <div class="card"><h4>SCP 传输</h4><p>双向文件传输 + sha256sum 校验</p></div>
-  <div class="card"><h4>通道选择</h4><p>区分串口与 SSH 的适用场景，故障时选对工具</p></div>
+  <div class="card"><h4>一键能力</h4><p>认识 ruyi 一键准备与一键编译，明确本章实验用手工流程即可过关</p></div>
 </div>
 
 <h3 id="s1.2-flash">镜像烧录：分区级数据写入</h3>
@@ -339,17 +360,17 @@
 <h3 id="s1.2-channels">三条通道，三个角色</h3>
 <div class="card-grid card-grid-3">
   <div class="card">
-    <h4>🔌 串口（UART）</h4>
+    <h4>串口（UART）</h4>
     <p><strong>本地调试 · 最后保障线</strong></p>
     <p style="margin-top:8px;">不依赖网络，直接观察启动日志。接线：GND-GND、TX→RX、RX→TX，3.3V 电平。</p>
   </div>
   <div class="card">
-    <h4>💻 SSH</h4>
+    <h4>SSH</h4>
     <p><strong>远程主工作通道</strong></p>
     <p style="margin-top:8px;">加密网络终端，适合日常开发。Ed25519 密钥登录替代密码。首次连接须核对主机指纹。</p>
   </div>
   <div class="card">
-    <h4>📁 SCP</h4>
+    <h4>SCP</h4>
     <p><strong>文件传输通道</strong></p>
     <p style="margin-top:8px;">复用 SSH 连接传输文件。上传后板端 sha256sum 校验——两端哈希一致即传输无损坏。</p>
   </div>
@@ -398,6 +419,28 @@
 <span class="c"># 下载</span>
 <span class="p">$</span> scp user@board-ip:/etc/os-release ./board-os-release.txt</pre>
 
+<h3 id="s1.2-oneclick">ruyi 的一键准备与一键编译</h3>
+<p>手工烧录（上文）和手动 SSH/SCP 之外，ruyi 还提供两类自动化能力，目的是省去重复劳动：</p>
+
+<div class="card-grid">
+  <div class="card">
+    <h4>一键准备</h4>
+    <p>按设备支持列表自动下载镜像、写入板卡存储介质，适合设备明确受支持、且写入目标是空白介质的场景。</p>
+  </div>
+  <div class="card">
+    <h4>一键编译</h4>
+    <p>封装交叉编译工具链调用与常见构建参数，适合快速验证工具链可用性或标准化构建流程。</p>
+  </div>
+</div>
+
+<pre><span class="c"># 以本机 ruyi 版本帮助为准，查询是否支持你的设备</span>
+<span class="p">$</span> ruyi device --help
+<span class="p">$</span> ruyi device provision --help</pre>
+
+<div class="info">
+  <strong>本课定位：</strong>一键准备与一键编译是 ruyi 的重要能力，讲义里必须掌握其原理与查询方式。本章实验的通道验收用<strong>手工烧录 + 手工 SCP/SSH</strong> 即可满足硬性要求，两条路径不冲突。
+</div>
+
 <h3 id="s1.2-exercises">课堂练习</h3>
 <ol>
   <li>将「开发板无法启动」拆分为镜像、烧录、供电、启动介质和显示通道五类原因，每类写出一个验证方法。</li>
@@ -405,83 +448,85 @@
 </ol>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>镜像来源与校验记录 · 完整烧录日志 · 系统检查表（OS / 内核 / 用户 / 网络 / 时间 / apt）· 串口接线与参数记录 · SSH 密钥登录验证 · SCP 双向传输哈希校验结果。
+  <strong>本节成果：</strong>镜像来源与校验记录 · 完整烧录日志 · 系统检查表（OS / 内核 / 用户 / 网络 / 时间 / apt）· 串口接线与参数记录 · SSH 密钥登录验证 · SCP 双向传输哈希校验结果 · 一键准备/一键编译帮助输出记录。
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
 <section id="s1.3">
 <div class="section-num">1.3</div>
-<h2>开发板一键准备：适用边界与风险</h2>
+<h2>交叉编译、Makefile 与 CoreMark</h2>
 
 <h3 id="s1.3-objectives">学习目标</h3>
 <div class="card-grid">
-  <div class="card"><h4>一键准备是什么</h4><p>理解 ruyi 自动下载镜像、写入板卡、生成指引等流程的目的与风险</p></div>
-  <div class="card"><h4>设备查询</h4><p>使用当前 ruyi 版本查询设备支持状态，不凭名称猜测</p></div>
-  <div class="card"><h4>六维对比</h4><p>对比手工烧录（§1.2）与一键准备的优劣</p></div>
-  <div class="card"><h4>风险决策</h4><p>根据六项检查做出用手工或尝试一键准备的路径选择</p></div>
+  <div class="card"><h4>交叉编译流程</h4><p>理解「主机编译、板端运行」的完整工作流</p></div>
+  <div class="card"><h4>Makefile 模板</h4><p>写出可复用的交叉编译 Makefile，指定编译器与目标三元组</p></div>
+  <div class="card"><h4>CoreMark 认知</h4><p>理解 CoreMark 作为算力基准的用途与分数含义</p></div>
+  <div class="card"><h4>实机构建</h4><p>交叉编译出可在 LicheePi 4A 上运行的 CoreMark 可执行文件</p></div>
 </div>
 
-<h3 id="s1.3-concept">开发板一键准备是什么</h3>
-<p>通过 <code>ruyi</code> 把开发板准备成可上手状态的一整套自动化流程，可能包括下载镜像、选择板卡型号、写入存储介质或给出操作指引。价值是少重复劳动；但误选磁盘、断电、版本不匹配等风险仍在。<strong>「命令能跑」不等于「适合现在跑」。</strong></p>
+<h3 id="s1.3-cross">交叉编译工作流</h3>
+<p>交叉编译是「在主机上编译，在目标板上运行」：主机架构（x86_64）与目标架构（riscv64）不同，因此编译器、汇编器、链接器都必须使用面向 RISC-V 的版本——这正是 1.1 中安装的 <code>riscv64-unknown-linux-gnu-gcc</code> 系列工具。</p>
 
-<h3 id="s1.3-compare">手工烧录 vs 一键准备：六维对比</h3>
-<table>
-  <tr><th>维度</th><th>手工流程（§1.2）</th><th>一键准备</th></tr>
-  <tr><td>控制粒度</td><td>每步可控，可随时停止</td><td>流程封装，中断后需恢复</td></tr>
-  <tr><td>适用条件</td><td>有镜像和烧录工具即可</td><td>设备必须在软件源中明确列出</td></tr>
-  <tr><td>误操作风险</td><td>人为确认每一步，可发现异常</td><td>自动写入可能跳过确认步骤</td></tr>
-  <tr><td>可调试性</td><td>高，每步可单独验证</td><td>低，失败后需拆解自动化步骤</td></tr>
-  <tr><td>重复效率</td><td>低，需重复执行相同命令</td><td>高，一条命令完成多步</td></tr>
-  <tr><td>建议场景</td><td>首次使用、设备未列出、数据风险高</td><td>设备明确支持、重复部署、空白介质</td></tr>
-</table>
+<div class="diagram">源代码（.c）
+    ↓  riscv64-unknown-linux-gnu-gcc（主机上运行）
+RISC-V 可执行文件（ELF）
+    ↓  scp 传输
+LicheePi 4A（riscv64，实际运行）</div>
 
-<h3 id="s1.3-query">如何查询「能不能一键准备」</h3>
-<pre><span class="c"># 以你本机 ruyi 版本帮助为准</span>
-<span class="p">$</span> ruyi device --help
-<span class="p">$</span> ruyi device provision --help</pre>
-<p>若当前版本没有相关子命令，记录版本与帮助输出即可——「当前路径不支持一键准备」是有效结论。具体决策练习见 <code>lab.html</code> 环节三。</p>
+<p>典型流程：编写/获取源码 → 主机交叉编译 → <code>file</code> 确认产物架构 → SCP 传输到板端 → SSH 登录运行 → 记录结果。这条链路与 1.2 建立的三通道完全对应。</p>
 
-<h3 id="s1.3-risk">六项风险检查</h3>
-<p>在运行任何写入操作前逐项确认：</p>
-<ol class="steps">
-  <li><span class="step-num">①</span><div>设备是否在当前软件源中明确列出？</div></li>
-  <li><span class="step-num">②</span><div>变体是否与实物一致？</div></li>
-  <li><span class="step-num">③</span><div>写入目标是否唯一且可确认？</div></li>
-  <li><span class="step-num">④</span><div>重要数据是否已备份？</div></li>
-  <li><span class="step-num">⑤</span><div>供电和数据连接是否稳定？</div></li>
-  <li><span class="step-num">⑥</span><div>是否已准备串口或其他恢复通道？</div></li>
-</ol>
+<h3 id="s1.3-makefile">Makefile 模板：固定交叉编译参数</h3>
+<p>把交叉编译命令写进 Makefile，避免每次手敲冗长参数，也便于团队统一工具链版本。</p>
+
+<pre><span class="c"># Makefile — 交叉编译模板</span>
+<span class="k">CROSS_COMPILE</span> := riscv64-unknown-linux-gnu-
+<span class="k">CC</span>            := $(CROSS_COMPILE)gcc
+<span class="k">CFLAGS</span>        := -O2 -Wall
+<span class="k">TARGET</span>        := app
+
+<span class="k">$(TARGET)</span>: main.c
+	$(CC) $(CFLAGS) main.c -o $(TARGET)
+
+<span class="k">clean</span>:
+	rm -f $(TARGET)
+
+<span class="k">.PHONY</span>: clean</pre>
+
+<pre><span class="c"># 使用</span>
+<span class="p">$</span> make
+<span class="p">$</span> file app
+app: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 
 <div class="warn">
-  <strong>关键原则：</strong>六项检查全部确认后，方可尝试一键准备。任一项存疑都应停用手动写入以外的自动流程，改用 §1.2 手工烧录。记录「当前版本不支持该设备」并说明手工替代路径，同样是合格结论。安全优先于省事。
+  <strong>常见陷阱：</strong>忘记切换 <code>CC</code> 会默默用主机 GCC 编译，产物在板端「文件损坏」或直接拒绝执行——先用 <code>file</code> 检查架构，再排查运行问题。
 </div>
 
-<h3>决策路径</h3>
-<div class="diagram">查询当前 ruyi 帮助与设备列表
-            ↓
-设备与变体是否明确受支持？
-       ┌────┴────┐
-      是          否
-      ↓           ↓
-核对六项风险检查   使用手工流程（见 §1.2）
-      ↓           并记录不支持原因
-六项全部通过？
-   ┌────┴────┐
-  是          否
-  ↓           ↓
-执行一键准备  停止自动写入，
-并验证        选用更可控的流程</div>
+<h3 id="s1.3-coremark">CoreMark：嵌入式算力基准</h3>
+<p>CoreMark 是业界常用的嵌入式处理器算力基准测试，输出一个可比较的分数（iterations/sec），用于衡量不同芯片、不同优化选项下的处理器性能。本课用它作为交叉编译 + 上板运行的综合练习：分数本身不是重点，<strong>完整走通「编译 → 传输 → 运行 → 读数」链路</strong>才是。</p>
 
-<h3>场景决策练习</h3>
-<div class="card-grid card-grid-3">
-  <div class="card"><h4>场景 A</h4><p>设备完全匹配，<strong>有重要数据</strong></p><p style="color:var(--warm);font-weight:700;margin-top:8px;">→ 手工流程（先备份）</p></div>
-  <div class="card"><h4>场景 B</h4><p>设备<strong>未列出</strong>，名称相似</p><p style="color:var(--accent);font-weight:700;margin-top:8px;">→ 手工流程，记录不支持原因</p></div>
-  <div class="card"><h4>场景 C</h4><p>设备列出 + <strong>空白介质</strong></p><p style="color:var(--accent);font-weight:700;margin-top:8px;">→ 可尝试一键准备</p></div>
-</div>
+<h3 id="s1.3-build">构建 CoreMark for riscv64</h3>
+<p>CoreMark 源码不在本课程仓库中，需自行获取（官方仓库或课程指定镜像地址）。以下是典型构建路径：</p>
 
-<div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>当前 ruyi 版本设备/一键准备相关帮助记录 · 设备支持查询结果 · 六项风险检查表 · 手工或一键准备的路径选择及理由（详见 <code>lab.html</code> 环节三）。
+<pre><span class="c"># 获取源码（以官方仓库为例，实际地址以课程指引为准）</span>
+<span class="p">$</span> git clone https://github.com/eembc/coremark.git
+<span class="p">$</span> cd coremark
+
+<span class="c"># 交叉编译：通过 make 变量指定工具链前缀</span>
+<span class="p">$</span> make PORT_DIR=linux64 \
+       CC=riscv64-unknown-linux-gnu-gcc \
+       LD=riscv64-unknown-linux-gnu-gcc \
+       CFLAGS="-O2 -DPERFORMANCE_RUN=1" \
+       XCFLAGS="-DFLAGS_STR=\"cross-riscv64\""
+
+<span class="c"># 确认产物架构</span>
+<span class="p">$</span> file coremark.exe
+coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
+
+<p>产物文件名因 CoreMark 版本而异（常见为 <code>coremark.exe</code> 或 <code>coremark_PORT_DIR.exe</code>），以实际生成结果为准。构建成功后，用 1.2 学到的 SCP 把可执行文件传到板端，SSH 登录运行并记录分数——完整验收步骤见 <code>lab.html</code>。</p>
+
+<div class="info">
+  <strong>本节成果：</strong>交叉编译 Makefile 模板 · 一次可运行的 <code>app</code> 交叉编译产物 · CoreMark 交叉编译成功的 RISC-V 可执行文件（本节末尾产出，上板运行与分数记录见本章实验）。
 </div>
 </section>
 
