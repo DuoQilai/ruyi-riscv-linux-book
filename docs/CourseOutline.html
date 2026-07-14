@@ -253,7 +253,8 @@
   <h1>Course Outline</h1>
   <p class="note">
     <strong>Linux 嵌入式实践课</strong> · RISC-V 开发板 + RuyiSDK + <strong>C 语言</strong> ·
-    一条线顺序学完六章，每章有讲义与本章实验 · 最后做一个综合项目（老师提供模型权重，学生在板上做推理部署）
+    一条线顺序学完六章 · <strong>每章讲义固定三节（x.1–x.3）+ 一个完整本章实验</strong> ·
+    最后做一个综合项目（老师提供模型权重，学生在板上做推理部署）
   </p>
 
   <div class="flow-wrap">
@@ -262,7 +263,7 @@
       <div class="ch-exp-ch mod-env">
         <span class="flow-ch">ch01</span>
         <p class="flow-title">环境与工具链</p>
-        <p class="flow-desc">RuyiSDK、烧录、SSH、交叉编译</p>
+        <p class="flow-desc">RuyiSDK、烧录、一键准备/编译、交叉编译、CoreMark</p>
       </div>
       <div class="ch-exp-ch mod-env">
         <span class="flow-ch">ch02</span>
@@ -272,7 +273,7 @@
       <div class="ch-exp-ch mod-board">
         <span class="flow-ch">ch03</span>
         <p class="flow-title">GPIO / UART / 外设</p>
-        <p class="flow-desc">灯、串口、温湿度、开关输出</p>
+        <p class="flow-desc">I/O 原理、GPIO、UART 与传感执行概念</p>
       </div>
       <div class="ch-exp-ch mod-linux">
         <span class="flow-ch">ch04</span>
@@ -295,17 +296,17 @@
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">上板通道验收</p>
-        <p class="flow-desc">能编、能拷、能跑</p>
+        <p class="flow-desc">CoreMark 交叉编译上板跑分（硬性）</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">改代码闯关</p>
-        <p class="flow-desc">改半成品，板端行为变化</p>
+        <p class="flow-desc">假温控半成品，改出可见行为</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">温控风扇</p>
-        <p class="flow-desc">捂热转、降温停</p>
+        <p class="flow-desc">接线拼装闭环：捂热转 / 降温停</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
@@ -351,18 +352,19 @@
       <tbody>
         <tr>
           <td><strong>讲义</strong>（lecture）</td>
-          <td>零件是什么、接口为啥这样用；带一条「快乐路径」小 Demo</td>
-          <td>跟做后，单项能力会了（例如灯会闪、能读一次温度）</td>
+          <td>零件是什么、接口为啥这样用；每章固定三节；带<strong>跟做能跑通的小例子</strong>（单项，不替代实验）</td>
+          <td>跟做后，单项能力会了（例如灯会闪、会打一行串口日志）</td>
         </tr>
         <tr>
           <td><strong>本章实验</strong>（lab）</td>
-          <td>用本章零件打一场有胜负条件的仗；默认你会讲义里的基础操作</td>
+          <td>用本章零件打一场有胜负条件的完整仗；半成品 + 规格 + 硬验收；默认你会讲义里的基础操作</td>
           <td>能演示约定现象（例如捂热风扇转），并填简单验收记录</td>
         </tr>
       </tbody>
     </table>
   </div>
   <ul class="relations">
+    <li>每章讲义<strong>只切三节</strong>（x.1 / x.2 / x.3）；本章实验是<strong>一整块</strong>，可有小标题，不再拆成多个「实验环节章」。</li>
     <li>实验正文<strong>不重贴</strong>讲义里的安装 / <code>make</code> / <code>scp</code> 教程，只写差量步骤和验收标准。</li>
     <li>不再使用全局「实验一」「实验二」编号；温控风扇 = <strong>ch03 本章实验</strong>，远程控灯 = <strong>ch05 本章实验</strong>。</li>
   </ul>
@@ -403,8 +405,20 @@
           <td>在 PC 上编译出<strong>只能在开发板上跑</strong>的程序，再 SSH/SCP 拷过去运行。</td>
         </tr>
         <tr>
+          <td>一键准备 / 一键编译</td>
+          <td>RuyiSDK 提供的自动化能力（如按支持列表写镜像、便捷构建）。讲义必讲（推广 ruyi）；本章实验<strong>不强制</strong>用一键准备烧录，手工烧录可过。</td>
+        </tr>
+        <tr>
+          <td>CoreMark</td>
+          <td>嵌入式常用算力基准。ch01 章末讲义介绍；<strong>本章实验硬性验收</strong>：交叉编译后上板跑出分数并记录。</td>
+        </tr>
+        <tr>
           <td>GPIO</td>
           <td>板子引脚，软件可读（按键、传感器）或可写（LED、继电器）。本课从<strong>接口用法</strong>理解，不讲芯片寄存器手册。</td>
+        </tr>
+        <tr>
+          <td>MMIO</td>
+          <td>内存映射 I/O：用访存方式访问设备。RISC-V 常用此方式；Linux 下由内核驱动管理，用户态经 API / 设备节点访问。</td>
         </tr>
         <tr>
           <td>DHT22</td>
@@ -456,11 +470,25 @@
       </thead>
       <tbody>
         <tr>
+          <td>ch01 本章实验</td>
+          <td>上板通道验收</td>
+          <td>交叉编译 CoreMark → SCP 上板 → 跑出分数并记录；SSH/<code>uname</code> 自证通道通</td>
+          <td>ruyi、交叉编译、Makefile、部署</td>
+          <td>通道硬验收；不强制一键准备烧录。</td>
+        </tr>
+        <tr>
+          <td>ch02 本章实验</td>
+          <td>改代码闯关</td>
+          <td>假温控半成品按关卡改完后，阈值/错误分支行为符合关卡表（不接真 DHT）</td>
+          <td>结构体、指针、多文件、控制流</td>
+          <td>先练「改 C」，再上 ch03 真硬件。</td>
+        </tr>
+        <tr>
           <td>ch03 本章实验</td>
           <td>温控风扇</td>
-          <td>捂热 → 风扇转；降温 → 风扇停；读失败有日志且不崩</td>
-          <td>GPIO、DHT22、阈值开/关</td>
-          <td>本地自动化：读温度 → 比阈值 → 控风扇。</td>
+          <td>接线 + 拼主循环：超阈值转、降温停；读失败有日志且不崩（模拟升温或真捂热均可过）</td>
+          <td>GPIO、DHT22、阈值开/关、可观测失败</td>
+          <td>讲义给零件与原理；闭环实现在实验。</td>
         </tr>
         <tr>
           <td>ch04 本章实验</td>
@@ -569,25 +597,25 @@
           <td>ch01</td>
           <td>基础篇</td>
           <td>环境与工具链</td>
-          <td>装好 RuyiSDK，烧录/SSH 通，会交叉编译并上板跑程序</td>
-          <td>上板通道验收（能编、能拷、能跑）</td>
-          <td>开发通道与最小可部署工程</td>
+          <td>装好 RuyiSDK；会烧录与通道；理解一键准备/一键编译；会交叉编译；CoreMark 上板</td>
+          <td>上板通道验收（CoreMark 硬性跑分）</td>
+          <td>开发通道与可部署工程</td>
         </tr>
         <tr class="mod-env">
           <td>ch02</td>
           <td>基础篇</td>
           <td>够用的 C 语言</td>
-          <td>读懂、改得动本课后续 C 代码（够用即止）</td>
-          <td>改代码闯关（半成品改出可见行为）</td>
+          <td>读懂、改得动本课后续 C 代码（够用即止；位操作不进主链）</td>
+          <td>改代码闯关（假温控半成品）</td>
           <td>具备继续做外设实验的语言基础</td>
         </tr>
         <tr class="mod-board">
           <td>ch03</td>
           <td>外设篇</td>
           <td>GPIO、UART 与常用外设</td>
-          <td>从接口层理解读传感器、控执行器（不讲寄存器/指令集）</td>
-          <td>温控风扇（捂热转 / 降温停）</td>
-          <td>外设单项能力 + 本地闭环</td>
+          <td>I/O 原理（含 MMIO 心智）+ GPIO/UART 接口；传感执行概念；闭环留给实验</td>
+          <td>温控风扇（拼装闭环）</td>
+          <td>外设能力 + 本地温控闭环</td>
         </tr>
         <tr class="mod-linux">
           <td>ch04</td>
@@ -626,7 +654,7 @@
   </div>
 
   <h2>章节小节</h2>
-  <p class="note">展开每章目录。讲义加深「接口原理」；实验只写场景与验收。最右栏为本章名词。</p>
+  <p class="note">每章讲义固定三节（x.1–x.3）；本章实验单独一行整块描述。讲义加深原理与接口；实验写场景与硬验收。最右栏为本章名词。ch04–06 / 综合暂维持原目录，后续再按「三节+一块实验」收束。</p>
   <div class="table-wrap">
     <table class="detail">
       <colgroup>
@@ -650,26 +678,26 @@
         </tr>
       </thead>
       <tbody>
-        <!-- ch01：合并旧环境+工具链 -->
+        <!-- ch01：三节讲义 + 一块实验 -->
         <tr class="mod-env">
           <td rowspan="4" class="merge">ch01</td>
           <td rowspan="4" class="merge">基础篇</td>
           <td class="section">1.1 RISC-V 平台与 ruyi 环境</td>
-          <td rowspan="4" class="merge section">环境通、工具链通、能上板跑程序</td>
+          <td rowspan="4" class="merge section">环境通、工具链通、CoreMark 能上板跑分</td>
           <td rowspan="4" class="merge section">上板通道验收</td>
           <td rowspan="4" class="merge section">最小可部署闭环</td>
           <td rowspan="4" class="merge glossary section"><dl>
-            <dt>RuyiSDK / ruyi</dt><dd>装工具链与镜像的入口。</dd>
+            <dt>RuyiSDK / ruyi</dt><dd>装工具链与镜像的入口；含一键准备/一键编译能力。</dd>
             <dt>交叉编译</dt><dd>PC 上编出板子可执行文件。</dd>
             <dt>SSH / SCP / 串口</dt><dd>远程登录、拷文件、调试通道。</dd>
-            <dt>ELF</dt><dd>Linux 常见可执行文件格式。</dd>
+            <dt>CoreMark</dt><dd>算力基准；本章实验硬性上板跑分。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-env"><td class="section">1.2 烧录、首次启动与 SSH/串口</td></tr>
-        <tr class="mod-env"><td class="section">1.3 交叉编译：从源码到板端程序</td></tr>
-        <tr class="mod-env"><td class="section">1.4 Makefile 与工程目录（hello 模板）</td></tr>
+        <tr class="mod-env"><td class="section">1.2 烧录、开发通道与一键准备/一键编译</td></tr>
+        <tr class="mod-env"><td class="section">1.3 交叉编译、Makefile 与 CoreMark</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 上板通道验收</strong>：手工烧录可过（不强制一键准备写入）；必须交叉编译 CoreMark、SCP 上板跑出分数并记录；自证 SSH / <code>uname</code> / 工具链三元组</td></tr>
 
-        <!-- ch02：够用的 C -->
+        <!-- ch02：三节讲义 + 一块实验 -->
         <tr class="mod-env">
           <td rowspan="4" class="merge">ch02</td>
           <td rowspan="4" class="merge">基础篇</td>
@@ -681,35 +709,33 @@
             <dt>指针（皮毛）</dt><dd>能看懂函数参数里的指针用法即可。</dd>
             <dt>结构体</dt><dd>把一组相关数据捆在一起。</dd>
             <dt>头文件</dt><dd>声明接口，供多个 .c 共用。</dd>
+            <dt>假温控</dt><dd>不接 DHT；用半成品练改阈值与错误分支。</dd>
           </dl></td>
         </tr>
         <tr class="mod-env"><td class="section">2.2 函数、头文件与多文件工程</td></tr>
-        <tr class="mod-env"><td class="section">2.3 指针与数组（本课用到的部分）</td></tr>
-        <tr class="mod-env"><td class="section">2.4 结构体与本课代码怎么读</td></tr>
+        <tr class="mod-env"><td class="section">2.3 指针、数组、结构体与本课代码怎么读</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 改代码闯关</strong>：假温控半成品（结构体/指针/阈值故意有坑）；按关卡改到行为符合表；不接真传感器</td></tr>
 
-        <!-- ch03 -->
+        <!-- ch03：三节讲义 + 一块实验（闭环在实验） -->
         <tr class="mod-board">
-          <td rowspan="7" class="merge">ch03</td>
-          <td rowspan="7" class="merge">外设篇</td>
-          <td class="section">3.1 GPIO 输入输出：LED 与按键（接口层）</td>
-          <td rowspan="7" class="merge section">板级读—算—控（接口原理加深）</td>
-          <td rowspan="7" class="merge section">温控风扇</td>
-          <td rowspan="7" class="merge section">外设能力 + 本地闭环</td>
-          <td rowspan="7" class="merge glossary section"><dl>
-            <dt>GPIO</dt><dd>通用输入输出脚；本课用 gpiod 等接口，不讲寄存器。</dd>
-            <dt>UART</dt><dd>串口收发；用来调试打印。</dd>
-            <dt>DHT22</dt><dd>温湿度传感器。</dd>
-            <dt>开/关控制</dt><dd>GPIO + 继电器驱动风扇启停。</dd>
+          <td rowspan="4" class="merge">ch03</td>
+          <td rowspan="4" class="merge">外设篇</td>
+          <td class="section">3.1 外设与 I/O：从物理世界到程序</td>
+          <td rowspan="4" class="merge section">I/O 原理 + GPIO/UART 接口；传感执行概念清楚；闭环在实验完成</td>
+          <td rowspan="4" class="merge section">温控风扇</td>
+          <td rowspan="4" class="merge section">外设能力 + 本地闭环</td>
+          <td rowspan="4" class="merge glossary section"><dl>
+            <dt>MMIO</dt><dd>内存映射 I/O；RISC-V 常用；用户态经驱动/API 访问。</dd>
+            <dt>GPIO</dt><dd>用 gpiod 等接口，不讲寄存器手册。</dd>
+            <dt>UART</dt><dd>串口收发；调试打印。</dd>
+            <dt>DHT22 / 开闭控制</dt><dd>读温度；GPIO+继电器控风扇。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-board"><td class="section">3.2 UART 与调试打印</td></tr>
-        <tr class="mod-board"><td class="section">3.3 DHT22 与风扇开/关输出</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 温控风扇</strong>：接线（课程套件）</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;">周期采样温度</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;">阈值开/关风扇</td></tr>
-        <tr class="mod-lab"><td class="section" style="padding-left:24px;">读失败打日志且进程继续</td></tr>
+        <tr class="mod-board"><td class="section">3.2 GPIO：数字 0/1 怎么进程序</td></tr>
+        <tr class="mod-board"><td class="section">3.3 UART、传感与执行：概念与数据流</td></tr>
+        <tr class="mod-lab"><td class="section" style="padding-left:24px;"><strong>▸ 本章实验 · 温控风扇</strong>：套件接线；半成品上补全周期采样 + 阈值开/关 + 主循环；读失败打日志且不崩；模拟升温或真捂热均可验收</td></tr>
 
-        <!-- ch04 -->
+        <!-- ch04（暂未按三节收束） -->
         <tr class="mod-linux">
           <td rowspan="6" class="merge">ch04</td>
           <td rowspan="6" class="merge">Linux 应用篇</td>
@@ -806,12 +832,12 @@
   <h2>硬课规</h2>
   <ul class="relations">
     <li>板载应用用 <strong>C 语言</strong>（MQTT 可用 libmosquitto 等 C 库）</li>
-    <li>用 <strong>RuyiSDK</strong> 获取工具链与目标环境</li>
-    <li>必须走通 <strong>交叉编译 + Makefile（或等价模板）</strong></li>
+    <li>用 <strong>RuyiSDK</strong> 获取工具链与目标环境；讲义覆盖<strong>一键准备 / 一键编译</strong>（实验不强制一键写入）</li>
+    <li>必须走通 <strong>交叉编译 + Makefile（或等价模板）</strong>；ch01 以 <strong>CoreMark 上板跑分</strong>作通道硬验收</li>
     <li>必须有 <strong>综合大项目</strong> 可演示成果</li>
     <li>模型权重由<strong>老师提供</strong>；学生做<strong>板端手写 tiny 前向与部署</strong>；不在板上训练；不以大模型板上推理为主线</li>
-    <li>原理讲到<strong>接口层</strong>（会用 fd / gpiod / socket 等）；不讲成操作系统内核课，不讲成 RISC-V 指令集课</li>
-    <li><strong>一条线顺序学</strong>；不设选修双轨</li>
+    <li>原理讲到<strong>接口层</strong>（会用 fd / gpiod / socket 等）；需要时交代 MMIO 等心智；不讲成操作系统内核课，不讲成 RISC-V 指令集课</li>
+    <li><strong>一条线顺序学</strong>；不设选修双轨；每章讲义<strong>固定三节</strong> + <strong>一个完整本章实验</strong></li>
     <li>OpenCV、YOLO、Buildroot 等不进主线</li>
   </ul>
 
