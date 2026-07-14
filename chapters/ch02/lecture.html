@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第二章 工具链与工程 · 讲义 — RISC-V Linux 课程</title>
+<title>第二章 够用的 C · 讲义 — RISC-V Linux 课程</title>
 <style>
   :root {
     --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -122,29 +122,30 @@
   <h4>目录</h4>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
-  <a href="#s2.1">2.1 交叉编译全流程</a>
-  <a class="sub" href="#s2.1-objectives">学习目标</a>
-  <a class="sub" href="#s2.1-concept">host/target/sysroot</a>
-  <a class="sub" href="#s2.1-steps">操作步骤</a>
-  <a class="sub" href="#s2.1-elf">ELF 分析</a>
+  <a href="#s2.1">2.1 类型、变量、控制流</a>
+  <a class="sub" href="#s2.1-types">类型与变量</a>
+  <a class="sub" href="#s2.1-control">控制流</a>
+  <a class="sub" href="#s2.1-practice">小练习</a>
   <div class="divider"></div>
-  <a href="#s2.2">2.2 Makefile 与工程目录</a>
-  <a class="sub" href="#s2.2-objectives">学习目标</a>
-  <a class="sub" href="#s2.2-makefile">Makefile 基础</a>
-  <a class="sub" href="#s2.2-project">统一工程目录</a>
-  <a class="sub" href="#s2.2-steps">操作步骤</a>
+  <a href="#s2.2">2.2 函数、头文件与多文件工程</a>
+  <a class="sub" href="#s2.2-func">函数</a>
+  <a class="sub" href="#s2.2-header">头文件</a>
+  <a class="sub" href="#s2.2-project">多文件工程</a>
   <div class="divider"></div>
-  <a href="#s2.3">2.3 CoreMark 算力基准</a>
+  <a href="#s2.3">2.3 指针、数组、结构体与本课代码怎么读</a>
+  <a class="sub" href="#s2.3-ptr">指针与数组</a>
+  <a class="sub" href="#s2.3-struct">结构体</a>
+  <a class="sub" href="#s2.3-read">本课代码怎么读</a>
 </nav>
 
 <!-- ═══════════════════════════════════════════ -->
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
-  <h1>工具链与工程</h1>
-  <p class="subtitle">host / target / sysroot → 交叉编译 → ELF 分析<br>Makefile 工程化 → 统一目录规范<br>— 2.1 / 2.2 / 2.3 —</p>
+  <h1>够用的 C</h1>
+  <p class="subtitle">类型 · 控制流 · 函数与多文件<br>指针 · 数组 · 结构体 · 读懂本课代码<br>— 2.1 / 2.2 / 2.3 —</p>
   <div class="meta">
-    <span>工程模板：hello + project-template</span>
-    <span>工具链：riscv64-unknown-linux-gnu-gcc</span>
+    <span>跟做：hello + project-template</span>
+    <span>本章实验：改代码闯关</span>
   </div>
 </div>
 
@@ -155,228 +156,248 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置条件：</strong>本章假设你已完成第一章全部内容——ruyi 已安装、工具链已验证、开发板已启动且 SSH/SCP 通道可用。每节约需 90–120 分钟（含本章 <code>lab.html</code>）。
+  <strong>前置条件：</strong>已完成第一章——主机能编译、板端能跑程序。本章目标是<strong>读懂、改得动</strong>本课后续的 C 代码；交叉编译与 CoreMark 已在 ch01 完成，这里不再重复。
 </div>
 
 <h3>你需要准备什么</h3>
 
 <div class="card-grid card-grid-3">
-  <div class="card"><h4>🖥 主机</h4><p>Linux x86_64，已安装 ruyi 与 RISC-V GNU Toolchain（交叉编译器前缀 <code>riscv64-unknown-linux-gnu-</code>）。</p></div>
-  <div class="card"><h4>📦 开发板</h4><p>LicheePi 4A，RevyOS 已启动，SSH/SCP 免密登录可用。本章所有代码在板端运行验证。</p></div>
-  <div class="card"><h4>💻 代码</h4><p>课程仓库 <code>chapters/ch02/code/</code> 下的 hello 和 project-template 工程模板。</p></div>
+  <div class="card"><h4>主机编译器</h4><p>本机 <code>gcc</code> 即可跟做与闯关；想顺便练交叉编译也可加上 <code>CROSS_COMPILE</code>。</p></div>
+  <div class="card"><h4>代码目录</h4><p><code>chapters/ch02/code/</code>：<code>hello/</code>、<code>project-template/</code> 跟做；<code>fake-thermostat/</code> 留给实验闯关。</p></div>
+  <div class="card"><h4>编辑器</h4><p>任意能改 C 的编辑器；改完 <code>make</code>，看终端输出是否符合预期。</p></div>
 </div>
 
 <h3>本章你会学到什么</h3>
 
 <div class="card-grid" style="margin-bottom:0;">
-  <div class="card"><h4>2.1 交叉编译全流程</h4><p>理解 host/target/sysroot，使用交叉编译器构建第一个 RISC-V 程序，部署到板端运行并用 readelf/ldd 分析二进制结构。</p></div>
-  <div class="card"><h4>2.2 Makefile 与工程目录</h4><p>编写 Makefile 规则与变量，理解增量构建与 clean，掌握 src/include/build 统一目录规范——后续实验的标准工程模板。</p></div>
-  <div class="card"><h4>2.3 CoreMark 算力基准</h4><p>了解 CPU 基准测试的用途与局限；动手跑分见本章 <code>lab.html</code>。</p></div>
+  <div class="card"><h4>2.1 类型、变量、控制流</h4><p>用 int / float / 比较与循环写出「温度高了就开风扇」这类判断。</p></div>
+  <div class="card"><h4>2.2 函数、头文件与多文件工程</h4><p>把逻辑拆成函数；用头文件声明接口；用 Makefile 编译多个 <code>.c</code>。</p></div>
+  <div class="card"><h4>2.3 指针、数组、结构体与本课代码怎么读</h4><p>看懂参数里的指针、配置结构体和数组序列；为闯关与后续外设实验铺路。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>学习建议：</strong>2.1 → 2.2 是递进关系——先用 hello 理解单文件编译部署，再用 project-template 掌握多文件工程化。每个操作步骤都有对应的验证方法。完整终端日志是实验验收材料——从现在开始养成保存日志的习惯。
+  <strong>学习建议：</strong>讲义用小例子建立直觉；动手闯关在 <code>lab.html</code>。不必追求 C 全书覆盖——够读、够改本课脚手架即可。
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
 <section id="s2.1">
 <div class="section-num">2.1</div>
-<h2>交叉编译全流程：从源码到板端可执行文件</h2>
+<h2>类型、变量、控制流</h2>
 
-<h3 id="s2.1-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>host / target / sysroot</h4><p>区分编译主机、运行设备和目标根文件系统，理解交叉编译</p></div>
-  <div class="card"><h4>工具链查询</h4><p>确认交叉编译器目标三元组，定位 sysroot 路径</p></div>
-  <div class="card"><h4>编译→传输→运行</h4><p>使用 hello 工程完成首个交叉编译闭环</p></div>
-  <div class="card"><h4>ELF 分析</h4><p>使用 readelf / ldd 查看二进制结构与动态库依赖</p></div>
-  <div class="card"><h4>架构验证</h4><p>用 file + readelf 确认产物为 RISC-V ELF</p></div>
-  <div class="card"><h4>两端验收</h4><p>区分 host 编译成功与 target 运行成功两个验收环节</p></div>
-</div>
+<h3 id="s2.1-types">类型与变量</h3>
+<p>程序处理的是<strong>有类型的数据</strong>。本课最常见的几种：</p>
 
-<h3 id="s2.1-concept">host、target、sysroot 与交叉编译</h3>
-<p>嵌入式 Linux 开发很少在开发板上直接编译大型程序。更常见的流程是：在性能更好的 PC（host）上生成二进制，再部署到开发板（target）执行。当 host 与 target 的 CPU 架构不同时，称为<strong>交叉编译</strong>（cross compilation）。</p>
-<p>工具链除了编译器，还需要目标系统的头文件和库。这些文件按目标系统的目录结构组织，合称为 <strong>sysroot</strong>。编译时编译器在 sysroot 中查找头文件和库；链接时按目标 ABI 链接其中的库。</p>
-
-<div class="diagram">host（x86_64 Linux PC）           target（LicheePi 4A + RevyOS）
-  ├─ 编辑器、make、ruyi               └─ ./your-program 在板端运行
-  ├─ riscv64-unknown-linux-gnu-gcc              ↑
-  └─ sysroot（RISC-V 根文件系统片段）             │
-            ↓ 交叉编译                    scp 部署
-      RISC-V ELF 可执行文件 ─────────────────┘</div>
-
-<h3>环境准备</h3>
 <table>
-  <tr><th>项目</th><th>要求</th><th>检查方式</th></tr>
-  <tr><td>host 架构</td><td>记录主机 CPU 架构</td><td><code>uname -m</code></td></tr>
-  <tr><td>target 架构</td><td>板端为 RISC-V 64 位</td><td><code>ssh user@board-ip uname -m</code></td></tr>
-  <tr><td>交叉编译器</td><td>前缀 <code>riscv64-unknown-linux-gnu-</code></td><td><code>command -v riscv64-unknown-linux-gnu-gcc</code></td></tr>
-  <tr><td>工程目录</td><td><code>chapters/ch02/code/hello/</code></td><td><code>ls main.c Makefile</code></td></tr>
-  <tr><td>分析工具</td><td>host 有 <code>readelf</code>、<code>file</code></td><td><code>command -v readelf</code></td></tr>
+  <tr><th>类型</th><th>典型用途</th><th>例子</th></tr>
+  <tr><td><code>int</code></td><td>计数、状态、返回码</td><td>风扇开关 <code>0/1</code>、循环下标</td></tr>
+  <tr><td><code>float</code> / <code>double</code></td><td>温度、阈值</td><td><code>28.5</code> °C</td></tr>
+  <tr><td><code>char</code> / 字符串</td><td>日志文字</td><td><code>"FAN ON"</code></td></tr>
+  <tr><td><code>int</code> 返回值</td><td>成功 / 失败</td><td><code>0</code> 成功，非 <code>0</code> 失败</td></tr>
 </table>
 
-<div class="warn">
-  <strong>关键区分：</strong><code>riscv64-unknown-elf-gcc</code> 面向无操作系统环境（裸机）。本课程用户态程序应使用带 <code>linux-gnu</code> 的工具链。两者不可互换。
-</div>
-
-<h3 id="s2.1-steps">操作步骤</h3>
-
-<ol class="steps">
-  <li><span class="step-num">1</span><div><strong>确认 host 与 target</strong><br>主机 <code>uname -m</code>（x86_64），板端 <code>uname -m</code>（riscv64）——两者不同说明需要交叉编译。</div></li>
-  <li><span class="step-num">2</span><div><strong>查看交叉编译器目标三元组与 sysroot</strong><br><code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code> 应含 <code>riscv64</code> 和 <code>linux-gnu</code>。<code>-print-sysroot</code> 查 sysroot 路径。</div></li>
-  <li><span class="step-num">3</span><div><strong>对比 host 与 target 运行环境</strong><br>两端分别执行 <code>file /bin/bash</code> 和 <code>ldd /bin/bash | head -n 3</code>，观察动态链接器路径与架构差异。</div></li>
-  <li><span class="step-num">4</span><div><strong>交叉编译第一个程序</strong><br><code>cd chapters/ch02/code/hello && make clean && make && file hello</code> — 应显示 RISC-V ELF。</div></li>
-  <li><span class="step-num">5</span><div><strong>部署到板端并运行</strong><br><code>scp hello user@board-ip:~/ && ssh user@board-ip './hello'</code> — 预期输出 <code>Hello, RISC-V Linux!</code></div></li>
-  <li><span class="step-num">6</span><div><strong>ELF 分析</strong><br><code>readelf -h hello</code>（Machine=RISC-V）、<code>readelf -l hello</code>（LOAD 段）、<code>ldd hello</code>（动态库依赖或注明静态链接）。</div></li>
-</ol>
-
-<h4 id="s2.1-elf">ELF 关键字段</h4>
-<table>
-  <tr><th>字段</th><th>含义</th><th>期望</th></tr>
-  <tr><td>Class</td><td>ELF 位数</td><td><code>ELF64</code></td></tr>
-  <tr><td>Data</td><td>字节序</td><td>小端，<code>LSB</code></td></tr>
-  <tr><td>Machine</td><td>CPU 架构</td><td><code>RISC-V</code></td></tr>
-  <tr><td>Type</td><td>文件类型</td><td><code>EXEC</code> 或 <code>DYN</code></td></tr>
-</table>
+<pre><span class="k">int</span> fan_on = 0;          <span class="c">/* 0 = 关，1 = 开 */</span>
+<span class="k">float</span> temp_c = 27.5f;    <span class="c">/* 当前温度 */</span>
+<span class="k">const float</span> T_HIGH = 28.0f;
+<span class="k">const float</span> T_LOW  = 26.0f;</pre>
 
 <div class="info">
-  <strong>为什么不在主机验证：</strong>x86_64 主机无法执行 RISC-V 二进制。<code>./hello</code> 在主机必然报错——正确验收是在板端执行。用 <code>file</code> 确认架构，用板端运行确认逻辑。
+  <strong>习惯：</strong>配置常量用 <code>const</code> 或宏写清楚含义；布尔语义用 <code>0/1</code> 并在注释里标明「开/关」。
 </div>
 
-<h3>课堂练习</h3>
+<h3 id="s2.1-control">控制流：判断与循环</h3>
+<p>温控的核心就是比较与分支：</p>
+
+<pre><span class="k">if</span> (temp_c &gt; T_HIGH) {
+    fan_on = 1;
+} <span class="k">else if</span> (temp_c &lt; T_LOW) {
+    fan_on = 0;
+}
+<span class="c">/* 落在 [T_LOW, T_HIGH] 之间：保持现状（滞回，避免频繁抖动） */</span></pre>
+
+<p>周期性采样用循环：</p>
+
+<pre><span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; n; i++) {
+    <span class="c">/* 读一次温度，做一次决策，打印一行 */</span>
+}
+
+<span class="k">while</span> (running) {
+    <span class="c">/* 主循环：采样 → 决策 → 延时 */</span>
+}</pre>
+
+<div class="diagram">温度序列示例（滞回）
+  T_HIGH = 28    T_LOW = 26
+
+  25 → 关     27 → 保持     29 → 开
+  27 → 保持   25 → 关
+
+  关键：比较方向写反、用错阈值字段，都会让「该开不开 / 该关不关」。</div>
+
+<h3 id="s2.1-practice">小练习</h3>
 <ol>
-  <li>「在 x86_64 笔记本上 <code>gcc hello.c</code> 得到的程序，可以直接 scp 到 LicheePi 4A 运行。」——这句话是否正确？为什么？</li>
-  <li>若 <code>scp</code> 成功但板端提示 <code>cannot execute binary file</code>，依次检查哪些项目？</li>
-  <li><code>readelf -h</code> 中 <code>Machine</code> 显示 <code>X86-64</code> 时，构建过程哪里出了问题？</li>
+  <li>写出：温度严格大于 28 开风扇，严格小于 26 关风扇，中间保持原状态。</li>
+  <li><code>temp &gt;= T_HIGH</code> 与 <code>temp &gt; T_HIGH</code> 在边界 <code>28.0</code> 上行为差在哪里？</li>
+  <li>若把 <code>T_HIGH</code> 和 <code>T_LOW</code> 写反，会出现什么现象？</li>
 </ol>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>host/target/sysroot 对照表 · 交叉编译器三元组与 sysroot 路径 · 板端可运行的 Hello World · 可复用的「编译→scp→运行」命令链 · readelf/ldd 分析记录。
+  <strong>本节成果：</strong>能读懂阈值判断与简单循环；知道滞回区间要「保持现状」。
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
 <section id="s2.2">
 <div class="section-num">2.2</div>
-<h2>Makefile 与工程目录规范</h2>
+<h2>函数、头文件与多文件工程</h2>
 
-<h3 id="s2.2-objectives">学习目标</h3>
+<h3 id="s2.2-func">函数：把「一件事」包起来</h3>
+<p>函数有<strong>参数</strong>、<strong>返回值</strong>和<strong>函数体</strong>。本课常见写法：</p>
+
+<pre><span class="c">/* 返回 0 成功，非 0 失败 */</span>
+<span class="k">int</span> read_temp(<span class="k">float</span> *out_c);
+
+<span class="k">void</span> apply_fan_policy(<span class="k">float</span> temp_c, <span class="k">int</span> *fan_on);</pre>
+
+<p>调用方根据返回值决定是否继续用读到的温度：</p>
+
+<pre><span class="k">float</span> t;
+<span class="k">if</span> (read_temp(&amp;t) != 0) {
+    <span class="c">/* 读失败：打日志，不要用未初始化的 t */</span>
+    <span class="k">return</span>;
+}
+apply_fan_policy(t, &amp;fan_on);</pre>
+
+<h3 id="s2.2-header">头文件：声明接口</h3>
+<p>头文件告诉其他 <code>.c</code>：「这些函数/类型存在」。实现放在对应的 <code>.c</code> 里。用 include guard 防止重复包含：</p>
+
+<pre><span class="c">/* greet.h */</span>
+<span class="k">#ifndef</span> GREET_H
+<span class="k">#define</span> GREET_H
+
+<span class="k">void</span> greet(<span class="k">const char</span> *name);
+
+<span class="k">#endif</span></pre>
+
 <div class="card-grid">
-  <div class="card"><h4>规则与依赖</h4><p>理解目标、依赖、命令三要素与 Tab 缩进</p></div>
-  <div class="card"><h4>变量管理</h4><p>使用 CC、CFLAGS、CROSS_COMPILE 避免硬编码</p></div>
-  <div class="card"><h4>增量构建</h4><p>make 时间戳判断 + clean + .PHONY</p></div>
-  <div class="card"><h4>目录约定</h4><p>src/（源码）+ include/（头文件）+ build/（产物分离）</p></div>
-  <div class="card"><h4>多文件链接</h4><p>模式规则将多 .c 编译到 build/ 下统一链接</p></div>
-  <div class="card"><h4>工程复用</h4><p>模板可扩展至后续 GPIO、MQTT、综合项目</p></div>
+  <div class="card"><h4>声明在 .h</h4><p>函数原型、结构体类型、对外宏——给调用方看。</p></div>
+  <div class="card"><h4>定义在 .c</h4><p>函数体、静态内部变量——实现细节。</p></div>
 </div>
 
-<h3 id="s2.2-makefile">Makefile 基础</h3>
-<p>Makefile 描述「什么文件由什么文件生成、执行什么命令」。<code>make</code> 根据文件时间戳决定是否重新编译。<code>chapters/ch02/code/hello/Makefile</code> 是单文件示例，<code>project-template/Makefile</code> 在此基础上增加多源文件与 <code>build/</code> 目录。</p>
-
-<div class="diagram">Makefile
-  CROSS_COMPILE, CC, CFLAGS
-        ↓
-  hello: main.c
-      $(CC) $(CFLAGS) -o $@ $^
-        ↓
-  make / make clean</div>
-
-<h3 id="s2.2-project">统一工程目录</h3>
-<p>单文件 <code>hello</code> 适合入门，真实项目应将代码按职责分离：</p>
+<h3 id="s2.2-project">多文件工程：跟做模板</h3>
+<p>跟做目录：</p>
+<ul>
+  <li><code>chapters/ch02/code/hello/</code> — 单文件入门</li>
+  <li><code>chapters/ch02/code/project-template/</code> — <code>src/</code> + <code>include/</code> + <code>build/</code></li>
+</ul>
 
 <div class="diagram">project-template/
 ├── Makefile
-├── include/          ← 对外头文件（greet.h）
-├── src/              ← 源文件（main.c + greet.c）
-└── build/            ← 产物（.o + app），可删可重建
+├── include/greet.h     ← 接口声明
+├── src/main.c          ← 调用 greet()
+├── src/greet.c         ← 实现 greet()
+└── build/              ← make 生成，可删</div>
 
-编译流程：
-  src/main.c ──┐
-  src/greet.c ─┼──> build/src/*.o ──> build/app
-  include/ ────┘</div>
-
-<h3 id="s2.2-steps">操作步骤</h3>
-
-<h4>阶段 A：单文件 Makefile</h4>
 <pre><span class="p">$</span> cd chapters/ch02/code/hello
-<span class="p">$</span> cat Makefile
+<span class="p">$</span> make CROSS_COMPILE=     <span class="c"># 本机 gcc；省略则用交叉前缀</span>
+<span class="p">$</span> ./hello
 
-<span class="c"># 完整构建流程</span>
-<span class="p">$</span> make clean && make
-<span class="p">$</span> make               <span class="c"># 第二次应提示 up to date</span>
-<span class="p">$</span> touch main.c
-<span class="p">$</span> make               <span class="c"># 应重新编译</span>
-
-<span class="c"># 清理</span>
-<span class="p">$</span> make clean && ls hello 2&gt;&amp;1   <span class="c"># hello 应已删除</span>
-
-<span class="c"># 命令行覆盖变量</span>
-<span class="p">$</span> make CFLAGS='-Wall -Wextra -O0 -g'</pre>
-
-<div class="warn">
-  <strong>课堂提示：</strong>跟做时可在 <code>main.c</code> 临时加入未使用变量，观察 <code>-Wall</code> 警告。<strong>Makefile 命令行必须以 Tab 缩进</strong>，用空格会触发 <code>missing separator</code>。
-</div>
-
-<h4>阶段 B：多文件工程</h4>
-<pre><span class="p">$</span> cd chapters/ch02/code/project-template
-<span class="p">$</span> find . -type f | sort
-
-<span class="p">$</span> make clean && make
-<span class="p">$</span> file build/app                <span class="c"># RISC-V ELF</span>
-
-<span class="c"># 部署并运行</span>
-<span class="p">$</span> scp build/app user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip 'chmod +x ~/app && ./app'
-<span class="c"># 预期输出：Hello, RISC-V Linux!</span>
-
-<span class="c"># 清理重构</span>
-<span class="p">$</span> make clean && test ! -d build && echo "build removed"</pre>
+<span class="p">$</span> cd ../project-template
+<span class="p">$</span> make CROSS_COMPILE=
+<span class="p">$</span> ./build/app</pre>
 
 <div class="info">
-  <strong>工程习惯：</strong><code>build/</code> 应加入 <code>.gitignore</code>（可删除、可重建），<code>src/</code> 和 <code>include/</code> 纳入版本库。不要把 <code>.o</code> 文件提交到 Git——它们是派生产物，不是源码。
+  <strong>提示：</strong>Makefile 里已有 <code>CROSS_COMPILE</code>。本章闯关优先本机 <code>gcc</code>，把注意力放在 C 逻辑上；需要时再交叉编译上板。
+</div>
+
+<div class="warn">
+  <strong>Makefile 命令行必须用 Tab 缩进</strong>，用空格会报 <code>missing separator</code>。
 </div>
 
 <h3>课堂练习</h3>
 <ol>
-  <li>以下 Makefile 错误分别导致什么现象：命令行前用空格而非 Tab；目标未声明依赖且产物已存在；<code>clean</code> 未标记 <code>.PHONY</code> 且目录下有同名文件？</li>
-  <li>为何 <code>build/</code> 加入 <code>.gitignore</code>，<code>src/</code> 和 <code>include/</code> 纳入版本库？</li>
+  <li>若只改 <code>greet.c</code> 不改 <code>main.c</code>，再 <code>make</code>，哪些文件会重新编译？</li>
+  <li>为什么调用方 <code>#include "greet.h"</code>，而不是把函数体复制进 <code>main.c</code>？</li>
 </ol>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>Makefile 变量与规则解释 · make / make clean / 增量构建演示 · 符合 src/include/build 约定的可运行工程 · 板端运行 app 记录 · 可复用模板路径 <code>chapters/ch02/code/project-template/</code>。
+  <strong>本节成果：</strong>能说明「声明 / 定义」分工；能用模板编译多文件程序。
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
 <section id="s2.3">
 <div class="section-num">2.3</div>
-<h2>CoreMark 算力基准</h2>
+<h2>指针、数组、结构体与本课代码怎么读</h2>
 
-<h3>学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>基准认知</h4><p>CoreMark 测什么、不测什么</p></div>
-  <div class="card"><h4>分数解读</h4><p>CoreMark 分数与 CoreMark/MHz 的含义与局限</p></div>
-  <div class="card"><h4>与课程关系</h4><p>算力直觉如何帮助评估后续算法与外设实验，而非替代真实场景测试</p></div>
+<h3 id="s2.3-ptr">指针与数组</h3>
+<p><strong>指针</strong>是「存着某个对象地址」的变量。函数要<strong>写回</strong>调用方的变量时，就传指针：</p>
+
+<pre><span class="k">void</span> set_fan(<span class="k">int</span> *fan_on, <span class="k">int</span> value)
+{
+    <span class="k">if</span> (fan_on == NULL)
+        <span class="k">return</span>;
+    *fan_on = value;   <span class="c">/* 改的是调用方那份变量 */</span>
+}</pre>
+
+<p><strong>数组</strong>是连续同类型元素。假温度序列常用数组驱动：</p>
+
+<pre><span class="k">static const float</span> seq[] = { 25.0f, 27.0f, 29.0f, 27.0f, 24.0f };
+<span class="k">for</span> (<span class="k">size_t</span> i = 0; i &lt; <span class="k">sizeof</span>(seq)/<span class="k">sizeof</span>(seq[0]); i++) {
+    <span class="c">/* 用 seq[i] 当本轮温度 */</span>
+}</pre>
+
+<div class="warn">
+  解引用前先确认指针非 <code>NULL</code>；数组下标不要越界。闯关脚手架里故意埋了相关坑。
 </div>
 
-<h3>CoreMark 是什么</h3>
-<p>CoreMark 是 EEMBC 发布的轻量级 CPU 基准，主要覆盖列表、矩阵、状态机等核心逻辑。结果常以绝对分数或 CoreMark/MHz 报告。它反映 CPU 纯算力，<strong>不能</strong>代表 GPIO 时序、网络、存储 I/O 等系统能力。</p>
+<h3 id="s2.3-struct">结构体：把相关字段捆在一起</h3>
+<p>配置不必散落成一堆全局变量：</p>
 
-<h3>为什么要学</h3>
-<p>交叉编译与 Makefile 解决「程序能跑」；CoreMark 帮助建立「这块板子算力大概什么量级」的直觉，便于判断软解码、图像处理等是否现实。本章动手在板端跑分——步骤在 <code>lab.html</code>。</p>
+<pre><span class="k">typedef struct</span> {
+    <span class="k">float</span> t_high;      <span class="c">/* 高于此开风扇 */</span>
+    <span class="k">float</span> t_low;       <span class="c">/* 低于此关风扇 */</span>
+    <span class="k">int</span>   period_ms;   <span class="c">/* 采样周期（毫秒） */</span>
+} ThermoConfig;
 
-<h3>理解分数时注意</h3>
-<ul>
-  <li>编译器版本、<code>-O</code> 级别、glibc/musl、CPU 频率都会影响结果。</li>
-  <li>只宜同环境前后对比，不宜盲目攀比网上截图。</li>
-  <li>MQTT、传感器类实验是否流畅，还取决于 I/O 与延迟，不能只看 CoreMark。</li>
-</ul>
+<span class="k">void</span> decide(<span class="k">const</span> ThermoConfig *cfg, <span class="k">float</span> temp, <span class="k">int</span> *fan_on)
+{
+    <span class="k">if</span> (temp &gt; cfg-&gt;t_high)
+        *fan_on = 1;
+    <span class="k">else if</span> (temp &lt; cfg-&gt;t_low)
+        *fan_on = 0;
+}</pre>
+
+<p>读结构体字段用 <code>cfg-&gt;t_high</code>（指针）或 <code>cfg.t_high</code>（变量本身）。用错字段名是真实 bug 的常见来源。</p>
+
+<h3 id="s2.3-read">本课代码怎么读</h3>
+<p>拿到一份半成品，建议按这个顺序扫：</p>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>看头文件</strong> — 有哪些结构体、API、返回值约定。</div></li>
+  <li><span class="step-num">2</span><div><strong>看 main</strong> — 输入从哪来、如何循环、打印什么。</div></li>
+  <li><span class="step-num">3</span><div><strong>看实现</strong> — 比较方向、字段名、空指针、错误分支是否完整。</div></li>
+  <li><span class="step-num">4</span><div><strong>对照行为表</strong> — 改一处、跑一次，输出是否逐步贴近验收表。</div></li>
+</ol>
+
+<div class="diagram">读代码清单（闯关时可用）
+  [ ] 阈值比较是 &gt; / &lt; 还是写反了？
+  [ ] 用的是 t_high / t_low，还是误用了 period_ms？
+  [ ] 指针参数有没有判 NULL？
+  [ ] 传感器失败时有没有跳过决策？</div>
+
+<div class="info">
+  <strong>下一步：</strong>打开 <code>lab.html</code>，进入 <code>fake-thermostat/</code> 改代码闯关。软件输入、无真 DHT——专注把逻辑改对。
+</div>
 
 <h3>课堂练习</h3>
-<p>列举三项 CoreMark <strong>无法单独反映</strong>、但在本课程实验中很重要的系统能力。</p>
+<ol>
+  <li><code>float *p = NULL; *p = 1.0f;</code> 会发生什么？应如何防护？</li>
+  <li>为何要把 <code>t_high</code>、<code>t_low</code>、<code>period_ms</code> 放进同一个结构体？</li>
+  <li>函数返回错误码后，调用方若仍使用未写入的输出参数，错在哪里？</li>
+</ol>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能口头说明 CoreMark 用途与局限 · 板端跑分与简短评述见 <code>lab.html</code>。
+  <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体；知道按「头文件 → main → 实现 → 行为表」排查半成品。
 </div>
 </section>
 

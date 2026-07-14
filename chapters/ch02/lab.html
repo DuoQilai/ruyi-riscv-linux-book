@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第二章 工具链与工程 · 实验</title>
+<title>第二章 够用的 C · 本章实验 — RISC-V Linux 课程</title>
 <style>
   :root {
     --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -58,80 +58,101 @@
 <nav class="toc">
   <h4>本章实验</h4>
   <a href="#intro">说明</a>
-  <a href="#steps">操作步骤</a>
-  <a href="#report">结果与评述</a>
+  <a href="#levels">关卡表</a>
+  <a href="#run">构建与运行</a>
+  <a href="#accept">验收清单</a>
 </nav>
 
 <article>
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
-  <h1>实验：CoreMark 板端跑分</h1>
-  <p class="meta">对应讲义 2.3 · 不重复 2.1 / 2.2 的 hello 与 Makefile 流程</p>
+  <h1>本章实验 · 改代码闯关</h1>
+  <p class="meta">对应讲义 2.1–2.3 · 假温控半成品 · 无真 DHT</p>
 </header>
 
 <section id="intro">
 <h2>实验目的</h2>
-<p>讲义 2.1–2.2 已完成交叉编译与工程构建；本实验在<strong>同一工具链与 SSH 通道</strong>上，把 CoreMark 跑到板端并解读结果。</p>
+<p>讲义已覆盖类型、函数、指针与结构体。本实验给你一份<strong>故意有坑</strong>的假温控脚手架，按关卡改到行为符合下表。</p>
 <ul>
-  <li>练习：获取第三方 C 工程 → 交叉编译 → 部署 → 板端运行</li>
-  <li>理解：CoreMark 分数能说明什么、不能说明什么（见讲义 2.3）</li>
+  <li>脚手架：<code>chapters/ch02/code/fake-thermostat/</code></li>
+  <li>输入：内置温度数组，或从 stdin 读浮点数；无真实 DHT 传感器</li>
+  <li>输出：每轮打印温度与风扇 ON/OFF 决策</li>
 </ul>
 <div class="info">
-  <strong>前置：</strong>已完成 <code>lecture.html</code> 2.1、2.2；板端 SSH 可用；主机有 <code>riscv64-unknown-linux-gnu-gcc</code>。
+  <strong>前置：</strong>读完讲义 2.1–2.3；本机有 <code>gcc</code> 与 <code>make</code>。优先本机编译，专注改 C；可选交叉编译上板自验。
 </div>
-</section>
-
-<section id="steps">
-<h2>操作步骤</h2>
-
-<h3>1. 获取源码</h3>
-<p>从 EEMBC 官方或课程提供的镜像站下载 CoreMark，解压。阅读包内 <code>README</code>，确认使用 <strong>Linux/POSIX 移植</strong>（不是裸机 <code>baremetal</code> 移植）。</p>
-
-<h3>2. 交叉编译</h3>
-<p>在源码目录（具体目标名以该版本 Makefile 为准）：</p>
-<pre><span class="p">$</span> export CC=riscv64-unknown-linux-gnu-gcc
-<span class="p">$</span> make PORT_DIR=linux XCFLAGS="-O2" link
-<span class="p">$</span> file coremark.exe</pre>
-<p><code>file</code> 应显示 RISC-V ELF。若目标文件名不是 <code>coremark.exe</code>，以实际产物为准。</p>
-
-<h3>3. 部署到板端</h3>
-<pre><span class="p">$</span> scp coremark.exe user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip 'chmod +x ~/coremark.exe && ~/coremark.exe'</pre>
-<p>完整运行可能占用 CPU 数十秒至数分钟，属正常现象。</p>
-
-<h3>4. 记录输出</h3>
-<p>保存终端中的 Iterations、Total time、CoreMark 分数等关键行。</p>
-
 <div class="warn">
-  跑分期间勿拔电源。与他人共用板子时注意散热与占用时间。
+  不要一上来大段重写。<strong>先跑通半成品，对照关卡表，一次改一类 bug</strong>。
 </div>
 </section>
 
-<section id="report">
-<h2>结果记录与评述</h2>
+<section id="levels">
+<h2>关卡表</h2>
+<p>默认配置：<code>t_high = 28.0</code>，<code>t_low = 26.0</code>，滞回：高于上限开、低于下限关、中间保持。</p>
 
-<h3>记录表（自填）</h3>
 <table>
-  <tr><th>项</th><th>你的结果</th></tr>
-  <tr><td>CoreMark 版本 / 源码来源</td><td></td></tr>
-  <tr><td>编译命令摘要</td><td></td></tr>
-  <tr><td><code>file</code> 架构</td><td></td></tr>
-  <tr><td>Iterations / Total time</td><td></td></tr>
-  <tr><td>CoreMark 分数</td><td></td></tr>
+  <tr><th>关卡</th><th>现象（修好前）</th><th>你要改到</th><th>主要坑类型</th></tr>
+  <tr>
+    <td>L1</td>
+    <td>温度升高时风扇反而关，或该开不开</td>
+    <td>比较方向正确：<code>temp &gt; t_high</code> → ON；<code>temp &lt; t_low</code> → OFF</td>
+    <td>错误比较</td>
+  </tr>
+  <tr>
+    <td>L2</td>
+    <td>阈值「怎么改都不对劲」，行为像用错了字段</td>
+    <td>决策使用 <code>cfg-&gt;t_high</code> / <code>cfg-&gt;t_low</code>，不要误用 <code>period_ms</code></td>
+    <td>结构体字段用错</td>
+  </tr>
+  <tr>
+    <td>L3</td>
+    <td>传入空配置或空风扇指针时崩溃 / 未定义行为</td>
+    <td>指针为 <code>NULL</code> 时安全返回，不解引用</td>
+    <td>指针使用</td>
+  </tr>
+  <tr>
+    <td>L4</td>
+    <td>传感器读失败仍用垃圾温度做决策</td>
+    <td>读失败时打印错误并<strong>跳过</strong>本轮决策，保持上一风扇状态</td>
+    <td>缺少错误分支</td>
+  </tr>
 </table>
 
-<h3>简答（各 2–4 句）</h3>
-<ol>
-  <li>CoreMark 高分是否意味着 MQTT 或 DHT22 实验一定更流畅？为什么？</li>
-  <li>列举两项影响你本次分数、但与「板子真实工作负载」无关的因素。</li>
-  <li>与讲义 2.1 的 hello 相比，本实验在「工程流程」上多做了哪几步？（获取外部源码、移植选择等。）</li>
-</ol>
+<h3>内置序列验收参考</h3>
+<p>修复全部后，默认内置序列的期望决策（初始风扇 OFF）：</p>
+<table>
+  <tr><th>步</th><th>温度 °C</th><th>期望风扇</th></tr>
+  <tr><td>1</td><td>25.0</td><td>OFF</td></tr>
+  <tr><td>2</td><td>27.0</td><td>OFF（滞回保持）</td></tr>
+  <tr><td>3</td><td>29.0</td><td>ON</td></tr>
+  <tr><td>4</td><td>27.0</td><td>ON（滞回保持）</td></tr>
+  <tr><td>5</td><td>24.0</td><td>OFF</td></tr>
+  <tr><td>6</td><td>读失败（哨兵）</td><td>保持 OFF，并有错误日志</td></tr>
+</table>
+</section>
 
-<h3>完成标志</h3>
+<section id="run">
+<h2>构建与运行</h2>
+<pre><span class="p">$</span> cd chapters/ch02/code/fake-thermostat
+<span class="p">$</span> make                 <span class="c"># 默认本机 gcc</span>
+<span class="p">$</span> ./build/fake-thermo  <span class="c"># 跑内置序列</span>
+
+<span class="c"># 可选：从 stdin 喂温度（一行一个浮点数；负数表示读失败）</span>
+<span class="p">$</span> printf '25\n27\n29\n27\n24\n-1\n' | ./build/fake-thermo --stdin
+
+<span class="c"># 可选：交叉编译</span>
+<span class="p">$</span> make CROSS_COMPILE=riscv64-unknown-linux-gnu-</pre>
+<p>细节与修好后的期望说明见脚手架内 <code>README.md</code>。</p>
+</section>
+
+<section id="accept">
+<h2>验收清单</h2>
 <ul>
-  <li>板端成功跑完并保存输出；</li>
-  <li>记录表与两道简答写完。</li>
+  <li>L1–L4 对应逻辑均已修正，程序可稳定跑完内置序列；</li>
+  <li>输出与「内置序列验收参考」一致（含读失败保持状态）；</li>
+  <li>能口头指出半成品里至少三类坑：比较、字段、指针或错误分支；</li>
+  <li>无需真 DHT、无需上板即可完成本章验收（上板为加分项）。</li>
 </ul>
 </section>
 

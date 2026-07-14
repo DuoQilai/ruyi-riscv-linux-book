@@ -1,5 +1,5 @@
 /*
- * ch03 blink — GPIO 输出闪烁（讲义 3.1）
+ * ch03 blink — GPIO 输出闪烁（讲义 3.2）
  * 修改 GPIO_CHIP_PATH / LED_LINE 以匹配课程接线表。
  * 依赖：libgpiod（链接 -lgpiod）
  */
