@@ -316,19 +316,19 @@
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">MQTT 远程控灯</p>
-        <p class="flow-desc">手机 → 网络 → LED</p>
+        <p class="flow-desc">手机 → 网络 → 外接 LED；板子 publish 状态小例子</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
-        <p class="flow-title">多线程协同</p>
-        <p class="flow-desc">采集∥控制真风扇 + Ctrl+C 干净停</p>
+        <p class="flow-title">三线程协同</p>
+        <p class="flow-desc">采集∥控制∥通信(MQTT) + Ctrl+C 干净停</p>
       </div>
     </div>
     <!-- Capstone: full width -->
     <div class="ch-exp-cap mod-cap">
       <span class="flow-ch">综合项目</span>
       <p class="flow-title">智能环境终端</p>
-      <p class="flow-desc">总装前几章成果 + 老师提供的权重 + 学生手写 tiny 前向推理</p>
+      <p class="flow-desc">复用 ch06 三线程骨架 + 规则/模型仲裁风扇；老师供权重 + 学生手写 tiny 前向</p>
     </div>
   </div>
   <div class="legend">
@@ -389,7 +389,7 @@
         </tr>
         <tr>
           <td>发布 / 订阅</td>
-          <td><strong>发布</strong> = 往某主题发一条消息；<strong>订阅</strong> = 盯着某主题，有新消息就收到。ch05 本章实验：手机发布、板子订阅。</td>
+          <td><strong>发布</strong> = 往某主题发一条消息；<strong>订阅</strong> = 盯着某主题，有新消息就收到。ch05：手机下行控外接 LED；板子 publish 状态/告警小例子。</td>
         </tr>
         <tr>
           <td>主题（topic）</td>
@@ -433,7 +433,19 @@
         </tr>
         <tr>
           <td>pthread / 多线程</td>
-          <td>一个程序里同时跑多段逻辑，如一线程读温度、一线程处理 MQTT。</td>
+          <td>一个程序里同时跑多段逻辑。ch06 三线程：采集∥控制∥通信(MQTT)。</td>
+        </tr>
+        <tr>
+          <td>外接 LED</td>
+          <td>远程控制用灯。ch05 MQTT 下行：手机发命令，板子驱此外接 LED。</td>
+        </tr>
+        <tr>
+          <td>告警红灯</td>
+          <td>本地异常指示（可板载或外接）。综合项目：模型/规则判异常时点亮。</td>
+        </tr>
+        <tr>
+          <td>规则/模型仲裁（或逻辑）</td>
+          <td>超阈值 OR 模型判异常 → 风扇转；日志记触发源。综合项目智力核心。</td>
         </tr>
         <tr>
           <td>时序异常检测</td>
@@ -449,7 +461,7 @@
         </tr>
         <tr>
           <td>智能环境终端</td>
-          <td>本课<strong>综合大项目</strong>：测温、控风扇、MQTT 控灯/上报，并用小模型判断环境是否异常。</td>
+          <td>本课<strong>综合大项目</strong>：复用 ch06 三线程；外接灯远程控、告警红灯本地异常；风扇用规则/模型或逻辑；老师供权重 + 手写 tiny 前向。</td>
         </tr>
       </tbody>
     </table>
@@ -504,7 +516,12 @@
         </tr>
         <tr>
           <td>外接 LED 模块</td>
-          <td>ch05 MQTT 控灯；综合项目状态指示</td>
+          <td>ch05 MQTT 远程控灯</td>
+          <td class="provider">课程提供</td>
+        </tr>
+        <tr>
+          <td>告警红灯（可板载或外接）</td>
+          <td>综合项目本地异常指示</td>
           <td class="provider">课程提供</td>
         </tr>
       </tbody>
@@ -567,28 +584,28 @@
           <td>ch05</td>
           <td>Linux 应用篇</td>
           <td>网络通信与 MQTT</td>
-          <td>理解发布/订阅；用 C 客户端控灯</td>
-          <td>MQTT 远程控灯</td>
-          <td>手机发消息 → 板上 LED 亮灭；板子可回传状态</td>
-          <td>可复用的 MQTT 控灯模块</td>
+          <td>发布/订阅；C 控灯；板子 publish 状态小例子</td>
+          <td>MQTT 远程控灯（含状态上报）</td>
+          <td>手机控外接 LED；板子 publish 状态可见</td>
+          <td>可复用 MQTT 模块（下行控灯 + 上行状态）</td>
         </tr>
         <tr class="mod-linux">
           <td>ch06</td>
           <td>Linux 应用篇</td>
           <td>线程与任务协同</td>
-          <td>一个进程里采集∥控制；共享状态不乱；能干净停</td>
-          <td>多线程协同</td>
-          <td>双线程同时跑，风扇按阈值转停；Ctrl+C 后关风扇并干净退出</td>
-          <td>双线程温控骨架（供综合复用）</td>
+          <td>采集∥控制∥通信(MQTT) 三线程；共享状态有序；干净停</td>
+          <td>三线程协同</td>
+          <td>三线同时跑；风扇按阈值；MQTT 通信线工作；Ctrl+C 关风扇干净退出</td>
+          <td>三线程骨架（供综合复用）</td>
         </tr>
         <tr class="mod-cap">
           <td>综合</td>
           <td>综合大项目</td>
           <td>智能环境终端</td>
-          <td>总装 + 载入老师权重 + 手写 tiny 前向</td>
+          <td>复用 ch06 三线程骨架；规则/模型或逻辑仲裁风扇；载入老师权重 + 手写 tiny 前向</td>
           <td>异常联动总验收</td>
-          <td>异常时红灯 + 风扇 + MQTT 告警几乎同时发生</td>
-          <td>可答辩的完整作品</td>
+          <td>异常时告警红灯 + 风扇 + MQTT 上行告警几乎同时；日志能看出触发源</td>
+          <td>可答辩作品</td>
         </tr>
       </tbody>
     </table>
@@ -695,55 +712,57 @@
           <td rowspan="3" class="merge">ch05</td>
           <td rowspan="3" class="merge">Linux 应用篇</td>
           <td class="section">5.1 联网也是跟外面说话</td>
-          <td rowspan="3" class="merge section">发布/订阅；C 客户端控灯</td>
-          <td rowspan="3" class="merge section"><strong>MQTT 远程控灯</strong>：C 半成品补全订阅→驱 LED→回传状态；手机 App 联调</td>
-          <td rowspan="3" class="merge section">可复用 MQTT 控灯</td>
+          <td rowspan="3" class="merge section">发布/订阅；C 控灯；板子 publish 状态</td>
+          <td rowspan="3" class="merge section"><strong>MQTT 远程控灯</strong>：订阅→驱外接 LED；含 publish 状态/告警小例子；手机 App 联调</td>
+          <td rowspan="3" class="merge section">可复用 MQTT（下行+上行种子）</td>
           <td rowspan="3" class="merge glossary section"><dl>
             <dt>Broker</dt><dd>消息中转站。</dd>
             <dt>主题</dt><dd>频道名；发布往这发，订阅盯这听。</dd>
             <dt>payload</dt><dd>消息正文，如 <code>on</code>/<code>off</code>。</dd>
+            <dt>publish 上行</dt><dd>板子往主题发状态/告警，手机或 PC 订阅可见。</dd>
           </dl></td>
         </tr>
         <tr class="mod-linux"><td class="section">5.2 主题、Broker 与命令行联调</td></tr>
-        <tr class="mod-linux"><td class="section">5.3 C 里接到开/关命令（单项小例子）</td></tr>
+        <tr class="mod-linux"><td class="section">5.3 C 里接到开/关，并 publish 一条状态</td></tr>
 
         <!-- ch06 -->
         <tr class="mod-linux">
           <td rowspan="3" class="merge">ch06</td>
           <td rowspan="3" class="merge">Linux 应用篇</td>
-          <td class="section">6.1 为啥一条线不够</td>
-          <td rowspan="3" class="merge section">采集∥控制；共享状态不乱；能干净停</td>
-          <td rowspan="3" class="merge section"><strong>多线程协同</strong>：C 脚手架（采集线/控制线空壳）；学生补采样入盒、阈值控风扇、保护共享数据；捂热/模拟升温风扇仍听话；Ctrl+C 关风扇并干净退出</td>
-          <td rowspan="3" class="merge section">双线程温控骨架</td>
+          <td class="section">6.1 为啥一条线不够（已有 MQTT 监听）</td>
+          <td rowspan="3" class="merge section">采集∥控制∥通信(MQTT) 三线程；共享状态有序；干净停</td>
+          <td rowspan="3" class="merge section"><strong>三线程协同</strong>：C 脚手架（采集∥控制∥通信）；接入 ch05 订阅/发布循环；阈值控风扇；共享状态有序；Ctrl+C 关风扇干净退出</td>
+          <td rowspan="3" class="merge section">三线程骨架（供综合复用）</td>
           <td rowspan="3" class="merge glossary section"><dl>
-            <dt>线程</dt><dd>一个进程里多条执行线。</dd>
-            <dt>共享状态</dt><dd>温度等数据两边都碰；要有规矩（锁）。</dd>
+            <dt>三线程</dt><dd>采集∥控制∥通信(MQTT)。</dd>
+            <dt>共享状态</dt><dd>温度等数据多线都碰；要有规矩（锁）。</dd>
             <dt>干净退出</dt><dd>Ctrl+C 后关风扇再退。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-linux"><td class="section">6.2 拆开跑、别抢同一份状态</td></tr>
-        <tr class="mod-linux"><td class="section">6.3 怎么干净停下来</td></tr>
+        <tr class="mod-linux"><td class="section">6.2 三线拆开：采集∥控制∥通信</td></tr>
+        <tr class="mod-linux"><td class="section">6.3 共享状态与干净停</td></tr>
 
         <!-- capstone -->
         <tr class="mod-cap">
           <td rowspan="7" class="merge">综合</td>
           <td rowspan="7" class="merge">综合大项目</td>
-          <td class="section">P.1 需求与模块图</td>
-          <td rowspan="7" class="merge section">总装 + 边缘推理部署</td>
-          <td rowspan="7" class="merge section"><strong>异常联动总验收</strong>：异常时红灯 + 风扇 + MQTT 告警几乎同时发生</td>
+          <td class="section">P.1 需求与模块图（复用 ch06 三线程）</td>
+          <td rowspan="7" class="merge section">复用 ch06 三线程骨架；规则/模型或逻辑仲裁风扇；载入老师权重 + 手写 tiny 前向</td>
+          <td rowspan="7" class="merge section"><strong>异常联动总验收</strong>：异常时告警红灯 + 风扇 + MQTT 上行告警几乎同时；日志能看出触发源</td>
           <td rowspan="7" class="merge section">可答辩作品</td>
           <td rowspan="7" class="merge glossary section"><dl>
             <dt>老师供权重</dt><dd>课内提供 <code>weights.h</code>；学生专注板端部署与手写前向。</dd>
             <dt>手写 tiny 前向</dt><dd>学生写 C 前向：读权重 → 乘加/激活 → 正常/异常。</dd>
             <dt>滑动窗口</dt><dd>取最近 N 次采样再推理。</dd>
+            <dt>规则/模型仲裁</dt><dd>超阈值 OR 模型异常 → 风扇转；日志记触发源。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-cap"><td class="section">P.2 合并温控 + MQTT 灯 + 配置日志</td></tr>
-        <tr class="mod-cap"><td class="section">P.3 线程架构：采集 / MQTT / 控制 / 推理</td></tr>
-        <tr class="mod-cap"><td class="section">P.4 载入老师提供的 <code>weights.h</code></td></tr>
-        <tr class="mod-cap"><td class="section">P.5 板端：滑动窗口 + 手写 C 前向</td></tr>
-        <tr class="mod-cap"><td class="section">P.6 异常联动：红灯 + 风扇 + MQTT 告警</td></tr>
-        <tr class="mod-cap"><td class="section">P.7 演示与验收（正常态 vs 捂热/加热）</td></tr>
+        <tr class="mod-cap"><td class="section">P.2 接入配置日志 + 外接灯远程控 + 告警红灯本地</td></tr>
+        <tr class="mod-cap"><td class="section">P.3 在三线程骨架上挂规则与模型输出</td></tr>
+        <tr class="mod-cap"><td class="section">P.4 载入老师 <code>weights.h</code></td></tr>
+        <tr class="mod-cap"><td class="section">P.5 滑动窗口 + 手写 C 前向（TinyML 方案待定，此处占位保留）</td></tr>
+        <tr class="mod-cap"><td class="section">P.6 风扇或逻辑仲裁 + 异常联动（红灯 + 风扇 + MQTT 上行）；日志记触发源</td></tr>
+        <tr class="mod-cap"><td class="section">P.7 演示与验收</td></tr>
       </tbody>
     </table>
   </div>
@@ -752,7 +771,7 @@
   <ul class="relations">
     <li><strong>老师（课前准备）</strong>：在 PC/GPU 上训好 tiny 模型，发布 <code>weights.h</code>（可附带说明与对照数据）</li>
     <li><strong>学生（主线）</strong>：滑动窗口 → 手写 C 前向 → 正常/异常 → 风扇 + LED + MQTT</li>
-    <li>课堂重点：权重如何进工程、前向如何嵌进多线程、如何与规则控制一起工作</li>
+    <li>课堂重点：权重如何进工程、前向如何嵌进三线程骨架、与规则控制用或逻辑一起工作</li>
   </ul>
 
   <footer>
