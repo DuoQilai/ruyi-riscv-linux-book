@@ -1,81 +1,80 @@
 # Ruyi RISC-V Linux Book
 
-Ruyi RISC-V Linux 嵌入式实践课公开材料（C + RuyiSDK + 开发板）。
+Ruyi RISC-V Linux 嵌入式实践课公开材料（**C + RuyiSDK + 真开发板**）。
 
-## 课程研发工作流
+- **大纲（规划源）：** [`docs/CourseOutline.html`](docs/CourseOutline.html)
+- **课程说明（定位 / 调研 / 取舍）：** [`docs/intro.md`](docs/intro.md)
+- **在线预览：** https://enzoding-rgb.github.io/ruyi-riscv-book/
+
+## 课程一句话
+
+六章讲义各三节 + 每章一个完整实验（C 脚手架、板上可见验收），最后综合项目：老师提供 `weights.h`，学生手写 tiny 前向并接到外设 / MQTT。
+
+| 章 | 名称 | 本章实验 |
+|----|------|----------|
+| ch01 | 环境与工具链 | 上板通道验收（CoreMark 硬性跑分） |
+| ch02 | 够用的 C | 假温控改代码闯关 |
+| ch03 | GPIO / UART / 外设 | 温控风扇 |
+| ch04 | 文件 / 配置 / 日志 | 配置化温控（配置 + 历史 + 告警） |
+| ch05 | 网络与 MQTT | MQTT 远程控灯 |
+| ch06 | 线程与协同 | 采集∥控制 + Ctrl+C 干净停 |
+| 综合 | 智能环境终端 | 总装 + 边缘推理部署 |
+
+调研结论摘要（`reference/` 采纳/舍弃、NJU PA 借鉴边界）见 **`docs/intro.md`**。
+
+## 研发工作流
 
 ```
-docs/CourseOutline.html     ← 唯一规划源（章/节目标、配套实验、术语、BOM）
+docs/CourseOutline.html     ← 唯一规划源（先改这里）
+docs/intro.md               ← 课程说明与调研取舍
          │
-         ├── chapters/chXX/lecture.html   ← 讲义：按节 1.1 / 1.2 / … 组织，教 + 可跟做
-         └── chapters/chXX/lab.html       ← 实验：一章一篇，递进于讲义，不拆节号
+         ├── chapters/chXX/lecture.html   ← 讲义：固定 1.1 / 1.2 / 1.3
+         └── chapters/chXX/lab.html       ← 实验：一整块；C 脚手架 + 硬件验收
 ```
 
 | 文档 | 角色 |
 |------|------|
-| **CourseOutline** | 改结构、改实验归属、改术语 → **先改这里** |
-| **lecture.html** | 概念、图示、操作示范、课堂练习；节与 outline 对齐 |
-| **lab.html** | 讲义跑通后的整合验收 / 对比 / 决策 / 独立动手（如 ch02 CoreMark） |
+| **CourseOutline** | 改结构、改实验、改术语 → 先改这里 |
+| **intro.md** | 为什么这样设计、调研了什么 |
+| **lecture.html** | 原理 + 单项跟做 |
+| **lab.html** | 半成品往后补；不重贴讲义命令块 |
 
-**原则：** 讲义能自学跟做；实验不重复讲义命令块，只递进一层。无独立交付价值时不硬拆 lab。
+**原则：** 一门课一条线；无选修双轨；实验必须结合板上硬件现象（有别于纯 CSAPP Shell 作业）。
 
 ## 构建与发布
 
 ```bash
-# 生成 PDF → 提交 enzo → 部署 GitHub Pages
-bash scripts/build.sh "update message"
+# 完整流程（PDF + 推送课程仓 + 部署 Pages）在 misc/scripts/build.sh
+# 仅同步大纲到 Pages 时可手动拷贝 docs/CourseOutline.html
+bash misc/scripts/build.sh "update message"
 ```
 
-`scripts/build.sh` 会：
-
-1. 用 Playwright 为章节 HTML（ch01–ch03 的 lecture + lab）生成 PDF  
-2. `git commit` 并 `push origin enzo`  
-3. 将 `CourseOutline.html` 与章节 HTML/PDF（及 `ch02/code/`）同步到 Pages 仓库  
-
-线上入口（`index.html` → 大纲）：`https://enzoding-rgb.github.io/ruyi-riscv-book/`
+线上入口：`https://enzoding-rgb.github.io/ruyi-riscv-book/`  
+大纲直链：`https://enzoding-rgb.github.io/ruyi-riscv-book/CourseOutline.html`
 
 ## 仓库结构
 
 ```text
 ruyi-riscv-linux-book/
 ├── README.md
-├── scripts/
-│   └── build.sh
 ├── docs/
-│   └── CourseOutline.html
+│   ├── CourseOutline.html
+│   ├── intro.md
+│   └── index.html
 ├── chapters/
-│   ├── ch01/
-│   │   ├── lecture.html / lecture.pdf
-│   │   └── lab.html / lab.pdf
-│   ├── ch02/
-│   │   ├── lecture.html / lecture.pdf
-│   │   ├── lab.html / lab.pdf
-│   │   └── code/              # hello、project-template
-│   └── ch03/
-│       ├── lecture.html
-│       ├── lab.html
-│       └── code/              # blink、uart-echo、temp-fan
+│   ├── ch01/ … ch03/     # 讲义/实验初稿（将按新大纲对齐）
+│   └── …
+├── reference/            # 调研资料（笔记等；大书默认不进主线）
 └── misc/
+    ├── scripts/build.sh
     ├── boards/
     └── archive/
 ```
 
-## 怎么读
-
-| 内容 | 路径 |
-| --- | --- |
-| 课程大纲 | `docs/CourseOutline.html` |
-| 第一章讲义 / 实验 | `chapters/ch01/lecture.html` · `lab.html` |
-| 第二章讲义 / 实验 | `chapters/ch02/lecture.html` · `lab.html` |
-| 第三章讲义 / 实验 | `chapters/ch03/lecture.html` · `lab.html` |
-| Hello 示例 | `chapters/ch02/code/hello/` |
-| 温控风扇示例 | `chapters/ch03/code/temp-fan/` |
-
 ## 当前进度
 
-- **ch01**：outline + lecture + lab（环境连通与一键准备决策）✅  
-- **ch02**：outline + lecture + lab（CoreMark 跑分）✅  
-- **ch03**：outline（3 节）+ lecture + lab（实验 1 温控风扇）+ code ✅  
-- **ch04–ch06 + 实验 2 + 综合项目**：见 CourseOutline  
+- **CourseOutline：** ch01–ch06 + 综合已按定稿更新 ✅  
+- **ch01–ch03：** 有讲义/实验 HTML 初稿；待按新三节结构重写对齐  
+- **ch04–ch06 + 综合正文：** 规划已定，待开发  
 
 制作分支：`enzo`。
