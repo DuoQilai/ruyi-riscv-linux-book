@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第六章 线程与协同 · 讲义 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+  }
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 80px 40px; border-bottom: 1px solid var(--line);
+  }
+  .hero .chapter-tag {
+    font-size: 42px; letter-spacing: 0.12em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero h1 { font-size: 64px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+  .hero .subtitle { font-size: 22px; color: var(--muted); line-height: 1.6; max-width: 700px; }
+  .hero .meta { margin-top: 48px; display: flex; gap: 40px; font-size: 17px; color: var(--faint); }
+  .content { max-width: 1000px; margin: 0 auto; padding: 0 48px 120px; }
+  section { padding: 80px 0; border-bottom: 1px solid var(--line-light); }
+  section:last-of-type { border-bottom: none; }
+  .section-num { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+  section h2 { font-size: 40px; font-weight: 700; margin-bottom: 40px; line-height: 1.3; }
+  section h3 { font-size: 24px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  section h4 { font-size: 19px; font-weight: 700; margin: 28px 0 10px; color: var(--muted); }
+  section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
+  section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 24px 28px; margin: 20px 0 28px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.75; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 17px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-light); }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: #8c5440; line-height: 1.7;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
+  }
+  .diagram {
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
+    white-space: pre; overflow-x: auto;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 1px solid var(--line); padding: 28px 30px; }
+  .card h4 { font-size: 20px; font-weight: 700; margin: 0 0 10px; color: var(--text); }
+  .card p { font-size: 17px; margin: 0; }
+  .steps { list-style: none; padding: 0; }
+  .steps li {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--line-light);
+    font-size: 18px; color: var(--muted); line-height: 1.6;
+  }
+  .steps li .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  @media print {
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
+    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
+    .content { max-width: none; padding: 0 36px; }
+    section { padding: 36px 0; page-break-before: always; }
+    section:first-of-type { page-break-before: avoid; }
+    pre, .diagram { font-size: 11pt; }
+  }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+  body { padding-left: 240px; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>目录</h4>
+  <a href="#overview">本章概览</a>
+  <div class="divider"></div>
+  <a href="#s6.1">6.1 一条线会互相堵</a>
+  <a class="sub" href="#s6.1-objectives">学习目标</a>
+  <a class="sub" href="#s6.1-block">阻塞从哪来</a>
+  <div class="divider"></div>
+  <a href="#s6.2">6.2 三线：采集∥控制∥通信</a>
+  <a class="sub" href="#s6.2-objectives">学习目标</a>
+  <a class="sub" href="#s6.2-split">职责拆分</a>
+  <a class="sub" href="#s6.2-skeleton">骨架一览</a>
+  <div class="divider"></div>
+  <a href="#s6.3">6.3 共享状态与干净停</a>
+  <a class="sub" href="#s6.3-objectives">学习目标</a>
+  <a class="sub" href="#s6.3-lock">锁与停机</a>
+  <a class="sub" href="#s6.3-race">深入理解：竞态与 TSan</a>
+</nav>
+
+<div class="hero">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第六章</div>
+  <h1>线程与协同</h1>
+  <p class="subtitle">一条线会堵 → 采集∥控制∥通信 → 共享状态、干净停与竞态深入理解<br>— 6.1 / 6.2 / 6.3 —</p>
+  <div class="meta">
+    <span>板卡：荔枝派 4A</span>
+    <span>工具链：RuyiSDK</span>
+    <span>脚手架：tri-thread · race-demo</span>
+  </div>
+</div>
+
+<div class="content">
+
+<section id="overview">
+<h2>开始之前</h2>
+
+<div class="warn" style="margin-bottom:32px;">
+  <strong>前置条件：</strong>第五章 MQTT 控灯可用；第四章温控与串口命令已验收。本章把采样、控风扇、MQTT 通信拆成<strong>三条线程</strong>（同一进程里并行跑的几条执行流），并处理共享数据与 Ctrl+C 干净停。每节约 90–120 分钟。
+</div>
+
+<h3>你需要准备什么</h3>
+
+<div class="card-grid card-grid-3">
+  <div class="card"><h4>荔枝派 4A</h4><p>DHT22、风扇、LED；MQTT Broker 可达。RuyiSDK 交叉工具链。</p></div>
+  <div class="card"><h4>主机 gcc</h4><p>跑 <code>race-demo</code> 时用本机 <code>gcc -fsanitize=thread</code>（ThreadSanitizer，检查谁在抢同一变量）。</p></div>
+  <div class="card"><h4>代码</h4><p><code>tri-thread/</code> 产品骨架；<code>race-demo/</code> 故意抢数据的小程序。</p></div>
+</div>
+
+<h3>本章你会学到什么</h3>
+
+<div class="card-grid" style="margin-bottom:0;">
+  <div class="card"><h4>6.1 一条线会互相堵</h4><p>已有 MQTT 监听时，单线程如何堵住采样与控制。</p></div>
+  <div class="card"><h4>6.2 三线：采集∥控制∥通信</h4><p>三条线程各干什么、共享哪份状态。</p></div>
+  <div class="card"><h4>6.3 共享状态与干净停 · 深入理解</h4><p>板上先不加锁看错乱，加锁修好；电脑上用 TSan 跑同一抢数据小程序。</p></div>
+</div>
+
+<div class="info" style="margin-top:28px;">
+  <strong>讲义 vs 实验：</strong>讲义建立拆分与竞态心智。本章实验在板上跑三线程协同，并在电脑上保存 TSan 报告；骨架供综合项目复用。
+</div>
+</section>
+
+<!-- ═══ 6.1 ═══ -->
+<section id="s6.1">
+<div class="section-num">6.1</div>
+<h2>一条线会互相堵</h2>
+
+<h3 id="s6.1-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>单线程瓶颈</h4><p>说清「等网络」如何拖死「读传感器」</p></div>
+  <div class="card"><h4>对照第五章</h4><p><code>mosquitto_loop_forever</code> 占住主线程的含义</p></div>
+  <div class="card"><h4>动机</h4><p>为何要拆成多条执行流</p></div>
+  <div class="card"><h4>边界</h4><p>本章用线程，不引入多进程架构</p></div>
+</div>
+
+<h3 id="s6.1-block">阻塞从哪来</h3>
+<p>第五章的 <code>mqtt-led</code> 用 <code>mosquitto_loop_forever</code> 一直处理网络事件——这很好，但<strong>同一条主线</strong>若还要每 2 秒读 DHT、判阈值、开风扇，就会互相抢时间：网络回调慢了，采样推迟；采样位带耗时长了，MQTT 心跳可能超时。</p>
+
+<div class="diagram">单线程硬塞在一起：
+
+  while (1) {
+    mqtt_处理一会儿();   // 可能卡住
+    读_DHT22();           // 也可能卡住
+    控风扇();
+  }
+
+结果：某一段一堵，后面全停。</div>
+
+<p><strong>线程</strong>让进程里同时跑多段逻辑：采集线专心采样，控制线专心判阈值，通信线专心 MQTT。它们通过共享内存里的状态结构交换数据——下一节定义这份结构，再下一节处理「同时改会写乱」的问题。</p>
+
+<div class="info">
+  <strong>和第四章 select 的关系：</strong><code>select</code> 适合「一个线程盯几个 I/O」；当业务块变多（传感时序 + 网络库自带循环），用线程按职责切开更清晰。两种手段都要会。
+</div>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>列出三种会让「单线程温控+MQTT」卡住的具体调用。</li>
+  <li>若只用 select、不用线程，能否覆盖 mosquitto 的网络循环？需要什么条件？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能解释单线程互相堵的现象 · 明确本章用三线程拆分的动机。
+</div>
+</section>
+
+<!-- ═══ 6.2 ═══ -->
+<section id="s6.2">
+<div class="section-num">6.2</div>
+<h2>三线：采集∥控制∥通信(MQTT)</h2>
+
+<h3 id="s6.2-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>采集线程</h4><p>周期读 DHT，写入共享温度</p></div>
+  <div class="card"><h4>控制线程</h4><p>读温度与阈值，驱动风扇</p></div>
+  <div class="card"><h4>通信线程</h4><p>跑 MQTT 循环：下行命令、上行状态</p></div>
+  <div class="card"><h4>共享结构</h4><p>温度、风扇、阈值、运行标志</p></div>
+</div>
+
+<h3 id="s6.2-split">职责拆分</h3>
+<div class="diagram">┌─────────────┐   写 last_temp    ┌─────────────┐
+│ 采集线程     │ ───────────────► │             │
+│ 读 DHT22     │                  │  共享状态   │
+└─────────────┘                  │  + 互斥锁   │
+                                 │             │
+┌─────────────┐   读温度/写风扇   │             │
+│ 控制线程     │ ◄──────────────► │             │
+│ 阈值开/关    │                  │             │
+└─────────────┘                  │             │
+                                 │             │
+┌─────────────┐   改阈值/发状态   │             │
+│ 通信线程     │ ◄──────────────► │             │
+│ MQTT loop    │                  └─────────────┘
+└─────────────┘</div>
+
+<table>
+  <tr><th>线程</th><th>做什么</th><th>不做什么</th></tr>
+  <tr><td>采集</td><td>按周期读传感器，更新 <code>last_temp</code>/<code>last_hum</code></td><td>不直接开风扇、不跑网络库</td></tr>
+  <tr><td>控制</td><td>读温度与阈值，调用风扇 GPIO</td><td>不阻塞在 MQTT</td></tr>
+  <tr><td>通信</td><td><code>mosquitto_loop</code>；下行改阈值或灯；上行发布状态</td><td>不做 DHT 位带</td></tr>
+</table>
+
+<h3 id="s6.2-skeleton">骨架一览</h3>
+<p><code>chapters/ch06/code/tri-thread/</code> 给出 pthread 创建、共享结构、三线程函数空壳与信号退出标志。实验中补全各线程循环与加锁读写。</p>
+
+<pre><span class="k">struct</span> shared_state {
+    pthread_mutex_t lock;   <span class="c">/* 锁：同一时刻只许一条线改关键字段 */</span>
+    float last_temp;
+    float t_high, t_low;
+    int fan_on;
+    volatile int running;   <span class="c">/* Ctrl+C 置 0，各线程退出 */</span>
+};</pre>
+
+<pre><span class="p">$</span> cd chapters/ch06/code/tri-thread
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file tri-thread
+<span class="p">$</span> scp tri-thread user@board-ip:~/</pre>
+
+<div class="warn">
+  线程函数必须是 <code>void *(*)(void *)</code>；创建后用 <code>pthread_join</code> 等其结束。风扇与 GPIO 初始化放在开线程之前，避免多线同时申请同一 line。
+</div>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>若采集线程直接调用 <code>fan_set</code>，破坏了哪条职责边界？</li>
+  <li>通信线程收到「提高上限」时，应改共享结构的哪个字段？谁去真正开风扇？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能画出三线与共享状态 · 能编译部署 tri-thread 骨架 · 知道各线程边界。
+</div>
+</section>
+
+<!-- ═══ 6.3 ═══ -->
+<section id="s6.3">
+<div class="section-num">6.3</div>
+<h2>共享状态与干净停 · 深入理解：竞态与 ThreadSanitizer</h2>
+
+<h3 id="s6.3-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>竞态</h4><p>两条线同时改同一数据，结果写乱</p></div>
+  <div class="card"><h4>互斥锁</h4><p>加锁后再读改共享字段</p></div>
+  <div class="card"><h4>干净停</h4><p>Ctrl+C 置标志 → 关风扇 → 线程退出</p></div>
+  <div class="card"><h4>深入理解</h4><p>板上必现错乱再修好；电脑 TSan 指出抢变量的行</p></div>
+</div>
+
+<h3 id="s6.3-lock">锁与干净停</h3>
+<p>采集写温度、控制读温度时，若中间被打断，可能读到「写到一半」的值。用 <strong>互斥锁</strong>（mutex：同一时刻只许一条线进入临界区）包住读写：</p>
+
+<pre>pthread_mutex_lock(&amp;st-&gt;lock);
+temp = st-&gt;last_temp;
+high = st-&gt;t_high;
+pthread_mutex_unlock(&amp;st-&gt;lock);</pre>
+
+<p><strong>干净停：</strong>注册 <code>SIGINT</code>（Ctrl+C）处理函数，把 <code>running=0</code>；各线程循环判断该标志后退出；主线程 join 完毕后关风扇、释放 GPIO、断开 MQTT。验收时必须看到风扇停转再进程结束。</p>
+
+<h3 id="s6.3-race">深入理解：板上不加锁 → 加锁；电脑上 TSan</h3>
+<p>本课要求你<strong>亲眼看见</strong>问题，而不是背「要加锁」三个字：</p>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>板上（tri-thread）</strong><br>按实验说明先关掉锁（或走「故意无锁」编译开关），跑一段时间，记录温度/风扇日志出现跳变、矛盾或明显错乱。</div></li>
+  <li><span class="step-num">2</span><div><strong>加锁修好</strong><br>恢复所有共享读写的 lock/unlock，错乱消失；风扇阈值行为恢复正常。</div></li>
+  <li><span class="step-num">3</span><div><strong>电脑上跑 race-demo</strong><br><code>chapters/ch06/code/race-demo/</code> 是确定性强制抢同一计数器的小程序（无板、无 GPIO）。本机：
+<pre>cd chapters/ch06/code/race-demo
+make
+./race-demo          <span class="c"># 无锁：计数偏小（丢更新）</span>
+sudo sysctl vm.mmap_rnd_bits=28   <span class="c"># 固定步骤：让 TSan 稳定跑通</span>
+make tsan
+./race-demo          <span class="c"># ThreadSanitizer 打印数据竞争报告</span></pre>
+  保存终端中 TSan 指出的两处访问行号，对照源码。</div></li>
+</ol>
+
+<div class="diagram">深入理解三条证据链：
+
+  板上无锁  → 日志/行为错乱（现象）
+  板上加锁  → 行为正确（对照）
+  电脑 TSan → 报告「这两行在抢同一变量」（机理）</div>
+
+<div class="info">
+  <strong>ThreadSanitizer（TSan）：</strong>编译加上 <code>-fsanitize=thread</code> 的检查器。它在<strong>电脑</strong>上跑同一类抢数据程序，打印哪两行在并发访问同一变量。板上交叉工具链未必开 TSan，故竞态机理用主机演示。
+</div>
+
+<div class="warn">
+  race-demo <strong>故意</strong>无锁；不要把无锁写法抄进产品骨架。产品路径（tri-thread）验收以加锁版本为准。
+</div>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>为何「偶尔看起来正常」不能证明没有竞态？</li>
+  <li>干净停时若只退出通信线程、不管控制线程，可能留下什么硬件状态？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>理解锁与 running 标志 · 能复述深入理解三步 · 带着验收清单进入本章实验。
+</div>
+</section>
+
+</div>
+</body>
+</html>

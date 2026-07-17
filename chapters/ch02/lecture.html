@@ -82,24 +82,6 @@
     background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .opt-tag {
-    display: inline-block; background: #e8e3d8; color: var(--faint);
-    font-size: 14px; padding: 3px 12px; margin-left: 12px; vertical-align: middle;
-    letter-spacing: 0.05em;
-  }
-  @media print {
-    body { padding-left: 0; background: #fff; }
-    .toc { display: none; }
-    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
-    .content { max-width: none; padding: 0 36px; }
-    section { padding: 36px 0; page-break-before: always; }
-    section:first-of-type { page-break-before: avoid; }
-    pre, .diagram { font-size: 11pt; }
-    .card-grid { grid-template-columns: 1fr 1fr; }
-    .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-  }
-
-  /* ── Sidebar TOC ── */
   .toc {
     position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
     overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
@@ -108,16 +90,22 @@
   .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
   .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .toc a:hover { color: var(--accent); }
-  .toc a.active { color: var(--accent); font-weight: 700; }
   .toc a.sub { padding-left: 16px; font-size: 14px; }
   .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
-
   body { padding-left: 240px; }
+  @media print {
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
+    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
+    .content { max-width: none; padding: 0 36px; }
+    section { padding: 36px 0; page-break-before: always; }
+    section:first-of-type { page-break-before: avoid; }
+    pre, .diagram { font-size: 11pt; }
+  }
 </style>
 </head>
 <body>
 
-<!-- ═══ TOC Sidebar ═══ -->
 <nav class="toc">
   <h4>目录</h4>
   <a href="#overview">本章概览</a>
@@ -125,24 +113,22 @@
   <a href="#s2.1">2.1 类型、变量、控制流</a>
   <a class="sub" href="#s2.1-types">类型与变量</a>
   <a class="sub" href="#s2.1-control">控制流</a>
-  <a class="sub" href="#s2.1-practice">小练习</a>
   <div class="divider"></div>
   <a href="#s2.2">2.2 函数、头文件与多文件工程</a>
   <a class="sub" href="#s2.2-func">函数</a>
   <a class="sub" href="#s2.2-header">头文件</a>
   <a class="sub" href="#s2.2-project">多文件工程</a>
   <div class="divider"></div>
-  <a href="#s2.3">2.3 指针、数组、结构体与本课代码怎么读</a>
+  <a href="#s2.3">2.3 指针、数组、结构体</a>
   <a class="sub" href="#s2.3-ptr">指针与数组</a>
   <a class="sub" href="#s2.3-struct">结构体</a>
-  <a class="sub" href="#s2.3-read">本课代码怎么读</a>
+  <a class="sub" href="#s2.3-deep">深入理解</a>
 </nav>
 
-<!-- ═══════════════════════════════════════════ -->
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
   <h1>够用的 C 语言基础</h1>
-  <p class="subtitle">类型 · 控制流 · 函数与多文件<br>指针 · 数组 · 结构体 · 读懂本课代码<br>— 2.1 / 2.2 / 2.3 —</p>
+  <p class="subtitle">类型 · 控制流 · 函数与多文件<br>指针 · 数组 · 结构体 · 程序怎么被拼出来<br>— 2.1 / 2.2 / 2.3 —</p>
   <div class="meta">
     <span>跟做：hello + project-template</span>
     <span>本章实验：改代码闯关</span>
@@ -151,18 +137,17 @@
 
 <div class="content">
 
-<!-- ═══ 本章概览 ═══ -->
 <section id="overview">
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置条件：</strong>已完成第一章——主机能编译、板端能跑程序。本章目标是<strong>读懂、改得动</strong>本课后续的 C 代码；交叉编译与 CoreMark 已在 ch01 完成，这里不再重复。
+  <strong>前置：</strong>已完成第一章——主机能交叉编译、荔枝派 4A 能跑程序。本章目标是<strong>读懂、改得动</strong>本课后续的 C 代码。
 </div>
 
 <h3>你需要准备什么</h3>
 
 <div class="card-grid card-grid-3">
-  <div class="card"><h4>主机编译器</h4><p>本机 <code>gcc</code> 即可跟做与闯关；想顺便练交叉编译也可加上 <code>CROSS_COMPILE</code>。</p></div>
+  <div class="card"><h4>编译器</h4><p>本机 <code>gcc</code> 与 <code>make</code>；Makefile 里已有 <code>CROSS_COMPILE</code>，需要上板时再打开交叉前缀。</p></div>
   <div class="card"><h4>代码目录</h4><p><code>chapters/ch02/code/</code>：<code>hello/</code>、<code>project-template/</code> 跟做；<code>fake-thermostat/</code> 留给实验闯关。</p></div>
   <div class="card"><h4>编辑器</h4><p>任意能改 C 的编辑器；改完 <code>make</code>，看终端输出是否符合预期。</p></div>
 </div>
@@ -172,11 +157,11 @@
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>2.1 类型、变量、控制流</h4><p>用 int / float / 比较与循环写出「温度高了就开风扇」这类判断。</p></div>
   <div class="card"><h4>2.2 函数、头文件与多文件工程</h4><p>把逻辑拆成函数；用头文件声明接口；用 Makefile 编译多个 <code>.c</code>。</p></div>
-  <div class="card"><h4>2.3 指针、数组、结构体与本课代码怎么读</h4><p>看懂参数里的指针、配置结构体和数组序列；为闯关与后续外设实验铺路。</p></div>
+  <div class="card"><h4>2.3 指针、数组、结构体</h4><p>看懂参数里的指针、配置结构体和数组序列；弄清多个 .c 如何变成一个可执行文件。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>学习建议：</strong>讲义用小例子建立直觉；动手闯关在 <code>lab.html</code>。不必追求 C 全书覆盖——够读、够改本课脚手架即可。
+  <strong>学习建议：</strong>讲义用小例子建立直觉；动手闯关在 <code>lab.html</code>。覆盖范围以「够读、够改本课脚手架」为准。
 </div>
 </section>
 
@@ -186,12 +171,12 @@
 <h2>类型、变量、控制流</h2>
 
 <h3 id="s2.1-types">类型与变量</h3>
-<p>程序处理的是<strong>有类型的数据</strong>。本课最常见的几种：</p>
+<p>程序处理的是<strong>有类型的数据</strong>。<strong>类型</strong>规定一块内存按什么规则解释（整数、小数、文字等）。本课最常见的几种：</p>
 
 <table>
   <tr><th>类型</th><th>典型用途</th><th>例子</th></tr>
   <tr><td><code>int</code></td><td>计数、状态、返回码</td><td>风扇开关 <code>0/1</code>、循环下标</td></tr>
-  <tr><td><code>float</code> / <code>double</code></td><td>温度、阈值</td><td><code>28.5</code> °C</td></tr>
+  <tr><td><code>float</code> / <code>double</code></td><td>温度、小数</td><td><code>28.5</code> °C</td></tr>
   <tr><td><code>char</code> / 字符串</td><td>日志文字</td><td><code>"FAN ON"</code></td></tr>
   <tr><td><code>int</code> 返回值</td><td>成功 / 失败</td><td><code>0</code> 成功，非 <code>0</code> 失败</td></tr>
 </table>
@@ -202,11 +187,11 @@
 <span class="k">const float</span> T_LOW  = 26.0f;</pre>
 
 <div class="info">
-  <strong>习惯：</strong>配置常量用 <code>const</code> 或宏写清楚含义；布尔语义用 <code>0/1</code> 并在注释里标明「开/关」。
+  <strong>习惯：</strong>配置常量用 <code>const</code> 写清含义；开关语义用 <code>0/1</code>，并在注释里标明「开/关」。
 </div>
 
 <h3 id="s2.1-control">控制流：判断与循环</h3>
-<p>温控的核心就是比较与分支：</p>
+<p><strong>控制流</strong>决定程序「先做什么、再做什么」——分支、循环都算。温控的核心是比较与分支：</p>
 
 <pre><span class="k">if</span> (temp_c &gt; T_HIGH) {
     fan_on = 1;
@@ -231,14 +216,18 @@
   25 → 关     27 → 保持     29 → 开
   27 → 保持   25 → 关
 
-  关键：比较方向写反、用错阈值字段，都会让「该开不开 / 该关不关」。</div>
+  陷阱：比较方向写反、用错阈值字段，都会让「该开不开 / 该关不关」。</div>
 
-<h3 id="s2.1-practice">小练习</h3>
+<h3>跟做与练习</h3>
 <ol>
   <li>写出：温度严格大于 28 开风扇，严格小于 26 关风扇，中间保持原状态。</li>
   <li><code>temp &gt;= T_HIGH</code> 与 <code>temp &gt; T_HIGH</code> 在边界 <code>28.0</code> 上行为差在哪里？</li>
   <li>若把 <code>T_HIGH</code> 和 <code>T_LOW</code> 写反，会出现什么现象？</li>
 </ol>
+
+<pre><span class="p">$</span> cd chapters/ch02/code/hello
+<span class="p">$</span> make CROSS_COMPILE=
+<span class="p">$</span> ./hello</pre>
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能读懂阈值判断与简单循环；知道滞回区间要「保持现状」。
@@ -251,7 +240,7 @@
 <h2>函数、头文件与多文件工程</h2>
 
 <h3 id="s2.2-func">函数：把「一件事」包起来</h3>
-<p>函数有<strong>参数</strong>、<strong>返回值</strong>和<strong>函数体</strong>。本课常见写法：</p>
+<p><strong>函数</strong>是一段有名字的代码块，有参数、返回值和函数体。本课常见写法：</p>
 
 <pre><span class="c">/* 返回 0 成功，非 0 失败 */</span>
 <span class="k">int</span> read_temp(<span class="k">float</span> *out_c);
@@ -268,7 +257,7 @@
 apply_fan_policy(t, &amp;fan_on);</pre>
 
 <h3 id="s2.2-header">头文件：声明接口</h3>
-<p>头文件告诉其他 <code>.c</code>：「这些函数/类型存在」。实现放在对应的 <code>.c</code> 里。用 include guard 防止重复包含：</p>
+<p><strong>头文件</strong>（<code>.h</code>）告诉其他 <code>.c</code>：「这些函数/类型存在」。实现放在对应的 <code>.c</code> 里。用 include guard 防止重复包含：</p>
 
 <pre><span class="c">/* greet.h */</span>
 <span class="k">#ifndef</span> GREET_H
@@ -284,7 +273,6 @@ apply_fan_policy(t, &amp;fan_on);</pre>
 </div>
 
 <h3 id="s2.2-project">多文件工程：跟做模板</h3>
-<p>跟做目录：</p>
 <ul>
   <li><code>chapters/ch02/code/hello/</code> — 单文件入门</li>
   <li><code>chapters/ch02/code/project-template/</code> — <code>src/</code> + <code>include/</code> + <code>build/</code></li>
@@ -297,23 +285,14 @@ apply_fan_policy(t, &amp;fan_on);</pre>
 ├── src/greet.c         ← 实现 greet()
 └── build/              ← make 生成，可删</div>
 
-<pre><span class="p">$</span> cd chapters/ch02/code/hello
-<span class="p">$</span> make CROSS_COMPILE=     <span class="c"># 本机 gcc；省略则用交叉前缀</span>
-<span class="p">$</span> ./hello
-
-<span class="p">$</span> cd ../project-template
+<pre><span class="p">$</span> cd chapters/ch02/code/project-template
 <span class="p">$</span> make CROSS_COMPILE=
 <span class="p">$</span> ./build/app</pre>
-
-<div class="info">
-  <strong>提示：</strong>Makefile 里已有 <code>CROSS_COMPILE</code>。本章闯关优先本机 <code>gcc</code>，把注意力放在 C 逻辑上；需要时再交叉编译上板。
-</div>
 
 <div class="warn">
   <strong>Makefile 命令行必须用 Tab 缩进</strong>，用空格会报 <code>missing separator</code>。
 </div>
 
-<h3>课堂练习</h3>
 <ol>
   <li>若只改 <code>greet.c</code> 不改 <code>main.c</code>，再 <code>make</code>，哪些文件会重新编译？</li>
   <li>为什么调用方 <code>#include "greet.h"</code>，而不是把函数体复制进 <code>main.c</code>？</li>
@@ -327,7 +306,7 @@ apply_fan_policy(t, &amp;fan_on);</pre>
 <!-- ═══════════════════════════════════════════ -->
 <section id="s2.3">
 <div class="section-num">2.3</div>
-<h2>指针、数组、结构体与本课代码怎么读</h2>
+<h2>指针、数组、结构体 · 深入理解：程序怎么被拼出来</h2>
 
 <h3 id="s2.3-ptr">指针与数组</h3>
 <p><strong>指针</strong>是「存着某个对象地址」的变量。函数要<strong>写回</strong>调用方的变量时，就传指针：</p>
@@ -351,7 +330,7 @@ apply_fan_policy(t, &amp;fan_on);</pre>
 </div>
 
 <h3 id="s2.3-struct">结构体：把相关字段捆在一起</h3>
-<p>配置不必散落成一堆全局变量：</p>
+<p><strong>结构体</strong>把一组相关字段捆成一种类型，配置不必散落成一堆全局变量：</p>
 
 <pre><span class="k">typedef struct</span> {
     <span class="k">float</span> t_high;      <span class="c">/* 高于此开风扇 */</span>
@@ -369,9 +348,6 @@ apply_fan_policy(t, &amp;fan_on);</pre>
 
 <p>读结构体字段用 <code>cfg-&gt;t_high</code>（指针）或 <code>cfg.t_high</code>（变量本身）。用错字段名是真实 bug 的常见来源。</p>
 
-<h3 id="s2.3-read">本课代码怎么读</h3>
-<p>拿到一份半成品，建议按这个顺序扫：</p>
-
 <ol class="steps">
   <li><span class="step-num">1</span><div><strong>看头文件</strong> — 有哪些结构体、API、返回值约定。</div></li>
   <li><span class="step-num">2</span><div><strong>看 main</strong> — 输入从哪来、如何循环、打印什么。</div></li>
@@ -379,29 +355,45 @@ apply_fan_policy(t, &amp;fan_on);</pre>
   <li><span class="step-num">4</span><div><strong>对照行为表</strong> — 改一处、跑一次，输出是否逐步贴近验收表。</div></li>
 </ol>
 
-<div class="diagram">读代码清单（闯关时可用）
-  [ ] 阈值比较是 &gt; / &lt; 还是写反了？
-  [ ] 用的是 t_high / t_low，还是误用了 period_ms？
-  [ ] 指针参数有没有判 NULL？
-  [ ] 传感器失败时有没有跳过决策？</div>
+<h3 id="s2.3-deep">深入理解：多个 .c 如何编译链接成一个可执行文件；main 之前发生了什么</h3>
+<p>一个可执行文件不是「直接把几个 .c 粘在一起」，而是分两步：</p>
+
+<div class="diagram">main.c ──► 编译 ──► main.o （目标文件：机器码 + 符号表）
+greet.c ──► 编译 ──► greet.o
+                         │
+                         ▼ 链接（ld / gcc 当链接器）
+              解析未定义符号：main.o 里调用了 greet
+              从 greet.o 找到 greet 的定义
+              再链上 C 运行库（printf 等）
+                         │
+                         ▼
+                    build/app（可执行文件）</div>
+
+<p><strong>编译</strong>把每个 <code>.c</code> 变成 <code>.o</code>：里面有函数的机器码，以及「我提供了什么符号 / 我还缺什么符号」的清单。<strong>链接</strong>把多个 <code>.o</code> 和库拼成一个 ELF：缺的符号必须在别处找到，否则报 <code>undefined reference</code>。</p>
+
+<p>那么你写的 <code>main</code> 是程序入口吗？对你写的代码来说是；对整进程来说，真正先跑的是 C 运行时启动代码（常叫 <code>_start</code>）：</p>
+
+<div class="diagram">操作系统加载 ELF
+    ↓
+_start（运行库提供）
+    ├─ 准备栈、参数 argc/argv、环境变量
+    ├─ 做全局/静态变量的初始化
+    ↓
+调用 main(argc, argv)
+    ↓
+main 返回后，运行库做收尾并退出进程</div>
+
+<p>所以：多个 <code>.c</code> → 各自编译成 <code>.o</code> → 链接成一个可执行文件；你敲 <code>./build/app</code> 时，先跑启动代码，再进 <code>main</code>。闯关工程 <code>fake-thermostat/</code> 就是这样拼出来的——改 <code>thermo.c</code> 再 <code>make</code>，链接器会把新的 <code>thermo.o</code> 和 <code>main.o</code> 重新拼在一起。</p>
 
 <div class="info">
-  <strong>下一步：</strong>打开 <code>lab.html</code>，进入 <code>fake-thermostat/</code> 改代码闯关。软件输入、无真 DHT——专注把逻辑改对。
+  <strong>下一步：</strong>打开 <code>lab.html</code>，进入 <code>chapters/ch02/code/fake-thermostat/</code> 改代码闯关。软件输入、无真 DHT——专注把逻辑改对。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li><code>float *p = NULL; *p = 1.0f;</code> 会发生什么？应如何防护？</li>
-  <li>为何要把 <code>t_high</code>、<code>t_low</code>、<code>period_ms</code> 放进同一个结构体？</li>
-  <li>函数返回错误码后，调用方若仍使用未写入的输出参数，错在哪里？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体；知道按「头文件 → main → 实现 → 行为表」排查半成品。
+  <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体；能口述「编译 → 链接 → _start → main」这条链。
 </div>
 </section>
 
 </div>
-
 </body>
 </html>

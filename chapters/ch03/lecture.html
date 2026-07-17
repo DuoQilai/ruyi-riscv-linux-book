@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第三章 外设篇 · 讲义 — RISC-V Linux 课程</title>
+<title>第三章 GPIO 与执行器 · 讲义 — RISC-V Linux 课程</title>
 <style>
   :root {
     --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -82,15 +82,6 @@
     background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  @media print {
-    body { padding-left: 0; background: #fff; }
-    .toc { display: none; }
-    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
-    .content { max-width: none; padding: 0 36px; }
-    section { padding: 36px 0; page-break-before: always; }
-    section:first-of-type { page-break-before: avoid; }
-    pre, .diagram { font-size: 11pt; }
-  }
   .toc {
     position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
     overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
@@ -102,6 +93,15 @@
   .toc a.sub { padding-left: 16px; font-size: 14px; }
   .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
   body { padding-left: 240px; }
+  @media print {
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
+    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
+    .content { max-width: none; padding: 0 36px; }
+    section { padding: 36px 0; page-break-before: always; }
+    section:first-of-type { page-break-before: avoid; }
+    pre, .diagram { font-size: 11pt; }
+  }
 </style>
 </head>
 <body>
@@ -111,29 +111,27 @@
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
   <a href="#s3.1">3.1 外设与 I/O</a>
-  <a class="sub" href="#s3.1-objectives">学习目标</a>
   <a class="sub" href="#s3.1-model">I/O 模型</a>
-  <a class="sub" href="#s3.1-mmio">MMIO 心智</a>
-  <a class="sub" href="#s3.1-userspace">用户态怎么碰硬件</a>
+  <a class="sub" href="#s3.1-mmio">寄存器与用户态</a>
   <div class="divider"></div>
-  <a href="#s3.2">3.2 GPIO</a>
-  <a class="sub" href="#s3.2-objectives">学习目标</a>
+  <a href="#s3.2">3.2 GPIO：用 gpiod 控灯与继电器</a>
   <a class="sub" href="#s3.2-gpiod">gpiod 接口</a>
-  <a class="sub" href="#s3.2-steps">跟做 blink</a>
+  <a class="sub" href="#s3.2-relay">灯与继电器</a>
+  <a class="sub" href="#s3.2-blink">跟做 blink</a>
   <div class="divider"></div>
-  <a href="#s3.3">3.3 UART、传感与执行</a>
-  <a class="sub" href="#s3.3-objectives">学习目标</a>
-  <a class="sub" href="#s3.3-uart">UART 与日志</a>
-  <a class="sub" href="#s3.3-flow">传感与执行数据流</a>
+  <a href="#s3.3">3.3 温控闭环</a>
+  <a class="sub" href="#s3.3-loop">传感 → 决策 → 执行</a>
+  <a class="sub" href="#s3.3-deep">深入理解</a>
 </nav>
 
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
-  <h1>GPIO / UART / 外设</h1>
-  <p class="subtitle">从物理世界到程序：I/O 心智 → GPIO 实操 → UART 与传感执行概念<br>闭环组装留给本章实验<br>— 3.1 / 3.2 / 3.3 —</p>
+  <h1>GPIO 与执行器</h1>
+  <p class="subtitle">外设与 I/O · gpiod 控灯与继电器<br>温控闭环 · 寄存器位怎么翻<br>— 3.1 / 3.2 / 3.3 —</p>
   <div class="meta">
-    <span>示例：blink · uart-echo</span>
-    <span>API：libgpiod · termios</span>
+    <span>示例：blink</span>
+    <span>实验：temp-fan</span>
+    <span>API：libgpiod</span>
   </div>
 </div>
 
@@ -143,64 +141,52 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置条件：</strong>已完成第一、二章——交叉编译、Makefile、SSH/SCP 可用。本章在<strong>板端用户态</strong>用 C 认识外设；每节约 90–120 分钟。温控闭环见本章 <code>lab.html</code>。
+  <strong>前置：</strong>已完成第一、二章——交叉编译、Makefile、SSH/SCP 可用，C 代码能读能改。本章在荔枝派 4A 的用户态用 C 控外设；温控风扇闭环在 <code>lab.html</code> 完成。
 </div>
 
 <h3>你需要准备什么</h3>
 
 <div class="card-grid card-grid-3">
-  <div class="card"><h4>主机 + 工具链</h4><p>与第二章相同：<code>riscv64-unknown-linux-gnu-gcc</code>；板端 SSH 可用。</p></div>
-  <div class="card"><h4>开发板 + 套件</h4><p>课程 LED、杜邦线；3.3 起认识 DHT22 与风扇模块。风扇由课程提供，不必自购。</p></div>
-  <div class="card"><h4>代码</h4><p><code>chapters/ch03/code/blink/</code>、<code>uart-echo/</code>。温控风扇脚手架在 <code>temp-fan/</code>，留给实验。</p></div>
+  <div class="card"><h4>主机 + 工具链</h4><p><code>riscv64-unknown-linux-gnu-gcc</code>；板端 SSH 可用。</p></div>
+  <div class="card"><h4>荔枝派 4A + 套件</h4><p>课程 LED、杜邦线、DHT22、风扇 + 继电器模块。风扇由课程提供。</p></div>
+  <div class="card"><h4>代码</h4><p>讲义跟做 <code>chapters/ch03/code/blink/</code>；实验脚手架 <code>chapters/ch03/code/temp-fan/</code>。</p></div>
 </div>
 
 <h3>本章你会学到什么</h3>
 
 <div class="card-grid" style="margin-bottom:0;">
-  <div class="card"><h4>3.1 外设与 I/O：从物理世界到程序</h4><p>建立 I/O 模型与 MMIO 心智；明白用户态经内核驱动与 API 访问硬件，而不是直接写寄存器。</p></div>
-  <div class="card"><h4>3.2 GPIO：数字 0/1 怎么进程序</h4><p>用 libgpiod 申请引脚、驱动 LED；跟做 <code>blink</code>，看到电平变成可见现象。</p></div>
-  <div class="card"><h4>3.3 UART、传感与执行：概念与数据流</h4><p>串口日志与 Echo；理清 DHT22 → 温度 → 风扇开/关的数据流。完整闭环在实验完成。</p></div>
-</div>
-
-<div class="info" style="margin-top:28px;">
-  <strong>讲义 vs 实验：</strong>讲义建立原理并练单项能力。本章实验把传感 + 阈值 + 风扇开/关 + 错误日志<strong>串成可演示闭环</strong>，不重复讲义里的整段命令块。
+  <div class="card"><h4>3.1 外设与 I/O</h4><p>物理量如何变成程序里的数；用户态经内核接口访问硬件。</p></div>
+  <div class="card"><h4>3.2 GPIO：用 gpiod 控灯与继电器</h4><p>用 libgpiod 申请引脚、驱动 LED；用同一套接口控继电器信号端。</p></div>
+  <div class="card"><h4>3.3 温控闭环</h4><p>温度 → 阈值 → 风扇开/关；用 devmem 只读核对寄存器位翻转。</p></div>
 </div>
 </section>
 
 <!-- ═══ 3.1 ═══ -->
 <section id="s3.1">
 <div class="section-num">3.1</div>
-<h2>外设与 I/O：从物理世界到程序</h2>
-
-<h3 id="s3.1-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>I/O 模型</h4><p>把「物理量 → 电气信号 → 软件可读数据」说清楚</p></div>
-  <div class="card"><h4>MMIO 心智</h4><p>知道设备常被映射成地址；CPU 用访存方式与之交互</p></div>
-  <div class="card"><h4>用户态边界</h4><p>Linux 下由内核驱动管理寄存器；应用走设备节点 / API</p></div>
-  <div class="card"><h4>为后文铺路</h4><p>理解后，3.2 的 gpiod 与 3.3 的 UART 不再像「魔法函数」</p></div>
-</div>
+<h2>外设与 I/O</h2>
 
 <h3 id="s3.1-model">I/O：物理世界怎么进程序</h3>
-<p>嵌入式程序要和环境打交道：灯亮不亮、键有没有按下、温度多少、风扇转不转。这些都是 <strong>I/O</strong>——输入把外界变成程序里的数，输出把程序里的决定变成外界动作。</p>
+<p><strong>外设</strong>是 CPU 之外、用来感知或驱动外部世界的硬件模块——传感器、LED、风扇驱动等都算。<strong>I/O</strong>（Input/Output）是程序与这些硬件打交道的总称：输入把外界变成程序里的数，输出把程序里的决定变成外界动作。</p>
 
 <div class="diagram">物理世界          电气层              软件层
   温度 / 按键  →  电压 / 电平  →  驱动读寄存器或缓冲
   LED / 风扇   ←  高/低、开关  ←  程序写「开/关」</div>
 
-<p>同一条 GPIO 脚，配置成输出就能驱动 LED；配置成输入就能读按键。UART 则按字节流收发。传感器、执行器再复杂，对用户态程序来说，最终仍是「读到一个值」或「写出一个命令」。</p>
+<p>同一条 GPIO 脚，配置成输出就能驱动 LED；配置成输入就能读按键。传感器、执行器再复杂，对用户态程序来说，最终仍是「读到一个值」或「写出一个命令」。</p>
 
-<h3 id="s3.1-mmio">MMIO 心智模型</h3>
-<p><strong>MMIO</strong>（Memory-Mapped I/O，内存映射 I/O）把设备寄存器映射到 CPU 可见的地址空间。在 RISC-V SoC 上这很常见：驱动里对某个地址的读写，实际落到外设控制逻辑，而不是普通 RAM。</p>
+<h3 id="s3.1-mmio">寄存器、MMIO 与用户态边界</h3>
+<p><strong>寄存器</strong>是芯片内部一组可读写的控制位，用来配置外设、读状态、写输出。<strong>MMIO</strong>（Memory-Mapped I/O，内存映射 I/O）把这些寄存器映射到 CPU 可见的地址空间：驱动对某个地址的读写，实际落到外设控制逻辑，而不是普通 RAM。</p>
 
 <table>
   <tr><th>说法</th><th>含义</th><th>本课怎么用</th></tr>
-  <tr><td>MMIO</td><td>用「访存」方式访问设备寄存器</td><td>建立心智；用户态不直接碰这些地址</td></tr>
-  <tr><td>设备节点</td><td>如 <code>/dev/gpiochip0</code>、<code>/dev/ttyS1</code></td><td>应用通过 open / ioctl / 库 API 访问</td></tr>
+  <tr><td>MMIO</td><td>用「访存」方式访问设备寄存器</td><td>建立心智；用户态程序不直接写这些地址做业务</td></tr>
+  <tr><td>设备节点</td><td>如 <code>/dev/gpiochip0</code></td><td>应用通过 open / 库 API 访问</td></tr>
   <tr><td>内核驱动</td><td>独占硬件、做权限与时序管理</td><td>保证多进程安全、屏蔽芯片细节</td></tr>
 </table>
 
 <div class="diagram">应用 C 代码
-    │  open / gpiod_* / read / write
+    │  gpiod_* / open / ioctl
     ▼
 设备节点（/dev/...）
     │  系统调用
@@ -208,47 +194,25 @@
 内核驱动 ──► MMIO 寄存器 ──► 物理引脚 / 外设</div>
 
 <div class="info">
-  <strong>记住一句：</strong>板上有 MMIO，但本课用户态程序不直接 <code>*(volatile uint32_t*)addr = ...</code>。你调用的是内核暴露的接口；寄存器细节由驱动完成。
+  <strong>记住一句：</strong>板上有 MMIO，但本课业务程序走内核暴露的接口（如 gpiod）。3.3 会用 <code>devmem</code> <strong>只读</strong>核对某一位是否翻转，用来对照理解驱动写了寄存器——不拿它当日常控灯手段。
 </div>
-
-<h3 id="s3.1-userspace">用户态怎么碰硬件</h3>
-<p>在运行 Linux 的开发板上，权限与共享由内核统一管理。本课路径是：</p>
-<ol>
-  <li>确认设备节点存在（如 <code>ls /dev/gpiochip*</code>）。</li>
-  <li>用稳定 API 访问——GPIO 用 <strong>libgpiod</strong>，串口用 <strong>termios</strong> + 读写。</li>
-  <li>引脚编号以<strong>课程接线表</strong>为准，写进宏，方便换板。</li>
-</ol>
 
 <div class="warn">
-  <strong>安全边界：</strong>GPIO 多为 3.3 V 逻辑。不要把引脚直接接到市电或大电流负载；风扇等执行器必须经课程提供的驱动模块，GPIO 只控信号端。
+  <strong>安全边界：</strong>GPIO 多为 3.3 V 逻辑。不要把引脚直接接到市电或大电流负载；风扇等执行器必须经继电器或驱动模块，GPIO 只控信号端。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>若用户态程序直接写 MMIO 地址，和走 <code>/dev/gpiochip*</code> 相比，主要少了哪一层保护？</li>
-  <li>「丝印脚号」和 <code>gpiochip</code> 的 line 编号为什么经常不是同一个数字？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能口述物理世界 → 电气 → 软件的路径 · 理解 MMIO 与用户态 API 的分工 · 知道后文 gpiod / UART 落在哪一层。
+  <strong>本节成果：</strong>能口述物理世界 → 电气 → 软件的路径 · 理解 MMIO 与用户态 API 的分工。
 </div>
 </section>
 
 <!-- ═══ 3.2 ═══ -->
 <section id="s3.2">
 <div class="section-num">3.2</div>
-<h2>GPIO：数字 0/1 怎么进程序</h2>
-
-<h3 id="s3.2-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>输入 / 输出</h4><p>输出驱动 LED；输入可读按键等电平</p></div>
-  <div class="card"><h4>libgpiod</h4><p>打开 chip、申请 line、读写数值</p></div>
-  <div class="card"><h4>跟做 blink</h4><p>交叉编译、部署、看到灯闪</p></div>
-  <div class="card"><h4>可移植配置</h4><p>chip 路径与 line 用宏，按接线表改</p></div>
-</div>
+<h2>GPIO：用 gpiod 控灯与继电器</h2>
 
 <h3 id="s3.2-gpiod">GPIO 与 gpiod</h3>
-<p><strong>GPIO</strong> 是可由软件配置为输入或输出的通用引脚。现代 Linux 推荐通过 <strong>libgpiod</strong> 访问字符设备 <code>/dev/gpiochipN</code>，而不是已弃用的 <code>/sys/class/gpio</code>。交叉编译时链接 <code>-lgpiod</code>；板端需有对应运行库。</p>
+<p><strong>GPIO</strong>（General-Purpose Input/Output）是可由软件配置为输入或输出的通用引脚。<strong>gpiod / libgpiod</strong> 是 Linux 上访问 GPIO 的用户态库，通过字符设备 <code>/dev/gpiochipN</code> 申请引脚、读写电平。交叉编译时链接 <code>-lgpiod</code>；板端需有对应运行库。</p>
 
 <div class="diagram">应用（C）
     │  gpiod_chip_open / gpiod_line_request_output
@@ -257,21 +221,29 @@
 libgpiod  ──►  /dev/gpiochip0
     │
     ▼
-内核 GPIO 控制器 ──► 物理引脚 ──► LED</div>
+内核 GPIO 控制器 ──► 物理引脚 ──► LED / 继电器信号端</div>
 
-<p>示例工程把关键配置收成宏，改接线只改这几行：</p>
 <pre><span class="k">#define</span> GPIO_CHIP_PATH  <span class="c">"/dev/gpiochip0"</span>
 <span class="k">#define</span> LED_LINE        17   <span class="c">/* 以课程接线表为准 */</span></pre>
 
-<p>程序流程与 <code>chapters/ch03/code/blink/main.c</code> 一致：打开 chip → 取 line → 申请为输出 → 循环翻转电平 → 释放。默认闪约 20 次后退出；板端可用 Ctrl+C 提前结束（若你改成无限循环）。</p>
+<h3 id="s3.2-relay">灯与继电器</h3>
+<p>控灯：GPIO 输出高/低 → LED 亮/灭（有的板子低电平点亮，以接线说明为准）。</p>
+<p><strong>继电器</strong>是用小信号开关大电流的模块：GPIO 只驱动继电器的控制端（几毫安级信号），继电器内部的触点再去接通风扇电机的供电回路。这样 GPIO 脚不会直接扛风扇电流。</p>
 
-<h3 id="s3.2-steps">操作步骤：跟做 blink</h3>
+<table>
+  <tr><th>对象</th><th>GPIO 做什么</th><th>注意</th></tr>
+  <tr><td>LED</td><td>输出高/低驱动灯</td><td>脚位以接线表为准，写进宏</td></tr>
+  <tr><td>继电器 → 风扇</td><td>输出高/低给继电器信号端</td><td>风扇电源按套件说明接；共地必接</td></tr>
+</table>
+
+<h3 id="s3.2-blink">跟做 blink</h3>
+<p>程序流程与 <code>chapters/ch03/code/blink/main.c</code> 一致：打开 chip → 取 line → 申请为输出 → 循环翻转电平 → 释放。</p>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>确认板端有 gpiochip</strong><br><code>ssh user@board-ip 'ls /dev/gpiochip*'</code>。可选安装 <code>gpiodetect</code> / <code>gpioinfo</code> 查看 line。</div></li>
+  <li><span class="step-num">1</span><div><strong>确认板端有 gpiochip</strong><br><code>ssh user@board-ip 'ls /dev/gpiochip*'</code>。用 <code>gpiodetect</code> / <code>gpioinfo</code> 查看 line（板端已装工具时）。</div></li>
   <li><span class="step-num">2</span><div><strong>按接线表改宏</strong><br>编辑 <code>chapters/ch03/code/blink/main.c</code> 中的 <code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>。</div></li>
   <li><span class="step-num">3</span><div><strong>交叉编译并部署</strong><br>见下方命令。预期：LED 周期性闪烁，终端打印 <code>[INFO] blinking line …</code>。</div></li>
-  <li><span class="step-num">4</span><div><strong>权限</strong><br>若无法打开 gpiochip，将用户加入 <code>gpio</code> 组，或按课程说明授权。勿养成长期 <code>sudo</code> 跑业务程序的习惯。</div></li>
+  <li><span class="step-num">4</span><div><strong>权限</strong><br>若无法打开 gpiochip，将用户加入 <code>gpio</code> 组，或按课程说明授权。</div></li>
 </ol>
 
 <pre><span class="c"># 主机</span>
@@ -285,98 +257,69 @@ libgpiod  ──►  /dev/gpiochip0
   <strong>Makefile：</strong><code>CROSS_COMPILE</code> 默认为 <code>riscv64-unknown-linux-gnu-</code>，并链接 <code>-lgpiod</code>。产物名 <code>blink</code>；<code>file</code> 应显示 RISC-V ELF。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>为何用 <code>LED_LINE</code> 宏，而不是在代码里写死某块板的丝印脚名？</li>
-  <li><code>gpiod_line_request_output</code> 失败时，你会先查哪三类原因？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能说明 GPIO 输入/输出差异 · 用 blink 点亮并闪烁 LED · 知道引脚以接线表为准。
+  <strong>本节成果：</strong>能说明 GPIO 输入/输出差异 · 用 blink 点亮并闪烁 LED · 能说明继电器如何用小信号开关风扇大电流。
 </div>
 </section>
 
 <!-- ═══ 3.3 ═══ -->
 <section id="s3.3">
 <div class="section-num">3.3</div>
-<h2>UART、传感与执行：概念与数据流</h2>
+<h2>温控闭环 · 深入理解：寄存器位怎么翻</h2>
 
-<h3 id="s3.3-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>UART 与日志</h4><p>配置串口或用 stdout 打带标签的运行信息</p></div>
-  <div class="card"><h4>传感</h4><p>理解 DHT22 读温湿度的角色与偶发失败</p></div>
-  <div class="card"><h4>执行</h4><p>用 GPIO + 驱动模块做风扇开/关</p></div>
-  <div class="card"><h4>数据流</h4><p>温度 → 阈值判断 → 风扇状态；闭环留给实验</p></div>
-</div>
+<h3 id="s3.3-loop">传感 → 决策 → 执行</h3>
+<p><strong>DHT22</strong> 是温湿度探头，用一根数据线接 GPIO，周期上报温度和湿度。用户态位带读可能偶发失败——属预期：打 <code>[ERR]</code> 并进入下一采样周期，让程序继续跑。</p>
+<p><strong>执行侧</strong>本课主线是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成滞回，避免温度在临界附近风扇狂抖。</p>
 
-<h3 id="s3.3-uart">UART 与调试日志</h3>
-<p><strong>UART</strong> 按约定波特率逐字节收发。第一章用 USB 转串口登录系统，那是<strong>控制台</strong>。本节示例打开板端某个 <code>/dev/tty*</code>，或先用 stdin/stdout 练同一套读写逻辑。</p>
-
-<div class="diagram">PC 串口工具 / 另一端
-        │  TX/RX 交叉 + GND
-        ▼
-  /dev/ttyS?（板端）
-        │  open + termios
-        ▼
-  你的 C 程序（Echo / 打日志）
-
-更常见：printf → SSH 终端（stdout）</div>
-
-<p><code>chapters/ch03/code/uart-echo/</code> 默认 <code>USE_STDIO=1</code>：在终端打字即可回显，适合没有第二路串口时练逻辑。改为 <code>0</code> 后打开 <code>UART_DEV</code>（默认 <code>/dev/ttyS1</code>），波特率 <code>B115200</code>。</p>
-
-<pre><span class="p">$</span> cd chapters/ch03/code/uart-echo
-<span class="p">$</span> make clean && make
-<span class="p">$</span> scp uart-echo user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip './uart-echo'</pre>
-
-<p>日志习惯：关键行带前缀，例如 <code>[INFO]</code>、<code>[ERR]</code>。温度、阈值、风扇状态各打清楚，实验里对照现象会轻松很多。</p>
-
-<div class="warn">
-  <strong>接线：</strong>真串口时 TX↔RX 交叉，GND 共地；两端波特率一致；电平多为 3.3 V，勿接 RS-232 高压口。不要占用正在当系统控制台的那一路，除非课程明确要求。
-</div>
-
-<h3 id="s3.3-flow">传感与执行：概念与数据流</h3>
-<p><strong>DHT22</strong> 用单总线报温度、湿度。用户态位带可能偶发失败——属预期。读失败时应打 <code>[ERR]</code> 并进入下一采样周期，让<strong>程序继续跑</strong>。</p>
-<p><strong>执行侧</strong>本课主线是开/关：GPIO 高/低 → 继电器或开关模块 → 风扇电源通断。PWM 用占空比调平均功率，讲义只建立概念；综合项目可再扩展调速。</p>
-
-<table>
-  <tr><th>方式</th><th>做法</th><th>本课用法</th></tr>
-  <tr><td><strong>开/关</strong></td><td>GPIO → 驱动模块接通或断开风扇</td><td>本章实验主线：实现简单、验收清晰</td></tr>
-  <tr><td><strong>PWM</strong></td><td>快速开关，占空比改变平均电压</td><td>讲义建立概念；后续可扩展</td></tr>
-</table>
-
-<div class="diagram">DHT22 ──► 温度 T、湿度 H
+<div class="diagram">DHT22 ──► 温度 T
               │
               ▼
-        阈值判断（概念）
-         T &gt; T_HIGH → 风扇开
-         T &lt; T_LOW  → 风扇关
+        阈值判断
+         T &gt; T_HIGH → 风扇开（继电器吸合）
+         T &lt; T_LOW  → 风扇关（继电器释放）
+         中间区间   → 保持上一状态
               │
               ▼
-        GPIO + 驱动模块 ──► 风扇
+        gpiod 写 FAN_LINE ──► 继电器信号端 ──► 风扇</div>
 
-讲义：理清数据流，可打印一次温度
-实验：周期采样 + 主循环闭环</div>
-
-<pre><span class="c">/* 伪代码：闭环逻辑在 lab 的 temp-fan 里落地 */</span>
+<pre><span class="c">/* 伪代码：完整主循环在 lab 的 temp-fan 里落地 */</span>
 <span class="k">if</span> (读温度失败) { 打 [ERR]; 继续下一轮; }
 <span class="k">else if</span> (T &gt; T_HIGH) 风扇_开();
-<span class="k">else if</span> (T &lt; T_LOW)  风扇_关();
-<span class="c">/* T_LOW ~ T_HIGH 之间保持上一状态，避免临界抖动 */</span></pre>
+<span class="k">else if</span> (T &lt; T_LOW)  风扇_关();</pre>
 
-<div class="info">
-  <strong>边界：</strong>本节把 UART 日志习惯、传感与执行的角色和数据流讲清楚即可。<strong>不要在讲义里拼完整温控主循环</strong>——接线检查、周期采样、阈值开/关与验收见 <code>lab.html</code> 与 <code>code/temp-fan/</code>。阈值目前可写在宏里；第四章再外置配置。
-</div>
+<p>脚手架：<code>chapters/ch03/code/temp-fan/</code>。默认 <code>SIMULATE_SENSOR=1</code> 用假温度演示阈值；接好 DHT22 后改为 <code>0</code>。接线、周期采样与验收见 <code>lab.html</code>。</p>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>SSH 已能看 <code>printf</code> 时，为何还要会配 <code>/dev/tty*</code>？</li>
-  <li>为何本章实验主线选开/关，而不是一上来 PWM 调速？</li>
-  <li>DHT22 偶发读失败时，怎样的日志与循环行为算「可诊断」？</li>
+<h3 id="s3.3-deep">深入理解：gpiod 写灯 → devmem 只读看寄存器位翻转 → 对照内核 gpio 驱动写寄存器</h3>
+<p>你在 C 里调用 <code>gpiod_line_set_value(line, 1)</code> 时，真正改硬件的是内核 gpio 驱动：它往 MMIO 地址写一笔，把对应引脚那一位从 0 翻成 1（或反过来）。用户态看不到那一行 C，但可以用 <strong>devmem</strong> 只读核对手感——devmem 是按地址读/写物理内存的小工具；本课<strong>只读</strong>。</p>
+
+<div class="diagram">① 应用：gpiod_line_set_value(..., 1)
+        │ 系统调用
+        ▼
+② 内核 gpio 驱动
+        │ 写 MMIO（把某一 bit 置 1）
+        ▼
+③ 硬件寄存器 ──► 引脚电平变高 ──► LED 亮
+
+核对（只读）：
+  点灯前：devmem 读该寄存器 → 记下那一位是 0
+  点灯后：devmem 再读同一地址 → 那一位变成 1</div>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>用 gpiod 控灯</strong><br>跑 <code>blink</code> 或单独写一次高/低，确认 LED 有可见变化。</div></li>
+  <li><span class="step-num">2</span><div><strong>查寄存器地址与位</strong><br>按课程讲义/板卡手册给出的 GPIO 数据寄存器地址与 bit 位（当堂下发，勿猜）。</div></li>
+  <li><span class="step-num">3</span><div><strong>devmem 只读核对</strong><br>点灯前读一次，点灯后再读一次，对比同一 bit 是否翻转。命令形态示例：
+<pre><span class="p">$</span> sudo devmem 0xADDRESS 32
+<span class="c"># 输出一个 32 位值；对照手册看你的那一位</span></pre>
+  </div></li>
+  <li><span class="step-num">4</span><div><strong>对照说明</strong><br>口述：用户态 gpiod → 系统调用 → 内核 gpio 驱动里写寄存器的那一行 → 位翻转 → 引脚电平变。devmem 只是让你亲眼看见「那一位翻了」。</div></li>
 </ol>
 
+<div class="warn">
+  <strong>纪律：</strong>本课对 MMIO 只做 <code>devmem</code> <strong>读</strong>。不要用它写寄存器控灯——会与内核驱动抢硬件，行为不可预期。
+</div>
+
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能完成 uart-echo 或等价验证 · 养成带标签的调试打印 · 说清 DHT22 → 阈值 → 风扇的数据流 · 带着概念进入本章实验。
+  <strong>本节成果：</strong>能说清 DHT22 → 阈值 → 继电器 → 风扇的数据流 · 能用 blink + devmem 只读完成「位翻转」对照 · 带着概念进入本章实验组装完整闭环。
 </div>
 </section>
 

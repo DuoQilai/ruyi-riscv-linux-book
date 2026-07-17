@@ -17,8 +17,6 @@
     background: var(--paper); color: var(--text);
     font-family: var(--sans); line-height: 1.7;
   }
-
-  /* ── Cover hero ── */
   .hero {
     min-height: 100vh; display: flex; flex-direction: column;
     justify-content: center; align-items: center; text-align: center;
@@ -31,11 +29,7 @@
   .hero h1 { font-size: 64px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
   .hero .subtitle { font-size: 22px; color: var(--muted); line-height: 1.6; max-width: 640px; }
   .hero .meta { margin-top: 48px; display: flex; gap: 40px; font-size: 17px; color: var(--faint); }
-
-  /* ── Content wrapper ── */
   .content { max-width: 1000px; margin: 0 auto; padding: 0 48px 120px; }
-
-  /* ── Section ── */
   section { padding: 80px 0; border-bottom: 1px solid var(--line-light); }
   section:last-of-type { border-bottom: none; }
   .section-num { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
@@ -46,8 +40,6 @@
   section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
   section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
   section li strong { color: var(--text); }
-
-  /* ── Code ── */
   pre {
     background: var(--code-bg); border: 1px solid var(--line-light);
     padding: 24px 28px; margin: 20px 0 28px; overflow-x: auto;
@@ -56,14 +48,10 @@
   pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
   code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
   pre code { background: none; padding: 0; }
-
-  /* ── Tables ── */
   table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 17px; }
   th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-light); }
   th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
   td { color: var(--muted); }
-
-  /* ── Callouts ── */
   .warn {
     background: var(--warn-bg); border-left: 3px solid var(--warm);
     padding: 22px 26px; margin: 24px 0; font-size: 18px; color: #8c5440; line-height: 1.7;
@@ -73,24 +61,17 @@
     padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
   }
   .warn strong, .info strong { color: inherit; font-size: 17px; }
-
-  /* ── Diagrams ── */
   .diagram {
     font-family: var(--mono); font-size: 15px; color: var(--muted);
     background: var(--code-bg); border: 1px solid var(--line-light);
     padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
     white-space: pre; overflow-x: auto;
   }
-
-  /* ── Card grid ── */
   .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
   .card { border: 1px solid var(--line); padding: 28px 30px; }
   .card h4 { font-size: 20px; font-weight: 700; margin: 0 0 10px; color: var(--text); }
   .card p { font-size: 17px; margin: 0; }
-
-  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-
-  /* ── Step flow ── */
   .steps { list-style: none; padding: 0; }
   .steps li {
     display: flex; gap: 20px; align-items: flex-start;
@@ -102,24 +83,6 @@
     background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-
-  /* ── Opt tag ── */
-  .opt-tag {
-    display: inline-block; background: #e8e3d8; color: var(--faint);
-    font-size: 14px; padding: 3px 12px; margin-left: 12px; vertical-align: middle;
-    letter-spacing: 0.05em;
-  }
-
-  /* ── Corner marks ── */
-  .section-divider {
-    display: flex; align-items: center; gap: 16px; margin: 60px 0 0;
-    color: var(--line); font-size: 14px; letter-spacing: 0.08em;
-  }
-  .section-divider::before, .section-divider::after {
-    content: ''; flex: 1; height: 1px; background: var(--line);
-  }
-
-  /* ── Sidebar TOC ── */
   .toc {
     position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
     overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
@@ -128,12 +91,9 @@
   .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
   .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .toc a:hover { color: var(--accent); }
-  .toc a.active { color: var(--accent); font-weight: 700; }
   .toc a.sub { padding-left: 16px; font-size: 14px; }
   .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
-
   body { padding-left: 240px; }
-
   @media print {
     body { padding-left: 0; background: #fff; }
     .toc { display: none; }
@@ -142,166 +102,131 @@
     section { padding: 36px 0; page-break-before: always; }
     section:first-of-type { page-break-before: avoid; }
     pre, .diagram { font-size: 11pt; }
-    .card-grid { grid-template-columns: 1fr 1fr; }
-    .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
   }
 </style>
 </head>
 <body>
 
-<!-- ═══ TOC Sidebar ═══ -->
 <nav class="toc">
   <h4>目录</h4>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
-  <a href="#s1.1">1.1 RISC-V 平台与 ruyi 环境</a>
-  <a class="sub" href="#s1.1-objectives">学习目标</a>
-  <a class="sub" href="#s1.1-platform">平台分层</a>
-  <a class="sub" href="#s1.1-ruyi">ruyi 与工具链</a>
-  <a class="sub" href="#s1.1-prep">环境准备</a>
-  <a class="sub" href="#s1.1-steps">操作步骤</a>
-  <a class="sub" href="#s1.1-exercises">课堂练习</a>
+  <a href="#s1.1">1.1 荔枝派 4A 与 RuyiSDK</a>
+  <a class="sub" href="#s1.1-board">认识板子</a>
+  <a class="sub" href="#s1.1-ruyi">安装 RuyiSDK</a>
+  <a class="sub" href="#s1.1-verify">验证工具链</a>
   <div class="divider"></div>
   <a href="#s1.2">1.2 烧录、开发通道与一键准备/一键编译</a>
-  <a class="sub" href="#s1.2-objectives">学习目标</a>
-  <a class="sub" href="#s1.2-flash">镜像烧录</a>
+  <a class="sub" href="#s1.2-flash">烧录系统</a>
   <a class="sub" href="#s1.2-channels">三条通道</a>
-  <a class="sub" href="#s1.2-firstboot">首次启动</a>
-  <a class="sub" href="#s1.2-ssh">SSH 与 SCP</a>
   <a class="sub" href="#s1.2-oneclick">一键准备与一键编译</a>
   <div class="divider"></div>
   <a href="#s1.3">1.3 交叉编译、Makefile 与 CoreMark</a>
-  <a class="sub" href="#s1.3-objectives">学习目标</a>
-  <a class="sub" href="#s1.3-cross">交叉编译工作流</a>
-  <a class="sub" href="#s1.3-makefile">Makefile 模板</a>
-  <a class="sub" href="#s1.3-coremark">CoreMark 基准</a>
-  <a class="sub" href="#s1.3-build">构建 CoreMark</a>
+  <a class="sub" href="#s1.3-cross">交叉编译与 Makefile</a>
+  <a class="sub" href="#s1.3-coremark">构建 CoreMark</a>
+  <a class="sub" href="#s1.3-deep">深入理解</a>
 </nav>
 
-<!-- ═══════════════════════════════════════════ -->
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
   <h1>环境与工具链</h1>
-  <p class="subtitle">RISC-V 平台认知 · ruyi 环境 · 烧录与开发通道 · 交叉编译与 CoreMark<br>— 1.1 / 1.2 / 1.3 —</p>
+  <p class="subtitle">荔枝派 4A · RuyiSDK · 烧录与开发通道<br>交叉编译 · Makefile · CoreMark<br>— 1.1 / 1.2 / 1.3 —</p>
   <div class="meta">
-    <span>目标平台：LicheePi 4A / TH1520</span>
-    <span>操作系统：RevyOS</span>
-    <span>工具链：ruyi + GNU Toolchain</span>
+    <span>目标板：荔枝派 4A</span>
+    <span>系统：RevyOS</span>
+    <span>工具：RuyiSDK</span>
   </div>
 </div>
 
 <div class="content">
 
-<!-- ═══ 本章概览 ═══ -->
 <section id="overview">
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>本章三节是递进关系：</strong>1.1 认识平台并装好 ruyi → 1.2 烧录系统并打通开发通道 → 1.3 学会交叉编译并跑出 CoreMark 分数。<strong>请按顺序完成，不要跳节。</strong>每节约需 90–120 分钟（含跟做命令）。
+  <strong>本章三节按顺序完成：</strong>1.1 认识板子并装好 RuyiSDK → 1.2 烧录系统并打通开发通道 → 1.3 交叉编译并编出 CoreMark。每节约 90–120 分钟（含跟做命令）。
 </div>
 
 <h3>你需要准备什么</h3>
 
 <div class="card-grid card-grid-3">
   <div class="card">
-    <h4>主机</h4>
-    <p>Linux x86_64（推荐 Ubuntu 22.04+）。macOS / Windows 备选但课程命令以 Linux 为准。确保可联网并至少有 10GB 可用磁盘空间。</p>
+    <h4>电脑</h4>
+    <p>Linux x86_64（推荐 Ubuntu 22.04+）。可联网，磁盘至少留 10GB。</p>
   </div>
   <div class="card">
-    <h4>开发板</h4>
-    <p>LicheePi 4A（TH1520 SoC）一块。配套：稳定电源适配器、USB 数据线（确认支持数据传输）、3.3V USB-TTL 串口模块、网线或 Wi-Fi。</p>
+    <h4>荔枝派 4A</h4>
+    <p>一块开发板。配套：电源适配器、USB 数据线（能传数据）、3.3V USB-TTL 串口模块、网线或 Wi-Fi。</p>
   </div>
   <div class="card">
     <h4>软件</h4>
-    <p>课程指定 RevyOS 镜像文件 + ruyi 包管理器 + RISC-V GNU Toolchain。本章全部安装步骤在 1.1–1.2 中详述。</p>
+    <p>课程指定的 RevyOS 镜像、RuyiSDK（命令入口是 <code>ruyi</code>）、RISC-V 交叉编译工具链。安装步骤在 1.1–1.2。</p>
   </div>
 </div>
 
 <h3>本章你会学到什么</h3>
 
 <div class="card-grid" style="margin-bottom:0;">
-  <div class="card"><h4>1.1 RISC-V 平台与 ruyi 环境</h4><p>理解 RISC-V 平台的分层结构，安装 ruyi 与交叉编译工具链，验证工具链可用性。</p></div>
-  <div class="card"><h4>1.2 烧录、开发通道与一键准备/一键编译</h4><p>将 RevyOS 烧录到 LicheePi 4A，建立串口 / SSH / SCP 三通道，认识 ruyi 一键准备与一键编译能力。</p></div>
-  <div class="card"><h4>1.3 交叉编译、Makefile 与 CoreMark</h4><p>掌握交叉编译工作流与 Makefile 模板，交叉编译 CoreMark 并理解其作为算力基准的意义。</p></div>
+  <div class="card"><h4>1.1 荔枝派 4A 与 RuyiSDK</h4><p>认清板子接口；安装 ruyi；验证交叉编译器能编出 RISC-V 程序。</p></div>
+  <div class="card"><h4>1.2 烧录、开发通道与一键准备/一键编译</h4><p>把系统写到板子上；打通串口、SSH、SCP；掌握一键准备与一键编译的用法。</p></div>
+  <div class="card"><h4>1.3 交叉编译、Makefile 与 CoreMark</h4><p>用 Makefile 固定交叉编译参数；编出 CoreMark 并理解「电脑编、板子跑」。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>学习建议：</strong>每个操作步骤都有对应的验证方法（「你应该看到…」）。如果某步验证不通过，先重新核对命令与路径，不要跳过。完整终端日志是本章实验（<code>lab.html</code>）的验收材料——从现在开始养成保存日志的习惯。
+  <strong>学习建议：</strong>每步都有「你应该看到…」。验证不过就停下来核对命令与路径。完整终端日志是本章实验（<code>lab.html</code>）的验收材料——从现在开始保存日志。
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
 <section id="s1.1">
 <div class="section-num">1.1</div>
-<h2>RISC-V 平台与 ruyi 环境</h2>
+<h2>荔枝派 4A 与 RuyiSDK</h2>
 
-<h3 id="s1.1-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>平台分层</h4><p>区分 ISA、SoC、开发板、OS、工具链五个层次</p></div>
-  <div class="card"><h4>接口识别</h4><p>识别 LicheePi 4A 电源、串口、网络和启动介质位置</p></div>
-  <div class="card"><h4>环境清单</h4><p>确认硬件、线缆、主机软件状态</p></div>
-  <div class="card"><h4>ruyi 安装</h4><p>安装 ruyi 包管理器，更新软件源，查询工具链</p></div>
-  <div class="card"><h4>工具链验证</h4><p>确认编译器版本、目标三元组，最小编译验证</p></div>
-  <div class="card"><h4>架构认知</h4><p>理解 ruyi 管理工具链、GCC 执行编译的分工</p></div>
-</div>
+<h3 id="s1.1-board">认识荔枝派 4A</h3>
+<p><strong>荔枝派 4A</strong> 是本课用的 RISC-V 开发板：一块带 CPU、内存、存储接口和排针的电路板，用来跑 Linux、接传感器和执行器。</p>
+<p><strong>RISC-V</strong> 是一种开放的 CPU 指令集——规定 CPU 认识哪些机器指令。电脑常见 x86_64 指令集；荔枝派 4A 跑的是 riscv64 指令集。两边指令不同，所以电脑上编好的普通程序不能直接丢到板子上跑。</p>
 
-<h3 id="s1.1-platform">平台分层：从 ISA 到应用</h3>
-<p>RISC-V 是开放指令集架构（ISA），定义了处理器执行指令的接口。芯片和开发板是不同层次的概念。建立分层思维是后续排查「镜像与板卡不匹配」「工具链架构错误」等问题的基础。</p>
-
-<div class="diagram">RISC-V ISA（开放指令集架构规范）
+<div class="diagram">RISC-V 指令集（规定 CPU 认哪些指令）
     ↓
-处理器核 / SoC（TH1520）
+荔枝派 4A（开发板：CPU + 内存 + 接口）
     ↓
-开发板（LicheePi 4A）
+RevyOS（板子上的 Linux 系统）
     ↓
-操作系统（RevyOS）
-    ↓
-开发工具（ruyi、编译器、SSH、串口工具）</div>
+RuyiSDK / ruyi（电脑上装工具链与镜像的入口）</div>
 
-<h3 id="s1.1-ruyi">ruyi：包管理与环境管理入口</h3>
-<p><code>ruyi</code> 是 RuyiSDK 的包管理入口，负责发现和获取 RISC-V 开发所需的软件包、镜像与工具链；真正编译代码的是 GCC。两者关系类似「应用商店」与「应用程序」。ruyi 之下还有一层自动化能力——一键准备（写镜像）与一键编译（便捷构建），1.2 与 1.3 会分别引入。</p>
+<p>动手前先在板子上标出：电源口、串口排针、网口、启动介质（eMMC / SD）。串口模块必须是 <strong>3.3V</strong> 电平——电平是引脚高低电压的约定；5V 可能损坏板子。</p>
 
-<div class="diagram">ruyi 命令
-  ├─ 软件源与包信息        → 查询可用工具链、镜像与设备支持
-  ├─ 工具链获取            → 下载并安装 RISC-V GNU Toolchain
-  ├─ 环境与配置管理        → 管理不同项目的工具链环境
-  └─ 设备支持查询          → 查看受支持的开发板与一键准备方式
-            ↓
-      GCC / binutils / sysroot</div>
-
-<h3 id="s1.1-prep">环境准备清单</h3>
 <table>
   <tr><th>项目</th><th>要求</th><th>检查方式</th></tr>
-  <tr><td>主机环境</td><td>Linux x86_64（推荐），macOS / Windows 备选</td><td><code>uname -a</code></td></tr>
-  <tr><td>目标平台</td><td>LicheePi 4A 与可用启动介质</td><td>核对板卡丝印和包装型号</td></tr>
-  <tr><td>USB 数据线</td><td>确认支持数据传输（非仅充电线）</td><td>替换已知数据线测试</td></tr>
-  <tr><td>USB-TTL 串口</td><td>3.3V 电平模块</td><td>核对模块规格</td></tr>
-  <tr><td>网络</td><td>可访问 RuyiSDK 软件源</td><td>浏览器或连通性测试</td></tr>
-  <tr><td>基础工具</td><td><code>curl</code> / <code>wget</code>、<code>sha256sum</code>、<code>file</code></td><td><code>command -v curl</code></td></tr>
+  <tr><td>电脑系统</td><td>Linux x86_64</td><td><code>uname -a</code></td></tr>
+  <tr><td>开发板</td><td>荔枝派 4A</td><td>核对板卡丝印与包装</td></tr>
+  <tr><td>USB 线</td><td>能传数据（不只充电）</td><td>换已知数据线试</td></tr>
+  <tr><td>串口模块</td><td>3.3V USB-TTL</td><td>看模块规格丝印</td></tr>
+  <tr><td>网络</td><td>能访问 RuyiSDK 软件源</td><td>浏览器或连通性测试</td></tr>
+  <tr><td>基础命令</td><td><code>curl</code> / <code>wget</code>、<code>sha256sum</code>、<code>file</code></td><td><code>command -v curl</code></td></tr>
 </table>
 
 <div class="warn">
   <strong>常见陷阱</strong><br>
-  · 部分 USB-C 线仅供电、无数据通道 → 无法识别设备时先换线<br>
-  · 串口电平必须为 3.3V → 5V 可能损坏板卡<br>
-  · 工具链前缀应选 <code>linux-gnu</code>（Linux 应用）→ <code>unknown-elf</code> 是裸机工具链，不适用
+  · 部分 USB-C 线只供电、不传数据 → 电脑认不出设备时先换线<br>
+  · 串口电平必须 3.3V → 5V 可能损坏板卡<br>
+  · 工具链前缀选 <code>linux-gnu</code>（跑 Linux 的程序）→ <code>unknown-elf</code> 是裸机工具链，本课不用
 </div>
 
-<h3 id="s1.1-steps">操作步骤</h3>
+<h3 id="s1.1-ruyi">安装 RuyiSDK</h3>
+<p><strong>RuyiSDK</strong> 是面向 RISC-V 开发的工具包集合；命令入口叫 <code>ruyi</code>，用来查包、装工具链、查设备支持。真正把 C 代码编成机器码的是里面的 <strong>GCC</strong>（GNU 编译器）。关系可以记成：ruyi 管「装什么」，GCC 管「怎么编」。</p>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>记录主机环境</strong><br><code>uname -a</code> / <code>uname -m</code> — 确认主机架构，记入个人环境清单。</div></li>
-  <li><span class="step-num">2</span><div><strong>安装 ruyi 并确认命令位置</strong><br><code>command -v ruyi</code> 确认 shell 实际调用的文件。<code>ruyi --version</code> 记录版本号。</div></li>
-  <li><span class="step-num">3</span><div><strong>更新软件源并查询工具链</strong><br><code>ruyi update</code> 更新源。<code>ruyi list | grep toolchain</code> 搜索可用工具链。</div></li>
-  <li><span class="step-num">4</span><div><strong>安装并验证编译器</strong><br><code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code> 应返回 <code>riscv64-unknown-linux-gnu</code>，这就是本课统一使用的目标三元组。</div></li>
-  <li><span class="step-num">5</span><div><strong>最小编译验证</strong><br>编译 <code>int main(void) { return 0; }</code> → <code>file</code> 检查产物为 RISC-V ELF。在主机上 <code>./a.out</code> 会因架构不同而无法运行——用 <code>file</code> 验收即可。</div></li>
-  <li><span class="step-num">6</span><div><strong>平台分层图与接口标注</strong><br>按上文分层图绘制个人版本，在 LicheePi 4A 资料上标出电源、串口、网络与启动介质。</div></li>
+  <li><span class="step-num">1</span><div><strong>记录电脑环境</strong><br><code>uname -a</code> / <code>uname -m</code> — 确认是 x86_64，写入个人环境清单。</div></li>
+  <li><span class="step-num">2</span><div><strong>安装 ruyi</strong><br>按课程安装说明装好后：<code>command -v ruyi</code> 应给出路径；<code>ruyi --version</code> 记录版本号。</div></li>
+  <li><span class="step-num">3</span><div><strong>更新软件源并查工具链</strong><br><code>ruyi update</code>，再 <code>ruyi list | grep toolchain</code>，按说明安装 RISC-V GNU Toolchain。</div></li>
+  <li><span class="step-num">4</span><div><strong>确认目标三元组</strong><br><strong>三元组</strong>是编译器目标平台的简写，格式大致是「CPU-厂商-系统」。本课统一用 <code>riscv64-unknown-linux-gnu</code>。</div></li>
 </ol>
 
-<pre><span class="c"># 主机架构</span>
+<pre><span class="c"># 电脑架构</span>
 <span class="p">$</span> uname -a
 
-<span class="c"># ruyi 安装位置与版本</span>
+<span class="c"># ruyi 位置与版本</span>
 <span class="p">$</span> command -v ruyi
 <span class="p">$</span> ruyi --version
 
@@ -311,22 +236,20 @@
 
 <span class="c"># 工具链三元组</span>
 <span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
-riscv64-unknown-linux-gnu
+riscv64-unknown-linux-gnu</pre>
 
-<span class="c"># 最小编译验证</span>
-<span class="p">$</span> printf 'int main(void) { return 0; }\n' &gt; mini.c
+<h3 id="s1.1-verify">最小编译验证</h3>
+<p>写一个空程序，用交叉编译器编一下，再用 <code>file</code> 看产物是不是 RISC-V：</p>
+
+<pre><span class="p">$</span> printf 'int main(void) { return 0; }\n' &gt; mini.c
 <span class="p">$</span> riscv64-unknown-linux-gnu-gcc mini.c -o mini-riscv
 <span class="p">$</span> file mini-riscv
 mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 
-<h3 id="s1.1-exercises">课堂练习</h3>
-<ol>
-  <li>解释「LicheePi 4A 是 RISC-V」表述的准确性问题，用 ISA、SoC、开发板三个术语重新表述。</li>
-  <li>比较 <code>linux-gnu</code> 与 <code>unknown-elf</code> 两个目标三元组，说明各自适用场景（Linux 应用 vs 裸机程序）。</li>
-</ol>
+<p>在电脑上直接 <code>./mini-riscv</code> 会失败——指令集不同。验收看 <code>file</code> 输出里有 RISC-V 字样即可。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>课程平台分层图 · LicheePi 4A 接口标注 · 个人环境清单 · ruyi 安装路径与版本 · 工具链目标三元组与最小编译验证结果。
+  <strong>本节成果：</strong>荔枝派 4A 接口标注 · 个人环境清单 · ruyi 路径与版本 · 三元组 <code>riscv64-unknown-linux-gnu</code> · 最小 RISC-V 可执行文件与 <code>file</code> 日志。
 </div>
 </section>
 
@@ -335,149 +258,116 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <div class="section-num">1.2</div>
 <h2>烧录、开发通道与一键准备/一键编译</h2>
 
-<h3 id="s1.2-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>镜像烧录</h4><p>理解镜像结构与分区写入流程，安全烧录 RevyOS</p></div>
-  <div class="card"><h4>系统检查</h4><p>启动后验证系统版本、架构、网络和时间</p></div>
-  <div class="card"><h4>串口通道</h4><p>建立 USB-TTL 本地调试连接作为备用保障</p></div>
-  <div class="card"><h4>SSH 登录</h4><p>配置 Ed25519 密钥登录替代密码认证</p></div>
-  <div class="card"><h4>SCP 传输</h4><p>双向文件传输 + sha256sum 校验</p></div>
-  <div class="card"><h4>一键能力</h4><p>认识 ruyi 一键准备与一键编译，明确本章实验用手工流程即可过关</p></div>
-</div>
-
-<h3 id="s1.2-flash">镜像烧录：分区级数据写入</h3>
-<p>烧录工具将引导程序、内核、设备树和根文件系统按分区结构写入目标介质。建议的烧录流程：校验镜像 → 识别目标设备 → 严格按发布说明执行 → 确认工具有成功报告。</p>
+<h3 id="s1.2-flash">烧录系统</h3>
+<p><strong>烧录</strong>是把系统镜像按分区写入板子存储介质（eMMC / SD）。镜像里通常有：引导程序（上电后最先跑）、Linux 内核与设备树（描述硬件）、根文件系统（用户空间程序与配置）。本课系统是 <strong>RevyOS</strong>——面向 RISC-V 板子的 Linux 发行版。</p>
 
 <div class="diagram">镜像发布包
-  ├─ 引导程序           ← 上电后第一条指令
-  ├─ Linux 内核与设备树  ← 硬件初始化 + 驱动匹配
-  └─ RevyOS 根文件系统   ← 用户空间全部内容
+  ├─ 引导程序
+  ├─ Linux 内核与设备树
+  └─ RevyOS 根文件系统
           ↓ 烧录（按分区写入）
-   eMMC / SD / 其他启动介质
-          ↓ 上电启动
-      串口日志 → 登录界面</div>
+   eMMC / SD
+          ↓ 上电
+      串口出现启动日志 → 登录界面</div>
 
-<h3 id="s1.2-channels">三条通道，三个角色</h3>
-<div class="card-grid card-grid-3">
-  <div class="card">
-    <h4>串口（UART）</h4>
-    <p><strong>本地调试 · 最后保障线</strong></p>
-    <p style="margin-top:8px;">不依赖网络，直接观察启动日志。接线：GND-GND、TX→RX、RX→TX，3.3V 电平。</p>
-  </div>
-  <div class="card">
-    <h4>SSH</h4>
-    <p><strong>远程主工作通道</strong></p>
-    <p style="margin-top:8px;">加密网络终端，适合日常开发。Ed25519 密钥登录替代密码。首次连接须核对主机指纹。</p>
-  </div>
-  <div class="card">
-    <h4>SCP</h4>
-    <p><strong>文件传输通道</strong></p>
-    <p style="margin-top:8px;">复用 SSH 连接传输文件。上传后板端 sha256sum 校验——两端哈希一致即传输无损坏。</p>
-  </div>
-</div>
+<p>固定流程：校验镜像哈希 → 认准目标设备号 → 严格按发布说明写入 → 工具报告成功后再上电。</p>
 
-<h3 id="s1.2-firstboot">首次启动检查清单</h3>
 <table>
   <tr><th>检查项</th><th>命令</th><th>期望</th></tr>
   <tr><td>系统版本</td><td><code>cat /etc/os-release</code></td><td>RevyOS</td></tr>
   <tr><td>架构</td><td><code>uname -m</code></td><td><code>riscv64</code></td></tr>
   <tr><td>账户</td><td><code>id</code></td><td>记录当前用户</td></tr>
-  <tr><td>主机名</td><td><code>hostnamectl</code></td><td>记录主机名</td></tr>
-  <tr><td>IP 地址</td><td><code>ip -br addr</code></td><td>有效 IP</td></tr>
+  <tr><td>IP 地址</td><td><code>ip -br addr</code></td><td>有有效 IP</td></tr>
   <tr><td>路由</td><td><code>ip route</code></td><td>有默认网关</td></tr>
-  <tr><td>时间</td><td><code>timedatectl</code></td><td>时间正确（错误会导致 TLS 失败）</td></tr>
-  <tr><td>软件源</td><td><code>grep '^deb ' /etc/apt/sources.list ...</code></td><td><code>sudo apt update</code> 成功</td></tr>
+  <tr><td>时间</td><td><code>timedatectl</code></td><td>时间正确（错了会导致 TLS 失败）</td></tr>
+  <tr><td>软件源</td><td><code>sudo apt update</code></td><td>更新成功</td></tr>
 </table>
 
-<h3 id="s1.2-ssh">SSH 密钥登录配置</h3>
-<pre><span class="c"># 板端启用 SSH 服务</span>
-<span class="p">$</span> sudo systemctl enable --now ssh
+<h3 id="s1.2-channels">三条开发通道</h3>
 
-<span class="c"># 主机生成 Ed25519 密钥对</span>
-<span class="p">$</span> ssh-keygen -t ed25519 -C "riscv-course"
-
-<span class="c"># 首次连接——核对主机指纹，确认无误后再输入 yes</span>
-<span class="p">$</span> ssh user@board-ip
-
-<span class="c"># 部署公钥</span>
-<span class="p">$</span> ssh-copy-id user@board-ip
-
-<span class="c"># 免密验证</span>
-<span class="p">$</span> ssh user@board-ip 'hostname; uname -m'</pre>
-
-<div class="warn">
-  <strong>指纹变更警告：</strong>可能是开发板重装系统，也可能连错了设备。先核对 IP 和串口中的主机指纹，再清理 <code>known_hosts</code> 旧记录。
+<div class="card-grid card-grid-3">
+  <div class="card">
+    <h4>串口（UART）</h4>
+    <p><strong>本地调试线</strong></p>
+    <p style="margin-top:8px;"><strong>UART</strong> 是按位串行收发的接口。接线：GND-GND、TX→RX、RX→TX，3.3V。不依赖网络，直接看启动日志。</p>
+  </div>
+  <div class="card">
+    <h4>SSH</h4>
+    <p><strong>远程主通道</strong></p>
+    <p style="margin-top:8px;"><strong>SSH</strong> 是加密的远程终端。日常开发用它登录板子。本课用 Ed25519 密钥登录；首次连接须核对主机指纹。</p>
+  </div>
+  <div class="card">
+    <h4>SCP</h4>
+    <p><strong>文件传输</strong></p>
+    <p style="margin-top:8px;"><strong>SCP</strong> 复用 SSH 连接拷文件。上传后在板端跑 <code>sha256sum</code>，与电脑端哈希一致即传输完整。</p>
+  </div>
 </div>
 
-<h3>SCP 双向传输校验</h3>
-<pre><span class="c"># 上传</span>
+<pre><span class="c"># 板端启用 SSH</span>
+<span class="p">$</span> sudo systemctl enable --now ssh
+
+<span class="c"># 电脑生成密钥</span>
+<span class="p">$</span> ssh-keygen -t ed25519 -C "riscv-course"
+
+<span class="c"># 首次连接——核对指纹后再输入 yes</span>
+<span class="p">$</span> ssh user@board-ip
+
+<span class="c"># 部署公钥并免密验证</span>
+<span class="p">$</span> ssh-copy-id user@board-ip
+<span class="p">$</span> ssh user@board-ip 'hostname; uname -m'</pre>
+
+<pre><span class="c"># SCP 上传并校验</span>
 <span class="p">$</span> printf 'transfer test\n' &gt; test.txt
 <span class="p">$</span> sha256sum test.txt
 <span class="p">$</span> scp test.txt user@board-ip:/tmp/
-<span class="p">$</span> ssh user@board-ip 'sha256sum /tmp/test.txt'   <span class="c"># 哈希应一致</span>
+<span class="p">$</span> ssh user@board-ip 'sha256sum /tmp/test.txt'</pre>
 
-<span class="c"># 下载</span>
-<span class="p">$</span> scp user@board-ip:/etc/os-release ./board-os-release.txt</pre>
+<div class="warn">
+  <strong>指纹变更：</strong>可能是板子重装系统，也可能连错了设备。先核对 IP 与串口里的主机指纹，再清理 <code>known_hosts</code> 旧记录。
+</div>
 
-<h3 id="s1.2-oneclick">ruyi 的一键准备与一键编译</h3>
-<p>手工烧录（上文）和手动 SSH/SCP 之外，ruyi 还提供两类自动化能力，目的是省去重复劳动：</p>
+<h3 id="s1.2-oneclick">一键准备与一键编译</h3>
+<p>手工烧录与手工 SSH/SCP 之外，ruyi 提供两类自动化能力：</p>
 
 <div class="card-grid">
   <div class="card">
     <h4>一键准备</h4>
-    <p>按设备支持列表自动下载镜像、写入板卡存储介质，适合设备明确受支持、且写入目标是空白介质的场景。</p>
+    <p>按设备支持列表自动下载镜像并写入板子存储，适合设备明确受支持、写入目标介质正确的场景。</p>
   </div>
   <div class="card">
     <h4>一键编译</h4>
-    <p>封装交叉编译工具链调用与常见构建参数，适合快速验证工具链可用性或标准化构建流程。</p>
+    <p>封装交叉工具链调用与常见构建参数，适合快速验证工具链或标准化构建。</p>
   </div>
 </div>
 
-<pre><span class="c"># 以本机 ruyi 版本帮助为准，查询是否支持你的设备</span>
+<pre><span class="c"># 以本机 ruyi 帮助为准</span>
 <span class="p">$</span> ruyi device --help
 <span class="p">$</span> ruyi device provision --help</pre>
 
 <div class="info">
-  <strong>本课定位：</strong>一键准备与一键编译是 ruyi 的重要能力，讲义里必须掌握其原理与查询方式。本章实验的通道验收用<strong>手工烧录 + 手工 SCP/SSH</strong> 即可满足硬性要求，两条路径不冲突。
+  <strong>本课定位：</strong>讲义要求掌握一键准备与一键编译的查询与用法。本章实验的通道验收用<strong>手工烧录 + 手工 SCP/SSH</strong> 走通全流程；两条路径都要会。
 </div>
 
-<h3 id="s1.2-exercises">课堂练习</h3>
-<ol>
-  <li>将「开发板无法启动」拆分为镜像、烧录、供电、启动介质和显示通道五类原因，每类写出一个验证方法。</li>
-  <li>以下故障分别应优先使用串口还是 SSH：板端没有 IP？sshd 配置错误？系统启动失败？需要批量上传文件？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>镜像来源与校验记录 · 完整烧录日志 · 系统检查表（OS / 内核 / 用户 / 网络 / 时间 / apt）· 串口接线与参数记录 · SSH 密钥登录验证 · SCP 双向传输哈希校验结果 · 一键准备/一键编译帮助输出记录。
+  <strong>本节成果：</strong>镜像校验与烧录日志 · 系统检查表 · 串口接线记录 · SSH 密钥登录 · SCP 双向哈希一致 · 一键准备/一键编译帮助输出记录。
 </div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
 <section id="s1.3">
 <div class="section-num">1.3</div>
-<h2>交叉编译、Makefile 与 CoreMark</h2>
+<h2>交叉编译、Makefile 与 CoreMark · 深入理解：跨架构怎么跑</h2>
 
-<h3 id="s1.3-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>交叉编译流程</h4><p>理解「主机编译、板端运行」的完整工作流</p></div>
-  <div class="card"><h4>Makefile 模板</h4><p>写出可复用的交叉编译 Makefile，指定编译器与目标三元组</p></div>
-  <div class="card"><h4>CoreMark 认知</h4><p>理解 CoreMark 作为算力基准的用途与分数含义</p></div>
-  <div class="card"><h4>实机构建</h4><p>交叉编译出可在 LicheePi 4A 上运行的 CoreMark 可执行文件</p></div>
-</div>
-
-<h3 id="s1.3-cross">交叉编译工作流</h3>
-<p>交叉编译是「在主机上编译，在目标板上运行」：主机架构（x86_64）与目标架构（riscv64）不同，因此编译器、汇编器、链接器都必须使用面向 RISC-V 的版本——这正是 1.1 中安装的 <code>riscv64-unknown-linux-gnu-gcc</code> 系列工具。</p>
+<h3 id="s1.3-cross">交叉编译与 Makefile</h3>
+<p><strong>交叉编译</strong>：在电脑（x86_64）上编译，生成能在荔枝派 4A（riscv64）上运行的程序。编译器、汇编器、链接器都必须用面向 RISC-V 的版本——即 1.1 装好的 <code>riscv64-unknown-linux-gnu-gcc</code> 系列。</p>
 
 <div class="diagram">源代码（.c）
-    ↓  riscv64-unknown-linux-gnu-gcc（主机上运行）
+    ↓  riscv64-unknown-linux-gnu-gcc（在电脑上跑）
 RISC-V 可执行文件（ELF）
-    ↓  scp 传输
-LicheePi 4A（riscv64，实际运行）</div>
+    ↓  scp
+荔枝派 4A（riscv64，实际运行）</div>
 
-<p>典型流程：编写/获取源码 → 主机交叉编译 → <code>file</code> 确认产物架构 → SCP 传输到板端 → SSH 登录运行 → 记录结果。这条链路与 1.2 建立的三通道完全对应。</p>
-
-<h3 id="s1.3-makefile">Makefile 模板：固定交叉编译参数</h3>
-<p>把交叉编译命令写进 Makefile，避免每次手敲冗长参数，也便于团队统一工具链版本。</p>
+<p><strong>Makefile</strong> 是描述「怎么编这个工程」的脚本；敲 <code>make</code> 就会按规则调用编译器。把交叉前缀写进 Makefile，避免每次手敲冗长命令：</p>
 
 <pre><span class="c"># Makefile — 交叉编译模板</span>
 <span class="k">CROSS_COMPILE</span> := riscv64-unknown-linux-gnu-
@@ -493,44 +383,58 @@ LicheePi 4A（riscv64，实际运行）</div>
 
 <span class="k">.PHONY</span>: clean</pre>
 
-<pre><span class="c"># 使用</span>
-<span class="p">$</span> make
+<pre><span class="p">$</span> make
 <span class="p">$</span> file app
 app: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 
 <div class="warn">
-  <strong>常见陷阱：</strong>忘记切换 <code>CC</code> 会默默用主机 GCC 编译，产物在板端「文件损坏」或直接拒绝执行——先用 <code>file</code> 检查架构，再排查运行问题。
+  <strong>常见陷阱：</strong>忘记设 <code>CC</code> 会默默用电脑自带的 GCC，产物在板端报 Exec format error。先用 <code>file</code> 查架构，再查运行问题。Makefile 命令行必须用 Tab 缩进。
 </div>
 
-<h3 id="s1.3-coremark">CoreMark：嵌入式算力基准</h3>
-<p>CoreMark 是业界常用的嵌入式处理器算力基准测试，输出一个可比较的分数（iterations/sec），用于衡量不同芯片、不同优化选项下的处理器性能。本课用它作为交叉编译 + 上板运行的综合练习：分数本身不是重点，<strong>完整走通「编译 → 传输 → 运行 → 读数」链路</strong>才是。</p>
+<h3 id="s1.3-coremark">构建 CoreMark</h3>
+<p><strong>CoreMark</strong> 是测处理器算力的小基准程序，输出可比较的分数（常见为 iterations/sec）。本课用它走通「编译 → 传输 → 运行 → 读数」；分数高低不是重点，链路走通才是。</p>
 
-<h3 id="s1.3-build">构建 CoreMark for riscv64</h3>
-<p>CoreMark 源码不在本课程仓库中，需自行获取（官方仓库或课程指定镜像地址）。以下是典型构建路径：</p>
-
-<pre><span class="c"># 获取源码（以官方仓库为例，实际地址以课程指引为准）</span>
+<pre><span class="c"># 获取源码（地址以课程指引为准）</span>
 <span class="p">$</span> git clone https://github.com/eembc/coremark.git
 <span class="p">$</span> cd coremark
 
-<span class="c"># 交叉编译：通过 make 变量指定工具链前缀</span>
+<span class="c"># 交叉编译</span>
 <span class="p">$</span> make PORT_DIR=linux64 \
        CC=riscv64-unknown-linux-gnu-gcc \
        LD=riscv64-unknown-linux-gnu-gcc \
        CFLAGS="-O2 -DPERFORMANCE_RUN=1" \
        XCFLAGS="-DFLAGS_STR=\"cross-riscv64\""
 
-<span class="c"># 确认产物架构</span>
 <span class="p">$</span> file coremark.exe
 coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 
-<p>产物文件名因 CoreMark 版本而异（常见为 <code>coremark.exe</code> 或 <code>coremark_PORT_DIR.exe</code>），以实际生成结果为准。构建成功后，用 1.2 学到的 SCP 把可执行文件传到板端，SSH 登录运行并记录分数——完整验收步骤见 <code>lab.html</code>。</p>
+<p>产物文件名因版本而异（常见 <code>coremark.exe</code>）。编好后用 SCP 传到板端、SSH 运行并记录分数——完整验收见 <code>lab.html</code>。</p>
 
-<div class="info">
-  <strong>本节成果：</strong>交叉编译 Makefile 模板 · 一次可运行的 <code>app</code> 交叉编译产物 · CoreMark 交叉编译成功的 RISC-V 可执行文件（本节末尾产出，上板运行与分数记录见本章实验）。
+<h3 id="s1.3-deep">深入理解：电脑与板子指令集不同，交叉工具链如何让程序在板子上跑</h3>
+<p>电脑 CPU 只认 x86_64 机器码；荔枝派 4A 只认 RISC-V 机器码。同一份 C 源码，用不同的编译器会编出不同的二进制：</p>
+
+<div class="diagram">同一份 main.c
+    │
+    ├─ 电脑 gcc                → x86_64 ELF   → 只能在电脑跑
+    │
+    └─ riscv64-...-gcc         → RISC-V ELF   → 只能在荔枝派 4A 跑
+         （交叉工具链）
+              │
+              ├─ 编译器：C → 汇编（RISC-V 指令）
+              ├─ 汇编器：汇编 → 目标文件 .o
+              └─ 链接器：.o + 库 → 可执行文件
+                    │
+                    └─ 链接时用的是 RISC-V 版 C 库（sysroot）
+                       调用约定、系统调用号都按板子来</div>
+
+<p>交叉工具链本质是「一套跑在电脑上、但专门生成 RISC-V 代码的编译器全家桶」。你在电脑上敲 <code>riscv64-unknown-linux-gnu-gcc</code>，它产出的机器指令板子认得；再用 SCP 把文件拷过去，板子上的 Linux 加载这个 ELF，程序就跑起来了。</p>
+<p>反过来：板端编好的程序拷回电脑也跑不了——同样是指令集不同。验收永远先看 <code>file</code> 里的架构字段，再谈「能不能执行」。</p>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>交叉编译 Makefile 模板 · 一次可运行的 <code>app</code> · CoreMark 的 RISC-V 可执行文件 · 能口述「电脑编、板子跑」的原因。上板跑分见本章实验。
 </div>
 </section>
 
 </div>
-
 </body>
 </html>

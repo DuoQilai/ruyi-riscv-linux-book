@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第四章 串口对话与温控 · 本章实验 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  section { margin-bottom: 48px; }
+  section h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+  section h3 { font-size: 22px; font-weight: 700; margin: 24px 0 12px; }
+  section p, section li { font-size: 18px; color: var(--muted); margin-bottom: 8px; }
+  section ol, section ul { padding-left: 24px; margin-bottom: 16px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7;
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { color: var(--accent); font-weight: 700; }
+  td { color: var(--muted); }
+  .warn { background: var(--warn-bg); border-left: 3px solid var(--warm); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440; }
+  .info { background: var(--info-bg); border-left: 3px solid var(--accent); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted); }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line); padding: 40px 20px;
+  }
+  .toc h4 { font-size: 14px; color: var(--accent); margin-bottom: 16px; }
+  .toc a { display: block; padding: 5px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  body { padding-left: 220px; }
+  @media print { body { padding-left: 0; } .toc { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>本章实验</h4>
+  <a href="#intro">说明</a>
+  <a href="#steps">步骤</a>
+  <a href="#accept">验收</a>
+</nav>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第四章</div>
+  <h1>本章实验 · 串口命令温控</h1>
+  <p class="meta">自动控温同时敲 status / set · 接讲义 4.1–4.3</p>
+</header>
+
+<section id="intro">
+<h2>说明</h2>
+<p>讲义已讲清串口字节进出、命令表与 <code>select</code>。本实验在脚手架上补全两块，并在荔枝派 4A 上演示：</p>
+<ul>
+  <li>自动按阈值开/关风扇（与第三章闭环一致）；</li>
+  <li>同时在终端敲 <code>status</code> / <code>set</code>，立刻得到回复，且新阈值马上参与控温。</li>
+</ul>
+<div class="info">
+  <strong>前置：</strong>讲义 4.1–4.3；第三章温控接线可用；RuyiSDK 交叉工具链与 SSH 可用。<strong>工程：</strong><code>chapters/ch04/code/serial-thermo/</code>。
+</div>
+<div class="warn">
+  <strong>你要改的代码：</strong><code>main.c</code> 里标了 TODO 的命令处理函数、命令表注册，以及 <code>select</code> 主循环。不要删掉已有的采样与风扇逻辑。
+</div>
+</section>
+
+<section id="steps">
+<h2>步骤</h2>
+
+<h3>1. 核对宏与接线</h3>
+<p>打开 <code>main.c</code>，确认 <code>GPIO_CHIP_PATH</code>、<code>DHT_LINE</code>、<code>FAN_LINE</code> 与课程接线表一致。默认可先用 <code>SIMULATE_SENSOR=1</code> 演示阈值与命令，再改 <code>0</code> 接真 DHT22。</p>
+
+<h3>2. 补全命令表</h3>
+<ol>
+  <li>实现 <code>cmd_status</code>：打印温度、湿度、风扇状态、<code>t_high</code>/<code>t_low</code>。</li>
+  <li>实现 <code>cmd_set</code>：解析 <code>set high &lt;数&gt;</code> / <code>set low &lt;数&gt;</code>；校验 <code>low &lt; high</code> 后写入状态结构。</li>
+  <li>把两条命令挂进 <code>g_cmds[]</code>，用查找函数按名字分发。</li>
+</ol>
+
+<h3>3. 补全 select 主循环</h3>
+<ol>
+  <li>用 <code>select</code> 同时等命令输入描述符与采样超时。</li>
+  <li>超时 → 调用已有采样与阈值控温。</li>
+  <li>可读 → 读一行、查表执行；未知命令打印简短错误，进程不退出。</li>
+</ol>
+
+<h3>4. 编译部署</h3>
+<pre><span class="p">$</span> cd chapters/ch04/code/serial-thermo
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file serial-thermo
+<span class="p">$</span> scp serial-thermo user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip './serial-thermo'</pre>
+
+<h3>5. 联调顺序（固定）</h3>
+<ol>
+  <li>启动后观察周期日志（温度 / 风扇）。</li>
+  <li>敲 <code>status</code>，核对打印字段完整。</li>
+  <li>敲 <code>set high 30</code>，再 <code>status</code> 确认上限已变。</li>
+  <li>在模拟升温或捂热过程中，确认风扇仍按阈值动作，且打字回复不卡住采样。</li>
+</ol>
+</section>
+
+<section id="accept">
+<h2>验收</h2>
+<table>
+  <tr><th>项</th><th>通过条件</th></tr>
+  <tr><td>编译</td><td>主机交叉编译成功，<code>file</code> 为 RISC-V</td></tr>
+  <tr><td>自动控温</td><td>超温开 / 降温关可演示（模拟或真传感器）</td></tr>
+  <tr><td>status</td><td>敲 <code>status</code> 立即打印温度、风扇、阈值</td></tr>
+  <tr><td>set</td><td><code>set high</code> / <code>set low</code> 生效；非法高低关系被拒绝并提示</td></tr>
+  <tr><td>同时工作</td><td>控温进行中敲命令仍立刻回复，采样不长期停更</td></tr>
+</table>
+
+<div class="info">
+  <strong>完成标志：</strong>上表五项均可演示；能口头说明 <code>select</code> 超时与可读分别触发哪条路径。
+</div>
+</section>
+
+</article>
+</body>
+</html>

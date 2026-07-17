@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第四章 串口对话与温控 · 讲义 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+  }
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 80px 40px; border-bottom: 1px solid var(--line);
+  }
+  .hero .chapter-tag {
+    font-size: 42px; letter-spacing: 0.12em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero h1 { font-size: 64px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+  .hero .subtitle { font-size: 22px; color: var(--muted); line-height: 1.6; max-width: 700px; }
+  .hero .meta { margin-top: 48px; display: flex; gap: 40px; font-size: 17px; color: var(--faint); }
+  .content { max-width: 1000px; margin: 0 auto; padding: 0 48px 120px; }
+  section { padding: 80px 0; border-bottom: 1px solid var(--line-light); }
+  section:last-of-type { border-bottom: none; }
+  .section-num { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+  section h2 { font-size: 40px; font-weight: 700; margin-bottom: 40px; line-height: 1.3; }
+  section h3 { font-size: 24px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  section h4 { font-size: 19px; font-weight: 700; margin: 28px 0 10px; color: var(--muted); }
+  section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
+  section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 24px 28px; margin: 20px 0 28px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.75; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 17px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-light); }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: #8c5440; line-height: 1.7;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
+  }
+  .diagram {
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
+    white-space: pre; overflow-x: auto;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 1px solid var(--line); padding: 28px 30px; }
+  .card h4 { font-size: 20px; font-weight: 700; margin: 0 0 10px; color: var(--text); }
+  .card p { font-size: 17px; margin: 0; }
+  .steps { list-style: none; padding: 0; }
+  .steps li {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--line-light);
+    font-size: 18px; color: var(--muted); line-height: 1.6;
+  }
+  .steps li .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  @media print {
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
+    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
+    .content { max-width: none; padding: 0 36px; }
+    section { padding: 36px 0; page-break-before: always; }
+    section:first-of-type { page-break-before: avoid; }
+    pre, .diagram { font-size: 11pt; }
+  }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+  body { padding-left: 240px; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>目录</h4>
+  <a href="#overview">本章概览</a>
+  <div class="divider"></div>
+  <a href="#s4.1">4.1 串口是聊天线</a>
+  <a class="sub" href="#s4.1-objectives">学习目标</a>
+  <a class="sub" href="#s4.1-bytes">字节怎么进出</a>
+  <a class="sub" href="#s4.1-stdio">用终端练读写</a>
+  <div class="divider"></div>
+  <a href="#s4.2">4.2 读 DHT22 + 串口命令</a>
+  <a class="sub" href="#s4.2-objectives">学习目标</a>
+  <a class="sub" href="#s4.2-cmd">命令表</a>
+  <a class="sub" href="#s4.2-status">status / set</a>
+  <div class="divider"></div>
+  <a href="#s4.3">4.3 两边同时工作</a>
+  <a class="sub" href="#s4.3-objectives">学习目标</a>
+  <a class="sub" href="#s4.3-select">深入理解：select</a>
+  <a class="sub" href="#s4.3-steps">跟做骨架</a>
+</nav>
+
+<div class="hero">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第四章</div>
+  <h1>串口对话与温控</h1>
+  <p class="subtitle">串口字节进出 → 命令表 status / set → select 同时等采样与打字<br>— 4.1 / 4.2 / 4.3 —</p>
+  <div class="meta">
+    <span>板卡：荔枝派 4A</span>
+    <span>工具链：RuyiSDK</span>
+    <span>脚手架：serial-thermo</span>
+  </div>
+</div>
+
+<div class="content">
+
+<section id="overview">
+<h2>开始之前</h2>
+
+<div class="warn" style="margin-bottom:32px;">
+  <strong>前置条件：</strong>已完成第三章——GPIO 闪灯、温控风扇闭环可用。本章在本地温控上加<strong>串口对话</strong>：一边自动控温，一边用打字查状态、改阈值。每节约 90–120 分钟。
+</div>
+
+<h3>你需要准备什么</h3>
+
+<div class="card-grid card-grid-3">
+  <div class="card"><h4>主机 + RuyiSDK</h4><p>交叉前缀 <code>riscv64-unknown-linux-gnu-</code>（经 RuyiSDK / ruyi 安装）。SSH 可登录荔枝派 4A。</p></div>
+  <div class="card"><h4>板卡 + 套件</h4><p>荔枝派 4A；DHT22（温湿度探头，接 GPIO）；风扇驱动模块。接线与第三章实验一致。</p></div>
+  <div class="card"><h4>代码</h4><p><code>chapters/ch04/code/serial-thermo/</code>：已接采样与风扇骨架；你补命令表与 <code>select</code> 主循环。</p></div>
+</div>
+
+<h3>本章你会学到什么</h3>
+
+<div class="card-grid" style="margin-bottom:0;">
+  <div class="card"><h4>4.1 串口是聊天线：字节怎么进出</h4><p><strong>串口</strong>＝USB 线连上后的打字黑窗口。理解字节从键盘进程序、再打回终端。</p></div>
+  <div class="card"><h4>4.2 读 DHT22 + 串口命令 status / set</h4><p>用<strong>命令表</strong>（字符串对应处理函数）实现查状态、改阈值。</p></div>
+  <div class="card"><h4>4.3 两边同时工作 · 深入理解：select</h4><p>用 <code>select</code> 同时等「该采样了」和「你打了一行字」，两边都及时响应。</p></div>
+</div>
+
+<div class="info" style="margin-top:28px;">
+  <strong>讲义 vs 实验：</strong>讲义建立串口读写、命令表与 <code>select</code> 心智。本章实验在脚手架上补全命令与主循环，验收「自动控温 + 敲 status/set 同时工作」。
+</div>
+</section>
+
+<!-- ═══ 4.1 ═══ -->
+<section id="s4.1">
+<div class="section-num">4.1</div>
+<h2>串口是聊天线：字节怎么进出</h2>
+
+<h3 id="s4.1-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>串口直觉</h4><p>把串口当成「打字进、回显出」的双向管道</p></div>
+  <div class="card"><h4>字节流</h4><p>一行命令就是一串字符，以换行结束</p></div>
+  <div class="card"><h4>读写 API</h4><p>用 <code>read</code> / <code>write</code>（或 stdin/stdout）收发</p></div>
+  <div class="card"><h4>与控制台关系</h4><p>SSH 终端也是同一套「读一行、写一行」逻辑</p></div>
+</div>
+
+<h3 id="s4.1-bytes">字节怎么进出</h3>
+<p><strong>串口</strong>（UART 接到电脑后，常表现为 USB 转串口工具里的黑窗口）按约定波特率逐字节收发。对本课程序来说：你敲的字变成字节流进入进程；程序 <code>write</code> 回去的字出现在同一窗口。</p>
+
+<div class="diagram">你（键盘）
+    │  敲 "status\n"
+    ▼
+终端 / 串口工具  ──►  stdin 或 /dev/tty*
+    │  read()
+    ▼
+你的 C 程序（解析命令、做事）
+    │  write() / printf
+    ▼
+同一窗口显示回复</div>
+
+<p>第一章用串口<strong>登录系统</strong>；本章用同一通道做<strong>应用层对话</strong>：程序读你的命令行，再打印状态。日常验收也可用 SSH 终端的 stdin/stdout——读写逻辑相同，脚手架默认 <code>USE_STDIO=1</code> 即走这条路。</p>
+
+<table>
+  <tr><th>说法</th><th>含义</th><th>本课怎么用</th></tr>
+  <tr><td>字节流</td><td>没有「消息边界」；你自己约定「一行一条命令」</td><td>读到 <code>\n</code> 再解析</td></tr>
+  <tr><td>阻塞读</td><td><code>read</code> 一直等到有数据才返回</td><td>4.1 可接受；4.3 要用 <code>select</code> 同时盯多路</td></tr>
+  <tr><td>回显</td><td>把收到的字再打回去，确认通路</td><td>第三章 uart-echo 已练过</td></tr>
+</table>
+
+<h3 id="s4.1-stdio">用终端练读写</h3>
+<p>先不接第二路硬件串口：在 SSH 里跑程序，从 stdin 读一行、往 stdout 写回复。确认「打字 → 程序 → 回复」闭环后，再把同一套解析接到真实 <code>/dev/tty*</code>（宏 <code>USE_STDIO=0</code>）。</p>
+
+<pre><span class="c">/* 读一行（简化示意） */</span>
+<span class="k">char</span> line[128];
+<span class="k">if</span> (fgets(line, <span class="k">sizeof</span>(line), stdin)) {
+    <span class="c">/* 去掉末尾 \n，再查命令表 */</span>
+}</pre>
+
+<div class="warn">
+  <strong>注意：</strong>真串口时 TX↔RX 交叉、GND 共地、波特率一致、电平 3.3 V。不要占用正在当系统控制台的那一路，除非课程接线表明确指定。
+</div>
+
+<h3>课堂练习</h3>
+<ol>
+  <li>用一句话说明：串口窗口里看到的文字，和程序里的 <code>char</code> 数组是什么关系？</li>
+  <li>若只 <code>read</code> 一个字节就解析命令，会出现什么问题？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能口述字节进出路径 · 能用 stdin 读一行命令 · 知道命令以换行分界。
+</div>
+</section>
+
+<!-- ═══ 4.2 ═══ -->
+<section id="s4.2">
+<div class="section-num">4.2</div>
+<h2>读 DHT22 + 串口命令：status / set</h2>
+
+<h3 id="s4.2-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>复用传感执行</h4><p>继续用 DHT22 与风扇阈值逻辑</p></div>
+  <div class="card"><h4>命令表</h4><p>字符串 → 处理函数，便于扩展</p></div>
+  <div class="card"><h4>status</h4><p>打印温度、湿度、风扇、阈值</p></div>
+  <div class="card"><h4>set</h4><p>现场改 T_HIGH / T_LOW</p></div>
+</div>
+
+<h3 id="s4.2-cmd">命令表：字符串对应函数</h3>
+<p><strong>命令表</strong>是一张「名字 → 处理函数」的表。收到一行字后，先拆出命令名，再查表调用。比一长串 <code>if/else</code> 更清晰，后面加 <code>help</code> 也只多一行。</p>
+
+<div class="diagram">输入行："set high 30\n"
+        │
+        ▼
+   拆词：cmd="set", arg1="high", arg2="30"
+        │
+        ▼
+   查命令表 → 调用 cmd_set(...)
+        │
+        ▼
+   改 t_high = 30.0，打印确认</div>
+
+<pre><span class="k">struct</span> cmd_entry {
+    <span class="k">const char</span> *name;
+    <span class="k">int</span> (*handler)(<span class="k">char</span> *args);  <span class="c">/* 返回 0 成功 */</span>
+};
+
+<span class="c">/* TODO（实验）：补全 status / set，挂到表里 */</span>
+<span class="k">static const struct</span> cmd_entry g_cmds[] = {
+    { "status", cmd_status },
+    { "set",    cmd_set    },
+    { NULL,     NULL       },
+};</pre>
+
+<h3 id="s4.2-status">status 与 set</h3>
+<table>
+  <tr><th>命令</th><th>例子</th><th>行为</th></tr>
+  <tr><td><code>status</code></td><td><code>status</code></td><td>打印最近温度、湿度、风扇 ON/OFF、<code>t_high</code>/<code>t_low</code></td></tr>
+  <tr><td><code>set high &lt;数&gt;</code></td><td><code>set high 30</code></td><td>改上限阈值并确认打印</td></tr>
+  <tr><td><code>set low &lt;数&gt;</code></td><td><code>set low 25</code></td><td>改下限阈值；须保持 <code>low &lt; high</code></td></tr>
+</table>
+
+<p><strong>DHT22</strong> 仍按第三章方式周期采样；读失败打 <code>[ERR]</code>，程序继续跑。串口命令只改<strong>内存里的阈值变量</strong>，立刻影响下一轮决策，不必重启进程。</p>
+
+<div class="info">
+  <strong>脚手架位置：</strong><code>chapters/ch04/code/serial-thermo/main.c</code> 已提供采样、风扇与状态结构；<code>cmd_status</code> / <code>cmd_set</code> 与命令表查找标为 TODO，在实验中补全。
+</div>
+
+<h3>课堂练习</h3>
+<ol>
+  <li><code>set high 20</code> 且当前 <code>t_low=26</code> 时，程序应拒绝还是静默接受？写出你的校验规则。</li>
+  <li>为何用命令表而不是在 <code>main</code> 里写死两个 <code>strcmp</code>？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>说清命令表结构 · 能设计 status/set 语义 · 知道阈值改在内存、下一采样周期生效。
+</div>
+</section>
+
+<!-- ═══ 4.3 ═══ -->
+<section id="s4.3">
+<div class="section-num">4.3</div>
+<h2>两边同时工作 · 深入理解：select 同时等采样与串口输入</h2>
+
+<h3 id="s4.3-objectives">学习目标</h3>
+<div class="card-grid">
+  <div class="card"><h4>问题</h4><p>阻塞读串口时，采样会卡住；死循环 sleep 时，打字要等</p></div>
+  <div class="card"><h4>select</h4><p>一次等待「多个文件描述符 / 超时」</p></div>
+  <div class="card"><h4>双源主循环</h4><p>超时到 → 采样控温；stdin 可读 → 解析命令</p></div>
+  <div class="card"><h4>深入理解</h4><p>亲手看见两边都能及时响应</p></div>
+</div>
+
+<h3>为何不能「先读串口再采样」串成一条线</h3>
+<p>若主循环写成「<code>fgets</code> 等你打字 → 再读 DHT → 再 sleep」：不打字时风扇永远不更新。若写成「采样 → sleep 2 秒 → 再看一眼串口」：你敲完字最多等 2 秒才有回复，体感像卡死。两边都要及时，就需要<strong>同时等</strong>。</p>
+
+<div class="diagram">错误 1：阻塞读命令
+  等打字 ……（风扇停更）
+
+错误 2：固定 sleep 再轮询
+  采样 → sleep 2s → 才读串口（打字延迟大）
+
+正确：select
+  同时等：stdin 可读  OR  采样超时到
+       │                    │
+       ▼                    ▼
+   解析命令              读 DHT + 阈值控风扇</div>
+
+<h3 id="s4.3-select">深入理解：select 在等什么</h3>
+<p><strong>select</strong> 是系统调用：告诉内核「这些文件描述符里，有谁可读/可写了，或者超时了，再叫醒我」。本课用法：</p>
+<ol>
+  <li>把串口（或 stdin）放进读集合；</li>
+  <li>超时设成「距下次采样还剩多少毫秒」；</li>
+  <li>返回后：若描述符可读 → 读一行、查命令表；若因超时返回 → 执行一次采样与控温。</li>
+</ol>
+
+<pre><span class="c">/* 伪代码：主循环骨架（实验里补全） */</span>
+<span class="k">for</span> (;;) {
+    fd_set rfds;
+    FD_ZERO(&amp;rfds);
+    FD_SET(cmd_fd, &amp;rfds);
+    <span class="k">struct</span> timeval tv = { .tv_sec = 0, .tv_usec = remain_us };
+
+    <span class="k">int</span> n = select(cmd_fd + 1, &amp;rfds, NULL, NULL, &amp;tv);
+    <span class="k">if</span> (n &lt; 0) { perror("select"); <span class="k">break</span>; }
+
+    <span class="k">if</span> (n == 0) {
+        <span class="c">/* 超时：该采样了 */</span>
+        sample_and_control();
+        remain_us = SAMPLE_MS * 1000;
+    } <span class="k">else if</span> (FD_ISSET(cmd_fd, &amp;rfds)) {
+        <span class="c">/* 有输入：读一行并处理命令 */</span>
+        handle_command_line();
+        <span class="c">/* 注意：处理命令后仍要扣减剩余等待时间 */</span>
+    }
+}</pre>
+
+<div class="info">
+  <strong>深入理解要看到的现象：</strong>程序在跑自动控温的同时，你敲 <code>status</code> 立刻有回复；敲 <code>set high 30</code> 后下一轮采样按新阈值动作。这证明两路事件都被 <code>select</code> 叫醒，而不是互相堵死。
+</div>
+
+<h3 id="s4.3-steps">跟做：骨架编译部署</h3>
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>打开脚手架</strong><br><code>chapters/ch04/code/serial-thermo/</code>，确认 GPIO 宏与第三章接线表一致。</div></li>
+  <li><span class="step-num">2</span><div><strong>交叉编译</strong><br><code>make</code> → <code>file serial-thermo</code> 应为 RISC-V ELF（RuyiSDK 工具链）。</div></li>
+  <li><span class="step-num">3</span><div><strong>上板</strong><br><code>scp</code> 后 SSH 运行；默认 STDIO 模式，在终端敲命令（实验中补全后生效）。</div></li>
+</ol>
+
+<pre><span class="p">$</span> cd chapters/ch04/code/serial-thermo
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file serial-thermo
+<span class="p">$</span> scp serial-thermo user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip './serial-thermo'</pre>
+
+<h3>课堂练习</h3>
+<ol>
+  <li><code>select</code> 返回 0 与返回正数，分别对应本课哪两种事件？</li>
+  <li>处理完一条命令后，若不更新「剩余超时」，可能出现什么采样节奏问题？</li>
+</ol>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能说明阻塞读写为何不够 · 能口述 select 双源循环 · 带着 TODO 清单进入本章实验。
+</div>
+</section>
+
+</div>
+</body>
+</html>

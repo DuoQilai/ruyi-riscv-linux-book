@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第五章 网络与 MQTT · 本章实验 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  section { margin-bottom: 48px; }
+  section h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+  section h3 { font-size: 22px; font-weight: 700; margin: 24px 0 12px; }
+  section p, section li { font-size: 18px; color: var(--muted); margin-bottom: 8px; }
+  section ol, section ul { padding-left: 24px; margin-bottom: 16px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7;
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { color: var(--accent); font-weight: 700; }
+  td { color: var(--muted); }
+  .warn { background: var(--warn-bg); border-left: 3px solid var(--warm); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440; }
+  .info { background: var(--info-bg); border-left: 3px solid var(--accent); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted); }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line); padding: 40px 20px;
+  }
+  .toc h4 { font-size: 14px; color: var(--accent); margin-bottom: 16px; }
+  .toc a { display: block; padding: 5px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  body { padding-left: 220px; }
+  @media print { body { padding-left: 0; } .toc { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>本章实验</h4>
+  <a href="#intro">说明</a>
+  <a href="#steps">步骤</a>
+  <a href="#accept">验收</a>
+</nav>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第五章</div>
+  <h1>本章实验 · MQTT 远程控灯</h1>
+  <p class="meta">下行控外接 LED · 上行状态 · 抓一条 publish · 接讲义 5.1–5.3</p>
+</header>
+
+<section id="intro">
+<h2>说明</h2>
+<p>讲义已覆盖 Broker / 主题 / 发布订阅、下行控灯与 tcpdump 分层。本实验在荔枝派 4A 上完成可演示闭环：</p>
+<ul>
+  <li>订阅 <code>course/led/cmd</code>，用 <code>on</code>/<code>off</code> 驱动外接 LED；</li>
+  <li>状态变化后 publish 到 <code>course/led/status</code>；</li>
+  <li>按讲义步骤抓一条 publish，能指出 MQTT 在 TCP/IP 之上。</li>
+</ul>
+<div class="info">
+  <strong>前置：</strong>讲义 5.1–5.3；Mosquitto（或课堂 Broker）可达；外接 LED 接线与 <code>LED_LINE</code> 一致。<strong>工程：</strong><code>chapters/ch05/code/mqtt-led/</code>。
+</div>
+<div class="warn">
+  <strong>你要补全：</strong>订阅回调里的点灯逻辑；<code>publish_status</code> 桩。连接与循环骨架已给出。
+</div>
+</section>
+
+<section id="steps">
+<h2>步骤</h2>
+
+<h3>1. 配置宏</h3>
+<p>编辑 <code>main.c</code>：<code>BROKER_HOST</code>（主机局域网 IP，勿用板端 127.0.0.1）、<code>TOPIC_CMD</code> / <code>TOPIC_STATUS</code>、<code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>。</p>
+
+<h3>2. 补全下行与上行</h3>
+<ol>
+  <li>在消息回调中：payload 为 <code>on</code>/<code>off</code> 时设置 GPIO，并调用 <code>publish_status</code>。</li>
+  <li>实现 <code>publish_status</code>：向状态主题发布当前灯态字符串。</li>
+  <li>未知 payload 打印 <code>[ERR]</code>，不改电平。</li>
+</ol>
+
+<h3>3. 编译部署</h3>
+<pre><span class="p">$</span> cd chapters/ch05/code/mqtt-led
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file mqtt-led
+<span class="p">$</span> scp mqtt-led user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip './mqtt-led'</pre>
+
+<h3>4. 联调（固定顺序）</h3>
+<ol>
+  <li>主机：<code>mosquitto_sub -h BROKER_IP -t 'course/led/status' -v</code></li>
+  <li>主机：<code>mosquitto_pub -h BROKER_IP -t 'course/led/cmd' -m on</code> → 灯亮，订阅端见到状态。</li>
+  <li>再发 <code>off</code> → 灯灭，状态同步。</li>
+  <li>手机 MQTT App 连同一 Broker，重复 on/off 一次。</li>
+  <li>按讲义 5.3 用 <code>tcpdump -i any -nn -A port 1883 -c 20</code> 抓一次发布，保存输出。</li>
+</ol>
+</section>
+
+<section id="accept">
+<h2>验收</h2>
+<table>
+  <tr><th>项</th><th>通过条件</th></tr>
+  <tr><td>编译</td><td>交叉编译成功，<code>file</code> 为 RISC-V</td></tr>
+  <tr><td>下行</td><td>pub <code>on</code>/<code>off</code> 外接 LED 亮灭正确</td></tr>
+  <tr><td>上行</td><td>状态主题订阅端能看到对应 payload</td></tr>
+  <tr><td>手机联调</td><td>App 发命令灯有动作（与主机 pub 等价）</td></tr>
+  <tr><td>抓包</td><td>保存含 1883 的 tcpdump 片段，能口述 MQTT→TCP→IP</td></tr>
+</table>
+
+<div class="info">
+  <strong>完成标志：</strong>上表五项齐全；可进入第六章把 MQTT 放进独立通信线程。
+</div>
+</section>
+
+</article>
+</body>
+</html>

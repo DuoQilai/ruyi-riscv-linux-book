@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第六章 线程与协同 · 本章实验 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  section { margin-bottom: 48px; }
+  section h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+  section h3 { font-size: 22px; font-weight: 700; margin: 24px 0 12px; }
+  section p, section li { font-size: 18px; color: var(--muted); margin-bottom: 8px; }
+  section ol, section ul { padding-left: 24px; margin-bottom: 16px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7;
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { color: var(--accent); font-weight: 700; }
+  td { color: var(--muted); }
+  .warn { background: var(--warn-bg); border-left: 3px solid var(--warm); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440; }
+  .info { background: var(--info-bg); border-left: 3px solid var(--accent); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted); }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line); padding: 40px 20px;
+  }
+  .toc h4 { font-size: 14px; color: var(--accent); margin-bottom: 16px; }
+  .toc a { display: block; padding: 5px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  body { padding-left: 220px; }
+  @media print { body { padding-left: 0; } .toc { display: none; } }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>本章实验</h4>
+  <a href="#intro">说明</a>
+  <a href="#steps">步骤</a>
+  <a href="#accept">验收</a>
+</nav>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第六章</div>
+  <h1>本章实验 · 三线程协同</h1>
+  <p class="meta">采集∥控制∥通信 · 竞态必现并修好 · TSan · 干净停</p>
+</header>
+
+<section id="intro">
+<h2>说明</h2>
+<p>讲义已说明单线程互堵、三线职责与锁 / TSan。本实验交付两份工程：</p>
+<ul>
+  <li><code>chapters/ch06/code/tri-thread/</code> — 荔枝派 4A 产品骨架（采样、阈值风扇、MQTT）；</li>
+  <li><code>chapters/ch06/code/race-demo/</code> — 电脑上跑的强制竞态小程序 + TSan。</li>
+</ul>
+<div class="info">
+  <strong>前置：</strong>讲义 6.1–6.3；第五章程控灯与 Broker；温控接线可用。工具链：板上用 RuyiSDK 交叉编译；TSan 用主机 <code>gcc</code>。
+</div>
+</section>
+
+<section id="steps">
+<h2>步骤</h2>
+
+<h3>A. 电脑：race-demo + TSan（先做，固定顺序）</h3>
+<ol>
+  <li><code>cd chapters/ch06/code/race-demo && make && ./race-demo</code> — 记录最终计数（应明显小于期望，证明丢更新）。</li>
+  <li>执行 <code>sudo sysctl vm.mmap_rnd_bits=28</code>（让本机 ThreadSanitizer 稳定跑通）。</li>
+  <li><code>make tsan && ./race-demo</code> — 保存 ThreadSanitizer 报告全文，标出它指出的两行源码。</li>
+</ol>
+
+<h3>B. 板上：tri-thread</h3>
+<ol>
+  <li>按接线表改 GPIO / Broker 宏；补全三线程循环（采集写温度、控制判阈值、通信跑 MQTT）。</li>
+  <li><strong>先不加锁</strong>（脚手架提供 <code>USE_LOCK 0</code>）：跑一段时间，记录错乱现象（温度跳变、风扇状态与温度矛盾等）。</li>
+  <li>改为 <code>USE_LOCK 1</code>，所有共享读写进锁；确认行为正确。</li>
+  <li>交叉编译部署：
+<pre><span class="p">$</span> cd chapters/ch06/code/tri-thread
+<span class="p">$</span> make clean && make
+<span class="p">$</span> scp tri-thread user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip './tri-thread'</pre>
+  </li>
+  <li>验证：风扇按阈值动作；MQTT 下行/上行仍工作。</li>
+  <li>Ctrl+C：风扇关断后进程退出（干净停）。</li>
+</ol>
+</section>
+
+<section id="accept">
+<h2>验收</h2>
+<table>
+  <tr><th>项</th><th>通过条件</th></tr>
+  <tr><td>三线同时跑</td><td>采集、控制、通信日志/行为均可观察</td></tr>
+  <tr><td>风扇阈值</td><td>超温开 / 降温关</td></tr>
+  <tr><td>MQTT 通信线</td><td>下行或上行至少一项可演示（与第五章主题约定一致）</td></tr>
+  <tr><td>无锁错乱</td><td>板上有记录的错乱现象</td></tr>
+  <tr><td>加锁正确</td><td>恢复锁后行为正常</td></tr>
+  <tr><td>TSan</td><td>主机 race-demo 报告已保存，能指出抢变量的两行</td></tr>
+  <tr><td>干净停</td><td>Ctrl+C 后风扇关，进程退出</td></tr>
+</table>
+
+<div class="info">
+  <strong>完成标志：</strong>上表全部勾选。本骨架供综合项目复用。
+</div>
+</section>
+
+</article>
+</body>
+</html>
