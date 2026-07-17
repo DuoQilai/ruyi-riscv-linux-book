@@ -252,18 +252,17 @@
 <main>
   <h1>Course Outline</h1>
   <p class="note">
-    <strong>Linux 嵌入式实践课</strong> · RISC-V 开发板 + RuyiSDK + <strong>C 语言</strong> ·
-    一条线顺序学完六章 · <strong>每章讲义固定三节（x.1–x.3）+ 一个完整本章实验</strong> ·
-    最后做一个综合项目（老师提供模型权重，学生在板上做推理部署）
+    <strong>Linux 嵌入式实践课</strong> · 荔枝派 4A + RuyiSDK + <strong>C 语言</strong> ·
+    顺序学完六章 · 每章讲义三节（x.1–x.3）+ 一个本章实验 ·
+    最后做综合项目（老师提供模型权重，学生在板上接推理）
   </p>
 
   <div class="flow-wrap">
-    <!-- Row 1: Chapters -->
     <div class="ch-exp-grid">
       <div class="ch-exp-ch mod-env">
         <span class="flow-ch">ch01</span>
         <p class="flow-title">环境与工具链</p>
-        <p class="flow-desc">RuyiSDK、烧录、一键准备/编译、交叉编译、CoreMark</p>
+        <p class="flow-desc">RuyiSDK、烧录、交叉编译、CoreMark</p>
       </div>
       <div class="ch-exp-ch mod-env">
         <span class="flow-ch">ch02</span>
@@ -272,26 +271,25 @@
       </div>
       <div class="ch-exp-ch mod-board">
         <span class="flow-ch">ch03</span>
-        <p class="flow-title">GPIO / UART / 外设</p>
-        <p class="flow-desc">I/O 原理、GPIO、UART 与传感执行概念</p>
+        <p class="flow-title">GPIO 与执行器</p>
+        <p class="flow-desc">控灯、控风扇；温度传感器 DHT22</p>
       </div>
       <div class="ch-exp-ch mod-linux">
         <span class="flow-ch">ch04</span>
-        <p class="flow-title">文件 / 配置 / 日志</p>
-        <p class="flow-desc">落盘、可配置、能排错</p>
+        <p class="flow-title">串口对话与温控</p>
+        <p class="flow-desc">读 DHT22；打字改阈值、查状态</p>
       </div>
       <div class="ch-exp-ch mod-linux">
         <span class="flow-ch">ch05</span>
         <p class="flow-title">网络与 MQTT</p>
-        <p class="flow-desc">Broker、订阅发布、远程控设备</p>
+        <p class="flow-desc">手机远程控灯；板子上报状态</p>
       </div>
       <div class="ch-exp-ch mod-linux">
         <span class="flow-ch">ch06</span>
         <p class="flow-title">线程与协同</p>
-        <p class="flow-desc">采集 / 通信 / 控制分开跑</p>
+        <p class="flow-desc">采集 / 控制 / 通信三条线一起跑</p>
       </div>
     </div>
-    <!-- Row 2: 本章实验 -->
     <div class="ch-exp-grid">
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
@@ -306,29 +304,28 @@
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">温控风扇</p>
-        <p class="flow-desc">接线拼装闭环：捂热转 / 降温停</p>
+        <p class="flow-desc">捂热风扇转、降温停；看寄存器翻位</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
-        <p class="flow-title">配置化温控</p>
-        <p class="flow-desc">C：读配置 + 写历史/告警</p>
+        <p class="flow-title">串口命令温控</p>
+        <p class="flow-desc">自动控温同时，打字查状态、改阈值</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">MQTT 远程控灯</p>
-        <p class="flow-desc">手机 → 网络 → 外接 LED；板子 publish 状态小例子</p>
+        <p class="flow-desc">手机控外接 LED；板子上报状态；抓包看一层层包装</p>
       </div>
       <div class="ch-exp-lab mod-lab">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">三线程协同</p>
-        <p class="flow-desc">采集∥控制∥通信(MQTT) + Ctrl+C 干净停</p>
+        <p class="flow-desc">三条线同时跑；先看抢数据翻车，再加锁修好</p>
       </div>
     </div>
-    <!-- Capstone: full width -->
     <div class="ch-exp-cap mod-cap">
       <span class="flow-ch">综合项目</span>
       <p class="flow-title">智能环境终端</p>
-      <p class="flow-desc">复用 ch06 三线程骨架 + 规则/模型仲裁风扇；老师供权重 + 学生手写 tiny 前向</p>
+      <p class="flow-desc">复用 ch06 三线程骨架；规则与模型一起判风扇；老师供权重 + 学生手写 tiny 前向</p>
     </div>
   </div>
   <div class="legend">
@@ -352,12 +349,12 @@
       <tbody>
         <tr>
           <td><strong>讲义</strong>（lecture）</td>
-          <td>零件是什么、接口为啥这样用；每章固定三节；带跟做能跑通的小例子</td>
+          <td>零件是什么、接口怎么用；每章固定三节；带跟做小例子；每章有一节<strong>深入理解</strong></td>
           <td>跟做后单项能力会了，例如灯会闪、会打一行串口日志</td>
         </tr>
         <tr>
           <td><strong>本章实验</strong>（lab）</td>
-          <td>用本章零件打一场有胜负条件的完整仗；C 脚手架 + 规格 + 硬验收</td>
+          <td>用本章零件做一场完整实验；给 C 脚手架 + 规格 + 验收标准</td>
           <td>能演示约定现象，例如捂热风扇转，并填简单验收记录</td>
         </tr>
       </tbody>
@@ -365,11 +362,12 @@
   </div>
   <ul class="relations">
     <li>每章讲义固定三节（x.1 / x.2 / x.3）；本章实验是一整块。</li>
-    <li>实验正文只写差量步骤和验收标准；安装 / <code>make</code> / <code>scp</code> 等基础操作以讲义为准。</li>
+    <li>实验正文写差量步骤和验收标准；安装 / <code>make</code> / <code>scp</code> 等基础操作以讲义为准。</li>
+    <li>全文直接写「做什么、看到什么」；每章深入理解写死一种做法，步骤人人相同。</li>
   </ul>
 
   <h2>术语表</h2>
-  <p class="note">读章节总览前可先扫一眼；各章细则表内仍有章节专属名词。</p>
+  <p class="note">读章节总览前可先扫一眼；各章细则表内仍有章节专属名词。每个词用一句话说清「它是什么」。</p>
   <div class="table-wrap">
     <table class="bom">
       <thead>
@@ -380,95 +378,119 @@
       </thead>
       <tbody>
         <tr>
-          <td>MQTT</td>
-          <td>物联网用的<strong>发消息协议</strong>。手机、开发板不直连，都连一个「中转站」，按<strong>主题名</strong>收发文字命令（如 <code>home/led</code> 发 <code>on</code>）。</td>
-        </tr>
-        <tr>
-          <td>Broker</td>
-          <td>MQTT 的<strong>中转站</strong>。谁发布、谁订阅，都由它转发。常用 <strong>Mosquitto</strong> 在 PC 或板子上跑。</td>
-        </tr>
-        <tr>
-          <td>发布 / 订阅</td>
-          <td><strong>发布</strong> = 往某主题发一条消息；<strong>订阅</strong> = 盯着某主题，有新消息就收到。ch05：手机下行控外接 LED；板子 publish 状态/告警小例子。</td>
-        </tr>
-        <tr>
-          <td>主题（topic）</td>
-          <td>消息频道名，像微信群名。例：<code>home/led</code> 控灯，<code>sensor/alert</code> 报告警。</td>
+          <td>荔枝派 4A</td>
+          <td>本课用的 RISC-V 开发板；板上已跑 Linux，用 SSH 或串口连上去写程序。</td>
         </tr>
         <tr>
           <td>RuyiSDK / ruyi</td>
-          <td>本课统一的 RISC-V 开发工具入口：装交叉编译器、系统镜像、查板卡支持列表。</td>
+          <td>如意课题组的 RISC-V 开发工具入口：装交叉编译器、系统镜像、查板卡支持列表。</td>
         </tr>
         <tr>
           <td>交叉编译</td>
-          <td>在 PC 上编译出<strong>只能在开发板上跑</strong>的程序，再 SSH/SCP 拷过去运行。</td>
+          <td>在电脑上编出<strong>只能在开发板上跑</strong>的程序，再拷到板子上运行。</td>
         </tr>
         <tr>
-          <td>一键准备 / 一键编译</td>
-          <td>RuyiSDK 提供的自动化能力（如按支持列表写镜像、便捷构建）。讲义必讲；实验可用手工烧录完成通道验收。</td>
+          <td>SSH / SCP / 串口</td>
+          <td><strong>SSH</strong>：远程登录板子敲命令。<strong>SCP</strong>：把文件拷到板子。<strong>串口</strong>：USB 线连上后的「聊天线」黑窗口，打字板子能看见。</td>
         </tr>
         <tr>
           <td>CoreMark</td>
-          <td>嵌入式常用算力基准。ch01 章末讲义介绍；本章实验硬性验收：交叉编译后上板跑出分数并记录。</td>
+          <td>测板子算力的小程序。ch01 实验：交叉编译后上板跑出分数并记录。</td>
         </tr>
         <tr>
           <td>GPIO</td>
-          <td>板子引脚，软件可读（按键、传感器）或可写（LED、继电器）。本课从接口用法理解。</td>
+          <td>板子上一排针脚。程序可读（按键、传感器）或可写（灯、继电器）。</td>
+        </tr>
+        <tr>
+          <td>gpiod</td>
+          <td>Linux 上读写 GPIO 针脚的常用接口库；本课用它控灯和风扇继电器。</td>
         </tr>
         <tr>
           <td>MMIO</td>
-          <td>内存映射 I/O：用访存方式访问设备。RISC-V 常用此方式；Linux 下由内核驱动管理，用户态经 API / 设备节点访问。</td>
+          <td>把硬件寄存器当成内存地址来读写。Linux 里内核管着这些地址；用户程序经 <code>gpiod</code> 等接口间接访问。ch03 用只读方式亲眼看某一位翻了。</td>
+        </tr>
+        <tr>
+          <td>devmem</td>
+          <td>在板子上按地址读/写内存的小工具。ch03 <strong>只读</strong>：点灯前后各读一次，看到那一位从 0 变成 1。</td>
         </tr>
         <tr>
           <td>DHT22</td>
-          <td>温湿度传感器。板子定时读它，得到当前温度、湿度数字。</td>
+          <td>温湿度探头物料。插在 GPIO 针脚上；程序问它「现在几度」，得到温度数字。</td>
         </tr>
         <tr>
-          <td>PWM</td>
-          <td>用快速开关调节平均电压，用来控风扇转速或 LED 亮度；温控实验主线是开/关。</td>
+          <td>继电器</td>
+          <td>用小信号开关大电流的模块。板子 GPIO 驱动继电器，继电器再给风扇通断电。</td>
         </tr>
         <tr>
           <td>阈值控制</td>
-          <td>温度高于某值开风扇，低于某值关。可写在程序里，ch04 起改到配置文件。</td>
+          <td>温度高于某值开风扇，低于某值关。数字可写在程序里，ch04 起可用串口命令现场改。</td>
         </tr>
         <tr>
-          <td>pthread / 多线程</td>
-          <td>一个程序里同时跑多段逻辑。ch06 三线程：采集∥控制∥通信(MQTT)。</td>
+          <td>串口命令</td>
+          <td>你在串口黑窗口打字，板子认命令。例：<code>status</code> 查状态，<code>set 30</code> 把阈值改成 30。</td>
+        </tr>
+        <tr>
+          <td>select</td>
+          <td>让程序同时盯几个输入源。ch04：一边等 DHT22 采样周期到，一边等你打字进串口。</td>
+        </tr>
+        <tr>
+          <td>MQTT</td>
+          <td>物联网发消息的方式。手机和板子都连一个「中转站」，按<strong>主题名</strong>收发文字（如主题 <code>home/led</code> 发 <code>on</code>）。</td>
+        </tr>
+        <tr>
+          <td>Broker</td>
+          <td>MQTT 的中转站。常用软件叫 <strong>Mosquitto</strong>，可跑在电脑或板子上。</td>
+        </tr>
+        <tr>
+          <td>发布 / 订阅</td>
+          <td><strong>发布</strong>＝往某主题发一条消息；<strong>订阅</strong>＝盯着某主题收消息。ch05：手机下行控外接 LED；板子上行发布状态。</td>
+        </tr>
+        <tr>
+          <td>tcpdump</td>
+          <td>抓网络包的工具。ch05：抓一条 MQTT 发布，亲眼看到消息被一层层包起来发出去。</td>
         </tr>
         <tr>
           <td>外接 LED</td>
-          <td>远程控制用灯。ch05 MQTT 下行：手机发命令，板子驱此外接 LED。</td>
+          <td>远程控制用的灯。ch05：手机发 MQTT 命令，板子驱动这盏灯。</td>
         </tr>
         <tr>
           <td>告警红灯</td>
-          <td>本地异常指示（可板载或外接）。综合项目：模型/规则判异常时点亮。</td>
+          <td>本地异常指示灯（板载或外接）。综合项目里规则或模型判异常时点亮。</td>
         </tr>
         <tr>
-          <td>规则/模型仲裁（或逻辑）</td>
-          <td>超阈值 OR 模型判异常 → 风扇转；日志记触发源。综合项目智力核心。</td>
+          <td>pthread / 多线程</td>
+          <td>一个程序里同时跑多段逻辑。ch06 三线程：采集 ∥ 控制 ∥ 通信(MQTT)。</td>
         </tr>
         <tr>
-          <td>时序异常检测</td>
-          <td>看最近一串读数（滑动窗口）像不像正常环境；不像则判异常。综合项目的推理部分就是这个。</td>
+          <td>竞态</td>
+          <td>两条线同时改同一份数据，结果写乱。ch06：先故意不加锁看数据错乱，再加锁修好。</td>
+        </tr>
+        <tr>
+          <td>ThreadSanitizer</td>
+          <td>编译时加上 <code>-fsanitize=thread</code> 的检查器。ch06：在<strong>电脑上</strong>编同一个抢数据小程序，终端打印哪两行在抢同一变量。</td>
+        </tr>
+        <tr>
+          <td>规则/模型仲裁</td>
+          <td>超阈值 <strong>或</strong> 模型判异常 → 风扇转；日志记下是谁触发的。综合项目的智力核心。</td>
         </tr>
         <tr>
           <td>老师供权重 / 学生做推理</td>
-          <td>老师用 PC/GPU 训好 tiny 模型，课里发 <code>weights.h</code>；学生在板上写手写 tiny 前向并接到风扇/灯/MQTT，专注板端部署与推理集成。</td>
+          <td>老师用电脑训好 tiny 模型，课里发 <code>weights.h</code>；学生在板上写手写 tiny 前向，接到风扇/灯/MQTT。</td>
         </tr>
         <tr>
           <td><code>weights.h</code></td>
-          <td>模型权重的 C 头文件，编译进板子程序，推理时直接读这些数字做乘法相加。</td>
+          <td>模型权重写成 C 头文件，编译进板子程序；推理时读这些数字做乘法相加。</td>
         </tr>
         <tr>
           <td>智能环境终端</td>
-          <td>本课<strong>综合大项目</strong>：复用 ch06 三线程；外接灯远程控、告警红灯本地异常；风扇用规则/模型或逻辑；老师供权重 + 手写 tiny 前向。</td>
+          <td>本课综合大项目：复用 ch06 三线程；外接灯远程控、告警红灯本地异常；风扇用规则与模型一起判；老师供权重 + 手写 tiny 前向。</td>
         </tr>
       </tbody>
     </table>
   </div>
 
   <h2>物料清单</h2>
-  <p class="note">自备电脑 SSH 连板即可。MQTT Broker 可跑在 PC 或开发板（ch05 起）。</p>
+  <p class="note">自备电脑，用 SSH 连荔枝派 4A。MQTT 中转站（Mosquitto）从 ch05 起跑在电脑或板子上。</p>
   <div class="table-wrap">
     <table class="bom">
       <thead>
@@ -481,22 +503,22 @@
       <tbody>
         <tr>
           <td>个人电脑</td>
-          <td>联网；安装 <code>ruyi</code>、交叉工具链；SSH/串口连板；ch05 起安装 Mosquitto 或 MQTT 客户端</td>
+          <td>联网；装 <code>ruyi</code> 与交叉工具链；SSH/串口连板；ch05 起装 Mosquitto 或 MQTT 客户端；ch06 用电脑跑 ThreadSanitizer 小程序</td>
           <td class="provider">学生自备</td>
         </tr>
         <tr>
           <td>智能手机</td>
-          <td>安装 MQTT 调试 App（如 MQTTX），ch05 远程控灯</td>
+          <td>装 MQTT 调试 App（如 MQTTX），ch05 远程控灯</td>
           <td class="provider">学生自备</td>
         </tr>
         <tr>
-          <td>RISC-V Linux 开发板</td>
-          <td>可运行 Linux，兼容 RuyiSDK（如 LicheePi 4A，见 <a href="https://github.com/ruyisdk/support-matrix">support-matrix</a>）；含电源、网线；板载 LED 与按键</td>
+          <td>荔枝派 4A</td>
+          <td>本课开发板；兼容 RuyiSDK（见 <a href="https://github.com/ruyisdk/support-matrix">support-matrix</a>）；含电源、网线；板载 LED 与按键</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
           <td>USB 转串口线</td>
-          <td>串口登录与调试</td>
+          <td>串口登录与打字对话（ch04）</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
@@ -505,13 +527,13 @@
           <td class="provider">课程提供</td>
         </tr>
         <tr>
-          <td>温湿度传感器（DHT22 等）</td>
-          <td>ch03 本章实验、综合项目环境采集</td>
+          <td>DHT22 温湿度探头</td>
+          <td>插 GPIO 读温度；ch03 起用，综合项目继续用</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
-          <td>风扇 + 驱动（继电器模块）</td>
-          <td>ch03 阈值控风；综合项目联动</td>
+          <td>风扇 + 继电器模块</td>
+          <td>GPIO 控继电器，继电器给风扇通断电；ch03 阈值控风；综合项目联动</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
@@ -520,7 +542,7 @@
           <td class="provider">课程提供</td>
         </tr>
         <tr>
-          <td>告警红灯（可板载或外接）</td>
+          <td>告警红灯（板载或外接）</td>
           <td>综合项目本地异常指示</td>
           <td class="provider">课程提供</td>
         </tr>
@@ -529,7 +551,7 @@
   </div>
 
   <h2>章节总览</h2>
-  <p class="note">每章一行；「验收现象」与「本章实验」对照查看。综合项目单独列出。</p>
+  <p class="note">每章一行；「验收现象」与「本章实验」对照看。综合项目单独列出。</p>
   <div class="table-wrap">
     <table class="summary">
       <thead>
@@ -548,7 +570,7 @@
           <td>ch01</td>
           <td>基础篇</td>
           <td>环境与工具链</td>
-          <td>装好 RuyiSDK；会烧录与通道；理解一键准备/一键编译；会交叉编译；CoreMark 上板</td>
+          <td>装好 RuyiSDK；会烧录与通道；会交叉编译；CoreMark 上板跑分</td>
           <td>上板通道验收</td>
           <td>CoreMark 交叉编译 → SCP 上板 → 跑出分数并记录；SSH / <code>uname</code> / 工具链三元组自证</td>
           <td>开发通道与可部署工程</td>
@@ -557,7 +579,7 @@
           <td>ch02</td>
           <td>基础篇</td>
           <td>够用的 C 语言基础</td>
-          <td>读懂、改得动本课后续 C 代码（结构体、指针、控制流够用）</td>
+          <td>读懂、改得动本课后续 C 代码</td>
           <td>改代码闯关</td>
           <td>假温控半成品按关卡改完；阈值与错误分支行为符合关卡表</td>
           <td>具备继续做外设实验的语言基础</td>
@@ -565,44 +587,44 @@
         <tr class="mod-board">
           <td>ch03</td>
           <td>外设篇</td>
-          <td>GPIO、UART 与常用外设</td>
-          <td>I/O 原理（含 MMIO 心智）+ GPIO/UART 接口；传感执行概念清楚；闭环在实验完成</td>
+          <td>GPIO 与执行器</td>
+          <td>会用 <code>gpiod</code> 控针脚；理解寄存器与 API 的关系；温控风扇闭环跑通</td>
           <td>温控风扇</td>
-          <td>接线 + 主循环：超阈值转、降温停；读失败有日志且程序继续跑</td>
+          <td>超阈值风扇转、降温停；点灯前后 <code>devmem</code> 只读看到寄存器位翻转；读失败有日志且程序继续跑</td>
           <td>外设能力 + 本地温控闭环</td>
         </tr>
         <tr class="mod-linux">
           <td>ch04</td>
           <td>Linux 应用篇</td>
-          <td>文件、配置与日志</td>
-          <td>会用 C 做文件读写；配置外置；历史/告警能落盘</td>
-          <td>配置化温控</td>
-          <td>读配置、追加温度历史、超阈值写告警；改配置后阈值/周期行为变；能翻文件验收</td>
-          <td>可配置、可留档的温控程序</td>
+          <td>串口对话与温控</td>
+          <td>DHT22 持续读温控风扇；串口打字查状态、改阈值；两边同时工作</td>
+          <td>串口命令温控</td>
+          <td>捂热风扇仍自动转；敲 <code>status</code> 有回复；敲 <code>set</code> 后阈值立刻变</td>
+          <td>可对话的本地温控程序</td>
         </tr>
         <tr class="mod-linux">
           <td>ch05</td>
           <td>Linux 应用篇</td>
           <td>网络通信与 MQTT</td>
-          <td>发布/订阅；C 控灯；板子 publish 状态小例子</td>
-          <td>MQTT 远程控灯（含状态上报）</td>
-          <td>手机控外接 LED；板子 publish 状态可见</td>
+          <td>发布/订阅；手机远程控外接 LED；板子发布状态；用 tcpdump 看一层层包装</td>
+          <td>MQTT 远程控灯</td>
+          <td>手机控外接 LED；板子状态在订阅端可见；抓包能指出 MQTT 落在哪一层</td>
           <td>可复用 MQTT 模块（下行控灯 + 上行状态）</td>
         </tr>
         <tr class="mod-linux">
           <td>ch06</td>
           <td>Linux 应用篇</td>
           <td>线程与任务协同</td>
-          <td>采集∥控制∥通信(MQTT) 三线程；共享状态有序；干净停</td>
+          <td>采集∥控制∥通信 三线程；共享状态加锁；Ctrl+C 干净停；竞态必现并修好</td>
           <td>三线程协同</td>
-          <td>三线同时跑；风扇按阈值；MQTT 通信线工作；Ctrl+C 关风扇干净退出</td>
+          <td>三线同时跑；风扇按阈值；MQTT 通信线工作；不加锁数据错乱、加锁正确；电脑上 ThreadSanitizer 打出抢变量报告；Ctrl+C 关风扇后退出</td>
           <td>三线程骨架（供综合复用）</td>
         </tr>
         <tr class="mod-cap">
           <td>综合</td>
           <td>综合大项目</td>
           <td>智能环境终端</td>
-          <td>复用 ch06 三线程骨架；规则/模型或逻辑仲裁风扇；载入老师权重 + 手写 tiny 前向</td>
+          <td>复用 ch06 三线程骨架；规则与模型一起判风扇；载入老师权重 + 手写 tiny 前向</td>
           <td>异常联动总验收</td>
           <td>异常时告警红灯 + 风扇 + MQTT 上行告警几乎同时；日志能看出触发源</td>
           <td>可答辩作品</td>
@@ -612,7 +634,7 @@
   </div>
 
   <h2>章节细则</h2>
-  <p class="note">每章讲义固定三节（x.1–x.3）；本章实验写在「本章实验」栏。讲义加深原理与接口；实验给 <strong>C 脚手架</strong>，学生按讲义往后补，且<strong>必须结合板上硬件看到现象</strong>。最右栏为本章名词。</p>
+  <p class="note">每章讲义固定三节（x.1–x.3）；「本章实验」单独一栏。讲义含原理与接口，并有一节<strong>深入理解</strong>；实验给 <strong>C 脚手架</strong>，学生按讲义补全，结合板上硬件看到现象。最右栏为本名词。</p>
   <div class="table-wrap">
     <table class="detail">
       <colgroup>
@@ -636,125 +658,120 @@
         </tr>
       </thead>
       <tbody>
-        <!-- ch01 -->
         <tr class="mod-env">
           <td rowspan="3" class="merge">ch01</td>
           <td rowspan="3" class="merge">基础篇</td>
-          <td class="section">1.1 RISC-V 平台与 ruyi 环境</td>
-          <td rowspan="3" class="merge section">环境通、工具链通、CoreMark 能上板跑分</td>
-          <td rowspan="3" class="merge section"><strong>上板通道验收</strong>：交叉编译 CoreMark、SCP 上板跑出分数并记录；自证 SSH / <code>uname</code> / 工具链三元组；烧录可用手工完成</td>
+          <td class="section">1.1 荔枝派 4A 与 RuyiSDK 环境</td>
+          <td rowspan="3" class="merge section">环境通、工具链通、CoreMark 上板跑分</td>
+          <td rowspan="3" class="merge section"><strong>上板通道验收</strong>：交叉编译 CoreMark、SCP 上板跑出分数并记录；自证 SSH / <code>uname</code> / 工具链三元组；烧录可手工完成</td>
           <td rowspan="3" class="merge section">最小可部署闭环</td>
           <td rowspan="3" class="merge glossary section"><dl>
-            <dt>RuyiSDK / ruyi</dt><dd>装工具链与镜像的入口；含一键准备/一键编译能力。</dd>
-            <dt>交叉编译</dt><dd>PC 上编出板子可执行文件。</dd>
-            <dt>SSH / SCP / 串口</dt><dd>远程登录、拷文件、调试通道。</dd>
-            <dt>CoreMark</dt><dd>算力基准；本章实验硬性上板跑分。</dd>
+            <dt>RuyiSDK / ruyi</dt><dd>装工具链与镜像的入口。</dd>
+            <dt>交叉编译</dt><dd>电脑上编出板子可执行文件。</dd>
+            <dt>SSH / SCP / 串口</dt><dd>远程登录、拷文件、调试聊天线。</dd>
+            <dt>深入理解</dt><dd>电脑与荔枝派 4A 指令集不同，交叉工具链如何让程序在板子上跑起来。</dd>
           </dl></td>
         </tr>
         <tr class="mod-env"><td class="section">1.2 烧录、开发通道与一键准备/一键编译</td></tr>
-        <tr class="mod-env"><td class="section">1.3 交叉编译、Makefile 与 CoreMark</td></tr>
+        <tr class="mod-env"><td class="section">1.3 交叉编译、Makefile 与 CoreMark · 深入理解：跨架构怎么跑</td></tr>
 
-        <!-- ch02 -->
         <tr class="mod-env">
           <td rowspan="3" class="merge">ch02</td>
           <td rowspan="3" class="merge">基础篇</td>
           <td class="section">2.1 类型、变量、控制流</td>
           <td rowspan="3" class="merge section">读懂、改得动本课 C 代码</td>
-          <td rowspan="3" class="merge section"><strong>改代码闯关</strong>：假温控半成品（结构体/指针/阈值故意有坑）；按关卡改到行为符合表</td>
+          <td rowspan="3" class="merge section"><strong>改代码闯关</strong>：假温控半成品（结构体/指针/阈值有坑）；按关卡改到行为符合表</td>
           <td rowspan="3" class="merge section">语言门槛过关</td>
           <td rowspan="3" class="merge glossary section"><dl>
-            <dt>指针</dt><dd>能看懂函数参数里的指针用法即可。</dd>
+            <dt>指针</dt><dd>能看懂函数参数里的指针用法。</dd>
             <dt>结构体</dt><dd>把一组相关数据捆在一起。</dd>
             <dt>头文件</dt><dd>声明接口，供多个 .c 共用。</dd>
-            <dt>假温控</dt><dd>用半成品练改阈值与错误分支。</dd>
+            <dt>深入理解</dt><dd>多个 .c 如何编译、链接成一个可执行文件；<code>main</code> 之前发生了什么。</dd>
           </dl></td>
         </tr>
         <tr class="mod-env"><td class="section">2.2 函数、头文件与多文件工程</td></tr>
-        <tr class="mod-env"><td class="section">2.3 指针、数组、结构体与本课代码怎么读</td></tr>
+        <tr class="mod-env"><td class="section">2.3 指针、数组、结构体 · 深入理解：程序怎么被拼出来</td></tr>
 
-        <!-- ch03 -->
         <tr class="mod-board">
           <td rowspan="3" class="merge">ch03</td>
           <td rowspan="3" class="merge">外设篇</td>
           <td class="section">3.1 外设与 I/O：从物理世界到程序</td>
-          <td rowspan="3" class="merge section">I/O 原理 + GPIO/UART 接口；传感执行概念清楚；闭环在实验完成</td>
-          <td rowspan="3" class="merge section"><strong>温控风扇</strong>：套件接线；半成品上补全周期采样 + 阈值开/关 + 主循环；读失败打日志且程序继续跑；模拟升温或真捂热可验收</td>
+          <td rowspan="3" class="merge section">会用 gpiod 控针脚；理解寄存器与 API；温控风扇闭环跑通</td>
+          <td rowspan="3" class="merge section"><strong>温控风扇</strong>：接线；周期读 DHT22 + 阈值开/关风扇；读失败打日志且程序继续；点灯前后 <code>devmem</code> 只读核对寄存器位</td>
           <td rowspan="3" class="merge section">外设能力 + 本地闭环</td>
           <td rowspan="3" class="merge glossary section"><dl>
-            <dt>MMIO</dt><dd>内存映射 I/O；RISC-V 常用；用户态经驱动/API 访问。</dd>
-            <dt>GPIO</dt><dd>用 gpiod 等接口，从 API 层理解引脚。</dd>
-            <dt>UART</dt><dd>串口收发；调试打印。</dd>
-            <dt>DHT22 / 开闭控制</dt><dd>读温度；GPIO+继电器控风扇。</dd>
+            <dt>GPIO / gpiod</dt><dd>针脚与读写接口。</dd>
+            <dt>DHT22</dt><dd>温湿度探头，接 GPIO。</dd>
+            <dt>继电器</dt><dd>GPIO 控通断，再驱动风扇。</dd>
+            <dt>深入理解</dt><dd><code>gpiod</code> 写灯 → <code>devmem</code> 只读看那一位翻转 → 对照内核 gpio 驱动里写寄存器的那一行。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-board"><td class="section">3.2 GPIO：数字 0/1 怎么进程序</td></tr>
-        <tr class="mod-board"><td class="section">3.3 UART、传感与执行：概念与数据流</td></tr>
+        <tr class="mod-board"><td class="section">3.2 GPIO：用 gpiod 控灯与继电器</td></tr>
+        <tr class="mod-board"><td class="section">3.3 温控闭环 · 深入理解：寄存器位怎么翻</td></tr>
 
-        <!-- ch04 -->
         <tr class="mod-linux">
           <td rowspan="3" class="merge">ch04</td>
           <td rowspan="3" class="merge">Linux 应用篇</td>
-          <td class="section">4.1 程序和「管家」：文件编号与读写</td>
-          <td rowspan="3" class="merge section">用 C 做文件读写；配置外置；历史/告警能落盘</td>
-          <td rowspan="3" class="merge section"><strong>配置化温控</strong>：C 半成品上补全读配置、追加温度历史、超阈值写告警；坏配置可观测；改配置后阈值/周期行为变；能翻文件验收</td>
-          <td rowspan="3" class="merge section">可配置、可留档的温控</td>
+          <td class="section">4.1 串口是聊天线：字节怎么进出</td>
+          <td rowspan="3" class="merge section">DHT22 控风扇同时，串口打字查状态、改阈值</td>
+          <td rowspan="3" class="merge section"><strong>串口命令温控</strong>：脚手架已接 DHT22 与风扇；补全命令表（<code>status</code> / <code>set</code>）；自动控温与打字回复同时工作</td>
+          <td rowspan="3" class="merge section">可对话的本地温控</td>
           <td rowspan="3" class="merge glossary section"><dl>
-            <dt>文件编号</dt><dd>打开后用编号读/写，不必每次报路径。</dd>
-            <dt>配置文件</dt><dd>阈值/周期外置，改文件即可改行为。</dd>
-            <dt>历史 / 告警</dt><dd>采样追加落盘；超阈值另写痕迹。</dd>
+            <dt>串口</dt><dd>USB 连上后的打字窗口。</dd>
+            <dt>命令表</dt><dd>字符串对应函数，如 <code>status</code> → 打印状态。</dd>
+            <dt>select</dt><dd>同时等采样时刻与串口输入。</dd>
+            <dt>深入理解</dt><dd>程序如何同时盯温度采样与你的打字，两边都及时响应。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-linux"><td class="section">4.2 文件就是字节串；设备也可当文件用</td></tr>
-        <tr class="mod-linux"><td class="section">4.3 配置外置与出错留痕</td></tr>
+        <tr class="mod-linux"><td class="section">4.2 读 DHT22 + 串口命令：status / set</td></tr>
+        <tr class="mod-linux"><td class="section">4.3 两边同时工作 · 深入理解：select 等两路</td></tr>
 
-        <!-- ch05 -->
         <tr class="mod-linux">
           <td rowspan="3" class="merge">ch05</td>
           <td rowspan="3" class="merge">Linux 应用篇</td>
-          <td class="section">5.1 联网也是跟外面说话</td>
-          <td rowspan="3" class="merge section">发布/订阅；C 控灯；板子 publish 状态</td>
-          <td rowspan="3" class="merge section"><strong>MQTT 远程控灯</strong>：订阅→驱外接 LED；含 publish 状态/告警小例子；手机 App 联调</td>
+          <td class="section">5.1 联网发消息：Broker、主题、发布订阅</td>
+          <td rowspan="3" class="merge section">手机远程控外接 LED；板子发布状态；tcpdump 看分层包装</td>
+          <td rowspan="3" class="merge section"><strong>MQTT 远程控灯</strong>：订阅主题驱动外接 LED；板子 publish 状态；手机 App 联调；按讲义步骤抓一条 publish</td>
           <td rowspan="3" class="merge section">可复用 MQTT：下行控灯 + 上行状态</td>
           <td rowspan="3" class="merge glossary section"><dl>
-            <dt>Broker</dt><dd>消息中转站。</dd>
+            <dt>Broker</dt><dd>消息中转站（Mosquitto）。</dd>
             <dt>主题</dt><dd>频道名；发布往这发，订阅盯这听。</dd>
             <dt>payload</dt><dd>消息正文，如 <code>on</code>/<code>off</code>。</dd>
-            <dt>publish 上行</dt><dd>板子往主题发状态/告警，手机或 PC 订阅可见。</dd>
+            <dt>深入理解</dt><dd>用 tcpdump 抓一条发布，看 MQTT → TCP → IP 一层层包装。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-linux"><td class="section">5.2 主题、Broker 与命令行联调</td></tr>
-        <tr class="mod-linux"><td class="section">5.3 C 里接到开/关，并 publish 一条状态</td></tr>
+        <tr class="mod-linux"><td class="section">5.2 下行：订阅命令，驱动外接 LED</td></tr>
+        <tr class="mod-linux"><td class="section">5.3 上行：publish 状态 · 深入理解：tcpdump 抓包</td></tr>
 
-        <!-- ch06 -->
         <tr class="mod-linux">
           <td rowspan="3" class="merge">ch06</td>
           <td rowspan="3" class="merge">Linux 应用篇</td>
-          <td class="section">6.1 为啥一条线不够：已有 MQTT 监听</td>
-          <td rowspan="3" class="merge section">采集∥控制∥通信(MQTT) 三线程；共享状态有序；干净停</td>
-          <td rowspan="3" class="merge section"><strong>三线程协同</strong>：C 脚手架（采集∥控制∥通信）；接入 ch05 订阅/发布循环；阈值控风扇；共享状态有序；Ctrl+C 关风扇干净退出</td>
+          <td class="section">6.1 一条线会互相堵：已有 MQTT 监听</td>
+          <td rowspan="3" class="merge section">三线程骨架；共享状态加锁；竞态必现并修好；干净停</td>
+          <td rowspan="3" class="merge section"><strong>三线程协同</strong>：采集∥控制∥通信脚手架；阈值控风扇；MQTT 通信线工作；板上先不加锁看数据错乱，再加锁修好；电脑上用 ThreadSanitizer 跑同一抢数据小程序并保存报告；Ctrl+C 关风扇后退出</td>
           <td rowspan="3" class="merge section">三线程骨架（供综合复用）</td>
           <td rowspan="3" class="merge glossary section"><dl>
-            <dt>三线程</dt><dd>采集∥控制∥通信(MQTT)。</dd>
-            <dt>共享状态</dt><dd>温度等数据多线都碰；要有规矩（锁）。</dd>
-            <dt>干净退出</dt><dd>Ctrl+C 后关风扇再退。</dd>
+            <dt>三线程</dt><dd>采集 ∥ 控制 ∥ 通信(MQTT)。</dd>
+            <dt>锁</dt><dd>同一时刻只许一条线改共享数据。</dd>
+            <dt>ThreadSanitizer</dt><dd>电脑上 <code>-fsanitize=thread</code>，打印谁在抢变量。</dd>
+            <dt>深入理解</dt><dd>不加锁必现错乱 → 加锁正确 → 电脑上工具指出抢变量的两行代码。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-linux"><td class="section">6.2 三线拆开：采集∥控制∥通信</td></tr>
-        <tr class="mod-linux"><td class="section">6.3 共享状态与干净停</td></tr>
+        <tr class="mod-linux"><td class="section">6.2 三线拆开：采集 ∥ 控制 ∥ 通信</td></tr>
+        <tr class="mod-linux"><td class="section">6.3 共享状态与干净停 · 深入理解：竞态与 ThreadSanitizer</td></tr>
 
-        <!-- capstone -->
         <tr class="mod-cap">
           <td rowspan="7" class="merge">综合</td>
           <td rowspan="7" class="merge">综合大项目</td>
           <td class="section">P.1 需求与模块图：复用 ch06 三线程</td>
-          <td rowspan="7" class="merge section">复用 ch06 三线程骨架；规则/模型或逻辑仲裁风扇；载入老师权重 + 手写 tiny 前向</td>
+          <td rowspan="7" class="merge section">复用 ch06 三线程骨架；规则与模型一起判风扇；载入老师权重 + 手写 tiny 前向</td>
           <td rowspan="7" class="merge section"><strong>异常联动总验收</strong>：异常时告警红灯 + 风扇 + MQTT 上行告警几乎同时；日志能看出触发源</td>
           <td rowspan="7" class="merge section">可答辩作品</td>
           <td rowspan="7" class="merge glossary section"><dl>
             <dt>老师供权重</dt><dd>课内提供 <code>weights.h</code>；学生专注板端部署与手写前向。</dd>
             <dt>手写 tiny 前向</dt><dd>学生写 C 前向：读权重 → 乘加/激活 → 正常/异常。</dd>
             <dt>滑动窗口</dt><dd>取最近 N 次采样再推理。</dd>
-            <dt>规则/模型仲裁</dt><dd>超阈值 OR 模型异常 → 风扇转；日志记触发源。</dd>
+            <dt>规则/模型仲裁</dt><dd>超阈值或模型异常 → 风扇转；日志记触发源。</dd>
           </dl></td>
         </tr>
         <tr class="mod-cap"><td class="section">P.2 接入配置日志 + 外接灯远程控 + 告警红灯本地</td></tr>
@@ -767,15 +784,17 @@
     </table>
   </div>
 
-  <h2>训练与推理分工</h2>
+  <h2>训练与推理分工（TinyML）</h2>
   <ul class="relations">
-    <li><strong>老师（课前准备）</strong>：在 PC/GPU 上训好 tiny 模型，发布 <code>weights.h</code>（可附带说明与对照数据）</li>
+    <li><strong>老师（课前准备）</strong>：在电脑/GPU 上训好 tiny 模型，发布 <code>weights.h</code>（可附说明与对照数据）</li>
     <li><strong>学生（主线）</strong>：滑动窗口 → 手写 C 前向 → 正常/异常 → 风扇 + LED + MQTT</li>
-    <li>课堂重点：权重如何进工程、前向如何嵌进三线程骨架、与规则控制用或逻辑一起工作</li>
+    <li>课堂重点：权重如何进工程、前向如何嵌进三线程骨架、与规则控制用「或」逻辑一起工作</li>
+    <li>TinyML 具体方案待定；综合项目 P.5 占位保留，方案定了再补实现细节</li>
   </ul>
 
   <footer>
-    在线预览：<a href="https://enzoding-rgb.github.io/ruyi-riscv-book/">enzoding-rgb.github.io/ruyi-riscv-book</a>
+    在线预览：<a href="https://enzoding-rgb.github.io/ruyi-riscv-book/CourseOutline.html">enzoding-rgb.github.io/ruyi-riscv-book/CourseOutline.html</a>
+    · 下载：<a href="https://raw.githubusercontent.com/EnzoDing-rgb/EnzoDing-rgb.github.io/main/ruyi-riscv-book/CourseOutline.html">raw HTML</a>
   </footer>
 </main>
 </body>
