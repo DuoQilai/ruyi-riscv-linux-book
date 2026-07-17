@@ -111,24 +111,24 @@
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
   <a href="#s6.1">6.1 一条线会互相堵</a>
-  <a class="sub" href="#s6.1-objectives">学习目标</a>
   <a class="sub" href="#s6.1-block">阻塞从哪来</a>
   <div class="divider"></div>
-  <a href="#s6.2">6.2 三线：采集∥控制∥通信</a>
-  <a class="sub" href="#s6.2-objectives">学习目标</a>
+  <a href="#s6.2">6.2 三线：采集、控制、通信</a>
   <a class="sub" href="#s6.2-split">职责拆分</a>
   <a class="sub" href="#s6.2-skeleton">骨架一览</a>
   <div class="divider"></div>
   <a href="#s6.3">6.3 共享状态与干净停</a>
-  <a class="sub" href="#s6.3-objectives">学习目标</a>
   <a class="sub" href="#s6.3-lock">锁与停机</a>
-  <a class="sub" href="#s6.3-race">深入理解：竞态与 TSan</a>
+  <div class="divider"></div>
+  <a href="#s6-deep">深入理解</a>
+  <a class="sub" href="#s6-deep-board">板上无锁与加锁</a>
+  <a class="sub" href="#s6-deep-tsan">电脑 race-demo 与 TSan</a>
 </nav>
 
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第六章</div>
   <h1>线程与协同</h1>
-  <p class="subtitle">一条线会堵 → 采集∥控制∥通信 → 共享状态、干净停与竞态深入理解<br>— 6.1 / 6.2 / 6.3 —</p>
+  <p class="subtitle">一条线会堵 → 采集、控制、通信三线 → 共享状态、干净停与竞态深入理解<br>— 6.1 / 6.2 / 6.3 —</p>
   <div class="meta">
     <span>板卡：荔枝派 4A</span>
     <span>工具链：RuyiSDK</span>
@@ -155,14 +155,14 @@
 
 <h3>本章你会学到什么</h3>
 
-<div class="card-grid" style="margin-bottom:0;">
-  <div class="card"><h4>6.1 一条线会互相堵</h4><p>已有 MQTT 监听时，单线程如何堵住采样与控制。</p></div>
-  <div class="card"><h4>6.2 三线：采集∥控制∥通信</h4><p>三条线程各干什么、共享哪份状态。</p></div>
-  <div class="card"><h4>6.3 共享状态与干净停 · 深入理解</h4><p>板上先不加锁看错乱，加锁修好；电脑上用 TSan 跑同一抢数据小程序。</p></div>
+<div class="card-grid card-grid-3" style="margin-bottom:0;">
+  <div class="card"><h4>6.1 一条线会互相堵</h4><p>单线程里网络等待如何拖死采样与控制。</p></div>
+  <div class="card"><h4>6.2 三线：采集、控制、通信</h4><p>三条线程各干什么、共享哪份状态。</p></div>
+  <div class="card"><h4>6.3 共享状态与干净停</h4><p>共享字段要加锁；Ctrl+C 后关风扇再退出。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>讲义 vs 实验：</strong>讲义建立拆分与竞态心智。本章实验在板上跑三线程协同，并在电脑上保存 TSan 报告；骨架供综合项目复用。
+  <strong>讲义 vs 实验：</strong>讲义建立拆分与竞态心智；「深入理解」在板上必现错乱再修好，并在电脑上用 TSan 指出抢变量的行。本章实验交付三线程协同与 TSan 报告；骨架供综合项目复用。
 </div>
 </section>
 
@@ -171,16 +171,8 @@
 <div class="section-num">6.1</div>
 <h2>一条线会互相堵</h2>
 
-<h3 id="s6.1-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>单线程瓶颈</h4><p>说清「等网络」如何拖死「读传感器」</p></div>
-  <div class="card"><h4>对照第五章</h4><p><code>mosquitto_loop_forever</code> 占住主线程的含义</p></div>
-  <div class="card"><h4>动机</h4><p>为何要拆成多条执行流</p></div>
-  <div class="card"><h4>边界</h4><p>本章用线程，不引入多进程架构</p></div>
-</div>
-
-<h3 id="s6.1-block">阻塞从哪来</h3>
-<p>第五章的 <code>mqtt-led</code> 用 <code>mosquitto_loop_forever</code> 一直处理网络事件——这很好，但<strong>同一条主线</strong>若还要每 2 秒读 DHT、判阈值、开风扇，就会互相抢时间：网络回调慢了，采样推迟；采样位带耗时长了，MQTT 心跳可能超时。</p>
+<h3 id="s6.1-block">阻塞从哪来（简述）</h3>
+<p>第五章的 <code>mqtt-led</code> 用网络循环一直处理 MQTT 事件——这很好，但<strong>同一条主线</strong>若还要每几秒读 DHT22、判阈值、开风扇，就会互相抢时间：网络处理慢了，采样推迟；采样或 GPIO 耗时长了，MQTT 心跳可能超时。某一段一堵，后面全停。</p>
 
 <div class="diagram">单线程硬塞在一起：
 
@@ -198,12 +190,6 @@
   <strong>和第四章 select 的关系：</strong><code>select</code> 适合「一个线程盯几个 I/O」；当业务块变多（传感时序 + 网络库自带循环），用线程按职责切开更清晰。两种手段都要会。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>列出三种会让「单线程温控+MQTT」卡住的具体调用。</li>
-  <li>若只用 select、不用线程，能否覆盖 mosquitto 的网络循环？需要什么条件？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能解释单线程互相堵的现象 · 明确本章用三线程拆分的动机。
 </div>
@@ -212,44 +198,40 @@
 <!-- ═══ 6.2 ═══ -->
 <section id="s6.2">
 <div class="section-num">6.2</div>
-<h2>三线：采集∥控制∥通信(MQTT)</h2>
+<h2>三线：采集、控制、通信</h2>
 
-<h3 id="s6.2-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>采集线程</h4><p>周期读 DHT，写入共享温度</p></div>
-  <div class="card"><h4>控制线程</h4><p>读温度与阈值，驱动风扇</p></div>
-  <div class="card"><h4>通信线程</h4><p>跑 MQTT 循环：下行命令、上行状态</p></div>
-  <div class="card"><h4>共享结构</h4><p>温度、风扇、阈值、运行标志</p></div>
-</div>
+<p>本节标题里的三线，完整说法是：<strong>采集线程</strong>、<strong>控制线程</strong>、<strong>通信线程</strong>。它们在同一进程里并行跑，通过一份共享状态交换数据。</p>
 
 <h3 id="s6.2-split">职责拆分</h3>
-<div class="diagram">┌─────────────┐   写 last_temp    ┌─────────────┐
-│ 采集线程     │ ───────────────► │             │
-│ 读 DHT22     │                  │  共享状态   │
-└─────────────┘                  │  + 互斥锁   │
-                                 │             │
-┌─────────────┐   读温度/写风扇   │             │
-│ 控制线程     │ ◄──────────────► │             │
-│ 阈值开/关    │                  │             │
-└─────────────┘                  │             │
-                                 │             │
-┌─────────────┐   改阈值/发状态   │             │
-│ 通信线程     │ ◄──────────────► │             │
-│ MQTT loop    │                  └─────────────┘
-└─────────────┘</div>
+<div class="diagram">┌─────────────────┐  写 last_temp   ┌─────────────────┐
+│ 采集线程         │ ─────────────► │                 │
+│ 周期读 DHT22     │                │   共享状态       │
+└─────────────────┘                │   + 互斥锁       │
+                                   │                 │
+┌─────────────────┐  读温度/写风扇  │                 │
+│ 控制线程         │ ◄────────────► │                 │
+│ 按阈值开/关风扇  │                │                 │
+└─────────────────┘                │                 │
+                                   │                 │
+┌─────────────────┐  改阈值/发状态  │                 │
+│ 通信线程         │ ◄────────────► │                 │
+│ 跑 MQTT 循环     │                └─────────────────┘
+└─────────────────┘</div>
+
+<p>图说明：采集只负责把最新温湿度写进共享状态；控制只负责读温度与阈值、驱动风扇；通信只负责 MQTT 下行改阈值/控灯与上行报状态。谁都不包办别人的活。</p>
 
 <table>
   <tr><th>线程</th><th>做什么</th><th>不做什么</th></tr>
-  <tr><td>采集</td><td>按周期读传感器，更新 <code>last_temp</code>/<code>last_hum</code></td><td>不直接开风扇、不跑网络库</td></tr>
-  <tr><td>控制</td><td>读温度与阈值，调用风扇 GPIO</td><td>不阻塞在 MQTT</td></tr>
-  <tr><td>通信</td><td><code>mosquitto_loop</code>；下行改阈值或灯；上行发布状态</td><td>不做 DHT 位带</td></tr>
+  <tr><td>采集线程</td><td>按周期读传感器，更新 <code>last_temp</code>/<code>last_hum</code></td><td>不直接开风扇、不跑网络库</td></tr>
+  <tr><td>控制线程</td><td>读温度与阈值，调用风扇 GPIO</td><td>不阻塞在 MQTT</td></tr>
+  <tr><td>通信线程</td><td>跑 MQTT 循环；下行改阈值或灯；上行发布状态</td><td>不做 DHT 位带采样</td></tr>
 </table>
 
 <h3 id="s6.2-skeleton">骨架一览</h3>
 <p><code>chapters/ch06/code/tri-thread/</code> 给出 pthread 创建、共享结构、三线程函数空壳与信号退出标志。实验中补全各线程循环与加锁读写。</p>
 
 <pre><span class="k">struct</span> shared_state {
-    pthread_mutex_t lock;   <span class="c">/* 锁：同一时刻只许一条线改关键字段 */</span>
+    pthread_mutex_t lock;   <span class="c">/* 互斥锁：同一时刻只许一条线改关键字段 */</span>
     float last_temp;
     float t_high, t_low;
     int fan_on;
@@ -265,32 +247,18 @@
   线程函数必须是 <code>void *(*)(void *)</code>；创建后用 <code>pthread_join</code> 等其结束。风扇与 GPIO 初始化放在开线程之前，避免多线同时申请同一 line。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>若采集线程直接调用 <code>fan_set</code>，破坏了哪条职责边界？</li>
-  <li>通信线程收到「提高上限」时，应改共享结构的哪个字段？谁去真正开风扇？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能画出三线与共享状态 · 能编译部署 tri-thread 骨架 · 知道各线程边界。
+  <strong>本节成果：</strong>能画出采集、控制、通信三线与共享状态 · 能编译部署 tri-thread 骨架 · 知道各线程边界。
 </div>
 </section>
 
 <!-- ═══ 6.3 ═══ -->
 <section id="s6.3">
 <div class="section-num">6.3</div>
-<h2>共享状态与干净停 · 深入理解：竞态与 ThreadSanitizer</h2>
-
-<h3 id="s6.3-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>竞态</h4><p>两条线同时改同一数据，结果写乱</p></div>
-  <div class="card"><h4>互斥锁</h4><p>加锁后再读改共享字段</p></div>
-  <div class="card"><h4>干净停</h4><p>Ctrl+C 置标志 → 关风扇 → 线程退出</p></div>
-  <div class="card"><h4>深入理解</h4><p>板上必现错乱再修好；电脑 TSan 指出抢变量的行</p></div>
-</div>
+<h2>共享状态与干净停</h2>
 
 <h3 id="s6.3-lock">锁与干净停</h3>
-<p>采集写温度、控制读温度时，若中间被打断，可能读到「写到一半」的值。用 <strong>互斥锁</strong>（mutex：同一时刻只许一条线进入临界区）包住读写：</p>
+<p>采集写温度、控制读温度、通信改阈值时，若两条线同时碰到同一字段，可能读到「写到一半」的值，或丢掉某次更新。用 <strong>互斥锁</strong>（mutex：同一时刻只许一条线程进入临界区）包住读写：</p>
 
 <pre>pthread_mutex_lock(&amp;st-&gt;lock);
 temp = st-&gt;last_temp;
@@ -299,44 +267,94 @@ pthread_mutex_unlock(&amp;st-&gt;lock);</pre>
 
 <p><strong>干净停：</strong>注册 <code>SIGINT</code>（Ctrl+C）处理函数，把 <code>running=0</code>；各线程循环判断该标志后退出；主线程 join 完毕后关风扇、释放 GPIO、断开 MQTT。验收时必须看到风扇停转再进程结束。</p>
 
-<h3 id="s6.3-race">深入理解：板上不加锁 → 加锁；电脑上 TSan</h3>
-<p>本课要求你<strong>亲眼看见</strong>问题，而不是背「要加锁」三个字：</p>
+<p>「为什么必须加锁、怎么亲眼看见竞态」，完整因果链放在下一节「深入理解」。</p>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>知道共享字段进锁 · 能口述干净停步骤 · 带着「无锁会怎样」进入深入理解。
+</div>
+</section>
+
+<!-- ═══ 深入理解 ═══ -->
+<section id="s6-deep">
+<div class="section-num">深入理解</div>
+<h2>竞态：板上必现错乱，电脑上用 TSan 指出两行</h2>
+
+<p>本节把三个词说清楚：<strong>竞态</strong>（data race）是两条线程无同步地并发读写同一共享变量，结果不确定甚至写乱；<strong>互斥锁</strong>（mutex）保证同一时刻只有一条线程进入临界区；<strong>ThreadSanitizer</strong>（TSan）是编译加上 <code>-fsanitize=thread</code> 的检查器，能在运行时报告「哪两行在抢同一变量」。板上交叉工具链未必开 TSan，所以产品现象在荔枝派 4A 上看，机理用主机上的 <code>race-demo</code> 演示。</p>
+
+<div class="diagram">三条证据链（必须都做）：
+
+  (1) 板上无锁  → 日志/行为错乱（现象）
+  (2) 板上加锁  → 行为正确（对照）
+  (3) 电脑 TSan → 报告「这两行在抢同一变量」（机理）</div>
+
+<p>图说明：只背「要加锁」不够；要先看见坏的，再修好，再用工具指出坏在哪两行。</p>
+
+<h3 id="s6-deep-board">(1)(2) 荔枝派 4A：无锁错乱 → 加锁正确</h3>
+
+<p><strong>原因：</strong>采集线程写 <code>last_temp</code>，控制线程读 <code>last_temp</code> 并写 <code>fan_on</code>，通信线程可能同时改 <code>t_high</code>。没有锁时，这些访问可以交错发生。</p>
+
+<p><strong>机制（无锁时）：</strong>例如控制线程读到「写了一半」的浮点位型，温度跳成离谱值；或风扇状态与刚打印的温度互相矛盾。错乱可能间歇出现——「偶尔正常」不能证明没有竞态。</p>
+
+<p><strong>机制（加锁后）：</strong>所有对共享字段的读改都包在 <code>pthread_mutex_lock</code> / <code>unlock</code> 之间。同一时刻只有一条线程在临界区里，交错消失，阈值控温与 MQTT 改阈值恢复一致。</p>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>板上（tri-thread）</strong><br>按实验说明先关掉锁（或走「故意无锁」编译开关），跑一段时间，记录温度/风扇日志出现跳变、矛盾或明显错乱。</div></li>
-  <li><span class="step-num">2</span><div><strong>加锁修好</strong><br>恢复所有共享读写的 lock/unlock，错乱消失；风扇阈值行为恢复正常。</div></li>
-  <li><span class="step-num">3</span><div><strong>电脑上跑 race-demo</strong><br><code>chapters/ch06/code/race-demo/</code> 是确定性强制抢同一计数器的小程序（无板、无 GPIO）。本机：
-<pre>cd chapters/ch06/code/race-demo
-make
-./race-demo          <span class="c"># 无锁：计数偏小（丢更新）</span>
-sudo sysctl vm.mmap_rnd_bits=28   <span class="c"># 固定步骤：让 TSan 稳定跑通</span>
-make tsan
-./race-demo          <span class="c"># ThreadSanitizer 打印数据竞争报告</span></pre>
-  保存终端中 TSan 指出的两处访问行号，对照源码。</div></li>
+  <li><span class="step-num">1</span><div><strong>板上先关锁</strong><br>按实验说明设 <code>USE_LOCK 0</code>（或等价开关），跑一段时间，记录温度跳变、风扇状态与温度矛盾等错乱现象。</div></li>
+  <li><span class="step-num">2</span><div><strong>再开锁对照</strong><br>改为 <code>USE_LOCK 1</code>，所有共享读写进锁；错乱消失，风扇按阈值动作，MQTT 下行/上行仍正常。</div></li>
 </ol>
 
-<div class="diagram">深入理解三条证据链：
+<div class="diagram">无锁时可能交错（示意）：
 
-  板上无锁  → 日志/行为错乱（现象）
-  板上加锁  → 行为正确（对照）
-  电脑 TSan → 报告「这两行在抢同一变量」（机理）</div>
+  采集:  写 temp 高位 ──┐
+  控制:                 ├── 读到半新半旧 → 决策离谱
+  采集:  写 temp 低位 ──┘
+
+加锁后：
+
+  采集:  lock → 写完整 temp → unlock
+  控制:  lock → 读完整 temp → unlock
+  （中间不会插入另一条线的半截写）</div>
+
+<p>图说明：锁保护的是「一整次读改」的原子性观感，不是让三线变回单线程——三线仍并行，只是碰共享状态时排队。</p>
+
+<h3 id="s6-deep-tsan">(3) 电脑：race-demo + ThreadSanitizer 指出两行</h3>
+
+<p><code>chapters/ch06/code/race-demo/</code> 是故意让两条线程无锁抢同一计数器的小程序（无板、无 GPIO）。先无锁跑一遍，计数会偏小（丢更新）；再用 TSan 编译运行，报告会打印发生数据竞争的两处源码行。</p>
+
+<pre><span class="p">$</span> cd chapters/ch06/code/race-demo
+<span class="p">$</span> make
+<span class="p">$</span> ./race-demo
+<span class="c"># 无锁：最终计数明显小于期望（丢更新）</span>
+
+<span class="p">$</span> sudo sysctl vm.mmap_rnd_bits=28
+<span class="c"># 固定步骤：新内核地址随机化位数与 TSan 冲突，调低后 TSan 才能稳定跑通</span>
+
+<span class="p">$</span> make tsan
+<span class="p">$</span> ./race-demo
+<span class="c"># ThreadSanitizer 打印数据竞争报告，标出两处访问行号</span></pre>
+
+<p>保存终端中 TSan 指出的两行，对照源码：那就是「谁和谁在无同步地碰同一变量」。产品路径（tri-thread）验收以加锁版本为准；不要把 race-demo 的无锁写法抄进板上骨架。</p>
+
+<div class="diagram">示意：TSan 报告在说什么
+
+  WARNING: ThreadSanitizer: data race
+    Write of size 4 at 0x... by thread T1:
+        #0  incr   race-demo.c:42   ← 这一行在写
+    Previous read of size 4 at 0x... by thread T2:
+        #0  incr   race-demo.c:42   ← 同一变量，另一线程也在碰
+        （或另一行号：读/写交错）</div>
+
+<p>图说明：TSan 不替你「修」程序，它只把竞态从「感觉偶尔不对」变成「具体是这两行」。你回去加 mutex，再跑应不再报同一竞争。</p>
 
 <div class="info">
-  <strong>ThreadSanitizer（TSan）：</strong>编译加上 <code>-fsanitize=thread</code> 的检查器。它在<strong>电脑</strong>上跑同一类抢数据程序，打印哪两行在并发访问同一变量。板上交叉工具链未必开 TSan，故竞态机理用主机演示。
+  <strong>验收话术：</strong>「板上无锁时我看到过错乱；加锁后行为正确；电脑上 race-demo 经 TSan 指出抢同一变量的两行。所以共享状态必须进互斥锁，不是口头约定。」
 </div>
 
 <div class="warn">
-  race-demo <strong>故意</strong>无锁；不要把无锁写法抄进产品骨架。产品路径（tri-thread）验收以加锁版本为准。
+  race-demo <strong>故意</strong>无锁，只用于教学演示。产品路径（tri-thread）以加锁版本验收。跑 TSan 前执行 <code>sudo sysctl vm.mmap_rnd_bits=28</code> 是本课固定步骤。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>为何「偶尔看起来正常」不能证明没有竞态？</li>
-  <li>干净停时若只退出通信线程、不管控制线程，可能留下什么硬件状态？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>理解锁与 running 标志 · 能复述深入理解三步 · 带着验收清单进入本章实验。
+  <strong>本节成果：</strong>能复述无锁→加锁→TSan 三步证据链 · 能解释 mutex、竞态与 mmap_rnd_bits 一步 · 带着验收清单进入本章实验。
 </div>
 </section>
 

@@ -121,13 +121,17 @@
   <div class="divider"></div>
   <a href="#s3.3">3.3 温控闭环</a>
   <a class="sub" href="#s3.3-loop">传感 → 决策 → 执行</a>
-  <a class="sub" href="#s3.3-deep">深入理解</a>
+  <div class="divider"></div>
+  <a href="#s3-deep">深入理解</a>
+  <a class="sub" href="#s3-deep-chain">从 gpiod 到寄存器位</a>
+  <a class="sub" href="#s3-deep-devmem">devmem 只读核对</a>
+  <a class="sub" href="#s3-deep-driver">对照内核驱动一行</a>
 </nav>
 
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
   <h1>GPIO 与执行器</h1>
-  <p class="subtitle">外设与 I/O · gpiod 控灯与继电器<br>温控闭环 · 寄存器位怎么翻<br>— 3.1 / 3.2 / 3.3 —</p>
+  <p class="subtitle">外设与 I/O · gpiod 控灯与继电器<br>温控闭环 · 寄存器位怎么翻<br>— 3.1 / 3.2 / 3.3 / 深入理解 —</p>
   <div class="meta">
     <span>示例：blink</span>
     <span>实验：temp-fan</span>
@@ -141,7 +145,7 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置：</strong>已完成第一、二章——交叉编译、Makefile、SSH/SCP 可用，C 代码能读能改。本章在荔枝派 4A 的用户态用 C 控外设；温控风扇闭环在 <code>lab.html</code> 完成。
+  <strong>前置：</strong>已完成第一、二章——交叉编译、Makefile、SSH/SCP 可用，C 代码能读能改。本章在荔枝派 4A 的用户态用 C 控外设；温控风扇闭环在 <code>lab.html</code> 完成。读完 3.1–3.3 后进入「深入理解」，用 <code>devmem</code> 只读看清寄存器位翻转。
 </div>
 
 <h3>你需要准备什么</h3>
@@ -157,7 +161,7 @@
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>3.1 外设与 I/O</h4><p>物理量如何变成程序里的数；用户态经内核接口访问硬件。</p></div>
   <div class="card"><h4>3.2 GPIO：用 gpiod 控灯与继电器</h4><p>用 libgpiod 申请引脚、驱动 LED；用同一套接口控继电器信号端。</p></div>
-  <div class="card"><h4>3.3 温控闭环</h4><p>温度 → 阈值 → 风扇开/关；用 devmem 只读核对寄存器位翻转。</p></div>
+  <div class="card"><h4>3.3 温控闭环</h4><p>温度 → 阈值 → 风扇开/关；建立「传感—决策—执行」数据流。</p></div>
 </div>
 </section>
 
@@ -194,7 +198,7 @@
 内核驱动 ──► MMIO 寄存器 ──► 物理引脚 / 外设</div>
 
 <div class="info">
-  <strong>记住一句：</strong>板上有 MMIO，但本课业务程序走内核暴露的接口（如 gpiod）。3.3 会用 <code>devmem</code> <strong>只读</strong>核对某一位是否翻转，用来对照理解驱动写了寄存器——不拿它当日常控灯手段。
+  <strong>记住一句：</strong>板上有 MMIO，但本课业务程序走内核暴露的接口（如 gpiod）。「深入理解」会用 <code>devmem</code> <strong>只读</strong>核对某一位是否翻转，用来对照理解驱动写了寄存器——不拿它当日常控灯手段。
 </div>
 
 <div class="warn">
@@ -265,11 +269,11 @@ libgpiod  ──►  /dev/gpiochip0
 <!-- ═══ 3.3 ═══ -->
 <section id="s3.3">
 <div class="section-num">3.3</div>
-<h2>温控闭环 · 深入理解：寄存器位怎么翻</h2>
+<h2>温控闭环</h2>
 
 <h3 id="s3.3-loop">传感 → 决策 → 执行</h3>
-<p><strong>DHT22</strong> 是温湿度探头，用一根数据线接 GPIO，周期上报温度和湿度。用户态位带读可能偶发失败——属预期：打 <code>[ERR]</code> 并进入下一采样周期，让程序继续跑。</p>
-<p><strong>执行侧</strong>本课主线是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成滞回，避免温度在临界附近风扇狂抖。</p>
+<p><strong>DHT22</strong> 是温湿度探头，用一根数据线接 GPIO，周期上报温度和湿度。它按严格时序一位一位收发数据；时序稍紧或线上干扰时，用户态读取可能偶发失败——属预期：打 <code>[ERR]</code> 并进入下一采样周期，让程序继续跑。</p>
+<p><strong>执行侧</strong>本课主线是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成滞回（第二章已定义：中间区间保持上一状态），避免温度在临界附近风扇狂抖。</p>
 
 <div class="diagram">DHT22 ──► 温度 T
               │
@@ -289,37 +293,85 @@ libgpiod  ──►  /dev/gpiochip0
 
 <p>脚手架：<code>chapters/ch03/code/temp-fan/</code>。默认 <code>SIMULATE_SENSOR=1</code> 用假温度演示阈值；接好 DHT22 后改为 <code>0</code>。接线、周期采样与验收见 <code>lab.html</code>。</p>
 
-<h3 id="s3.3-deep">深入理解：gpiod 写灯 → devmem 只读看寄存器位翻转 → 对照内核 gpio 驱动写寄存器</h3>
-<p>你在 C 里调用 <code>gpiod_line_set_value(line, 1)</code> 时，真正改硬件的是内核 gpio 驱动：它往 MMIO 地址写一笔，把对应引脚那一位从 0 翻成 1（或反过来）。用户态看不到那一行 C，但可以用 <strong>devmem</strong> 只读核对手感——devmem 是按地址读/写物理内存的小工具；本课<strong>只读</strong>。</p>
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能说清 DHT22 → 阈值 → 继电器 → 风扇的数据流。下一节深入理解用 <code>devmem</code> 只读核对「写灯时寄存器位真的翻了」。
+</div>
+</section>
+
+<!-- ═══ 深入理解 ═══ -->
+<section id="s3-deep">
+<div class="section-num">深入理解</div>
+<h2>gpiod 写灯之后：内核如何翻寄存器位，以及你如何亲眼看见</h2>
+
+<h3 id="s3-deep-chain">原因：用户态 API 并不直接碰芯片寄存器</h3>
+<p>你在 C 里调用 <code>gpiod_line_set_value(line, 1)</code>，看起来只是「把灯打开」。真正改硬件的，是<strong>内核里的 GPIO 驱动</strong>：它通过系统调用接到你的请求后，往某个 MMIO 地址写一笔，把对应引脚那一位从 0 翻成 1（或反过来）。引脚电平变了，LED 才亮。</p>
+<p>回顾几个词，串成一条链：</p>
+<ul>
+  <li><strong>GPIO</strong>：通用输入输出引脚，本课用来输出高/低控灯或继电器信号端。</li>
+  <li><strong>继电器</strong>：小信号开关大电流；GPIO 只管信号，风扇电源走继电器触点。</li>
+  <li><strong>MMIO</strong>：设备寄存器被映射成「像内存一样」的地址；驱动对地址的写，落到硬件控制逻辑。</li>
+  <li><strong>devmem</strong>：按物理地址读/写内存映射区域的小工具。本课<strong>只读</strong>，用来核对某一位是否翻转，绝不拿它当日常控灯手段。</li>
+</ul>
 
 <div class="diagram">① 应用：gpiod_line_set_value(..., 1)
-        │ 系统调用
+        │  经 libgpiod → 打开的 /dev/gpiochipN
+        │  系统调用进入内核
         ▼
-② 内核 gpio 驱动
-        │ 写 MMIO（把某一 bit 置 1）
+② 内核 GPIO 驱动
+        │  写 MMIO：把该引脚对应的 bit 置 1（或清 0）
         ▼
-③ 硬件寄存器 ──► 引脚电平变高 ──► LED 亮
+③ 硬件寄存器（某物理地址上的一个字）
+        │
+        ▼
+④ 物理引脚电平变高 / 变低 ──► LED 亮 / 灭
 
-核对（只读）：
+旁路核对（只读，不当业务路径）：
   点灯前：devmem 读该寄存器 → 记下那一位是 0
   点灯后：devmem 再读同一地址 → 那一位变成 1</div>
 
+<p>读图：左边主路径是业务程序该走的路——永远经 gpiod / 内核。右边旁路是课堂验证：你不改驱动源码，也能用只读 <code>devmem</code> 看见「那一位确实翻了」，从而相信主路径终点落在寄存器上。</p>
+
+<h3 id="s3-deep-devmem">机制落地：点灯前后各读一次</h3>
+<p>寄存器地址与「哪一位对应哪根脚」来自芯片手册与板卡文档，本课由<strong>当堂下发</strong>（具体 <code>0x……</code> 与 bit 编号以课堂材料为准，勿自行猜测）。你要做的是固定同一地址、同一位，做前后对比。</p>
+
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>用 gpiod 控灯</strong><br>跑 <code>blink</code> 或单独写一次高/低，确认 LED 有可见变化。</div></li>
-  <li><span class="step-num">2</span><div><strong>查寄存器地址与位</strong><br>按课程讲义/板卡手册给出的 GPIO 数据寄存器地址与 bit 位（当堂下发，勿猜）。</div></li>
-  <li><span class="step-num">3</span><div><strong>devmem 只读核对</strong><br>点灯前读一次，点灯后再读一次，对比同一 bit 是否翻转。命令形态示例：
-<pre><span class="p">$</span> sudo devmem 0xADDRESS 32
-<span class="c"># 输出一个 32 位值；对照手册看你的那一位</span></pre>
-  </div></li>
-  <li><span class="step-num">4</span><div><strong>对照说明</strong><br>口述：用户态 gpiod → 系统调用 → 内核 gpio 驱动里写寄存器的那一行 → 位翻转 → 引脚电平变。devmem 只是让你亲眼看见「那一位翻了」。</div></li>
+  <li><span class="step-num">1</span><div><strong>先用 gpiod 控灯</strong><br>跑 <code>blink</code>，或写一个只置一次高/低的小程序，确认 LED 有可见变化。没有可见变化时，先查接线与 line 编号，不要先怪寄存器。</div></li>
+  <li><span class="step-num">2</span><div><strong>拿到课堂给出的地址与 bit</strong><br>例如：某 GPIO 数据寄存器物理地址 <code>0xADDRESS</code>，你的 LED 对应第 N 位。把地址和 N 记在实验记录里。</div></li>
+  <li><span class="step-num">3</span><div><strong>点灯前只读一次</strong><br><code>sudo devmem 0xADDRESS 32</code>，得到一个 32 位十六进制值。按课堂说明标出第 N 位当前是 0 还是 1。</div></li>
+  <li><span class="step-num">4</span><div><strong>点灯后再读同一地址</strong><br>保持其他条件不变，只改变 gpiod 写出的电平，再跑一次 <code>devmem</code>。对比：第 N 位应随灯的亮灭翻转；其余位通常不变（若变了，说明读错地址或脚位映射理解有误）。</div></li>
 </ol>
 
+<pre><span class="c"># 地址与位以课堂下发为准；以下仅为命令形态</span>
+<span class="p">$</span> sudo devmem 0xADDRESS 32
+<span class="c"># 例如输出：0x00000000  → 记下第 N 位</span>
+
+<span class="c"># 用 gpiod 把灯打开（blink 或单独 set）</span>
+
+<span class="p">$</span> sudo devmem 0xADDRESS 32
+<span class="c"># 例如输出：0x00020000  → 同一第 N 位已翻</span></pre>
+
 <div class="warn">
-  <strong>纪律：</strong>本课对 MMIO 只做 <code>devmem</code> <strong>读</strong>。不要用它写寄存器控灯——会与内核驱动抢硬件，行为不可预期。
+  <strong>纪律：</strong>本课对 MMIO 只做 <code>devmem</code> <strong>读</strong>。不要用它写寄存器控灯——会与内核驱动抢硬件，行为不可预期，也可能把脚配成危险状态。
 </div>
 
+<h3 id="s3-deep-driver">对照：内核驱动里「写寄存器」的那一行</h3>
+<p>课堂会指出（或投影）内核 GPIO 驱动中与「写数据寄存器」对应的那一行——形态往往是「读出旧值 → 改某一 bit → 写回」或直接写置位/清零寄存器。你不需要在本课改内核；目的是把三件事对齐：</p>
+
+<div class="diagram">用户态一行：
+  gpiod_line_set_value(line, 1);
+
+内核驱动一行（课堂指出的写寄存器语句）：
+  写 MMIO → 改变第 N 位;
+
+你亲眼看见：
+  devmem 前后对比 → 第 N 位 0→1（或 1→0）
+  LED 同时亮灭变化</div>
+
+<p>读图：上层 API、驱动写语句、硬件位、肉眼可见的灯，四者应同时一致。若灯亮了但位没变，多半是地址/位号对错了脚；若位变了灯不亮，多半是接线或高低电平有效极性问题——回到 3.2 查硬件，而不是怀疑「Linux 魔法」。</p>
+<p>整条故事：<strong>gpiod 写灯 → 系统调用 → 内核 GPIO 驱动写 MMIO → 寄存器某一 bit 翻转 → 引脚电平变 → LED 亮；用 <code>devmem</code> 只读在点灯前后核对同一 bit，并对照课堂给出的驱动写寄存器那一行。</strong></p>
+
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能说清 DHT22 → 阈值 → 继电器 → 风扇的数据流 · 能用 blink + devmem 只读完成「位翻转」对照 · 带着概念进入本章实验组装完整闭环。
+  <strong>本节成果：</strong>能口述 GPIO / 继电器 / MMIO / <code>devmem</code> · 能用 blink + <code>devmem</code> 只读完成位翻转对照 · 带着概念进入本章实验组装完整温控闭环。
 </div>
 </section>
 

@@ -122,13 +122,17 @@
   <a href="#s2.3">2.3 指针、数组、结构体</a>
   <a class="sub" href="#s2.3-ptr">指针与数组</a>
   <a class="sub" href="#s2.3-struct">结构体</a>
-  <a class="sub" href="#s2.3-deep">深入理解</a>
+  <div class="divider"></div>
+  <a href="#s2-deep">深入理解</a>
+  <a class="sub" href="#s2-deep-build">编译与链接</a>
+  <a class="sub" href="#s2-deep-start">main 之前发生了什么</a>
+  <a class="sub" href="#s2-deep-verify">如何亲自验证</a>
 </nav>
 
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
   <h1>够用的 C 语言基础</h1>
-  <p class="subtitle">类型 · 控制流 · 函数与多文件<br>指针 · 数组 · 结构体 · 程序怎么被拼出来<br>— 2.1 / 2.2 / 2.3 —</p>
+  <p class="subtitle">类型 · 控制流 · 函数与多文件<br>指针 · 数组 · 结构体 · 程序怎么被拼出来<br>— 2.1 / 2.2 / 2.3 / 深入理解 —</p>
   <div class="meta">
     <span>跟做：hello + project-template</span>
     <span>本章实验：改代码闯关</span>
@@ -141,7 +145,7 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置：</strong>已完成第一章——主机能交叉编译、荔枝派 4A 能跑程序。本章目标是<strong>读懂、改得动</strong>本课后续的 C 代码。
+  <strong>前置：</strong>已完成第一章——主机能交叉编译、荔枝派 4A 能跑程序。本章目标是<strong>读懂、改得动</strong>本课后续的 C 代码。读完 2.1–2.3 后进入「深入理解」，弄清多个 <code>.c</code> 如何变成可执行文件、以及 <code>main</code> 之前发生了什么。
 </div>
 
 <h3>你需要准备什么</h3>
@@ -157,7 +161,7 @@
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>2.1 类型、变量、控制流</h4><p>用 int / float / 比较与循环写出「温度高了就开风扇」这类判断。</p></div>
   <div class="card"><h4>2.2 函数、头文件与多文件工程</h4><p>把逻辑拆成函数；用头文件声明接口；用 Makefile 编译多个 <code>.c</code>。</p></div>
-  <div class="card"><h4>2.3 指针、数组、结构体</h4><p>看懂参数里的指针、配置结构体和数组序列；弄清多个 .c 如何变成一个可执行文件。</p></div>
+  <div class="card"><h4>2.3 指针、数组、结构体</h4><p>看懂参数里的指针、配置结构体和数组序列。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
@@ -191,14 +195,15 @@
 </div>
 
 <h3 id="s2.1-control">控制流：判断与循环</h3>
-<p><strong>控制流</strong>决定程序「先做什么、再做什么」——分支、循环都算。温控的核心是比较与分支：</p>
+<p><strong>控制流</strong>决定程序「先做什么、再做什么」——分支、循环都算。</p>
+<p>温控里会用到<strong>滞回</strong>：开和关用两个不同的阈值，中间一段「保持上一状态」，避免温度在临界附近来回抖动时风扇狂开狂关。例如：温度<strong>严格大于</strong> 28 °C 才开风扇，<strong>严格小于</strong> 26 °C 才关；落在 26–28 之间则不改当前开关状态。</p>
 
 <pre><span class="k">if</span> (temp_c &gt; T_HIGH) {
     fan_on = 1;
 } <span class="k">else if</span> (temp_c &lt; T_LOW) {
     fan_on = 0;
 }
-<span class="c">/* 落在 [T_LOW, T_HIGH] 之间：保持现状（滞回，避免频繁抖动） */</span></pre>
+<span class="c">/* 落在 [T_LOW, T_HIGH] 之间：保持现状（滞回） */</span></pre>
 
 <p>周期性采样用循环：</p>
 
@@ -218,6 +223,8 @@
 
   陷阱：比较方向写反、用错阈值字段，都会让「该开不开 / 该关不关」。</div>
 
+<p>读图：从 25 升到 27 仍关着（还没越过 28）；到 29 才开；再降到 27 仍保持开（还没低于 26）；到 25 才关。中间「保持」就是滞回在起作用。</p>
+
 <h3>跟做与练习</h3>
 <ol>
   <li>写出：温度严格大于 28 开风扇，严格小于 26 关风扇，中间保持原状态。</li>
@@ -230,7 +237,7 @@
 <span class="p">$</span> ./hello</pre>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能读懂阈值判断与简单循环；知道滞回区间要「保持现状」。
+  <strong>本节成果：</strong>能读懂阈值判断与简单循环；能说明滞回为什么需要「保持现状」。
 </div>
 </section>
 
@@ -306,7 +313,7 @@ apply_fan_policy(t, &amp;fan_on);</pre>
 <!-- ═══════════════════════════════════════════ -->
 <section id="s2.3">
 <div class="section-num">2.3</div>
-<h2>指针、数组、结构体 · 深入理解：程序怎么被拼出来</h2>
+<h2>指针、数组、结构体</h2>
 
 <h3 id="s2.3-ptr">指针与数组</h3>
 <p><strong>指针</strong>是「存着某个对象地址」的变量。函数要<strong>写回</strong>调用方的变量时，就传指针：</p>
@@ -355,42 +362,82 @@ apply_fan_policy(t, &amp;fan_on);</pre>
   <li><span class="step-num">4</span><div><strong>对照行为表</strong> — 改一处、跑一次，输出是否逐步贴近验收表。</div></li>
 </ol>
 
-<h3 id="s2.3-deep">深入理解：多个 .c 如何编译链接成一个可执行文件；main 之前发生了什么</h3>
-<p>一个可执行文件不是「直接把几个 .c 粘在一起」，而是分两步：</p>
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体。下一节深入理解讲「多个 .c 如何变成一个可执行文件」。
+</div>
+</section>
 
-<div class="diagram">main.c ──► 编译 ──► main.o （目标文件：机器码 + 符号表）
-greet.c ──► 编译 ──► greet.o
+<!-- ═══════════════════════════════════════════ -->
+<section id="s2-deep">
+<div class="section-num">深入理解</div>
+<h2>从 .c 到可执行文件：编译、链接，以及 main 之前</h2>
+
+<h3 id="s2-deep-build">原因与机制：先编译成 .o，再链接成可执行文件</h3>
+<p>你在工程里写了多个 <code>.c</code> 文件，但最终只得到<strong>一个</strong>可执行文件。这不是「把几个源文件粘在一起」，而是分两步：<strong>编译</strong>和<strong>链接</strong>。</p>
+<p><strong>编译</strong>：把每个 <code>.c</code> 翻译成对应的目标文件 <code>.o</code>。目标文件里已经有该文件函数的机器码，以及一张「符号表」——记录「我提供了哪些函数名 / 我还引用了哪些别处定义的名字」。</p>
+<p><strong>链接</strong>：把多个 <code>.o</code> 以及 C 运行库拼成一个 ELF。链接器负责解析未定义符号：例如 <code>main.o</code> 调用了 <code>greet</code>，就要在 <code>greet.o</code> 里找到定义；找不到就报 <code>undefined reference</code>。</p>
+
+<div class="diagram">编译 + 链接
+
+  main.c  ──编译──►  main.o   （机器码 + 符号：提供 main，需要 greet）
+  greet.c ──编译──►  greet.o  （机器码 + 符号：提供 greet）
                          │
-                         ▼ 链接（ld / gcc 当链接器）
-              解析未定义符号：main.o 里调用了 greet
-              从 greet.o 找到 greet 的定义
-              再链上 C 运行库（printf 等）
+                         ▼ 链接（ld，或由 gcc 调用）
+              解析未定义符号：main 需要的 greet ← 来自 greet.o
+              再链上 C 运行库（printf、启动代码等）
                          │
                          ▼
-                    build/app（可执行文件）</div>
+                    build/app（可执行 ELF）</div>
 
-<p><strong>编译</strong>把每个 <code>.c</code> 变成 <code>.o</code>：里面有函数的机器码，以及「我提供了什么符号 / 我还缺什么符号」的清单。<strong>链接</strong>把多个 <code>.o</code> 和库拼成一个 ELF：缺的符号必须在别处找到，否则报 <code>undefined reference</code>。</p>
+<p>读图：左边两行是「各自独立编译」——改 <code>greet.c</code> 通常只需重编 <code>greet.o</code>，不必重编 <code>main.c</code>。中间箭头是链接：把分散的机器码和符号对上号。右边是最终产物。头文件 <code>.h</code> 不参加链接；它只在编译阶段把声明抄进需要它的 <code>.c</code>，让编译器知道「<code>greet</code> 长什么样」。</p>
 
-<p>那么你写的 <code>main</code> 是程序入口吗？对你写的代码来说是；对整进程来说，真正先跑的是 C 运行时启动代码（常叫 <code>_start</code>）：</p>
+<h3 id="s2-deep-start">继续：你写的 main 并不是进程真正的第一步</h3>
+<p>对你写的业务代码来说，入口是 <code>main</code>。对整个进程来说，操作系统加载 ELF 后，先跑的是 C 运行库提供的启动代码，常记作 <code>_start</code>。</p>
 
-<div class="diagram">操作系统加载 ELF
-    ↓
-_start（运行库提供）
-    ├─ 准备栈、参数 argc/argv、环境变量
-    ├─ 做全局/静态变量的初始化
-    ↓
-调用 main(argc, argv)
-    ↓
-main 返回后，运行库做收尾并退出进程</div>
+<div class="diagram">进程启动（简化）
 
-<p>所以：多个 <code>.c</code> → 各自编译成 <code>.o</code> → 链接成一个可执行文件；你敲 <code>./build/app</code> 时，先跑启动代码，再进 <code>main</code>。闯关工程 <code>fake-thermostat/</code> 就是这样拼出来的——改 <code>thermo.c</code> 再 <code>make</code>，链接器会把新的 <code>thermo.o</code> 和 <code>main.o</code> 重新拼在一起。</p>
+  操作系统加载 ELF
+        │
+        ▼
+  _start（运行库提供，不是你写的）
+        ├─ 准备栈（stack）：函数调用时放局部变量与返回地址
+        ├─ 准备参数：argc、argv（命令行参数个数与字符串数组）
+        ├─ 准备环境变量指针
+        ├─ 做全局 / 静态变量的初始化（含构造相关工作）
+        │
+        ▼
+  调用 main(argc, argv)
+        │
+        ▼
+  main 返回后，运行库做收尾（如冲刷缓冲）并退出进程</div>
+
+<p>读图：栈让函数调用有地方放临时数据；<code>argc</code> / <code>argv</code> 让 <code>main</code> 能读到你在命令行敲的参数；全局初始化保证你在 <code>main</code> 里读到的全局变量已经是源码里写好的初值。然后才进入你熟悉的 <code>main</code>。所以「程序从 main 开始」是应用层说法；完整链条是 <strong>加载 → <code>_start</code> → 栈与参数与全局初始化 → <code>main</code></strong>。</p>
+
+<h3 id="s2-deep-verify">学生如何亲自验证</h3>
+<p>用 <code>project-template</code> 走一遍，把抽象步骤变成终端证据：</p>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>看中间产物</strong><br>在 <code>project-template</code> 里 <code>make CROSS_COMPILE=</code>，然后列出 <code>build/</code>：应能看到 <code>.o</code> 与最终 <code>app</code>。用 <code>file build/*.o build/app</code> 确认目标文件与可执行文件的角色不同。</div></li>
+  <li><span class="step-num">2</span><div><strong>制造链接错误</strong><br>临时把 <code>greet.c</code> 里的函数名改错再 <code>make</code>，应看到 <code>undefined reference to greet</code>——这就是「编译过了、链接对不上」。</div></li>
+  <li><span class="step-num">3</span><div><strong>确认入口不是只有 main</strong><br>对可执行文件跑 <code>nm build/app | grep -E '_start|main'</code>（若本机有 <code>nm</code>）：通常能同时看到 <code>main</code> 与启动相关符号。不必背所有符号名，目的是意识到 ELF 里不止你写的函数。</div></li>
+  <li><span class="step-num">4</span><div><strong>对照实验工程</strong><br>闯关工程 <code>fake-thermostat/</code> 同样是多 <code>.c</code> → 多 <code>.o</code> → 一个可执行文件。改 <code>thermo.c</code> 再 <code>make</code>，链接器会把新的 <code>thermo.o</code> 和 <code>main.o</code> 重新拼在一起。</div></li>
+</ol>
+
+<pre><span class="p">$</span> cd chapters/ch02/code/project-template
+<span class="p">$</span> make CROSS_COMPILE=
+<span class="p">$</span> ls build/
+<span class="p">$</span> file build/*.o build/app
+<span class="p">$</span> nm build/app | grep -E '_start|main' || true
+<span class="p">$</span> ./build/app</pre>
+
+<p>整条故事：<strong><code>.c</code> → 编译 → <code>.o</code> → 链接 → 可执行文件；运行时先 <code>_start</code>（栈、argv、全局初始化），再进 <code>main</code>。</strong> 读懂这条链，后面改温控逻辑时就知道「改哪个文件、为什么重新 make 就够了」。</p>
 
 <div class="info">
   <strong>下一步：</strong>打开 <code>lab.html</code>，进入 <code>chapters/ch02/code/fake-thermostat/</code> 改代码闯关。软件输入、无真 DHT——专注把逻辑改对。
 </div>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体；能口述「编译 → 链接 → _start → main」这条链。
+  <strong>本节成果：</strong>能口述「编译 → 链接 → <code>_start</code> → <code>main</code>」；能用 <code>file</code> / 链接错误 / <code>nm</code> 做最小验证。
 </div>
 </section>
 

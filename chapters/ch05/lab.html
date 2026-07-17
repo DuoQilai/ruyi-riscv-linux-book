@@ -49,6 +49,7 @@
   }
   .toc h4 { font-size: 14px; color: var(--accent); margin-bottom: 16px; }
   .toc a { display: block; padding: 5px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
   body { padding-left: 220px; }
   @media print { body { padding-left: 0; } .toc { display: none; } }
 </style>
@@ -58,6 +59,7 @@
 <nav class="toc">
   <h4>本章实验</h4>
   <a href="#intro">说明</a>
+  <div class="divider"></div>
   <a href="#steps">步骤</a>
   <a href="#accept">验收</a>
 </nav>
@@ -72,17 +74,17 @@
 
 <section id="intro">
 <h2>说明</h2>
-<p>讲义已覆盖 Broker / 主题 / 发布订阅、下行控灯与 tcpdump 分层。本实验在荔枝派 4A 上完成可演示闭环：</p>
+<p>讲义已覆盖 <strong>Broker</strong>（消息中转站）、主题、发布/订阅、下行控灯，以及用 tcpdump 看「MQTT 装在 TCP 里、TCP 装在 IP 里」的分层。本实验在荔枝派 4A 上完成可演示闭环：</p>
 <ul>
-  <li>订阅 <code>course/led/cmd</code>，用 <code>on</code>/<code>off</code> 驱动外接 LED；</li>
-  <li>状态变化后 publish 到 <code>course/led/status</code>；</li>
-  <li>按讲义步骤抓一条 publish，能指出 MQTT 在 TCP/IP 之上。</li>
+  <li>板端程序订阅命令主题 <code>course/led/cmd</code>，收到载荷 <code>on</code> / <code>off</code> 后驱动外接 LED；</li>
+  <li>灯态变化后，向状态主题 <code>course/led/status</code> 发布当前状态；</li>
+  <li>按固定步骤抓一条 publish，能指出 MQTT 运行在 TCP 端口 1883 之上。</li>
 </ul>
 <div class="info">
-  <strong>前置：</strong>讲义 5.1–5.3；Mosquitto（或课堂 Broker）可达；外接 LED 接线与 <code>LED_LINE</code> 一致。<strong>工程：</strong><code>chapters/ch05/code/mqtt-led/</code>。
+  <strong>前置：</strong>已读讲义 5.1–5.3；Mosquitto（或课堂统一 Broker）在局域网可达；外接 LED 接线与源码宏 <code>LED_LINE</code> 一致。<strong>工程目录：</strong><code>chapters/ch05/code/mqtt-led/</code>（源码 <code>main.c</code>，说明见 <code>README.md</code>）。板端需已安装/可用 libmosquitto 与 libgpiod（按课堂环境配置）。
 </div>
 <div class="warn">
-  <strong>你要补全：</strong>订阅回调里的点灯逻辑；<code>publish_status</code> 桩。连接与循环骨架已给出。
+  <strong>你要补全：</strong>消息回调 <code>on_message</code> 里的点灯逻辑；以及 <code>publish_status</code> 函数桩。连接 Broker、订阅命令主题、以及 <code>mosquitto_loop_forever</code> 循环骨架已给出，不要推倒重写。
 </div>
 </section>
 
@@ -90,41 +92,79 @@
 <h2>步骤</h2>
 
 <h3>1. 配置宏</h3>
-<p>编辑 <code>main.c</code>：<code>BROKER_HOST</code>（主机局域网 IP，勿用板端 127.0.0.1）、<code>TOPIC_CMD</code> / <code>TOPIC_STATUS</code>、<code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>。</p>
+<p>编辑 <code>chapters/ch05/code/mqtt-led/main.c</code> 顶部宏：</p>
+<ul>
+  <li><code>BROKER_HOST</code>：填 Broker 的<strong>局域网 IP</strong>（主机跑 Mosquitto 时，用主机在局域网中的地址）。不要写成板端的 <code>127.0.0.1</code>——那只指向板子自己，连不到主机上的 Broker。</li>
+  <li><code>BROKER_PORT</code>：默认 <code>1883</code>（MQTT 明文常用端口）。</li>
+  <li><code>TOPIC_CMD</code> / <code>TOPIC_STATUS</code>：默认 <code>course/led/cmd</code> 与 <code>course/led/status</code>；若课堂统一改了主题，以板书为准并保持发布端与订阅端一致。</li>
+  <li><code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>：与外接 LED 接线表一致。</li>
+</ul>
+<p><strong>本步成功判据：</strong>宏已按课堂环境改好；你能说出 Broker IP 与两个主题名。</p>
 
-<h3>2. 补全下行与上行</h3>
+<h3>2. 补全下行控灯与上行状态发布</h3>
+<p>术语提醒：<strong>下行</strong>指从手机/主机发命令到板子控硬件；<strong>上行</strong>指板子把当前状态发回 Broker，供别人订阅。</p>
 <ol>
-  <li>在消息回调中：payload 为 <code>on</code>/<code>off</code> 时设置 GPIO，并调用 <code>publish_status</code>。</li>
-  <li>实现 <code>publish_status</code>：向状态主题发布当前灯态字符串。</li>
-  <li>未知 payload 打印 <code>[ERR]</code>，不改电平。</li>
+  <li>
+    <strong>在 <code>on_message</code> 中处理命令载荷</strong><br>
+    脚手架已把 payload 拷进字符串 <code>buf</code>。你要做：若精确等于 <code>on</code>，调用已有 <code>led_set(1)</code>，再调用 <code>publish_status("on")</code>（或与你约定一致的状态字符串）；若等于 <code>off</code>，则 <code>led_set(0)</code> 并 <code>publish_status("off")</code>。<br>
+    其他任意字符串：打印 <code>[ERR]</code>，<strong>不改</strong> GPIO 电平。<br>
+    <strong>成功样子：</strong>主机 pub <code>on</code> 后板端日志有收包记录，外接 LED 亮；pub <code>off</code> 后灯灭。
+  </li>
+  <li>
+    <strong>实现 <code>publish_status</code></strong><br>
+    用 <code>mosquitto_publish</code> 向 <code>TOPIC_STATUS</code> 发布当前灯态字符串。成功打 <code>[INFO]</code>，失败打 <code>[ERR]</code>（可参考 mosquitto 返回值与 <code>mosquitto_strerror</code>）。<br>
+    <strong>成功样子：</strong>另一台机器上 <code>mosquitto_sub -t course/led/status -v</code> 能看到与灯态一致的 payload。
+  </li>
 </ol>
 
-<h3>3. 编译部署</h3>
+<h3>3. 交叉编译并部署</h3>
 <pre><span class="p">$</span> cd chapters/ch05/code/mqtt-led
 <span class="p">$</span> make clean && make
 <span class="p">$</span> file mqtt-led
+<span class="c"># 应为 RISC-V ELF</span>
 <span class="p">$</span> scp mqtt-led user@board-ip:~/
 <span class="p">$</span> ssh user@board-ip './mqtt-led'</pre>
+<p>启动后应看到正在连接 Broker、连接成功、以及已订阅命令主题的日志。若连接失败，先检查 <code>BROKER_HOST</code>、防火墙是否放行 1883、板子与主机是否同一网段。</p>
 
-<h3>4. 联调（固定顺序）</h3>
+<h3>4. 联调（固定顺序，全部要做）</h3>
 <ol>
-  <li>主机：<code>mosquitto_sub -h BROKER_IP -t 'course/led/status' -v</code></li>
-  <li>主机：<code>mosquitto_pub -h BROKER_IP -t 'course/led/cmd' -m on</code> → 灯亮，订阅端见到状态。</li>
-  <li>再发 <code>off</code> → 灯灭，状态同步。</li>
-  <li>手机 MQTT App 连同一 Broker，重复 on/off 一次。</li>
-  <li>按讲义 5.3 用 <code>tcpdump -i any -nn -A port 1883 -c 20</code> 抓一次发布，保存输出。</li>
+  <li>
+    在主机开一个订阅窗口，盯住状态主题：
+<pre><span class="p">$</span> mosquitto_sub -h BROKER_IP -t 'course/led/status' -v</pre>
+  </li>
+  <li>
+    再开一个窗口发下行命令：
+<pre><span class="p">$</span> mosquitto_pub -h BROKER_IP -t 'course/led/cmd' -m on</pre>
+    期望：外接 LED 亮；订阅窗口出现状态 payload（如 <code>on</code>）。
+  </li>
+  <li>再发 <code>-m off</code>：灯灭，状态同步为 off。</li>
+  <li>用手机 MQTT 客户端连<strong>同一 Broker</strong>，对同一命令主题再发一次 on/off，确认与主机 pub 等价（灯有动作）。</li>
+  <li>
+    <strong>抓包（必做）：</strong>在主机或板端（以讲义 5.3 与课堂约定为准，通常在能看到板↔Broker 流量的那一侧）执行：
+<pre><span class="p">$</span> sudo tcpdump -i any -nn -A port 1883 -c 20</pre>
+    然后触发一次 publish（例如再 pub <code>on</code>，或让板端上报状态）。
+    <div class="info">
+      <strong>你应当在 tcpdump 输出里看到什么：</strong>
+      <ul>
+        <li>过滤条件 <code>port 1883</code> 命中的包（MQTT 默认明文端口）；</li>
+        <li>用 <code>-nn</code> 看到的 IP 地址与端口，对应「这是 TCP 连接上的流量」；</li>
+        <li>用 <code>-A</code> 打印的 ASCII 区，有时能瞥到主题名或 <code>on</code>/<code>off</code> 一类载荷片段。</li>
+      </ul>
+      分层心智（口述即可）：应用层是 MQTT 的 publish 内容 → 装在传输层 TCP（端口 1883）里 → 再装在网络层 IP 里发出去。tcpdump 让你亲眼看到端口与载荷痕迹，而不是只相信库函数返回成功。把含 1883 的片段保存下来作为验收证据。
+    </div>
+  </li>
 </ol>
 </section>
 
 <section id="accept">
 <h2>验收</h2>
 <table>
-  <tr><th>项</th><th>通过条件</th></tr>
-  <tr><td>编译</td><td>交叉编译成功，<code>file</code> 为 RISC-V</td></tr>
-  <tr><td>下行</td><td>pub <code>on</code>/<code>off</code> 外接 LED 亮灭正确</td></tr>
-  <tr><td>上行</td><td>状态主题订阅端能看到对应 payload</td></tr>
-  <tr><td>手机联调</td><td>App 发命令灯有动作（与主机 pub 等价）</td></tr>
-  <tr><td>抓包</td><td>保存含 1883 的 tcpdump 片段，能口述 MQTT→TCP→IP</td></tr>
+  <tr><th>项</th><th>通过条件</th><th>□</th></tr>
+  <tr><td>编译</td><td>交叉编译成功，<code>file</code> 为 RISC-V</td><td></td></tr>
+  <tr><td>下行</td><td>pub <code>on</code>/<code>off</code> 外接 LED 亮灭正确</td><td></td></tr>
+  <tr><td>上行</td><td>状态主题订阅端能看到对应 payload</td><td></td></tr>
+  <tr><td>手机联调</td><td>App 发命令灯有动作（与主机 pub 等价）</td><td></td></tr>
+  <tr><td>抓包</td><td>保存含 1883 的 tcpdump 片段；能口述 MQTT→TCP→IP 分层</td><td></td></tr>
 </table>
 
 <div class="info">

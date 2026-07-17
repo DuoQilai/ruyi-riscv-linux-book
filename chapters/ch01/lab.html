@@ -88,54 +88,81 @@
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
   <h1>本章实验 · 上板通道验收</h1>
-  <p class="meta">接讲义 1.1 / 1.2 / 1.3 · CoreMark 交叉编译 SCP 上板跑分</p>
+  <p class="meta">接讲义 1.1 / 1.2 / 1.3 · CoreMark 交叉编译、SCP 上板、跑分与通道自证</p>
 </header>
 
 <section id="intro">
 <h2>说明</h2>
-<p>先按 <code>lecture.html</code> 完成 1.1 → 1.2 → 1.3，再回到本页做整合验收。安装 ruyi、烧录、SSH/SCP、Makefile、CoreMark 交叉编译的完整命令以讲义为准；本页写整合步骤与必须留下的证据。</p>
+<p>本章实验不是再讲一遍安装，而是把讲义 1.1（工具链）、1.2（烧录与登录）、1.3（交叉编译 CoreMark）串成一次<strong>可复查的通道验收</strong>：你必须证明「主机编出的 RISC-V 程序，能完整传到荔枝派 4A 上并跑出分数」。</p>
+<p>安装 ruyi、烧录系统镜像、配置 SSH/SCP、Makefile 与 CoreMark 源码编译的完整命令，以 <code>lecture.html</code> 为准。本页只写整合步骤、成功判据，以及必须留下的证据。</p>
 <div class="info">
-  <strong>硬性目标：</strong>交叉编译 CoreMark → SCP 上传到荔枝派 4A → 跑出分数并记录；同时自证 SSH、<code>uname</code>、工具链三元组。烧录用讲义 1.2 的手工流程完成。
+  <strong>硬性目标：</strong>在主机上交叉编译出 CoreMark 可执行文件 → 用 SCP 上传到荔枝派 4A → 在板端跑出分数并写入记录表；同时留下 SSH 登录、<code>uname -m</code>、工具链三元组三份自证输出。烧录请按讲义 1.2 的手工流程完成。
 </div>
 </section>
 
 <section id="prep">
 <h2>前提自检</h2>
-<p>缺哪一项，先回对应讲义小节补齐，再继续。</p>
+<p>下表每一项都必须先满足。缺哪一项，就回到对应讲义小节补齐，再继续本章步骤。不要跳过自检直接上板。</p>
 <table>
-  <tr><th>前提</th><th>对应讲义</th><th>□</th></tr>
-  <tr><td>ruyi 与交叉工具链已安装，<code>-dumpmachine</code> 可用</td><td>1.1</td><td></td></tr>
-  <tr><td>荔枝派 4A 已烧录并可启动</td><td>1.2</td><td></td></tr>
-  <tr><td>串口或 SSH 至少一种可登录板端</td><td>1.2</td><td></td></tr>
-  <tr><td>主机已交叉编译出 RISC-V 的 CoreMark，<code>file</code> 确认架构</td><td>1.3</td><td></td></tr>
+  <tr><th>前提</th><th>你怎么确认「已经具备」</th><th>对应讲义</th><th>□</th></tr>
+  <tr>
+    <td>ruyi 与交叉工具链已安装</td>
+    <td>主机执行 <code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code>，输出为 <code>riscv64-unknown-linux-gnu</code></td>
+    <td>1.1</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>荔枝派 4A 已烧录并可启动</td>
+    <td>上电后串口或屏上能看到 Linux 启动过程，最终出现登录提示</td>
+    <td>1.2</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>串口或 SSH 至少一种可登录板端</td>
+    <td>能进入板端 shell，并执行简单命令（如 <code>hostname</code>）</td>
+    <td>1.2</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>主机已交叉编译出 RISC-V 的 CoreMark</td>
+    <td>对产物执行 <code>file</code>，输出含 <code>RISC-V</code> 或 <code>UCB RISC-V</code> 字样（不是 x86-64）</td>
+    <td>1.3</td>
+    <td></td>
+  </tr>
 </table>
 </section>
 
 <section id="steps">
 <h2>步骤</h2>
 
-<h3>1. CoreMark 上板跑分</h3>
-<ol>
-  <li>在主机确认产物为 RISC-V ELF：
+<h3>1. 在主机确认 CoreMark 产物架构</h3>
+<p><strong>交叉编译</strong>的意思是：在 x86 主机上，用面向 RISC-V 的编译器，生成只能在 RISC-V 板上运行的可执行文件。若误用本机 <code>gcc</code>，板端会报 <code>Exec format error</code>（可执行文件格式不对）。</p>
+<p>在主机 CoreMark 构建目录中执行（产物文件名以你讲义 1.3 实际生成为准，常见为 <code>coremark.exe</code>）：</p>
 <pre><span class="p">$</span> file coremark.exe
-<span class="c"># 应含 UCB RISC-V / RISC-V 字样</span>
-<span class="p">$</span> sha256sum coremark.exe</pre>
-  </li>
-  <li>SCP 上传到荔枝派 4A（用户名与 IP 换成你的板子）：
+<span class="c"># 成功：一行摘要里应出现 UCB RISC-V 或 RISC-V 字样</span>
+<span class="c"># 失败：若出现 x86-64 / Intel 80386，说明没用交叉工具链，回讲义 1.3 重编</span>
+
+<span class="p">$</span> sha256sum coremark.exe
+<span class="c"># 记下这串哈希，稍后与板端对照，证明 SCP 传的是同一份文件</span></pre>
+<p><strong>本步成功判据：</strong><code>file</code> 确认是 RISC-V ELF；你已把 <code>sha256sum</code> 结果抄进下方「必记字段」表。</p>
+
+<h3>2. SCP 上传到荔枝派 4A 并核对完整性</h3>
+<p><strong>SCP</strong>（Secure Copy）通过 SSH 通道把文件拷到远端。把下面命令里的 <code>user</code> 和 <code>board-ip</code> 换成你板子的真实用户名与局域网 IP（可先在板端执行 <code>ip a</code> 查看）。</p>
 <pre><span class="p">$</span> scp coremark.exe user@board-ip:/tmp/
 <span class="p">$</span> ssh user@board-ip 'sha256sum /tmp/coremark.exe'
-<span class="c"># 与主机 sha256sum 对照，两端一致</span></pre>
-  </li>
-  <li>SSH 登录板端，赋予执行权限并运行：
+<span class="c"># 板端打印的哈希必须与主机上一步完全一致</span></pre>
+<p><strong>本步成功判据：</strong>两端哈希一致；板端路径 <code>/tmp/coremark.exe</code>（或你实际选用的路径）可被列出。</p>
+
+<h3>3. 板端赋予执行权限并跑分</h3>
 <pre><span class="p">$</span> ssh user@board-ip
+<span class="c"># 已进入板端 shell 后：</span>
 <span class="p">$</span> chmod +x /tmp/coremark.exe
 <span class="p">$</span> /tmp/coremark.exe</pre>
-  </li>
-  <li>从输出中抄录 CoreMark 分数（常见字段为 iterations/sec 或 CoreMark 总分）。完整终端输出另存为日志文件。</li>
-</ol>
+<p>程序会运行一段时间后打印结果。从输出中抄录 CoreMark 分数——常见字段为 <code>Iterations/Sec</code>，或汇总行里的 CoreMark 总分。把<strong>完整终端输出</strong>另存为日志文件（截图或重定向均可），不要只记一个数字。</p>
+<p><strong>本步成功判据：</strong>程序正常结束并打出分数；你已把分数与运行日期写入「必记字段」表，并保存完整日志。</p>
 
 <div class="warn">
-  <strong>排错：</strong>板端报 Exec format error 时，回主机用 <code>file</code> 核对是否误用了主机 GCC；再核对 SCP 路径与权限。命令细节见讲义 1.2 / 1.3。
+  <strong>排错：</strong>板端报 <code>Exec format error</code> 时，先回主机用 <code>file</code> 核对是否误用了主机 GCC；再核对 SCP 目标路径与 <code>chmod +x</code> 是否做过。若 SSH 连不上，回讲义 1.2 检查网线、IP 与防火墙。命令细节以讲义 1.2 / 1.3 为准。
 </div>
 
 <h3>必记字段</h3>
@@ -143,26 +170,27 @@
   <tr><th>字段</th><th>你的记录</th></tr>
   <tr><td>产物文件名</td><td></td></tr>
   <tr><td>主机 <code>file</code> 一行摘要</td><td></td></tr>
-  <tr><td>板端路径</td><td></td></tr>
-  <tr><td>CoreMark 分数</td><td></td></tr>
+  <tr><td>主机与板端 <code>sha256sum</code>（须一致）</td><td></td></tr>
+  <tr><td>板端可执行文件路径</td><td></td></tr>
+  <tr><td>CoreMark 分数（含字段名）</td><td></td></tr>
   <tr><td>运行日期 / 板卡型号</td><td></td></tr>
 </table>
 
-<h3>2. 通道与工具链自证</h3>
-<p>每条保留一行真实输出。</p>
-
-<pre><span class="c"># 板端：SSH 与架构</span>
+<h3>4. 通道与工具链自证</h3>
+<p>除跑分外，还要留下三份「通道还活着」的证据。每条保留一行真实输出（可粘贴到实验报告）。</p>
+<pre><span class="c"># 板端：证明 SSH 能登录，且架构是 riscv64</span>
 <span class="p">$</span> ssh user@board-ip 'hostname; uname -m'
-<span class="c"># uname -m 应为 riscv64</span>
+<span class="c"># uname -m 的期望输出：riscv64</span>
 
-<span class="c"># 主机：工具链三元组</span>
+<span class="c"># 主机：证明交叉工具链三元组正确</span>
 <span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
-<span class="c"># 应为 riscv64-unknown-linux-gnu</span></pre>
+<span class="c"># 期望输出：riscv64-unknown-linux-gnu</span></pre>
+<p><strong>本步成功判据：</strong>三行输出均已保存；<code>uname -m</code> 为 <code>riscv64</code>；<code>-dumpmachine</code> 为 <code>riscv64-unknown-linux-gnu</code>。</p>
 </section>
 
 <section id="accept">
 <h2>验收表</h2>
-<p>全部勾选且材料齐全，即完成本章实验。</p>
+<p>全部勾选且材料齐全，即完成本章实验。缺证据视为未通过。</p>
 <table>
   <tr><th>验收项</th><th>证据</th><th>□</th></tr>
   <tr><td>烧录后荔枝派 4A 可启动</td><td>启动日志或串口/SSH 登录截图</td><td></td></tr>
@@ -170,12 +198,12 @@
   <tr><td><code>uname -m</code> 为 <code>riscv64</code></td><td>同上日志中的架构行</td><td></td></tr>
   <tr><td>工具链三元组正确</td><td><code>-dumpmachine</code> → <code>riscv64-unknown-linux-gnu</code></td><td></td></tr>
   <tr><td>CoreMark 交叉编译产物为 RISC-V</td><td>主机 <code>file</code> 输出</td><td></td></tr>
-  <tr><td>SCP 上板成功</td><td>两端 <code>sha256sum</code> 一致</td><td></td></tr>
+  <tr><td>SCP 上板成功且文件完整</td><td>两端 <code>sha256sum</code> 一致</td><td></td></tr>
   <tr><td>板端跑出 CoreMark 分数并已记录</td><td>完整运行日志 + 「必记字段」表</td><td></td></tr>
 </table>
 
 <div class="info">
-  <strong>完成标志：</strong>验收表全部勾选；CoreMark 分数与三项自证输出已归档。进入下一章。
+  <strong>完成标志：</strong>验收表全部勾选；CoreMark 分数与三项自证输出已归档。通道打通后进入第二章。
 </div>
 </section>
 

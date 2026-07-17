@@ -49,6 +49,7 @@
   }
   .toc h4 { font-size: 14px; color: var(--accent); margin-bottom: 16px; }
   .toc a { display: block; padding: 5px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
   body { padding-left: 220px; }
   @media print { body { padding-left: 0; } .toc { display: none; } }
 </style>
@@ -58,6 +59,7 @@
 <nav class="toc">
   <h4>本章实验</h4>
   <a href="#intro">说明</a>
+  <div class="divider"></div>
   <a href="#steps">步骤</a>
   <a href="#accept">验收</a>
 </nav>
@@ -67,21 +69,21 @@
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第四章</div>
   <h1>本章实验 · 串口命令温控</h1>
-  <p class="meta">自动控温同时敲 status / set · 接讲义 4.1–4.3</p>
+  <p class="meta">自动控温同时敲 status / set · 接讲义 4.1–4.3 · chapters/ch04/code/serial-thermo/</p>
 </header>
 
 <section id="intro">
 <h2>说明</h2>
-<p>讲义已讲清串口字节进出、命令表与 <code>select</code>。本实验在脚手架上补全两块，并在荔枝派 4A 上演示：</p>
+<p>讲义 4.1–4.3 已讲清串口字节进出、<strong>命令表</strong>（把字符串命令名映射到处理函数）以及用 <strong>select</strong> 同时等待「该采样了」和「你打了一行字」。本实验在现成脚手架上补全命令处理与主循环，并在荔枝派 4A 上演示两件事同时成立：</p>
 <ul>
-  <li>自动按阈值开/关风扇（与第三章闭环一致）；</li>
-  <li>同时在终端敲 <code>status</code> / <code>set</code>，立刻得到回复，且新阈值马上参与控温。</li>
+  <li>程序自动按阈值开/关风扇（与第三章温控闭环同一套阈值思路）；</li>
+  <li>你在终端敲 <code>status</code> / <code>set</code>，立刻得到回复，且新阈值马上参与后续控温。</li>
 </ul>
 <div class="info">
-  <strong>前置：</strong>讲义 4.1–4.3；第三章温控接线可用；RuyiSDK 交叉工具链与 SSH 可用。<strong>工程：</strong><code>chapters/ch04/code/serial-thermo/</code>。
+  <strong>前置：</strong>已读讲义 4.1–4.3；第三章温控相关接线仍可用（DHT22 / 继电器 / 风扇）；RuyiSDK 交叉工具链与 SSH 可用。<strong>工程目录：</strong><code>chapters/ch04/code/serial-thermo/</code>（源码 <code>main.c</code>，说明见同目录 <code>README.md</code>）。
 </div>
 <div class="warn">
-  <strong>你要改的代码：</strong><code>main.c</code> 里标了 TODO 的命令处理函数、命令表注册，以及 <code>select</code> 主循环。不要删掉已有的采样与风扇逻辑。
+  <strong>你要改的代码：</strong>只动 <code>main.c</code> 里标了 TODO 的三处——<code>cmd_status</code> / <code>cmd_set</code>、命令表 <code>g_cmds[]</code>、以及 <code>main_loop</code> 里的 <code>select</code> 主循环。不要删掉已有的采样（<code>sample_and_control</code>）与风扇逻辑。默认 <code>USE_STDIO=1</code> 时，命令从 SSH 终端的标准输入读入，不必另接物理串口线即可联调。
 </div>
 </section>
 
@@ -89,51 +91,86 @@
 <h2>步骤</h2>
 
 <h3>1. 核对宏与接线</h3>
-<p>打开 <code>main.c</code>，确认 <code>GPIO_CHIP_PATH</code>、<code>DHT_LINE</code>、<code>FAN_LINE</code> 与课程接线表一致。默认可先用 <code>SIMULATE_SENSOR=1</code> 演示阈值与命令，再改 <code>0</code> 接真 DHT22。</p>
+<p>打开 <code>chapters/ch04/code/serial-thermo/main.c</code>，确认 <code>GPIO_CHIP_PATH</code>、<code>DHT_LINE</code>、<code>FAN_LINE</code> 与课程接线表一致。首次演示建议保持 <code>SIMULATE_SENSOR=1</code>（假温度缓缓升降，方便验证阈值与命令）；接好真 DHT22 后再改为 <code>0</code> 并重新编译。</p>
+<p><strong>本步成功判据：</strong>宏与接线一致；你知道当前是模拟传感器还是真传感器。</p>
 
-<h3>2. 补全命令表</h3>
+<h3>2. 补全命令处理与命令表</h3>
+<p><strong>命令表</strong>是一张「名字 → 函数指针」的列表：收到一行输入后，先拆出命令名，再在表里查找并调用对应函数。脚手架已提供 <code>dispatch_command</code> 查找逻辑，你只需实现函数并把条目挂进表。</p>
 <ol>
-  <li>实现 <code>cmd_status</code>：打印温度、湿度、风扇状态、<code>t_high</code>/<code>t_low</code>。</li>
-  <li>实现 <code>cmd_set</code>：解析 <code>set high &lt;数&gt;</code> / <code>set low &lt;数&gt;</code>；校验 <code>low &lt; high</code> 后写入状态结构。</li>
-  <li>把两条命令挂进 <code>g_cmds[]</code>，用查找函数按名字分发。</li>
+  <li>
+    <strong>实现 <code>cmd_status</code></strong><br>
+    从全局状态 <code>g_st</code> 打印：最近温度、湿度、风扇 ON/OFF、<code>t_high</code> / <code>t_low</code>。<br>
+    若尚未采到有效样本（例如 <code>has_sample</code> 为 0），也要明确打印「尚无采样」之类提示，而不是输出未初始化的垃圾数。<br>
+    <strong>成功样子：</strong>敲一行 <code>status</code> 后，终端立刻出现完整状态行，进程不退出。
+  </li>
+  <li>
+    <strong>实现 <code>cmd_set</code></strong><br>
+    解析参数形态：<code>high &lt;数&gt;</code> 或 <code>low &lt;数&gt;</code>（用户敲的整行是 <code>set high 30</code> / <code>set low 25</code>；表项名字是 <code>set</code>，后面的词作为 <code>args</code> 传入）。<br>
+    写入 <code>g_st</code> 前必须校验 <code>low &lt; high</code>；不满足时打印 <code>[ERR]</code> 并拒绝修改，进程不退出。<br>
+    <strong>成功样子：</strong><code>set high 30</code> 后再 <code>status</code>，上限已变为 30；故意设成 <code>low &gt;= high</code> 时被拒绝并有错误提示。
+  </li>
+  <li>
+    <strong>注册到 <code>g_cmds[]</code></strong><br>
+    取消注释或填写 <code>{ "status", cmd_status }</code> 与 <code>{ "set", cmd_set }</code>，表尾保持 <code>{ NULL, NULL }</code> 结束。<br>
+    <strong>成功样子：</strong>未知命令（如 <code>foo</code>）打印 <code>[ERR] unknown command</code>；已知命令能进到你的处理函数。
+  </li>
 </ol>
 
-<h3>3. 补全 select 主循环</h3>
+<h3>3. 补全 select 主循环（说清要做什么）</h3>
+<p>脚手架里的占位循环是「先采样，再 <code>usleep</code>」：睡眠期间你敲的字不会被处理，两边不能同时工作。你要改成用 <strong>select</strong> 一次等待两件事：</p>
 <ol>
-  <li>用 <code>select</code> 同时等命令输入描述符与采样超时。</li>
-  <li>超时 → 调用已有采样与阈值控温。</li>
-  <li>可读 → 读一行、查表执行；未知命令打印简短错误，进程不退出。</li>
+  <li>
+    <strong>准备等待集合与超时</strong><br>
+    把命令输入描述符 <code>cmd_fd</code>（<code>USE_STDIO=1</code> 时即标准输入）放进 <code>fd_set</code>；把超时设为距离下一次采样还剩多少时间（初始可设为 <code>SAMPLE_MS</code> 毫秒）。
+  </li>
+  <li>
+    <strong>调用 <code>select</code></strong><br>
+    返回值含义（本课用法）：
+    <ul>
+      <li>返回 0：超时到期 → 调用已有的 <code>sample_and_control()</code> 做一轮采样与阈值控温，然后重新装满等待时间；</li>
+      <li>返回正数：有描述符可读 → 调用已有的 <code>read_command_line()</code> 读一行并查表执行；处理完后应<strong>扣减已经过去的时间</strong>，避免采样间隔越来越稀；</li>
+      <li>返回负数：打印错误并退出循环（或按讲义约定处理）。</li>
+    </ul>
+  </li>
+  <li>
+    <strong>未知命令与错误</strong><br>
+    查不到的命令打印简短 <code>[ERR]</code>，进程继续跑，不要 <code>exit</code>。
+  </li>
 </ol>
+<p><strong>本步成功判据：</strong>控温日志仍按约 <code>SAMPLE_MS</code> 周期出现；你在两次采样之间敲 <code>status</code>，回复几乎立即出现，而不是等到下一次睡眠结束才回。</p>
 
-<h3>4. 编译部署</h3>
+<h3>4. 交叉编译并部署到板端</h3>
 <pre><span class="p">$</span> cd chapters/ch04/code/serial-thermo
 <span class="p">$</span> make clean && make
 <span class="p">$</span> file serial-thermo
+<span class="c"># 应为 RISC-V ELF</span>
 <span class="p">$</span> scp serial-thermo user@board-ip:~/
 <span class="p">$</span> ssh user@board-ip './serial-thermo'</pre>
+<p>启动后应看到阈值、采样周期，以及「可输入 status / set …」一类提示（具体文案以你程序为准）。</p>
 
-<h3>5. 联调顺序（固定）</h3>
+<h3>5. 联调顺序（固定，全部要做）</h3>
 <ol>
-  <li>启动后观察周期日志（温度 / 风扇）。</li>
-  <li>敲 <code>status</code>，核对打印字段完整。</li>
-  <li>敲 <code>set high 30</code>，再 <code>status</code> 确认上限已变。</li>
-  <li>在模拟升温或捂热过程中，确认风扇仍按阈值动作，且打字回复不卡住采样。</li>
+  <li>启动后观察至少两轮周期日志（温度 / 风扇 / 阈值），确认自动采样在跑。</li>
+  <li>敲 <code>status</code>，核对打印字段完整（温度、湿度、风扇、上下限）。</li>
+  <li>敲 <code>set high 30</code>，再敲 <code>status</code>，确认上限已变。</li>
+  <li>故意敲非法组合（例如把 low 设得不低于 high），确认被拒绝并有 <code>[ERR]</code>。</li>
+  <li>在模拟升温或捂热过程中，确认风扇仍按阈值动作；同时连续敲几次 <code>status</code>，确认打字回复不卡住采样（日志不会长时间停更）。</li>
 </ol>
 </section>
 
 <section id="accept">
 <h2>验收</h2>
 <table>
-  <tr><th>项</th><th>通过条件</th></tr>
-  <tr><td>编译</td><td>主机交叉编译成功，<code>file</code> 为 RISC-V</td></tr>
-  <tr><td>自动控温</td><td>超温开 / 降温关可演示（模拟或真传感器）</td></tr>
-  <tr><td>status</td><td>敲 <code>status</code> 立即打印温度、风扇、阈值</td></tr>
-  <tr><td>set</td><td><code>set high</code> / <code>set low</code> 生效；非法高低关系被拒绝并提示</td></tr>
-  <tr><td>同时工作</td><td>控温进行中敲命令仍立刻回复，采样不长期停更</td></tr>
+  <tr><th>项</th><th>通过条件</th><th>□</th></tr>
+  <tr><td>编译</td><td>主机交叉编译成功，<code>file</code> 为 RISC-V</td><td></td></tr>
+  <tr><td>自动控温</td><td>超温开 / 降温关可演示（模拟或真传感器）</td><td></td></tr>
+  <tr><td>status</td><td>敲 <code>status</code> 立即打印温度、风扇、阈值（尚无采样时有明确说明）</td><td></td></tr>
+  <tr><td>set</td><td><code>set high</code> / <code>set low</code> 生效；非法高低关系被拒绝并提示</td><td></td></tr>
+  <tr><td>同时工作</td><td>控温进行中敲命令仍立刻回复，采样不长期停更</td><td></td></tr>
 </table>
 
 <div class="info">
-  <strong>完成标志：</strong>上表五项均可演示；能口头说明 <code>select</code> 超时与可读分别触发哪条路径。
+  <strong>完成标志：</strong>上表五项均可演示；能口头说明 <code>select</code> 超时与「可读」分别触发哪条路径（采样 vs 读命令）。
 </div>
 </section>
 

@@ -111,19 +111,19 @@
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
   <a href="#s5.1">5.1 Broker、主题、发布订阅</a>
-  <a class="sub" href="#s5.1-objectives">学习目标</a>
   <a class="sub" href="#s5.1-model">发布订阅模型</a>
   <a class="sub" href="#s5.1-mosquitto">启动 Mosquitto</a>
   <div class="divider"></div>
   <a href="#s5.2">5.2 下行：订阅命令控 LED</a>
-  <a class="sub" href="#s5.2-objectives">学习目标</a>
   <a class="sub" href="#s5.2-down">主题与 payload</a>
   <a class="sub" href="#s5.2-steps">跟做下行</a>
   <div class="divider"></div>
-  <a href="#s5.3">5.3 上行 publish · 深入理解</a>
-  <a class="sub" href="#s5.3-objectives">学习目标</a>
+  <a href="#s5.3">5.3 上行：发布状态</a>
   <a class="sub" href="#s5.3-up">发布状态</a>
-  <a class="sub" href="#s5.3-tcpdump">深入理解：tcpdump</a>
+  <div class="divider"></div>
+  <a href="#s5-deep">深入理解</a>
+  <a class="sub" href="#s5-deep-stack">一次 publish 怎么下网</a>
+  <a class="sub" href="#s5-deep-tcpdump">标注一份 tcpdump</a>
 </nav>
 
 <div class="hero">
@@ -156,14 +156,14 @@
 
 <h3>本章你会学到什么</h3>
 
-<div class="card-grid" style="margin-bottom:0;">
-  <div class="card"><h4>5.1 Broker、主题、发布订阅</h4><p><strong>Broker</strong>=中转站（常用 Mosquitto）；<strong>主题</strong>=频道名。理解谁发、谁收、谁转发。</p></div>
-  <div class="card"><h4>5.2 下行：订阅命令驱动外接 LED</h4><p>板子订阅命令主题；收到 <code>on</code>/<code>off</code> 点灯或灭灯。</p></div>
-  <div class="card"><h4>5.3 上行 publish · 深入理解：tcpdump</h4><p>板子发布 LED 状态；用 <strong>tcpdump</strong>（抓网络包的工具）看 MQTT→TCP→IP 包装。</p></div>
+<div class="card-grid card-grid-3" style="margin-bottom:0;">
+  <div class="card"><h4>5.1 Broker、主题、发布订阅</h4><p><strong>Broker</strong> 是中转站；<strong>主题</strong> 是频道名。理解谁发、谁收、谁转发。</p></div>
+  <div class="card"><h4>5.2 下行：订阅命令控 LED</h4><p>板子订阅命令主题；收到 <code>on</code>/<code>off</code> 点灯或灭灯。</p></div>
+  <div class="card"><h4>5.3 上行：发布状态</h4><p>板子把 LED 状态 publish 出去，订阅端能看见。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>讲义 vs 实验：</strong>讲义建立模型并跟做 Broker 与抓包步骤。本章实验完成「手机/客户端控灯 + 状态可见 + 抓一条 publish」。
+  <strong>讲义 vs 实验：</strong>讲义建立模型并跟做 Broker 与抓包步骤；「深入理解」把一次 publish 从应用到以太网拆开看。本章实验完成「手机/客户端控灯 + 状态可见 + 抓一条 publish」。
 </div>
 </section>
 
@@ -172,16 +172,8 @@
 <div class="section-num">5.1</div>
 <h2>Broker、主题、发布订阅</h2>
 
-<h3 id="s5.1-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>三角色</h4><p>发布者、订阅者、Broker</p></div>
-  <div class="card"><h4>主题</h4><p>用频道名隔离不同业务</p></div>
-  <div class="card"><h4>payload</h4><p>消息正文，如 <code>on</code> / <code>off</code></p></div>
-  <div class="card"><h4>本课拓扑</h4><p>手机下行控灯；板子上行报状态</p></div>
-</div>
-
 <h3 id="s5.1-model">发布订阅模型</h3>
-<p><strong>MQTT</strong> 不强调「你直接连我」，而强调「大家都连中转站」。<strong>Broker</strong>（中转站，本课常用软件 <strong>Mosquitto</strong>）按<strong>主题</strong>（频道名，如 <code>course/led/cmd</code>）把消息转给订阅了该主题的客户端。</p>
+<p><strong>MQTT</strong> 不强调「你直接连我」，而强调「大家都连中转站」。<strong>Broker</strong> 是消息中转站（本课常用软件 <strong>Mosquitto</strong>）：客户端连上它，按<strong>主题</strong>（频道名，如 <code>course/led/cmd</code>）转发消息。<strong>publish</strong>（发布）是往某个主题发一条消息；订阅是盯着某个主题收消息。</p>
 
 <div class="diagram">手机 App（发布者）
     │  publish  course/led/cmd  payload="on"
@@ -199,9 +191,9 @@ Broker（Mosquitto）
   <tr><th>术语</th><th>一句话</th><th>本课例子</th></tr>
   <tr><td>Broker</td><td>消息中转站</td><td>主机或板上的 Mosquitto，默认端口 1883</td></tr>
   <tr><td>主题</td><td>频道名</td><td><code>course/led/cmd</code>、<code>course/led/status</code></td></tr>
-  <tr><td>发布</td><td>往某主题发一条</td><td>手机发 <code>on</code></td></tr>
+  <tr><td>publish（发布）</td><td>往某主题发一条</td><td>手机发 <code>on</code>；板子报状态</td></tr>
   <tr><td>订阅</td><td>盯着某主题收</td><td>板子订 <code>course/led/cmd</code></td></tr>
-  <tr><td>payload</td><td>消息正文</td><td><code>on</code> / <code>off</code> / JSON 状态</td></tr>
+  <tr><td>payload</td><td>消息正文</td><td><code>on</code> / <code>off</code></td></tr>
 </table>
 
 <h3 id="s5.1-mosquitto">启动 Mosquitto（主机示例）</h3>
@@ -218,12 +210,6 @@ Broker（Mosquitto）
   <strong>网络：</strong>板子连接 Broker 时用<strong>主机局域网 IP</strong>，不要写 <code>127.0.0.1</code>（那是板子自己）。防火墙需放行 1883。课堂若提供统一 Broker 地址，以当堂板书为准。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>若两个客户端都订同一主题，一方发布后，另一方会怎样？</li>
-  <li>为何控灯命令与状态上报要用两个不同主题？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能画发布—Broker—订阅三角 · Mosquitto 能收发一条测试消息 · 记下 Broker IP 与主题名。
 </div>
@@ -233,14 +219,6 @@ Broker（Mosquitto）
 <section id="s5.2">
 <div class="section-num">5.2</div>
 <h2>下行：订阅命令驱动外接 LED</h2>
-
-<h3 id="s5.2-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>连接</h4><p>板端程序连上 Broker</p></div>
-  <div class="card"><h4>订阅</h4><p>订命令主题，回调里处理 payload</p></div>
-  <div class="card"><h4>GPIO</h4><p>复用 gpiod 驱动外接 LED</p></div>
-  <div class="card"><h4>约定</h4><p><code>on</code>/<code>off</code>（大小写按脚手架约定）</p></div>
-</div>
 
 <h3 id="s5.2-down">主题与 payload 约定</h3>
 <p>本课默认：</p>
@@ -255,12 +233,12 @@ Broker（Mosquitto）
         ▼
    Broker
         ▼
-mqtt-led 订阅回调
-        │  strcmp(payload, "on")
+mqtt-led 收到消息
+        │  比较 payload 是否为 on / off
         ▼
-gpiod_line_set_value(LED, 1)</div>
+gpiod_line_set_value(LED, 1 或 0)</div>
 
-<p>脚手架 <code>chapters/ch05/code/mqtt-led/</code> 用 <strong>libmosquitto</strong>（Mosquitto 的 C 客户端库）提供连接与回调骨架；<code>on_message</code> 里点灯逻辑标为 TODO。交叉编译需链接 <code>-lmosquitto -lgpiod</code>；板端安装对应运行库。</p>
+<p>脚手架 <code>chapters/ch05/code/mqtt-led/</code> 用 <strong>libmosquitto</strong>（Mosquitto 的 C 客户端库）提供连接与消息处理骨架；点灯逻辑标为 TODO。交叉编译需链接 <code>-lmosquitto -lgpiod</code>；板端安装对应运行库。</p>
 
 <h3 id="s5.2-steps">跟做步骤</h3>
 <ol class="steps">
@@ -283,12 +261,6 @@ gpiod_line_set_value(LED, 1)</div>
   <strong>权限：</strong>GPIO 打不开时按第三章方式授权。MQTT 连不上时先在板端 <code>ping BROKER_IP</code>，再查端口与主题拼写。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>订阅回调在哪个线程上下文执行？若回调里做很重的事，可能有什么风险？（概念即可）</li>
-  <li>payload 写成 <code>ON</code>（大写）时，你的程序应如何处理？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>板子能订阅并响应 on/off · 外接 LED 可见动作 · 日志有收到主题与 payload 的记录。
 </div>
@@ -297,18 +269,10 @@ gpiod_line_set_value(LED, 1)</div>
 <!-- ═══ 5.3 ═══ -->
 <section id="s5.3">
 <div class="section-num">5.3</div>
-<h2>上行 publish 状态 · 深入理解：tcpdump 抓一条 publish 看分层</h2>
+<h2>上行：发布状态</h2>
 
-<h3 id="s5.3-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>上行</h4><p>灯状态变化后 publish 到状态主题</p></div>
-  <div class="card"><h4>联调</h4><p>手机/mosquitto_sub 能看见状态</p></div>
-  <div class="card"><h4>抓包</h4><p>用 tcpdump 抓住一次发布</p></div>
-  <div class="card"><h4>深入理解</h4><p>指出 MQTT 落在应用层，下面是 TCP、IP</p></div>
-</div>
-
-<h3 id="s5.3-up">发布状态</h3>
-<p>灯亮灭改变后，板子向 <code>course/led/status</code> 发布当前状态（如 <code>on</code>/<code>off</code>）。订阅该主题的客户端即可确认「命令是否落地」。脚手架中 <code>publish_status()</code> 为桩，实验里接到点灯成功之后调用。</p>
+<h3 id="s5.3-up">灯态变化后 publish</h3>
+<p>灯亮灭改变后，板子向 <code>course/led/status</code> <strong>publish</strong>（发布）当前状态（如 <code>on</code>/<code>off</code>）。订阅该主题的客户端即可确认「命令是否落地」。脚手架中 <code>publish_status()</code> 为桩，实验里接到点灯成功之后调用。</p>
 
 <pre><span class="c">/* 伪代码 */</span>
 led_set(1);
@@ -317,42 +281,82 @@ publish_status("on");   <span class="c">/* TODO: mosquitto_publish(...) */</span
 <pre><span class="c"># 主机订阅状态</span>
 <span class="p">$</span> mosquitto_sub -h BROKER_IP -t 'course/led/status' -v</pre>
 
-<h3 id="s5.3-tcpdump">深入理解：tcpdump 抓一条 publish</h3>
-<p><strong>tcpdump</strong> 在网卡上抓原始包。MQTT 默认跑在 <strong>TCP</strong> 1883 端口上；再往下是 <strong>IP</strong>，再往下是以太网帧。你要亲眼看到：应用里的一次 <code>publish</code>，在网上是「被一层层包起来」发出去的。</p>
+<p>应用层「发布成功」只说明库函数返回了；它在网上究竟怎么走，要靠下一节用抓包把分层拆开看。</p>
 
-<div class="diagram">应用：mosquitto_publish(topic, payload)
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>状态主题可被订阅端看见 · 知道上行与下行用不同主题 · 带着「一次 publish 在网上长什么样」进入深入理解。
+</div>
+</section>
+
+<!-- ═══ 深入理解 ═══ -->
+<section id="s5-deep">
+<div class="section-num">深入理解</div>
+<h2>一次 publish：从应用到以太网，再用 tcpdump 看见</h2>
+
+<p>先把本节会反复用到的词说清楚：<strong>Broker</strong> 是 MQTT 中转站；<strong>主题</strong> 是频道名；<strong>publish</strong> 是往某主题发一条消息；<strong>tcpdump</strong> 是在网卡上抓原始包、打印协议字段的工具。默认明文 MQTT 跑在 <strong>TCP</strong> 端口 <strong>1883</strong> 上。</p>
+
+<h3 id="s5-deep-stack">原因 → 机制：一次 publish 怎么一层层包下去</h3>
+
+<p>你在板子上调用 <code>mosquitto_publish(...)</code> 时，应用只交出「主题 + payload」。库和内核再把它装进 MQTT 报文，塞进 TCP 连接（目的端口 1883），外面再套 IP，最外层是以太网帧（有线）或 Wi-Fi 帧。Broker 拆包后按主题转发给订阅者。</p>
+
+<div class="diagram">应用：mosquitto_publish(topic="course/led/status", payload="on")
         │
-        ▼  MQTT 报文（应用层）
-        ▼  TCP 段（传输层，端口 1883）
-        ▼  IP 包（网络层）
-        ▼  以太网帧（链路层）
+        ▼  MQTT 报文（应用层：主题名、payload、报文类型等）
+        ▼  TCP 段（传输层：源端口、目的端口 1883、序号、载荷）
+        ▼  IP 包（网络层：源 IP、目的 IP）
+        ▼  以太网帧（链路层：MAC、类型、帧载荷）
         │
-     网线 / Wi-Fi</div>
+     网线 / Wi-Fi  ──►  Broker 主机</div>
+
+<p>图说明：每一层只多加自己的头尾，并不改写你业务上的「on」含义；tcpdump 能同时看到这些头，所以能对照「应用里的一次 publish」和「网上的一串包」。</p>
+
+<h3 id="s5-deep-tcpdump">验证：标注一份看起来像 tcpdump 的输出</h3>
+
+<p>在 Broker 主机或板端（以能看到板→Broker 流量为准）开抓包，再触发一次上行 publish：</p>
+
+<pre><span class="p">$</span> sudo tcpdump -i any -nn -A port 1883 -c 20</pre>
+
+<p>下面是一份<strong>示意输出</strong>（字段形状与真实 tcpdump 相近；IP/时间以你机器为准）。右侧注释标出各层：</p>
+
+<pre class="diagram">14:02:11.123456 IP 192.168.1.50.45678 &gt; 192.168.1.10.1883: Flags [P.], ...
+                 │                │              │     │
+                 │                │              │     └─ 目的端口 1883 → TCP 上的 MQTT
+                 │                │              └─ Broker 主机 IP（网络层目的）
+                 │                └─ 板子临时源端口（传输层）
+                 └─ 板子 IP（网络层源）
+
+    …… TCP 载荷的一部分（-A 以 ASCII 显示）……
+    ....course/led/status..on....
+         │                 │
+         │                 └─ payload 痕迹（明文 MQTT 时可能露出）
+         └─ 主题名痕迹（应用层 MQTT）</pre>
+
+<p>逐项对照：</p>
+<table>
+  <tr><th>你在输出里看到的</th><th>对应哪一层</th><th>说明什么</th></tr>
+  <tr><td><code>IP a.b.c.d &gt; e.f.g.h</code></td><td>网络层（IP）</td><td>谁发给谁：板子 → Broker</td></tr>
+  <tr><td><code>.1883</code>（目的端口）</td><td>传输层（TCP）</td><td>这是默认 MQTT 端口，不是随便一个网页流量</td></tr>
+  <tr><td><code>Flags [P.]</code> 等</td><td>TCP</td><td>段在推送数据；握手/ACK 包也可能出现在同一段抓取里</td></tr>
+  <tr><td>ASCII 里的主题 / <code>on</code></td><td>应用层（MQTT）</td><td>业务内容落在 TCP 载荷里；明文时可见片段</td></tr>
+  <tr><td>（有线抓包时的 MAC 行，若开了相应选项）</td><td>链路层（以太网）</td><td>帧在本地网段上传递；本课用 <code>-nn -A port 1883</code> 已够指认 TCP/IP/MQTT</td></tr>
+</table>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>在 Broker 主机或板端开抓包</strong>（二选一，以能看到板→Broker 流量为准）：
-<pre>sudo tcpdump -i any -nn -A port 1883 -c 20</pre>
-  </div></li>
-  <li><span class="step-num">2</span><div><strong>触发一次上行</strong><br>让板子 publish 状态（或主机 <code>mosquitto_pub</code> 发一条）。</div></li>
-  <li><span class="step-num">3</span><div><strong>在输出里找</strong><br>1883 端口、ASCII 区可能露出主题名或 payload 片段；结合 <code>-nn</code> 看到的 IP:端口，对照「MQTT 在 TCP 之上」。</div></li>
+  <li><span class="step-num">1</span><div><strong>开抓包</strong><br><code>sudo tcpdump -i any -nn -A port 1883 -c 20</code></div></li>
+  <li><span class="step-num">2</span><div><strong>触发一次上行</strong><br>让板子 publish 状态（或主机 <code>mosquitto_pub</code> 发一条到状态主题）。</div></li>
+  <li><span class="step-num">3</span><div><strong>对照上表</strong><br>指出 1883、双方 IP，以及 ASCII 区是否露出主题或 payload；用自己的话复述「MQTT → TCP → IP → 出网卡」。</div></li>
 </ol>
 
 <div class="info">
-  <strong>深入理解验收话术：</strong>「这次 publish 的内容在 MQTT 应用层；它装在 TCP（1883）里，再装在 IP 里发出去。tcpdump 让我看见端口与载荷痕迹，而不是只相信库函数返回成功。」
+  <strong>验收话术：</strong>「这次 publish 的内容在 MQTT 应用层；它装在 TCP（1883）里，再装在 IP 里，最后由以太网/Wi-Fi 发出。tcpdump 让我看见端口与载荷痕迹，而不是只相信库函数返回成功。」
 </div>
 
 <div class="warn">
-  抓包需相应权限；只抓本课端口、限制 <code>-c</code> 包数。不要在公共网络长时间无过滤抓包。
+  抓包需相应权限；只抓本课端口、限制 <code>-c</code> 包数。不要在公共网络长时间无过滤抓包。若走 TLS（常 8883），ASCII 一般看不到明文 payload——那是加密层在起作用，分层关系不变。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>若 tcpdump 看不到 1883 流量，按「进程没发 / 走了别的网卡 / 权限不足」列三条检查。</li>
-  <li>加密 MQTT（TLS，常 8883）时，ASCII 还能直接看到 payload 吗？说明原因。</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>状态主题可被订阅端看见 · 保存一段含 1883 的 tcpdump 输出 · 能口述 MQTT/TCP/IP 三层关系。
+  <strong>本节成果：</strong>能画出 publish 的分层包装 · 能标注一份 tcpdump 片段里各字段属于哪一层 · 保存一段含 1883 的输出进入本章实验验收。
 </div>
 </section>
 

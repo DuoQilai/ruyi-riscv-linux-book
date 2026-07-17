@@ -69,78 +69,85 @@
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
   <h1>本章实验 · 改代码闯关</h1>
-  <p class="meta">对应讲义 2.1–2.3 · chapters/ch02/code/fake-thermostat/</p>
+  <p class="meta">对应讲义 2.1–2.3 · 脚手架 chapters/ch02/code/fake-thermostat/</p>
 </header>
 
 <section id="intro">
 <h2>说明</h2>
-<p>讲义已覆盖类型、函数、指针与结构体。本实验给你一份<strong>故意有坑</strong>的假温控脚手架，按关卡改到行为符合下表。</p>
+<p>讲义 2.1–2.3 已覆盖类型、函数、指针与结构体。本实验给你一份<strong>故意埋了 bug 的假温控程序</strong>：没有真实 DHT 传感器，温度来自内置数组或标准输入。你的任务是按关卡表把逻辑改对，直到输出与期望序列完全一致。</p>
 <ul>
-  <li>脚手架：<code>chapters/ch02/code/fake-thermostat/</code></li>
-  <li>输入：内置温度数组，或从 stdin 读浮点数；无真实 DHT 传感器</li>
-  <li>输出：每轮打印温度与风扇 ON/OFF 决策</li>
+  <li><strong>脚手架目录：</strong><code>chapters/ch02/code/fake-thermostat/</code>（半成品主要在 <code>src/thermo.c</code>，接口声明在 <code>include/thermo.h</code>，驱动入口在 <code>src/main.c</code>）</li>
+  <li><strong>输入：</strong>默认跑内置温度序列；也可用 <code>--stdin</code> 从标准输入读浮点数（负数表示本轮「读失败」）</li>
+  <li><strong>输出：</strong>每一步打印温度与风扇 ON/OFF 决策；读失败时应打印 <code>READ_FAIL</code> 并保持上一风扇状态</li>
 </ul>
 <div class="info">
-  <strong>前置：</strong>读完讲义 2.1–2.3；本机有 <code>gcc</code> 与 <code>make</code>。本章用本机编译，专注改 C 逻辑。
+  <strong>前置：</strong>已读完讲义 2.1–2.3；本机装有 <code>gcc</code> 与 <code>make</code>。本章用<strong>本机编译</strong>，专注改 C 逻辑，不必上板。
 </div>
 <div class="warn">
-  不要一上来大段重写。<strong>先跑通半成品，对照关卡表，一次改一类 bug</strong>。细节见脚手架内 <code>README.md</code>。
+  不要一上来大段重写。<strong>先跑通半成品，对照关卡表，一次只改一类 bug</strong>。脚手架内 <code>README.md</code> 与源码注释里的 L1–L4 标记可对照使用。
 </div>
 </section>
 
 <section id="steps">
 <h2>步骤</h2>
 
-<h3>1. 构建与首次运行</h3>
+<h3>1. 构建与首次运行（先看坏现象）</h3>
+<p>进入脚手架目录，编译并运行。半成品会编译通过，但决策是错的——这是故意的，用来对照关卡表找坑。</p>
 <pre><span class="p">$</span> cd chapters/ch02/code/fake-thermostat
 <span class="p">$</span> make
 <span class="p">$</span> ./build/fake-thermo
+<span class="c"># 观察内置序列下的温度与风扇输出，记下「哪里不对」</span>
 
-<span class="c"># 从 stdin 喂温度（一行一个浮点数；负数表示读失败）</span>
+<span class="c"># 也可用 stdin 喂温度（一行一个浮点数；负数表示读失败）</span>
 <span class="p">$</span> printf '25\n27\n29\n27\n24\n-1\n' | ./build/fake-thermo --stdin</pre>
+<p><strong>本步成功判据：</strong>能编译出 <code>./build/fake-thermo</code> 并看到每步输出；你已确认当前行为与下方「修好后期望表」不一致（说明坑还在）。</p>
 
-<h3>2. 按关卡改代码</h3>
-<p>默认配置：<code>t_high = 28.0</code>，<code>t_low = 26.0</code>，滞回：高于上限开、低于下限关、中间保持。主要改 <code>src/thermo.c</code>。</p>
+<h3>2. 按关卡改代码（一次一类）</h3>
+<p><strong>滞回控温</strong>的含义：温度高于上限才开风扇，低于下限才关风扇；夹在中间时保持上一状态，避免在阈值附近频繁开关。本实验默认配置：<code>t_high = 28.0</code>，<code>t_low = 26.0</code>，初始风扇为 OFF。</p>
+<p>主要改 <code>src/thermo.c</code> 里的 <code>thermo_decide</code> 与 <code>thermo_read</code>。每修完一关，重新 <code>make</code> 再跑，对照现象是否消失。</p>
 
 <table>
-  <tr><th>关卡</th><th>现象（修好前）</th><th>你要改到</th><th>主要坑类型</th></tr>
+  <tr><th>关卡</th><th>修好前你会看到什么</th><th>你要改成什么（成功判据）</th><th>主要坑类型</th></tr>
   <tr>
     <td>L1</td>
-    <td>温度升高时风扇反而关，或该开不开</td>
-    <td>比较方向正确：<code>temp &gt; t_high</code> → ON；<code>temp &lt; t_low</code> → OFF</td>
+    <td>温度升高时风扇反而关，或该开不开、该关不关</td>
+    <td>比较方向正确：<code>temp &gt; t_high</code> → 风扇 ON；<code>temp &lt; t_low</code> → 风扇 OFF；中间保持</td>
     <td>错误比较</td>
   </tr>
   <tr>
     <td>L2</td>
-    <td>阈值「怎么改都不对劲」，行为像用错了字段</td>
-    <td>决策使用 <code>cfg-&gt;t_high</code> / <code>cfg-&gt;t_low</code>，不要误用 <code>period_ms</code></td>
+    <td>阈值「怎么改都不对劲」，行为像拿错了结构体里的另一个字段</td>
+    <td>决策只使用 <code>cfg-&gt;t_high</code> 与 <code>cfg-&gt;t_low</code>，不要误用 <code>period_ms</code>（采样周期毫秒数，不是温度阈值）</td>
     <td>结构体字段用错</td>
   </tr>
   <tr>
     <td>L3</td>
-    <td>传入空配置或空风扇指针时崩溃 / 未定义行为</td>
-    <td>指针为 <code>NULL</code> 时安全返回，不解引用</td>
+    <td>传入空配置指针或空风扇状态指针时崩溃，或出现未定义行为</td>
+    <td><code>thermo_decide</code> / <code>thermo_read</code> 在指针为 <code>NULL</code> 时安全返回，不解引用空指针</td>
     <td>指针使用</td>
   </tr>
   <tr>
     <td>L4</td>
-    <td>传感器读失败仍用垃圾温度做决策</td>
-    <td>读失败时打印错误并<strong>跳过</strong>本轮决策，保持上一风扇状态</td>
+    <td>传感器读失败时仍用垃圾温度做决策，或失败路径却返回「成功」</td>
+    <td><code>thermo_read</code> 失败时返回非 0 且不写输出；主循环侧打印错误并<strong>跳过</strong>本轮决策，保持上一风扇状态</td>
     <td>缺少错误分支</td>
   </tr>
 </table>
 
-<h3>3. 对照内置序列验收</h3>
-<p>修复全部后，默认内置序列的期望决策（初始风扇 OFF）：</p>
+<p>修 L3 时，可用讲义练习或在测试代码里对 <code>thermo_decide(NULL, …)</code> / <code>thermo_read(NULL)</code> 调用一次，确认进程不崩溃。修 L4 时，内置序列最后一步会注入「读失败」，输出应出现 <code>READ_FAIL</code>。</p>
+
+<h3>3. 对照内置序列做最终验收</h3>
+<p>四关都修好后，直接运行 <code>./build/fake-thermo</code>（默认内置序列）。期望决策如下（初始风扇 OFF）：</p>
 <table>
-  <tr><th>步</th><th>温度 °C</th><th>期望风扇</th></tr>
-  <tr><td>1</td><td>25.0</td><td>OFF</td></tr>
-  <tr><td>2</td><td>27.0</td><td>OFF（滞回保持）</td></tr>
-  <tr><td>3</td><td>29.0</td><td>ON</td></tr>
-  <tr><td>4</td><td>27.0</td><td>ON（滞回保持）</td></tr>
-  <tr><td>5</td><td>24.0</td><td>OFF</td></tr>
-  <tr><td>6</td><td>读失败（哨兵）</td><td>保持 OFF，并有错误日志（如 <code>READ_FAIL</code>）</td></tr>
+  <tr><th>步</th><th>温度 °C</th><th>期望风扇</th><th>说明</th></tr>
+  <tr><td>1</td><td>25.0</td><td>OFF</td><td>低于下限，保持关</td></tr>
+  <tr><td>2</td><td>27.0</td><td>OFF</td><td>落在滞回带中间，保持上一状态</td></tr>
+  <tr><td>3</td><td>29.0</td><td>ON</td><td>高于上限，打开</td></tr>
+  <tr><td>4</td><td>27.0</td><td>ON</td><td>仍在中间带，保持开</td></tr>
+  <tr><td>5</td><td>24.0</td><td>OFF</td><td>低于下限，关闭</td></tr>
+  <tr><td>6</td><td>读失败（哨兵）</td><td>保持 OFF</td><td>打印 <code>READ_FAIL</code>（或等价错误日志），不根据垃圾温度改风扇</td></tr>
 </table>
+<p><strong>本步成功判据：</strong>六步输出与上表一致；你能口头指出半成品里至少三类坑（比较、字段、指针、错误分支中任选）。</p>
 </section>
 
 <section id="accept">
@@ -148,10 +155,10 @@
 <table>
   <tr><th>验收项</th><th>证据</th><th>□</th></tr>
   <tr><td>L1 比较方向已修正</td><td>升温开、降温关，输出与序列表一致</td><td></td></tr>
-  <tr><td>L2 结构体字段使用正确</td><td>改 <code>t_high</code>/<code>t_low</code> 后行为随之变化</td><td></td></tr>
-  <tr><td>L3 空指针安全返回</td><td>传 NULL 不崩溃</td><td></td></tr>
-  <tr><td>L4 读失败跳过决策</td><td>有错误日志且风扇状态保持</td><td></td></tr>
-  <tr><td>内置序列跑通</td><td><code>./build/fake-thermo</code> 输出与期望表一致</td><td></td></tr>
+  <tr><td>L2 结构体字段使用正确</td><td>改 <code>t_high</code>/<code>t_low</code> 后行为随之变化；不再误用 <code>period_ms</code></td><td></td></tr>
+  <tr><td>L3 空指针安全返回</td><td>传 <code>NULL</code> 不崩溃</td><td></td></tr>
+  <tr><td>L4 读失败跳过决策</td><td>有 <code>READ_FAIL</code>（或等价）日志，且风扇状态保持</td><td></td></tr>
+  <tr><td>内置序列跑通</td><td><code>./build/fake-thermo</code> 输出与期望表六步一致</td><td></td></tr>
   <tr><td>能指出半成品里的坑</td><td>口头说明比较、字段、指针或错误分支中至少三类</td><td></td></tr>
 </table>
 

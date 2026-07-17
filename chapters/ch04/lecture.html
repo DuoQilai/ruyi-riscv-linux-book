@@ -111,19 +111,21 @@
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
   <a href="#s4.1">4.1 串口是聊天线</a>
-  <a class="sub" href="#s4.1-objectives">学习目标</a>
   <a class="sub" href="#s4.1-bytes">字节怎么进出</a>
   <a class="sub" href="#s4.1-stdio">用终端练读写</a>
   <div class="divider"></div>
-  <a href="#s4.2">4.2 读 DHT22 + 串口命令</a>
-  <a class="sub" href="#s4.2-objectives">学习目标</a>
+  <a href="#s4.2">4.2 读 DHT22 与串口命令</a>
   <a class="sub" href="#s4.2-cmd">命令表</a>
   <a class="sub" href="#s4.2-status">status / set</a>
   <div class="divider"></div>
   <a href="#s4.3">4.3 两边同时工作</a>
-  <a class="sub" href="#s4.3-objectives">学习目标</a>
-  <a class="sub" href="#s4.3-select">深入理解：select</a>
+  <a class="sub" href="#s4.3-problem">为何串成一条线不行</a>
   <a class="sub" href="#s4.3-steps">跟做骨架</a>
+  <div class="divider"></div>
+  <a href="#s4-deep">深入理解</a>
+  <a class="sub" href="#s4-deep-wrong">两种错误写法</a>
+  <a class="sub" href="#s4-deep-select">select 怎么等</a>
+  <a class="sub" href="#s4-deep-verify">怎么验收</a>
 </nav>
 
 <div class="hero">
@@ -156,14 +158,14 @@
 
 <h3>本章你会学到什么</h3>
 
-<div class="card-grid" style="margin-bottom:0;">
-  <div class="card"><h4>4.1 串口是聊天线：字节怎么进出</h4><p><strong>串口</strong>＝USB 线连上后的打字黑窗口。理解字节从键盘进程序、再打回终端。</p></div>
-  <div class="card"><h4>4.2 读 DHT22 + 串口命令 status / set</h4><p>用<strong>命令表</strong>（字符串对应处理函数）实现查状态、改阈值。</p></div>
-  <div class="card"><h4>4.3 两边同时工作 · 深入理解：select</h4><p>用 <code>select</code> 同时等「该采样了」和「你打了一行字」，两边都及时响应。</p></div>
+<div class="card-grid card-grid-3" style="margin-bottom:0;">
+  <div class="card"><h4>4.1 串口是聊天线</h4><p><strong>串口</strong>是按字节收发的双向通道。理解键盘字怎么进程序、回复怎么打回终端。</p></div>
+  <div class="card"><h4>4.2 读 DHT22 与串口命令</h4><p>用<strong>命令表</strong>（字符串对应处理函数）实现 <code>status</code> / <code>set</code>。</p></div>
+  <div class="card"><h4>4.3 两边同时工作</h4><p>主循环既要周期采样控风扇，又要及时响应你敲的命令行。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>讲义 vs 实验：</strong>讲义建立串口读写、命令表与 <code>select</code> 心智。本章实验在脚手架上补全命令与主循环，验收「自动控温 + 敲 status/set 同时工作」。
+  <strong>讲义 vs 实验：</strong>讲义建立串口读写、命令表与 <code>select</code> 心智；「深入理解」把错误写法与正确机制讲透。本章实验在脚手架上补全命令与主循环，验收「自动控温 + 敲 status/set 同时工作」。
 </div>
 </section>
 
@@ -172,35 +174,27 @@
 <div class="section-num">4.1</div>
 <h2>串口是聊天线：字节怎么进出</h2>
 
-<h3 id="s4.1-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>串口直觉</h4><p>把串口当成「打字进、回显出」的双向管道</p></div>
-  <div class="card"><h4>字节流</h4><p>一行命令就是一串字符，以换行结束</p></div>
-  <div class="card"><h4>读写 API</h4><p>用 <code>read</code> / <code>write</code>（或 stdin/stdout）收发</p></div>
-  <div class="card"><h4>与控制台关系</h4><p>SSH 终端也是同一套「读一行、写一行」逻辑</p></div>
-</div>
-
 <h3 id="s4.1-bytes">字节怎么进出</h3>
-<p><strong>串口</strong>（UART 接到电脑后，常表现为 USB 转串口工具里的黑窗口）按约定波特率逐字节收发。对本课程序来说：你敲的字变成字节流进入进程；程序 <code>write</code> 回去的字出现在同一窗口。</p>
+<p><strong>串口</strong>是一种按约定波特率、逐字节收发的双向通信通道。硬件上常叫 UART；接到电脑后，往往表现为 USB 转串口工具里的黑窗口，或系统里的设备节点 <code>/dev/tty*</code>。对本课程序来说：你敲的字变成字节流进入进程；程序 <code>write</code> / <code>printf</code> 回去的字出现在同一窗口。</p>
 
 <div class="diagram">你（键盘）
     │  敲 "status\n"
     ▼
 终端 / 串口工具  ──►  stdin 或 /dev/tty*
-    │  read()
+    │  read() / fgets()
     ▼
 你的 C 程序（解析命令、做事）
     │  write() / printf
     ▼
 同一窗口显示回复</div>
 
-<p>第一章用串口<strong>登录系统</strong>；本章用同一通道做<strong>应用层对话</strong>：程序读你的命令行，再打印状态。日常验收也可用 SSH 终端的 stdin/stdout——读写逻辑相同，脚手架默认 <code>USE_STDIO=1</code> 即走这条路。</p>
+<p>第一章用串口<strong>登录系统</strong>；本章用同一类通道做<strong>应用层对话</strong>：程序读你的命令行，再打印状态。日常验收也可用 SSH 终端的 stdin/stdout——读写逻辑相同，脚手架默认 <code>USE_STDIO=1</code> 即走这条路。</p>
 
 <table>
   <tr><th>说法</th><th>含义</th><th>本课怎么用</th></tr>
-  <tr><td>字节流</td><td>没有「消息边界」；你自己约定「一行一条命令」</td><td>读到 <code>\n</code> 再解析</td></tr>
-  <tr><td>阻塞读</td><td><code>read</code> 一直等到有数据才返回</td><td>4.1 可接受；4.3 要用 <code>select</code> 同时盯多路</td></tr>
-  <tr><td>回显</td><td>把收到的字再打回去，确认通路</td><td>第三章 uart-echo 已练过</td></tr>
+  <tr><td>字节流</td><td>没有天然的「消息边界」；你自己约定「一行一条命令」</td><td>读到 <code>\n</code> 再解析</td></tr>
+  <tr><td>阻塞读</td><td><code>read</code> / <code>fgets</code> 一直等到有数据才返回</td><td>4.1 练通路时可用；两边同时工作时要用 <code>select</code></td></tr>
+  <tr><td>回显</td><td>把收到的字再打回去，确认通路通畅</td><td>先确认「打字进、回复出」，再接命令表</td></tr>
 </table>
 
 <h3 id="s4.1-stdio">用终端练读写</h3>
@@ -216,12 +210,6 @@
   <strong>注意：</strong>真串口时 TX↔RX 交叉、GND 共地、波特率一致、电平 3.3 V。不要占用正在当系统控制台的那一路，除非课程接线表明确指定。
 </div>
 
-<h3>课堂练习</h3>
-<ol>
-  <li>用一句话说明：串口窗口里看到的文字，和程序里的 <code>char</code> 数组是什么关系？</li>
-  <li>若只 <code>read</code> 一个字节就解析命令，会出现什么问题？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能口述字节进出路径 · 能用 stdin 读一行命令 · 知道命令以换行分界。
 </div>
@@ -230,15 +218,9 @@
 <!-- ═══ 4.2 ═══ -->
 <section id="s4.2">
 <div class="section-num">4.2</div>
-<h2>读 DHT22 + 串口命令：status / set</h2>
+<h2>读 DHT22 与串口命令：status / set</h2>
 
-<h3 id="s4.2-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>复用传感执行</h4><p>继续用 DHT22 与风扇阈值逻辑</p></div>
-  <div class="card"><h4>命令表</h4><p>字符串 → 处理函数，便于扩展</p></div>
-  <div class="card"><h4>status</h4><p>打印温度、湿度、风扇、阈值</p></div>
-  <div class="card"><h4>set</h4><p>现场改 T_HIGH / T_LOW</p></div>
-</div>
+<p><strong>DHT22</strong> 是温湿度探头：一根数据线接 GPIO，按协议周期上报温度和湿度。第三章已用它做温控闭环；本章继续周期采样，并在串口侧增加查状态、改阈值的命令。</p>
 
 <h3 id="s4.2-cmd">命令表：字符串对应函数</h3>
 <p><strong>命令表</strong>是一张「名字 → 处理函数」的表。收到一行字后，先拆出命令名，再查表调用。比一长串 <code>if/else</code> 更清晰，后面加 <code>help</code> 也只多一行。</p>
@@ -274,17 +256,11 @@
   <tr><td><code>set low &lt;数&gt;</code></td><td><code>set low 25</code></td><td>改下限阈值；须保持 <code>low &lt; high</code></td></tr>
 </table>
 
-<p><strong>DHT22</strong> 仍按第三章方式周期采样；读失败打 <code>[ERR]</code>，程序继续跑。串口命令只改<strong>内存里的阈值变量</strong>，立刻影响下一轮决策，不必重启进程。</p>
+<p>DHT22 仍按第三章方式周期采样；读失败打 <code>[ERR]</code>，程序继续跑。串口命令只改<strong>内存里的阈值变量</strong>，立刻影响下一轮决策，不必重启进程。</p>
 
 <div class="info">
   <strong>脚手架位置：</strong><code>chapters/ch04/code/serial-thermo/main.c</code> 已提供采样、风扇与状态结构；<code>cmd_status</code> / <code>cmd_set</code> 与命令表查找标为 TODO，在实验中补全。
 </div>
-
-<h3>课堂练习</h3>
-<ol>
-  <li><code>set high 20</code> 且当前 <code>t_low=26</code> 时，程序应拒绝还是静默接受？写出你的校验规则。</li>
-  <li>为何用命令表而不是在 <code>main</code> 里写死两个 <code>strcmp</code>？</li>
-</ol>
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>说清命令表结构 · 能设计 status/set 语义 · 知道阈值改在内存、下一采样周期生效。
@@ -294,38 +270,88 @@
 <!-- ═══ 4.3 ═══ -->
 <section id="s4.3">
 <div class="section-num">4.3</div>
-<h2>两边同时工作 · 深入理解：select 同时等采样与串口输入</h2>
+<h2>两边同时工作</h2>
 
-<h3 id="s4.3-objectives">学习目标</h3>
-<div class="card-grid">
-  <div class="card"><h4>问题</h4><p>阻塞读串口时，采样会卡住；死循环 sleep 时，打字要等</p></div>
-  <div class="card"><h4>select</h4><p>一次等待「多个文件描述符 / 超时」</p></div>
-  <div class="card"><h4>双源主循环</h4><p>超时到 → 采样控温；stdin 可读 → 解析命令</p></div>
-  <div class="card"><h4>深入理解</h4><p>亲手看见两边都能及时响应</p></div>
+<h3 id="s4.3-problem">为何「先读串口再采样」串成一条线不行</h3>
+<p>本章程序要同时完成两件事：约每 2 秒读一次 DHT22 并按阈值开/关风扇；随时响应你敲的 <code>status</code> / <code>set</code>。若主循环写成「等你打完字再采样」或「固定 sleep 再瞥一眼串口」，总有一边会挨饿。下一节「深入理解」把两种错误写法、正确的 <code>select</code> 机制，以及如何验收讲完整。</p>
+
+<div class="diagram">目标行为（一句话）：
+
+  风扇仍按温度自动开/关
+       同时
+  敲 status / set 立刻有回复</div>
+
+<h3 id="s4.3-steps">跟做：骨架编译部署</h3>
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>打开脚手架</strong><br><code>chapters/ch04/code/serial-thermo/</code>，确认 GPIO 宏与第三章接线表一致。</div></li>
+  <li><span class="step-num">2</span><div><strong>交叉编译</strong><br><code>make</code> → <code>file serial-thermo</code> 应为 RISC-V ELF（RuyiSDK 工具链）。</div></li>
+  <li><span class="step-num">3</span><div><strong>上板</strong><br><code>scp</code> 后 SSH 运行；默认 STDIO 模式，在终端敲命令（实验中补全后生效）。</div></li>
+</ol>
+
+<pre><span class="p">$</span> cd chapters/ch04/code/serial-thermo
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file serial-thermo
+<span class="p">$</span> scp serial-thermo user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip './serial-thermo'</pre>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>明确「双源同时及时」的目标 · 能编译部署脚手架 · 带着问题进入「深入理解」。
 </div>
+</section>
 
-<h3>为何不能「先读串口再采样」串成一条线</h3>
-<p>若主循环写成「<code>fgets</code> 等你打字 → 再读 DHT → 再 sleep」：不打字时风扇永远不更新。若写成「采样 → sleep 2 秒 → 再看一眼串口」：你敲完字最多等 2 秒才有回复，体感像卡死。两边都要及时，就需要<strong>同时等</strong>。</p>
+<!-- ═══ 深入理解 ═══ -->
+<section id="s4-deep">
+<div class="section-num">深入理解</div>
+<h2>select：同时等串口输入与采样超时</h2>
+
+<p>这一节按「错误写法 → 正确机制 → 返回值含义 → 剩余时间怎么扣 → 怎么验收」把链路讲完。先记住三个词：<strong>串口</strong>是字节双向通道（见 4.1）；<strong>DHT22</strong> 是周期上报温湿度的探头（见 4.2）；<strong>select</strong> 是系统调用——你告诉内核「这些文件描述符里谁就绪了，或者超时到了，再叫醒我」。</p>
+
+<h3 id="s4-deep-wrong">两种错误写法：为什么会堵死一边</h3>
+
+<p><strong>错误一：主循环阻塞在串口读上。</strong>写成「先 <code>fgets</code> / <code>read</code> 等到一行命令，再读 DHT22，再控风扇」。没有人打字时，进程一直卡在读调用里，采样永远不会执行，风扇停在上次状态——温度已经越界，继电器也不会动。</p>
+
+<p><strong>错误二：只轮询传感器，打字要等固定 sleep。</strong>写成「采样 → <code>sleep(2)</code> → 才看一眼串口」。风扇节奏对了，但你敲完 <code>status</code> 最多要等满整个 sleep 才有回复，体感像卡死；若 sleep 期间有多行输入，还容易积压在缓冲里。</p>
 
 <div class="diagram">错误 1：阻塞读命令
-  等打字 ……（风扇停更）
+  等打字 ……（风扇停更，控温失效）
 
 错误 2：固定 sleep 再轮询
   采样 → sleep 2s → 才读串口（打字延迟大）
 
-正确：select
-  同时等：stdin 可读  OR  采样超时到
-       │                    │
-       ▼                    ▼
-   解析命令              读 DHT + 阈值控风扇</div>
+正确目标：同一时刻「盯」两件事
+  · 串口（或 stdin）是否可读
+  · 距下次采样是否已到时间</div>
 
-<h3 id="s4.3-select">深入理解：select 在等什么</h3>
-<p><strong>select</strong> 是系统调用：告诉内核「这些文件描述符里，有谁可读/可写了，或者超时了，再叫醒我」。本课用法：</p>
-<ol>
-  <li>把串口（或 stdin）放进读集合；</li>
-  <li>超时设成「距下次采样还剩多少毫秒」；</li>
-  <li>返回后：若描述符可读 → 读一行、查命令表；若因超时返回 → 执行一次采样与控温。</li>
-</ol>
+<p>图说明：单线程里不能「先干完 A 再干 B」地串死；必须让内核在「有字可读」和「采样周期到了」之间择一叫醒你，两边都有机会马上处理。</p>
+
+<h3 id="s4-deep-select">正确机制：select 等串口 fd + 采样超时</h3>
+
+<p>做法是：把命令输入的文件描述符（stdin 或打开的 <code>/dev/tty*</code>）放进 <code>select</code> 的读集合；同时把超时设成「距下次采样还剩多少时间」。内核替你睡到这两种事件之一发生，再返回。</p>
+
+<div class="diagram">每次进入 select 之前：
+
+  读集合：cmd_fd（串口 / stdin）
+  超时 tv：remain_us（距下次采样的剩余微秒）
+
+            select(...)
+                 │
+     ┌───────────┼───────────┐
+     ▼           ▼           ▼
+  返回 &lt; 0     返回 0      返回 &gt; 0
+  出错         超时到      有描述符就绪
+     │           │           │
+     ▼           ▼           ▼
+  perror      采样+控温    若 FD_ISSET(cmd_fd)
+              重置周期       读一行、查命令表</div>
+
+<p>图说明：一次 <code>select</code> 只回答「这次是因为超时醒的，还是因为串口有数据醒的」。你根据返回值分支，而不是自己猜。</p>
+
+<table>
+  <tr><th>select 返回值</th><th>含义</th><th>本课该做什么</th></tr>
+  <tr><td><code>&lt; 0</code></td><td>出错（常见被信号打断等）</td><td><code>perror</code>，按策略退出或重试</td></tr>
+  <tr><td><code>0</code></td><td>超时：没有任何描述符就绪，但时间到了</td><td>执行一次「读 DHT22 + 阈值判风扇」；把剩余时间重置为完整采样周期</td></tr>
+  <tr><td><code>&gt; 0</code></td><td>有就绪描述符；用 <code>FD_ISSET</code> 判断是谁</td><td>若命令 fd 可读：读一行、查命令表、回复；然后<strong>扣减</strong>已经流逝的等待时间，再进下一轮 select</td></tr>
+</table>
 
 <pre><span class="c">/* 伪代码：主循环骨架（实验里补全） */</span>
 <span class="k">for</span> (;;) {
@@ -344,35 +370,40 @@
     } <span class="k">else if</span> (FD_ISSET(cmd_fd, &amp;rfds)) {
         <span class="c">/* 有输入：读一行并处理命令 */</span>
         handle_command_line();
-        <span class="c">/* 注意：处理命令后仍要扣减剩余等待时间 */</span>
+        <span class="c">/* 处理完后要按墙上时钟扣减 remain_us，避免采样被拖慢 */</span>
     }
 }</pre>
 
+<h4>剩余时间（remain）怎么工作</h4>
+<p><code>select</code> 的超时参数在返回后可能被内核改写为「还剩多少没等到」——具体是否改写因平台而异，所以本课更稳妥的做法是：自己用时钟记下「本轮采样 deadline」，每次进 <code>select</code> 前算 <code>remain = deadline - now</code>。若中间因为处理了一条命令而返回，deadline 不变，只是下一次 <code>remain</code> 变短；等 <code>remain</code> 耗尽或返回 0，再采样并设定下一个 deadline。这样采样周期不会因为你敲了几行命令就整体往后滑。</p>
+
+<div class="diagram">时间轴示意（采样周期 2s）：
+
+  t=0.0  采样，设 deadline=2.0
+  t=0.0  select(remain≈2.0s)
+  t=0.7  你敲 status → select 返回 &gt;0 → 立刻回复
+         再 select(remain≈1.3s)   ← 没重置成 2s
+  t=2.0  select 返回 0 → 采样，设 deadline=4.0
+  ...</div>
+
+<p>图说明：处理命令<strong>不</strong>等于「采样时钟重新开始」。只有超时分支（或 remain 耗尽）才推进下一轮采样。</p>
+
+<h3 id="s4-deep-verify">验证：风扇自动控，status / set 立刻响应</h3>
+
+<p>在荔枝派 4A 上跑补全后的程序，按下面顺序验收因果链是否闭合：</p>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>看自动控温仍在</strong><br>不敲任何命令，改变探头附近温度（或临时用仿真温度），风扇仍应按阈值开/关。说明超时分支在跑，没有被串口阻塞吃掉。</div></li>
+  <li><span class="step-num">2</span><div><strong>敲 <code>status</code></strong><br>应立刻打印最近温湿度、风扇与阈值。说明读集合分支在跑，没有卡在固定 sleep 上。</div></li>
+  <li><span class="step-num">3</span><div><strong>敲 <code>set high 30</code>（或课堂指定值）</strong><br>立刻看到确认；下一轮采样起，新阈值参与决策。说明命令改的是内存状态，且采样循环仍在继续。</div></li>
+</ol>
+
 <div class="info">
-  <strong>深入理解要看到的现象：</strong>程序在跑自动控温的同时，你敲 <code>status</code> 立刻有回复；敲 <code>set high 30</code> 后下一轮采样按新阈值动作。这证明两路事件都被 <code>select</code> 叫醒，而不是互相堵死。
+  <strong>验收话术：</strong>「我没有阻塞在串口读上，也没有用固定 sleep 饿死打字；我用 select 同时等串口可读和采样超时。返回 0 就采样控风扇，返回正数且 fd 就绪就处理命令，并用剩余时间保持采样节奏。所以风扇仍自动控，status/set 立刻有回复。」
 </div>
 
-<h3 id="s4.3-steps">跟做：骨架编译部署</h3>
-<ol class="steps">
-  <li><span class="step-num">1</span><div><strong>打开脚手架</strong><br><code>chapters/ch04/code/serial-thermo/</code>，确认 GPIO 宏与第三章接线表一致。</div></li>
-  <li><span class="step-num">2</span><div><strong>交叉编译</strong><br><code>make</code> → <code>file serial-thermo</code> 应为 RISC-V ELF（RuyiSDK 工具链）。</div></li>
-  <li><span class="step-num">3</span><div><strong>上板</strong><br><code>scp</code> 后 SSH 运行；默认 STDIO 模式，在终端敲命令（实验中补全后生效）。</div></li>
-</ol>
-
-<pre><span class="p">$</span> cd chapters/ch04/code/serial-thermo
-<span class="p">$</span> make clean && make
-<span class="p">$</span> file serial-thermo
-<span class="p">$</span> scp serial-thermo user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip './serial-thermo'</pre>
-
-<h3>课堂练习</h3>
-<ol>
-  <li><code>select</code> 返回 0 与返回正数，分别对应本课哪两种事件？</li>
-  <li>处理完一条命令后，若不更新「剩余超时」，可能出现什么采样节奏问题？</li>
-</ol>
-
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能说明阻塞读写为何不够 · 能口述 select 双源循环 · 带着 TODO 清单进入本章实验。
+  <strong>本节成果：</strong>能指出两种错误设计 · 能解释 select 返回值与 remain · 能用「双源同时及时」完成验收口述 · 带着 TODO 清单进入本章实验。
 </div>
 </section>
 
