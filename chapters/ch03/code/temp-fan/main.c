@@ -12,9 +12,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#define GPIO_CHIP_PATH   "/dev/gpiochip0"
-#define DHT_LINE         18 /* TODO: DHT22 DATA */
-#define FAN_LINE         17 /* TODO: 风扇驱动模块信号脚 */
+#define GPIO_CHIP_PATH   "/dev/gpiochip1"
+#define DHT_LINE         4 /* IO1_4：DHT22 数据线（经电平转换） */
+#define FAN_LINE         3 /* IO1_3：继电器/风扇信号（经电平转换） */
 
 #define T_HIGH           28.0f /* °C：高于此开风扇 */
 #define T_LOW            26.0f /* °C：低于此关风扇（滞回） */

@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define GPIO_CHIP_PATH "/dev/gpiochip0"
-#define LED_LINE       17 /* TODO: 按接线表修改 */
+#define GPIO_CHIP_PATH "/dev/gpiochip1"
+#define LED_LINE       3 /* IO1_3：与温控风扇信号脚同默认；换脚只改此数字 */
 
 int main(void)
 {

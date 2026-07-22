@@ -222,13 +222,13 @@
     │  gpiod_chip_open / gpiod_line_request_output
     │  gpiod_line_set_value
     ▼
-libgpiod  ──►  /dev/gpiochip0
+libgpiod  ──►  /dev/gpiochip1
     │
     ▼
 内核 GPIO 控制器 ──► 物理引脚 ──► LED / 继电器信号端</div>
 
-<pre><span class="k">#define</span> GPIO_CHIP_PATH  <span class="c">"/dev/gpiochip0"</span>
-<span class="k">#define</span> LED_LINE        17   <span class="c">/* 以课程接线表为准 */</span></pre>
+<pre><span class="k">#define</span> GPIO_CHIP_PATH  <span class="c">"/dev/gpiochip1"</span>
+<span class="k">#define</span> LED_LINE        3    <span class="c">/* IO1_3；以 lab 接线表为准 */</span></pre>
 
 <h3 id="s3.2-relay">灯与继电器</h3>
 <p>控灯：GPIO 输出高/低 → LED 亮/灭（有的板子低电平点亮，以接线说明为准）。</p>
@@ -291,7 +291,7 @@ libgpiod  ──►  /dev/gpiochip0
 <span class="k">else if</span> (T &gt; T_HIGH) 风扇_开();
 <span class="k">else if</span> (T &lt; T_LOW)  风扇_关();</pre>
 
-<p>脚手架：<code>chapters/ch03/code/temp-fan/</code>。默认 <code>SIMULATE_SENSOR=1</code> 用假温度演示阈值；接好 DHT22 后改为 <code>0</code>。接线、周期采样与验收见 <code>lab.html</code>。</p>
+<p>脚手架：<code>chapters/ch03/code/temp-fan/</code>。默认 <code>SIMULATE_SENSOR=1</code> 用假温度演示阈值；接好 DHT22 后改为 <code>0</code>。完整从零拼装（零件、排针、电平转换、逐根接线、验收）见 <a href="lab.html">lab.html</a>。</p>
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能说清 DHT22 → 阈值 → 继电器 → 风扇的数据流。下一节深入理解用 <code>devmem</code> 只读核对「写灯时寄存器位真的翻了」。
