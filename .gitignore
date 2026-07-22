@@ -49,3 +49,18 @@ venv/
 
 # Dependencies
 node_modules/
+
+# Local reference dumps (books, installers, course zips — not course source)
+reference/
+
+# Taobao product-page PDF dumps / phone photos (keep real datasheets only)
+chapters/**/manuals/**/*淘宝网.pdf
+chapters/**/manuals/**/*.HEIC
+chapters/**/manuals/**/*.heic
+chapters/**/manuals/**/*.JPG
+chapters/**/manuals/**/*.jpg
+chapters/**/manuals/**/*.JPEG
+chapters/**/manuals/**/*.jpeg
+chapters/**/manuals/**/*.PNG
+chapters/**/manuals/**/*.png
+!chapters/**/manuals/**/lpi4a-wiki-assets/**
