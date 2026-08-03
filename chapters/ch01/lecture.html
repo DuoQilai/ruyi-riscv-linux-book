@@ -452,30 +452,32 @@ coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <p>因此：在电脑上敲普通的 <code>gcc main.c -o app</code>，得到的是<strong>本机架构</strong>的 ELF。这个文件只能在本机跑；拷到荔枝派 4A 上，内核会拒绝加载（常见报错是 <code>Exec format error</code>）。反过来，板子上编好的 RISC-V 程序拷回电脑，也一样跑不了。</p>
 <p>要让程序在板子上跑，必须在电脑上使用<strong>交叉工具链</strong>：一套仍然跑在电脑上的编译器全家桶，但它专门生成 RISC-V 机器码，并链接面向 RISC-V Linux 的 C 库。本课通过 RuyiSDK 安装，前缀是 <code>riscv64-unknown-linux-gnu-</code>。</p>
 
-<h3 id="s1-deep-paths">机制：同一份 main.c，两条编译路径</h3>
-<p>下面这张图把「同一份源码、两种产物」画清楚。左边是本机原生编译；右边是交叉编译。请顺着箭头读：关键在哪里分叉、产物各自能去哪里。</p>
+<h3 id="s1-deep-paths">机制：同一份 main.c，三条编译路径</h3>
+<p>下面这张图把「同一份源码、三种产物」画清楚：左边是电脑本机编译，中间是交叉编译，右边是<strong>板端原生编译</strong>。请顺着箭头读：关键在哪里分叉、产物各自能去哪里。</p>
 
 <div class="diagram">同一份 main.c
         │
-        ├─────────────────────┬─────────────────────
-        │                     │
-        ▼                     ▼
-  电脑自带 gcc          riscv64-unknown-linux-gnu-gcc
-  （本机工具链）         （交叉工具链，经 RuyiSDK 安装）
-        │                     │
-        │ 生成 x86_64          │ 生成 RISC-V
-        │ 机器指令             │ 机器指令
-        │                     │
-        ▼                     ▼
-  app-host（ELF）         app-riscv（ELF）
-  架构：x86_64             架构：UCB RISC-V
-        │                     │
-        ▼                     ▼
-  只能在电脑 ./app-host   用 SCP 拷到荔枝派 4A
-  在板子上会 Exec format     再 ssh 执行 ./app-riscv
-        error                 → 板子 Linux 加载并运行</div>
+        ├───────────────┬──────────────────┬───────────────
+        │               │                  │
+        ▼               ▼                  ▼
+  电脑自带 gcc     riscv64-unknown-    板端自带 gcc
+  （本机工具链）    linux-gnu-gcc       （荔枝派 4A 上的
+                  （交叉工具链，         RISC-V 编译器）
+                   经 RuyiSDK 安装）         │
+        │               │                  │ 生成 RISC-V
+        │ 生成 x86_64   │ 生成 RISC-V      │ 机器指令
+        │ 机器指令      │ 机器指令         │
+        ▼               ▼                  ▼
+  app-host（ELF）  app-riscv（ELF）   app-board（ELF）
+  架构：x86_64       架构：RISC-V       架构：RISC-V
+        │               │                  │
+        ▼               ▼                  ▼
+  只能在电脑跑    用 SCP 拷到板子    直接在板子上
+  拷到板子会     再 ssh 执行          ./app-board
+  Exec format    → 板端加载运行        就地运行
+  error</div>
 
-<p>读图时抓住三步。第一，<strong>编译器选错，架构就错</strong>：左边 gcc 把 C 翻成电脑 CPU 认得的指令；右边交叉 gcc 把同一份 C 翻成板子 CPU 认得的指令。第二，<strong>产物用 <code>file</code> 一眼可辨</strong>：输出里写 x86-64 还是 UCB RISC-V，就是验收标准。第三，<strong>传输与运行是两件事</strong>：交叉编译只解决「编对架构」；还要用 SCP 把文件送到板子，再在板端执行——板端的 Linux 负责加载这个 RISC-V ELF。</p>
+<p>读图时抓住三步。第一，<strong>编译器选错，架构就错</strong>：本机 gcc 把 C 翻成电脑 CPU 认得的指令；交叉 gcc 把同一份 C 翻成板子 CPU 认得的指令。第二，<strong>产物用 <code>file</code> 一眼可辨</strong>：输出里写 x86-64 还是 UCB RISC-V，就是验收标准。第三，<strong>传输与运行是两件事</strong>：交叉编译只解决「编对架构」；还要用 SCP 把文件送到板子，再在板端执行——板端的 Linux 负责加载这个 RISC-V ELF。</p>
 <p>交叉工具链内部仍然是「编译 → 汇编 → 链接」，只是每一步的目标都是 RISC-V：编译器产出 RISC-V 汇编，汇编器变成 <code>.o</code>，链接器再链上 RISC-V 版的 C 运行库（sysroot）。调用约定、系统调用号都按板子来，这样程序在板端跑起来才像「正常 Linux 程序」。</p>
 
 <div class="diagram">交叉编译内部（都在电脑上执行）
@@ -499,6 +501,7 @@ coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
   <li><span class="step-num">2</span><div><strong>本机路径</strong><br><code>gcc main.c -o app-host</code>，再 <code>file app-host</code>。应看到 x86-64（或你电脑对应的本机架构）。在电脑上 <code>./app-host</code> 能跑。</div></li>
   <li><span class="step-num">3</span><div><strong>交叉路径</strong><br><code>riscv64-unknown-linux-gnu-gcc main.c -o app-riscv</code>，再 <code>file app-riscv</code>。应看到 UCB RISC-V。在电脑上 <code>./app-riscv</code> 应失败。</div></li>
   <li><span class="step-num">4</span><div><strong>上板</strong><br><code>scp app-riscv user@board-ip:~/</code>，再 <code>ssh user@board-ip './app-riscv'</code>。板端应能执行；若报 Exec format error，先核对 <code>file</code> 是否真是 RISC-V。</div></li>
+  <li><span class="step-num">5</span><div><strong>补：板端原生路径（更省事）</strong><br><code>ssh user@board-ip 'gcc main.c -o app-board; file app-board; ./app-board'</code>。板子自带 RISC-V 的 gcc，就地编译就地运行——不需要交叉工具链、不需要 SCP。前提是板子装得下 gcc（本课板子可以）。</div></li>
 </ol>
 
 <pre><span class="p">$</span> gcc main.c -o app-host
@@ -510,12 +513,16 @@ coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <span class="c"># … ELF … UCB RISC-V …</span>
 
 <span class="p">$</span> scp app-riscv user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip './app-riscv; echo exit:$?'</pre>
+<span class="p">$</span> ssh user@board-ip './app-riscv; echo exit:$?'
 
-<p>整条故事可以收成一句话：<strong>指令集不同 → 本机 gcc 编不出板子能跑的二进制 → 经 RuyiSDK 安装的交叉工具链专门生成 RISC-V Linux ELF → <code>file</code> 确认架构 → SCP 上板 → 板端执行。</strong> CoreMark 只是把这条链换成更大一点的工程；验收逻辑不变。</p>
+<span class="c"># 第三条路：直接在板子上编译（前提：板子装了 gcc）</span>
+<span class="p">$</span> ssh user@board-ip 'gcc main.c -o app-board; file app-board; ./app-board; echo exit:$?'
+<span class="c"># file 应显示 UCB RISC-V；就地编译、就地运行</span></pre>
+
+<p>整条故事可以收成一句话：<strong>指令集不同 → 本机 gcc 编不出板子能跑的二进制 → 经 RuyiSDK 安装的交叉工具链专门生成 RISC-V Linux ELF → <code>file</code> 确认架构 → SCP 上板 → 板端执行。</strong>此外还有一条更省事的路——<strong>板端原生编译</strong>：板子自带的 gcc 同样是 RISC-V 编译器，就地编译就地跑。两条路各有取舍：原生简单直接，但要求板子装得下 gcc、性能够；交叉编译是目标机太弱或装不了编译器时的专业选择。本课后续章节两种都会用到，届时会明确提示走哪条。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能口述指令集 / 交叉编译 / 三元组；能画「同一 main.c 两条路」；能用 <code>file</code> + SCP 亲自验证。带着这条链进入本章实验跑 CoreMark。
+  <strong>本节成果：</strong>能口述指令集 / 交叉编译 / 三元组；能画「同一 main.c 三条路」（本机 / 交叉 / 板端原生）；能用 <code>file</code> + SCP 亲自验证。带着这条链进入本章实验跑 CoreMark。
 </div>
 </section>
 
