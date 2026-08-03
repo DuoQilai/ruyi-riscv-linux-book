@@ -4,7 +4,10 @@
  * 采集 ∥ 控制 ∥ 通信(MQTT)
  * USE_LOCK=0 时不加锁，便于板上必现错乱；验收改为 1。
  *
- * 板卡：荔枝派 4A。工具链：RuyiSDK。
+ * 板：荔枝派 4A + RevyOS。libgpiod v2 API。全程 C 语言。
+ * 脚位：继电器 IO1_5（gpiochip5 line 5）、DHT22 IO1_6（line 6，经 TXS）。
+ *
+ * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-unknown-linux-gnu-
  */
 #include <errno.h>
 #include <gpiod.h>
@@ -24,9 +27,9 @@
 #define TOPIC_STATUS     "course/thermo/status"
 #define CLIENT_ID        "licheepi4a-tri-thread"
 
-#define GPIO_CHIP_PATH   "/dev/gpiochip0"
-#define DHT_LINE         18
-#define FAN_LINE         17
+#define GPIO_CHIP_PATH   "/dev/gpiochip5"
+#define DHT_LINE         6  /* IO1_6 */
+#define FAN_LINE         5  /* IO1_5 */
 #define SAMPLE_MS        500
 #define CONTROL_MS       200
 
@@ -43,8 +46,34 @@ struct shared_state {
 
 static struct shared_state g_st;
 static struct gpiod_chip *chip;
-static struct gpiod_line *fan_line;
+static struct gpiod_line_request *fan_req;
 static struct mosquitto *mosq;
+
+/* libgpiod v2：申请一根线。direction 为 OUTPUT 时立即置 val。 */
+static struct gpiod_line_request *line_request(unsigned int offset,
+                                               int direction, int val)
+{
+	struct gpiod_line_settings *s = gpiod_line_settings_new();
+	struct gpiod_line_config *lc = gpiod_line_config_new();
+	struct gpiod_request_config *rc = gpiod_request_config_new();
+	struct gpiod_line_request *r;
+	unsigned int offs[1] = { offset };
+
+	if (!s || !lc || !rc)
+		return NULL;
+	gpiod_line_settings_set_direction(s, direction);
+	gpiod_line_config_add_line_settings(lc, offs, 1, s);
+	gpiod_request_config_set_consumer(rc, "tri-thread");
+
+	r = gpiod_chip_request_lines(chip, rc, lc);
+	gpiod_request_config_free(rc);
+	gpiod_line_config_free(lc);
+	gpiod_line_settings_free(s);
+
+	if (r && direction == GPIOD_LINE_DIRECTION_OUTPUT)
+		gpiod_line_request_set_value(r, offset, val);
+	return r;
+}
 
 static void state_lock(void)
 {
@@ -68,19 +97,17 @@ static void on_sigint(int sig)
 
 static int fan_init(void)
 {
-	fan_line = gpiod_chip_get_line(chip, FAN_LINE);
-	if (!fan_line)
-		return -1;
-	if (gpiod_line_request_output(fan_line, "tri-thread", 0) < 0)
+	fan_req = line_request(FAN_LINE, GPIOD_LINE_DIRECTION_OUTPUT, 0);
+	if (!fan_req)
 		return -1;
 	return 0;
 }
 
 static void fan_set_unlocked(int on)
 {
-	if (!fan_line)
+	if (!fan_req)
 		return;
-	gpiod_line_set_value(fan_line, on ? 1 : 0);
+	gpiod_line_request_set_value(fan_req, FAN_LINE, on ? 1 : 0);
 	g_st.fan_on = on;
 	printf("[INFO] fan %s\n", on ? "ON" : "OFF");
 	fflush(stdout);
@@ -103,7 +130,7 @@ static int dht22_read(float *t, float *h)
 #else
 static int dht22_read(float *t, float *h)
 {
-	/* TODO: 复用 ch03/ch04 的 DHT22 位带；此处留桩 */
+	/* TODO: 复用第四章的 DHT22 位带；此处留桩 */
 	(void)t;
 	(void)h;
 	(void)DHT_LINE;
@@ -287,8 +314,8 @@ int main(void)
 	fan_set_unlocked(0);
 	state_unlock();
 
-	if (fan_line)
-		gpiod_line_release(fan_line);
+	if (fan_req)
+		gpiod_line_request_release(fan_req);
 	gpiod_chip_close(chip);
 	pthread_mutex_destroy(&g_st.lock);
 	printf("[INFO] exited cleanly\n");
