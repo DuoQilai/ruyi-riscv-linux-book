@@ -102,12 +102,33 @@
   .toc a.sub { padding-left: 16px; font-size: 14px; }
   .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
   body { padding-left: 240px; }
+/* course-nav-css */
+
+  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line, #d4cfc4);
+    font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
+    line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
 </style>
 </head>
 <body>
 
 <nav class="toc">
   <h4>目录</h4>
+<!-- course-nav-toc -->
+  <a class="course-rail" href="../../index.html">课程总览</a>
+  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
+  <a class="course-rail" href="lab.html">本章实验</a>
+  <div class="divider"></div>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
   <a href="#s6.1">6.1 一条线会互相堵</a>
@@ -358,6 +379,11 @@ pthread_mutex_unlock(&amp;st-&gt;lock);</pre>
 </div>
 </section>
 
+<!-- course-nav-foot -->
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="../ch05/lab.html"><span class="dir">上一篇</span>第五章 · 实验<br>MQTT 远程控灯</a>
+  <a class="next" href="lab.html"><span class="dir">下一篇</span>第六章 · 实验<br>三线程协同</a>
+</nav>
 </div>
 </body>
 </html>

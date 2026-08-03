@@ -70,12 +70,34 @@
     section { page-break-before: always; }
     section:first-of-type { page-break-before: avoid; }
   }
+/* course-nav-css */
+
+  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line, #d4cfc4);
+    font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
+    line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
 </style>
 </head>
 <body>
 
 <nav class="toc">
   <h4>本章实验</h4>
+<!-- course-nav-toc -->
+  <a class="course-rail" href="../../index.html">课程总览</a>
+  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
+  <a class="course-rail" href="lecture.html">本章讲义</a>
+  <a class="course-rail" href="../ch02/lecture.html">下一章 · 第二章</a>
+  <div class="divider"></div>
   <a href="#intro">说明</a>
   <div class="divider"></div>
   <a href="#prep">前提自检</a>
@@ -207,6 +229,11 @@
 </div>
 </section>
 
+<!-- course-nav-foot -->
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="lecture.html"><span class="dir">上一篇</span>第一章 · 讲义<br>环境与工具链</a>
+  <a class="next" href="../ch02/lecture.html"><span class="dir">下一篇</span>第二章 · 讲义<br>够用的 C</a>
+</nav>
 </article>
 </body>
 </html>

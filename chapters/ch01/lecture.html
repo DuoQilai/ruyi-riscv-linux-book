@@ -103,12 +103,33 @@
     section:first-of-type { page-break-before: avoid; }
     pre, .diagram { font-size: 11pt; }
   }
+/* course-nav-css */
+
+  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line, #d4cfc4);
+    font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
+    line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
 </style>
 </head>
 <body>
 
 <nav class="toc">
   <h4>目录</h4>
+<!-- course-nav-toc -->
+  <a class="course-rail" href="../../index.html">课程总览</a>
+  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
+  <a class="course-rail" href="lab.html">本章实验</a>
+  <div class="divider"></div>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
   <a href="#s1.1">1.1 荔枝派 4A 与 RuyiSDK</a>
@@ -498,6 +519,11 @@ coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 </div>
 </section>
 
+<!-- course-nav-foot -->
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="../../index.html"><span class="dir">上一篇</span>课程总览</a>
+  <a class="next" href="lab.html"><span class="dir">下一篇</span>第一章 · 实验<br>上板通道验收</a>
+</nav>
 </div>
 </body>
 </html>
