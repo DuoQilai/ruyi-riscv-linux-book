@@ -102,7 +102,7 @@
   <li>你在终端敲 <code>status</code> / <code>set</code>，立刻得到回复，且新阈值马上参与后续控温。</li>
 </ul>
 <div class="info">
-  <strong>前置：</strong>已读讲义 4.1–4.3；第三章温控相关接线仍可用（DHT22 / 继电器 / 风扇）；RuyiSDK 交叉工具链与 SSH 可用。<strong>工程目录：</strong><code>chapters/ch04/code/serial-thermo/</code>（源码 <code>main.c</code>，说明见同目录 <code>README.md</code>）。
+  <strong>前置：</strong>已读讲义 4.1–4.3；继电器/风扇沿用第三章（IO1_5）；DHT22 按讲义 4.2 首次接线（经 TXS，IO1_6，含排针焊接）。编译用板端原生 gcc 或交叉工具链都行。<strong>工程目录：</strong><code>chapters/ch04/code/serial-thermo/</code>（源码 <code>main.c</code>）。
 </div>
 <div class="warn">
   <strong>你要改的代码：</strong>只动 <code>main.c</code> 里标了 TODO 的三处——<code>cmd_status</code> / <code>cmd_set</code>、命令表 <code>g_cmds[]</code>、以及 <code>main_loop</code> 里的 <code>select</code> 主循环。不要删掉已有的采样（<code>sample_and_control</code>）与风扇逻辑。默认 <code>USE_STDIO=1</code> 时，命令从 SSH 终端的标准输入读入，不必另接物理串口线即可联调。
@@ -112,9 +112,20 @@
 <section id="steps">
 <h2>步骤</h2>
 
-<h3>1. 核对宏与接线</h3>
-<p>打开 <code>chapters/ch04/code/serial-thermo/main.c</code>，确认 <code>GPIO_CHIP_PATH</code>、<code>DHT_LINE</code>、<code>FAN_LINE</code> 与课程接线表一致。首次演示建议保持 <code>SIMULATE_SENSOR=1</code>（假温度缓缓升降，方便验证阈值与命令）；接好真 DHT22 后再改为 <code>0</code> 并重新编译。</p>
-<p><strong>本步成功判据：</strong>宏与接线一致；你知道当前是模拟传感器还是真传感器。</p>
+<h3>1. 焊接与接线（DHT22 首次上场）</h3>
+<p>先把 TXS 的排针焊上去（烙铁预热 → 排针插进孔位 → 背面逐脚上锡 → 检查连锡）。然后接线：</p>
+<table>
+  <tr><th>从</th><th>到</th><th>说明</th></tr>
+  <tr><td>排针 3.3V</td><td>DHT22 正（VCC）</td><td>传感器供电</td></tr>
+  <tr><td>排针 GND</td><td>DHT22 负（GND）</td><td>共地</td></tr>
+  <tr><td>DHT22 OUT</td><td>TXS B2</td><td>高压侧 3.3V</td></tr>
+  <tr><td>TXS A2</td><td>排针 IO1_6</td><td>低压侧 1.8V 接板子</td></tr>
+  <tr><td>AMS1117 OUT</td><td>TXS VA</td><td>低压侧电源 1.8V（IN 接排针 3.3V）</td></tr>
+  <tr><td>排针 3.3V</td><td>TXS VB</td><td>高压侧电源 3.3V</td></tr>
+  <tr><td>TXS OE</td><td>接高</td><td>使能</td></tr>
+</table>
+<p>继电器/风扇沿用第三章（IO1_5 直连）。然后打开 <code>main.c</code>，确认 <code>GPIO_CHIP_PATH=/dev/gpiochip5</code>、<code>DHT_LINE=6</code>、<code>FAN_LINE=5</code>。首次演示建议保持 <code>SIMULATE_SENSOR=1</code>（假温度缓缓升降，方便验证阈值与命令）；接好真 DHT22 后再改为 <code>0</code> 并重新编译。</p>
+<p><strong>本步成功判据：</strong>DHT22 接好、TXS 排针焊好；宏与接线一致；你知道当前是模拟传感器还是真传感器。</p>
 
 <h3>2. 补全命令处理与命令表</h3>
 <p><strong>命令表</strong>是一张「名字 → 函数指针」的列表：收到一行输入后，先拆出命令名，再在表里查找并调用对应函数。脚手架已提供 <code>dispatch_command</code> 查找逻辑，你只需实现函数并把条目挂进表。</p>
@@ -161,9 +172,13 @@
 </ol>
 <p><strong>本步成功判据：</strong>控温日志仍按约 <code>SAMPLE_MS</code> 周期出现；你在两次采样之间敲 <code>status</code>，回复几乎立即出现，而不是等到下一次睡眠结束才回。</p>
 
-<h3>4. 交叉编译并部署到板端</h3>
-<pre><span class="p">$</span> cd chapters/ch04/code/serial-thermo
-<span class="p">$</span> make clean && make
+<h3>4. 编译并部署到板端</h3>
+<pre><span class="c"># 板端原生最省事</span>
+<span class="p">$</span> ssh user@board-ip 'cd ~/ruyi-riscv-embedded/ch04-lab && make && ./serial-thermo'
+
+<span class="c"># 或主机交叉编译 + scp（第一章的路）</span>
+<span class="p">$</span> cd chapters/ch04/code/serial-thermo
+<span class="p">$</span> make CROSS_COMPILE=riscv64-unknown-linux-gnu-
 <span class="p">$</span> file serial-thermo
 <span class="c"># 应为 RISC-V ELF</span>
 <span class="p">$</span> scp serial-thermo user@board-ip:~/
