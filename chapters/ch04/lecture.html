@@ -135,7 +135,9 @@
   <a class="sub" href="#s4.1-bytes">字节怎么进出</a>
   <a class="sub" href="#s4.1-stdio">用终端练读写</a>
   <div class="divider"></div>
-  <a href="#s4.2">4.2 读 DHT22 与串口命令</a>
+  <a href="#s4.2">4.2 接传感器与串口命令</a>
+  <a class="sub" href="#s4.2-sensor">DHT22：第一次接传感器</a>
+  <a class="sub" href="#s4.2-txs">电平转换与焊接</a>
   <a class="sub" href="#s4.2-cmd">命令表</a>
   <a class="sub" href="#s4.2-status">status / set</a>
   <div class="divider"></div>
@@ -166,22 +168,22 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置条件：</strong>已完成第三章——GPIO 闪灯、温控风扇闭环可用。本章在本地温控上加<strong>串口对话</strong>：一边自动控温，一边用打字查状态、改阈值。每节约 90–120 分钟。
+  <strong>前置条件：</strong>已完成第三章——能用 GPIO 输出驱动继电器/风扇（假温度闭环）。第四章<strong>第一次接真传感器</strong>（DHT22），并在本地温控上加<strong>串口对话</strong>：一边自动控温，一边用打字查状态、改阈值。
 </div>
 
 <h3>你需要准备什么</h3>
 
 <div class="card-grid card-grid-3">
-  <div class="card"><h4>主机 + RuyiSDK</h4><p>交叉前缀 <code>riscv64-unknown-linux-gnu-</code>（经 RuyiSDK / ruyi 安装）。SSH 可登录荔枝派 4A。</p></div>
-  <div class="card"><h4>板卡 + 套件</h4><p>荔枝派 4A；DHT22（温湿度探头，接 GPIO）；风扇驱动模块。接线与第三章实验一致。</p></div>
-  <div class="card"><h4>代码</h4><p><code>chapters/ch04/code/serial-thermo/</code>：已接采样与风扇骨架；你补命令表与 <code>select</code> 主循环。</p></div>
+  <div class="card"><h4>主机 + 工具链</h4><p>板端原生 <code>gcc</code> 或主机交叉工具链；SSH 可登录荔枝派 4A。</p></div>
+  <div class="card"><h4>板卡 + 套件</h4><p>荔枝派 4A；DHT22 温湿度模块；TXS0108E 电平转换模块（排针需焊接）；AMS1117-1.8V 降压小板；继电器 + 风扇（第三章的）。</p></div>
+  <div class="card"><h4>代码</h4><p><code>chapters/ch04/code/serial-thermo/</code>：已接 DHT22 读取与风扇骨架；你补命令表与 <code>select</code> 主循环。</p></div>
 </div>
 
 <h3>本章你会学到什么</h3>
 
 <div class="card-grid card-grid-3" style="margin-bottom:0;">
   <div class="card"><h4>4.1 串口是聊天线</h4><p><strong>串口</strong>是按字节收发的双向通道。理解键盘字怎么进程序、回复怎么打回终端。</p></div>
-  <div class="card"><h4>4.2 读 DHT22 与串口命令</h4><p>用<strong>命令表</strong>（字符串对应处理函数）实现 <code>status</code> / <code>set</code>。</p></div>
+  <div class="card"><h4>4.2 接传感器与串口命令</h4><p>第一次接 DHT22：为什么数据线要过 TXS、怎么焊接、怎么接线；用<strong>命令表</strong>实现 <code>status</code> / <code>set</code>。</p></div>
   <div class="card"><h4>4.3 两边同时工作</h4><p>主循环既要周期采样控风扇，又要及时响应你敲的命令行。</p></div>
 </div>
 
@@ -239,9 +241,36 @@
 <!-- ═══ 4.2 ═══ -->
 <section id="s4.2">
 <div class="section-num">4.2</div>
-<h2>读 DHT22 与串口命令：status / set</h2>
+<h2>接传感器与串口命令：DHT22、电平转换、status / set</h2>
 
-<p><strong>DHT22</strong> 是温湿度探头：一根数据线接 GPIO，按协议周期上报温度和湿度。第三章已用它做温控闭环；本章继续周期采样，并在串口侧增加查状态、改阈值的命令。</p>
+<h3 id="s4.2-sensor">DHT22：第一次接传感器</h3>
+<p><strong>DHT22</strong> 是温湿度探头，模块上 <strong>3 根针脚</strong>：<strong>正</strong>（VCC，电源）、<strong>负</strong>（GND，地）、<strong>OUT</strong>（DAT，数据线）。它内部一直在测温度和湿度，但<strong>你不问它不说</strong>——程序每次发一个「开始信号」，它才回传 40 位数据（湿度 16 位 + 温度 16 位 + 校验 8 位）。对程序来说，这就是「读一个数」的输入侧。</p>
+
+<h3 id="s4.2-txs">为什么数据线要过 TXS，以及怎么焊接</h3>
+<p>DHT22 数据线是 3.3V 电平，而板子 GPIO 是 1.8V。两个硬原因让它不能直连：</p>
+<ol>
+  <li><strong>板子叫不醒它：</strong>GPIO 高只有 1.8V，DHT22（3.3V 供电）认「高」要 ≥2.3V，1.8V 它当没看到。</li>
+  <li><strong>它回话会烧脚：</strong>DHT22 把数据线拉到 3.3V 回话，直接进 1.8V 的 GPIO 脚会超压。</li>
+</ol>
+<p><strong>TXS</strong>（TXS0108E）是双向电平转换模块：A 排接低压侧（板子 1.8V），B 排接高压侧（模块 3.3V），同一编号 A1↔B1 是一对。它把两边的电压互译，让 1.8V 的板子和 3.3V 的传感器能对话。</p>
+<p><strong>先焊接：</strong>你买的 TXS 是散件，排针没焊。烙铁预热 → 排针插进模块孔位 → 背面逐脚上锡 → 检查有无连锡。安全：烙铁放回架、注意通风、别摸烙铁头。</p>
+
+<h4>接线（DHT22 数据线走 TXS 第二路）</h4>
+<table>
+  <tr><th>从</th><th>到</th><th>说明</th></tr>
+  <tr><td>排针 3.3V</td><td>DHT22 正（VCC）</td><td>传感器供电</td></tr>
+  <tr><td>排针 GND</td><td>DHT22 负（GND）</td><td>共地</td></tr>
+  <tr><td>DHT22 OUT</td><td>TXS <strong>B2</strong></td><td>高压侧（3.3V）</td></tr>
+  <tr><td>TXS <strong>A2</strong></td><td>排针 <strong>IO1_6</strong></td><td>低压侧（1.8V）接板子 GPIO</td></tr>
+  <tr><td>AMS1117 的 IN</td><td>排针 3.3V</td><td>1.8V 降压输入</td></tr>
+  <tr><td>AMS1117 的 OUT</td><td>TXS <strong>VA</strong></td><td>TXS 低压侧电源 1.8V</td></tr>
+  <tr><td>排针 3.3V</td><td>TXS <strong>VB</strong></td><td>TXS 高压侧电源 3.3V</td></tr>
+  <tr><td>TXS <strong>OE</strong></td><td>接高</td><td>使能脚，不拉高不工作</td></tr>
+</table>
+<p>继电器和风扇保持第三章的接法（IO1_5 直连），不动。</p>
+
+<h4>读取：单总线位带 + 重试</h4>
+<p>程序流程：把 IO1_6 配成输出 → 拉低约 1.1ms（开始信号）→ 拉高 → 转成输入 → 读 DHT22 回应的 40 位 → 校验。用户态位带可能偶发失败，所以失败打 <code>[ERR]</code> 重试几次，再不行等下一周期——程序不退出。脚手架已写好这套读取，你只需接对线。</p>
 
 <h3 id="s4.2-cmd">命令表：字符串对应函数</h3>
 <p><strong>命令表</strong>是一张「名字 → 处理函数」的表。收到一行字后，先拆出命令名，再查表调用。比一长串 <code>if/else</code> 更清晰，后面加 <code>help</code> 也只多一行。</p>
@@ -277,7 +306,7 @@
   <tr><td><code>set low &lt;数&gt;</code></td><td><code>set low 25</code></td><td>改下限阈值；须保持 <code>low &lt; high</code></td></tr>
 </table>
 
-<p>DHT22 仍按第三章方式周期采样；读失败打 <code>[ERR]</code>，程序继续跑。串口命令只改<strong>内存里的阈值变量</strong>，立刻影响下一轮决策，不必重启进程。</p>
+<p>DHT22 按 4.2 前面的接法周期采样；读失败打 <code>[ERR]</code>，程序继续跑。串口命令只改<strong>内存里的阈值变量</strong>，立刻影响下一轮决策，不必重启进程。</p>
 
 <div class="info">
   <strong>脚手架位置：</strong><code>chapters/ch04/code/serial-thermo/main.c</code> 已提供采样、风扇与状态结构；<code>cmd_status</code> / <code>cmd_set</code> 与命令表查找标为 TODO，在实验中补全。
@@ -304,7 +333,7 @@
 
 <h3 id="s4.3-steps">跟做：骨架编译部署</h3>
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>打开脚手架</strong><br><code>chapters/ch04/code/serial-thermo/</code>，确认 GPIO 宏与第三章接线表一致。</div></li>
+  <li><span class="step-num">1</span><div><strong>打开脚手架</strong><br><code>chapters/ch04/code/serial-thermo/</code>，确认 GPIO 宏：<code>gpiochip5</code>，继电器 IO1_5、DHT22 IO1_6。</div></li>
   <li><span class="step-num">2</span><div><strong>交叉编译</strong><br><code>make</code> → <code>file serial-thermo</code> 应为 RISC-V ELF（RuyiSDK 工具链）。</div></li>
   <li><span class="step-num">3</span><div><strong>上板</strong><br><code>scp</code> 后 SSH 运行；默认 STDIO 模式，在终端敲命令（实验中补全后生效）。</div></li>
 </ol>

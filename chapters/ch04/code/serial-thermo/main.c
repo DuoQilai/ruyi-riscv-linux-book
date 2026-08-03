@@ -1,10 +1,13 @@
 /*
  * ch04 serial-thermo — 串口命令温控（本章实验脚手架）
  *
- * 已提供：状态结构、DHT/风扇、采样与阈值。
+ * 已提供：状态结构、DHT22 读取、继电器/风扇、采样与阈值。
  * 学生 TODO：命令表（status / set）+ select 主循环。
  *
- * 板卡：荔枝派 4A。工具链：RuyiSDK（riscv64-unknown-linux-gnu-gcc）。
+ * 板：荔枝派 4A + RevyOS。libgpiod v2 API。全程 C 语言。
+ * 脚位：继电器 IO1_5（gpiochip5 line 5）、DHT22 IO1_6（line 6，经 TXS）。
+ *
+ * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-unknown-linux-gnu-
  */
 #include <errno.h>
 #include <fcntl.h>
@@ -21,9 +24,9 @@
 #define USE_STDIO        1
 #define UART_DEV         "/dev/ttyS1"
 
-#define GPIO_CHIP_PATH   "/dev/gpiochip0"
-#define DHT_LINE         18 /* TODO: 按接线表改 */
-#define FAN_LINE         17 /* TODO: 按接线表改 */
+#define GPIO_CHIP_PATH   "/dev/gpiochip5"
+#define DHT_LINE         6   /* IO1_6 */
+#define FAN_LINE         5   /* IO1_5 */
 
 #define SAMPLE_MS        2000
 #define DHT_RETRY        3
@@ -49,8 +52,34 @@ static struct thermo_state g_st = {
 };
 
 static struct gpiod_chip *chip;
-static struct gpiod_line *fan_line;
+static struct gpiod_line_request *fan_req;
 static int cmd_fd = -1;
+
+/* libgpiod v2：申请一根线。direction 为 OUTPUT 时立即置 val。 */
+static struct gpiod_line_request *line_request(unsigned int offset,
+                                               int direction, int val)
+{
+	struct gpiod_line_settings *s = gpiod_line_settings_new();
+	struct gpiod_line_config *lc = gpiod_line_config_new();
+	struct gpiod_request_config *rc = gpiod_request_config_new();
+	struct gpiod_line_request *r;
+	unsigned int offs[1] = { offset };
+
+	if (!s || !lc || !rc)
+		return NULL;
+	gpiod_line_settings_set_direction(s, direction);
+	gpiod_line_config_add_line_settings(lc, offs, 1, s);
+	gpiod_request_config_set_consumer(rc, "serial-thermo");
+
+	r = gpiod_chip_request_lines(chip, rc, lc);
+	gpiod_request_config_free(rc);
+	gpiod_line_config_free(lc);
+	gpiod_line_settings_free(s);
+
+	if (r && direction == GPIOD_LINE_DIRECTION_OUTPUT)
+		gpiod_line_request_set_value(r, offset, val);
+	return r;
+}
 
 static void log_info(const char *msg)
 {
@@ -66,12 +95,8 @@ static void log_err(const char *msg)
 
 static int fan_init(void)
 {
-	fan_line = gpiod_chip_get_line(chip, FAN_LINE);
-	if (!fan_line) {
-		perror("fan get_line");
-		return -1;
-	}
-	if (gpiod_line_request_output(fan_line, "serial-thermo", 0) < 0) {
+	fan_req = line_request(FAN_LINE, GPIOD_LINE_DIRECTION_OUTPUT, 0);
+	if (!fan_req) {
 		perror("fan request_output");
 		return -1;
 	}
@@ -81,9 +106,9 @@ static int fan_init(void)
 
 static void fan_set(int on)
 {
-	if (!fan_line)
+	if (!fan_req)
 		return;
-	if (gpiod_line_set_value(fan_line, on ? 1 : 0) < 0) {
+	if (gpiod_line_request_set_value(fan_req, FAN_LINE, on ? 1 : 0) < 0) {
 		perror("fan set_value");
 		return;
 	}
@@ -93,9 +118,10 @@ static void fan_set(int on)
 }
 
 #if !SIMULATE_SENSOR
+/* DHT22 单总线读取（libgpiod v2）。用户态位带可能偶发失败，调用方应重试。 */
 static int dht22_read(float *temp_c, float *hum_pct)
 {
-	struct gpiod_line *line;
+	struct gpiod_line_request *r;
 	uint8_t data[5];
 	int i, j;
 	struct timespec ts_short = { .tv_sec = 0, .tv_nsec = 1000 };
@@ -103,25 +129,24 @@ static int dht22_read(float *temp_c, float *hum_pct)
 	struct timespec ts_wait = { .tv_sec = 0, .tv_nsec = 1100000 };
 
 	memset(data, 0, sizeof(data));
-	line = gpiod_chip_get_line(chip, DHT_LINE);
-	if (!line)
-		return -1;
-	if (gpiod_line_request_output(line, "dht22", 1) < 0)
-		return -1;
 
-	gpiod_line_set_value(line, 0);
+	/* 开始信号：拉低 ~1.1ms，再拉高 ~30us */
+	r = line_request(DHT_LINE, GPIOD_LINE_DIRECTION_OUTPUT, 0);
+	if (!r)
+		return -1;
 	nanosleep(&ts_wait, NULL);
-	gpiod_line_set_value(line, 1);
+	gpiod_line_request_set_value(r, DHT_LINE, 1);
 	nanosleep(&ts_30, NULL);
-	gpiod_line_release(line);
+	gpiod_line_request_release(r);
 
-	if (gpiod_line_request_input(line, "dht22") < 0)
+	/* 转输入，等传感器响应：80us 低 + 80us 高（宽松超时） */
+	r = line_request(DHT_LINE, GPIOD_LINE_DIRECTION_INPUT, 0);
+	if (!r)
 		return -1;
-
 	{
 		int seen_low = 0, seen_high = 0;
 		for (i = 0; i < 200; i++) {
-			int v = gpiod_line_get_value(line);
+			int v = gpiod_line_request_get_value(r, DHT_LINE);
 			if (v < 0)
 				goto fail;
 			if (!seen_low && v == 0)
@@ -136,14 +161,15 @@ static int dht22_read(float *temp_c, float *hum_pct)
 			goto fail;
 	}
 
+	/* 读 40 位：低 ~50us，高 26us=0 / 70us=1 */
 	for (j = 0; j < 40; j++) {
 		int low_c = 0, high_c = 0;
-		while (gpiod_line_get_value(line) == 0) {
+		while (gpiod_line_request_get_value(r, DHT_LINE) == 0) {
 			if (++low_c > 100)
 				goto fail;
 			nanosleep(&ts_short, NULL);
 		}
-		while (gpiod_line_get_value(line) == 1) {
+		while (gpiod_line_request_get_value(r, DHT_LINE) == 1) {
 			if (++high_c > 100)
 				goto fail;
 			nanosleep(&ts_short, NULL);
@@ -152,7 +178,7 @@ static int dht22_read(float *temp_c, float *hum_pct)
 		if (high_c > low_c)
 			data[j / 8] |= 1;
 	}
-	gpiod_line_release(line);
+	gpiod_line_request_release(r);
 
 	if (((data[0] + data[1] + data[2] + data[3]) & 0xFF) != data[4])
 		return -1;
@@ -161,8 +187,9 @@ static int dht22_read(float *temp_c, float *hum_pct)
 	if (data[2] & 0x80)
 		*temp_c = -(((data[2] & 0x7F) << 8) | data[3]) / 10.0f;
 	return 0;
+
 fail:
-	gpiod_line_release(line);
+	gpiod_line_request_release(r);
 	return -1;
 }
 #else
@@ -301,7 +328,6 @@ static int read_command_line(void)
 	if (n <= 0)
 		return -1;
 	buf[n] = '\0';
-	/* 简化：假定一次 read 含一行；正式实现可做行缓冲 */
 #endif
 	len = strlen(buf);
 	while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r'))
@@ -318,7 +344,7 @@ static int read_command_line(void)
 static void main_loop(void)
 {
 	/* 占位：阻塞式「先采样再睡」，两边不能同时工作。
-	 * 请改成 select 版本（见讲义 4.3）。 */
+	 * 请改成 select 版本（见讲义 4.3 与深入理解）。 */
 	log_info("TODO: replace this loop with select()");
 	for (;;) {
 		sample_and_control();
@@ -363,8 +389,8 @@ int main(void)
 
 	main_loop();
 
-	if (fan_line)
-		gpiod_line_release(fan_line);
+	if (fan_req)
+		gpiod_line_request_release(fan_req);
 	gpiod_chip_close(chip);
 #if !USE_STDIO
 	close(cmd_fd);
