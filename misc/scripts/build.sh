@@ -31,8 +31,11 @@ mkdir -p "$DST/docs"
 
 cp index.html "$DST/index.html"
 cp docs/CourseOutline.html "$DST/docs/CourseOutline.html"
-cp docs/CourseOutline.html "$DST/CourseOutline.html"
 cp docs/index.html "$DST/docs/index.html"
+# 旧书签 /CourseOutline.html → 跳到 docs/（避免根路径下 ../chapters 链失效）
+cp CourseOutline.html "$DST/CourseOutline.html"
+# GitHub Pages / Jekyll：避免偶发忽略路径
+touch "$DST/.nojekyll"
 
 for ch in ch01 ch02 ch03 ch04 ch05 ch06; do
   cp "chapters/$ch/lecture.html" "$DST/chapters/$ch/"
