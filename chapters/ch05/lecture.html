@@ -171,7 +171,7 @@
 
 <div class="card-grid card-grid-3">
   <div class="card"><h4>主机</h4><p>RuyiSDK 交叉工具链；可安装 <strong>Mosquitto</strong>（MQTT 中转软件）或使用课程指定 Broker 地址。</p></div>
-  <div class="card"><h4>板卡 + LED</h4><p>荔枝派 4A；外接 LED（与第三章 blink 同类接线）。手机可装 MQTTX 等调试 App。</p></div>
+  <div class="card"><h4>板卡 + LED</h4><p>荔枝派 4A；外接 LED（GPIO 输出，IO1_5）。电脑装 MQTTX 桌面版，或直接用 <code>mosquitto_pub</code> / 一段 Python 客户端。</p></div>
   <div class="card"><h4>代码</h4><p><code>chapters/ch05/code/mqtt-led/</code>：订阅控灯与发布状态的桩函数待你补全。</p></div>
 </div>
 
@@ -184,7 +184,7 @@
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>讲义 vs 实验：</strong>讲义建立模型并跟做 Broker 与抓包步骤；「深入理解」把一次 publish 从应用到以太网拆开看。本章实验完成「手机/客户端控灯 + 状态可见 + 抓一条 publish」。
+  <strong>讲义 vs 实验：</strong>讲义建立模型并跟做 Broker 与抓包步骤；「深入理解」把一次 publish 从应用到以太网拆开看。本章实验完成「电脑客户端控灯 + 状态可见 + 抓一条 publish」。
 </div>
 </section>
 
@@ -196,7 +196,7 @@
 <h3 id="s5.1-model">发布订阅模型</h3>
 <p><strong>MQTT</strong> 不强调「你直接连我」，而强调「大家都连中转站」。<strong>Broker</strong> 是消息中转站（本课常用软件 <strong>Mosquitto</strong>）：客户端连上它，按<strong>主题</strong>（频道名，如 <code>course/led/cmd</code>）转发消息。<strong>publish</strong>（发布）是往某个主题发一条消息；订阅是盯着某个主题收消息。</p>
 
-<div class="diagram">手机 App（发布者）
+<div class="diagram">电脑客户端（发布者）
     │  publish  course/led/cmd  payload="on"
     ▼
 Broker（Mosquitto）
@@ -206,13 +206,13 @@ Broker（Mosquitto）
 
 反方向：
 板子 publish  course/led/status  payload="on"
-    → Broker → 手机 / 桌面客户端看见状态</div>
+    → Broker → 电脑客户端看见状态</div>
 
 <table>
   <tr><th>术语</th><th>一句话</th><th>本课例子</th></tr>
   <tr><td>Broker</td><td>消息中转站</td><td>主机或板上的 Mosquitto，默认端口 1883</td></tr>
   <tr><td>主题</td><td>频道名</td><td><code>course/led/cmd</code>、<code>course/led/status</code></td></tr>
-  <tr><td>publish（发布）</td><td>往某主题发一条</td><td>手机发 <code>on</code>；板子报状态</td></tr>
+  <tr><td>publish（发布）</td><td>往某主题发一条</td><td>电脑客户端发 <code>on</code>；板子报状态</td></tr>
   <tr><td>订阅</td><td>盯着某主题收</td><td>板子订 <code>course/led/cmd</code></td></tr>
   <tr><td>payload</td><td>消息正文</td><td><code>on</code> / <code>off</code></td></tr>
 </table>
@@ -249,7 +249,7 @@ Broker（Mosquitto）
   <li>未知 payload → 打 <code>[ERR]</code>，不改变当前电平</li>
 </ul>
 
-<div class="diagram">mosquitto_pub / 手机 App
+<div class="diagram">mosquitto_pub / MQTTX 桌面版
         │  topic=course/led/cmd  msg=on
         ▼
    Broker
@@ -315,6 +315,17 @@ publish_status("on");   <span class="c">/* TODO: mosquitto_publish(...) */</span
 <h2>一次 publish：从应用到以太网，再用 tcpdump 看见</h2>
 
 <p>先把本节会反复用到的词说清楚：<strong>Broker</strong> 是 MQTT 中转站；<strong>主题</strong> 是频道名；<strong>publish</strong> 是往某主题发一条消息；<strong>tcpdump</strong> 是在网卡上抓原始包、打印协议字段的工具。默认明文 MQTT 跑在 <strong>TCP</strong> 端口 <strong>1883</strong> 上。</p>
+
+<h3 id="s5-deep-layers">网络四层模型：一条消息套几层「信封」</h3>
+<p>你发的消息不是光着身子出门的——它被一层层装进「信封」，每层只负责自己的地址信息。这就是<strong>网络分层</strong>（简化的四层模型）：</p>
+<table>
+  <tr><th>层</th><th>这一层的「信封」</th><th>本课看到的证据</th></tr>
+  <tr><td>应用层（MQTT）</td><td>MQTT 报文：主题名 + payload + 报文类型</td><td>tcpdump 用 <code>-A</code> 看到的 <code>course/led/status</code> / <code>on</code></td></tr>
+  <tr><td>传输层（TCP）</td><td>TCP 段：源/目的端口（1883）、序号、载荷</td><td><code>….1883</code> 目的端口、<code>Flags [P.]</code></td></tr>
+  <tr><td>网络层（IP）</td><td>IP 包：源/目的 IP 地址</td><td><code>IP 板子IP &gt; BrokerIP</code></td></tr>
+  <tr><td>链路层（以太网/Wi-Fi）</td><td>帧：MAC 地址、类型、载荷</td><td>有线抓包的 MAC 行（本课可选看）</td></tr>
+</table>
+<p>分层的好处：每一层只需要「在信封上写自己的地址，然后把信封原样传给下一层」——应用不管 TCP 怎么重传，网络不管帧在哪个网段。下面把一次 publish 顺着这四层走一遍。</p>
 
 <h3 id="s5-deep-stack">原因 → 机制：一次 publish 怎么一层层包下去</h3>
 

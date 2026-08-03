@@ -4,7 +4,10 @@
  * 下行：订阅 TOPIC_CMD，payload on/off → GPIO LED
  * 上行：publish_status() 发到 TOPIC_STATUS（学生补全）
  *
- * 板卡：荔枝派 4A。工具链：RuyiSDK。依赖：libmosquitto、libgpiod。
+ * 板：荔枝派 4A + RevyOS。libgpiod v2 API。依赖：libmosquitto、libgpiod。
+ * 脚位：外接 LED 接 IO1_5（gpiochip5 line 5）。
+ *
+ * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-unknown-linux-gnu-
  */
 #include <gpiod.h>
 #include <mosquitto.h>
@@ -18,11 +21,11 @@
 #define TOPIC_STATUS     "course/led/status"
 #define CLIENT_ID        "licheepi4a-mqtt-led"
 
-#define GPIO_CHIP_PATH   "/dev/gpiochip0"
-#define LED_LINE         17 /* TODO: 按接线表改 */
+#define GPIO_CHIP_PATH   "/dev/gpiochip5"
+#define LED_LINE         5 /* IO1_5 */
 
 static struct gpiod_chip *chip;
-static struct gpiod_line *led_line;
+static struct gpiod_line_request *led_req;
 static struct mosquitto *mosq;
 static int led_on;
 
@@ -38,14 +41,36 @@ static void log_err(const char *msg)
 	fflush(stderr);
 }
 
+/* libgpiod v2：申请一根输出线，初始置 val */
+static struct gpiod_line_request *line_request(unsigned int offset,
+                                               int direction, int val)
+{
+	struct gpiod_line_settings *s = gpiod_line_settings_new();
+	struct gpiod_line_config *lc = gpiod_line_config_new();
+	struct gpiod_request_config *rc = gpiod_request_config_new();
+	struct gpiod_line_request *r;
+	unsigned int offs[1] = { offset };
+
+	if (!s || !lc || !rc)
+		return NULL;
+	gpiod_line_settings_set_direction(s, direction);
+	gpiod_line_config_add_line_settings(lc, offs, 1, s);
+	gpiod_request_config_set_consumer(rc, "mqtt-led");
+
+	r = gpiod_chip_request_lines(chip, rc, lc);
+	gpiod_request_config_free(rc);
+	gpiod_line_config_free(lc);
+	gpiod_line_settings_free(s);
+
+	if (r && direction == GPIOD_LINE_DIRECTION_OUTPUT)
+		gpiod_line_request_set_value(r, offset, val);
+	return r;
+}
+
 static int led_init(void)
 {
-	led_line = gpiod_chip_get_line(chip, LED_LINE);
-	if (!led_line) {
-		perror("led get_line");
-		return -1;
-	}
-	if (gpiod_line_request_output(led_line, "mqtt-led", 0) < 0) {
+	led_req = line_request(LED_LINE, GPIOD_LINE_DIRECTION_OUTPUT, 0);
+	if (!led_req) {
 		perror("led request_output");
 		return -1;
 	}
@@ -55,9 +80,9 @@ static int led_init(void)
 
 static void led_set(int on)
 {
-	if (!led_line)
+	if (!led_req)
 		return;
-	if (gpiod_line_set_value(led_line, on ? 1 : 0) < 0) {
+	if (gpiod_line_request_set_value(led_req, LED_LINE, on ? 1 : 0) < 0) {
 		perror("led set_value");
 		return;
 	}
@@ -160,8 +185,8 @@ int main(void)
 
 	mosquitto_destroy(mosq);
 	mosquitto_lib_cleanup();
-	if (led_line)
-		gpiod_line_release(led_line);
+	if (led_req)
+		gpiod_line_request_release(led_req);
 	gpiod_chip_close(chip);
 	return 0;
 }
