@@ -144,6 +144,12 @@
   <a class="sub" href="#s2.3-ptr">指针与数组</a>
   <a class="sub" href="#s2.3-struct">结构体</a>
   <div class="divider"></div>
+  <a href="#s2.4">2.4 实验直接要用到的 C</a>
+  <a class="sub" href="#s2.4-string">字符串</a>
+  <a class="sub" href="#s2.4-bits">位运算</a>
+  <a class="sub" href="#s2.4-funcptr">函数指针</a>
+  <a class="sub" href="#s2.4-macro">宏与条件编译</a>
+  <div class="divider"></div>
   <a href="#s2-deep">深入理解</a>
   <a class="sub" href="#s2-deep-build">编译与链接</a>
   <a class="sub" href="#s2-deep-start">main 之前发生了什么</a>
@@ -153,7 +159,7 @@
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
   <h1>够用的 C 语言基础</h1>
-  <p class="subtitle">类型 · 控制流 · 函数与多文件<br>指针 · 数组 · 结构体 · 程序怎么被拼出来<br>— 2.1 / 2.2 / 2.3 / 深入理解 —</p>
+  <p class="subtitle">类型 · 控制流 · 函数与多文件 · 指针 · 数组 · 结构体<br>字符串 · 位运算 · 函数指针 · 宏 · 程序怎么被拼出来<br>— 2.1 / 2.2 / 2.3 / 2.4 / 深入理解 —</p>
   <div class="meta">
     <span>跟做：hello + project-template</span>
     <span>本章实验：改代码闯关</span>
@@ -166,7 +172,7 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置：</strong>已完成第一章——主机能交叉编译、荔枝派 4A 能跑程序。本章目标是<strong>读懂、改得动</strong>本课后续的 C 代码。读完 2.1–2.3 后进入「深入理解」，弄清多个 <code>.c</code> 如何变成可执行文件、以及 <code>main</code> 之前发生了什么。
+  <strong>前置：</strong>已完成第一章——能编译（板端原生或主机交叉）、荔枝派 4A 能跑程序。本章目标是<strong>读懂、改得动</strong>本课后续的 C 代码。读完 2.1–2.4 后进入「深入理解」，弄清多个 <code>.c</code> 如何变成可执行文件、以及 <code>main</code> 之前发生了什么。
 </div>
 
 <h3>你需要准备什么</h3>
@@ -183,6 +189,7 @@
   <div class="card"><h4>2.1 类型、变量、控制流</h4><p>用 int / float / 比较与循环写出「温度高了就开风扇」这类判断。</p></div>
   <div class="card"><h4>2.2 函数、头文件与多文件工程</h4><p>把逻辑拆成函数；用头文件声明接口；用 Makefile 编译多个 <code>.c</code>。</p></div>
   <div class="card"><h4>2.3 指针、数组、结构体</h4><p>看懂参数里的指针、配置结构体和数组序列。</p></div>
+  <div class="card"><h4>2.4 实验直接要用到的 C</h4><p>字符串切词、位运算、函数指针命令表、宏与条件编译——第三、四章代码里真正出现的部分。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
@@ -385,6 +392,83 @@ apply_fan_policy(t, &amp;fan_on);</pre>
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体。下一节深入理解讲「多个 .c 如何变成一个可执行文件」。
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="s2.4">
+<div class="section-num">2.4</div>
+<h2>实验直接要用到的 C：字符串、位运算、函数指针、宏</h2>
+
+<p>前几节是地基。这一节专挑<strong>本课实验代码里真正出现的</strong>四样东西讲深——它们不是课外延伸，第三章之后你就会亲眼看到。每样配一道练习。</p>
+
+<h3 id="s2.4-string">字符串：命令解析全靠它</h3>
+<p>C 没有「字符串类型」；字符串就是 <code>char</code> 数组，末尾一个 <code>'\0'</code> 表示结束。常用函数：</p>
+<ul>
+  <li><code>strlen(s)</code>：长度（不含结尾的 <code>\0</code>）。</li>
+  <li><code>strcmp(a, b)</code>：比较两串，相等返回 0。</li>
+  <li><code>snprintf(buf, size, fmt, …)</code>：安全格式化（会截断，不会写越界）。</li>
+  <li><code>sscanf(s, fmt, …)</code>：从字符串里按格式读数据。</li>
+  <li><code>fgets(buf, size, stdin)</code>：读一行，含换行。</li>
+</ul>
+<p>命令处理最常见的活是<strong>按空格切词</strong>：把 <code>"set high 30"</code> 拆成命令名 <code>set</code> 和参数 <code>high 30</code>。第四章的命令表就是这么干的：</p>
+<pre><span class="k">char</span> line[] = <span class="p">"set high 30"</span>;
+<span class="k">char</span> *sp = strchr(line, ' ');      <span class="c">/* 找第一个空格 */</span>
+<span class="k">if</span> (sp) { *sp = '\0'; args = sp + 1; }
+<span class="k">else</span>     args = line + <span class="k">strlen</span>(line);</pre>
+<p><strong>练习：</strong>写函数 <code>split_first(word, rest, line)</code>，把 <code>"set high 30"</code> 拆成 <code>word="set"</code>、<code>rest="high 30"</code>；连续多个空格也要能处理。</p>
+
+<h3 id="s2.4-bits">位运算：DHT22 读位靠它</h3>
+<p>位运算是按二进制位操作：<code>&amp;</code>（与）、<code>|</code>（或）、<code>^</code>（异或）、<code>&lt;&lt;</code>（左移）、<code>&gt;&gt;</code>（右移）。</p>
+<ul>
+  <li>取某一位：<code>x &amp; 0x80</code> —— 只关心第 7 位是 0 还是 1。</li>
+  <li>置位：<code>data |= 1 &lt;&lt; 3</code> —— 把第 3 位置 1。</li>
+  <li>左移拼接：<code>v = (v &lt;&lt; 1) | bit</code> —— 一位一位把 0/1 拼成一个数。</li>
+</ul>
+<p>第四章 DHT22 读 40 位数据，就是每读到一位 0/1，把它拼进字节：</p>
+<pre>data[j / 8] <span class="k">&lt;&lt;=</span> 1;
+<span class="k">if</span> (high_c &gt; low_c) data[j / 8] <span class="k">|=</span> 1;   <span class="c">/* 高电平长=1，短=0 */</span></pre>
+<p><strong>练习：</strong>给一个字节 <code>b=0b10100110</code>，说出第 3 位是 0 还是 1；再用位运算把 <code>0x01</code> 和 <code>0x14</code> 拼成整数 <code>0x0114</code>。</p>
+
+<h3 id="s2.4-funcptr">函数指针：命令表靠它</h3>
+<p><strong>函数指针</strong>是「指向函数的指针」：把一个函数的地址存进变量，之后通过它调用。声明形如 <code>int (*handler)(char *args);</code>。</p>
+<p>第四章的命令表就是一张「名字 → 函数指针」的表：</p>
+<pre><span class="k">struct</span> cmd_entry {
+    <span class="k">const char</span> *name;
+    <span class="k">int</span> (*handler)(<span class="k">char</span> *args);
+};
+<span class="k">static const struct</span> cmd_entry cmds[] = {
+    { "status", cmd_status },
+    { "set",    cmd_set    },
+    { NULL,     NULL       },
+};</pre>
+<p>查表调用：遍历表，名字对上就用 <code>e-&gt;handler(args)</code> 调用对应函数。</p>
+<p><strong>练习：</strong>给这张表加一行 <code>{ "help", cmd_help }</code>，写一个 <code>cmd_help</code> 打印所有命令名；说明为什么加一条命令只多一行、不用改查找逻辑。</p>
+
+<h3 id="s2.4-macro">宏与条件编译：实验开关靠它</h3>
+<p><strong>宏</strong>（<code>#define</code>）是编译期的文字替换；<strong>条件编译</strong>（<code>#if</code> / <code>#ifndef</code>）让一段代码在满足条件时才被编译进去。</p>
+<pre><span class="k">#define</span> SIMULATE_SENSOR  1   <span class="c">/* 1=假温度，0=真 DHT22 */</span>
+
+<span class="k">#if</span> SIMULATE_SENSOR
+<span class="c">/* 假温度：程序自己变 */</span>
+<span class="k">#else</span>
+<span class="c">/* 真 DHT22：读传感器 */</span>
+<span class="k">#endif</span></pre>
+<p>改一个宏、重新编译，程序就走另一套代码——第三章之后的实验开关全靠这个。</p>
+<p><strong>练习：</strong>解释「<code>#ifndef</code> + <code>#define</code> + <code>#endif</code> 的 include guard」为什么能防止一个头文件被重复包含。</p>
+
+<h3 id="s2.4-designated">设计化初始化：状态结构靠它</h3>
+<p>C99 允许按字段名初始化结构体，比按顺序填更不易错：</p>
+<pre><span class="k">struct</span> thermo_state g_st = {
+    .t_high = 28.0f,
+    .t_low  = 26.0f,
+    .fan_on = 0,
+};</pre>
+<p>第四章的状态结构就是这么初始化的。</p>
+<p><strong>练习：</strong>用 <code>.field=值</code> 补上 <code>last_temp</code> 和 <code>has_sample</code>；说明如果漏写一个字段，它会被初始成什么。</p>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能在第四章实验代码里认出字符串切词、位运算、函数指针命令表、条件编译与设计化初始化，并会写对应的最小练习。
 </div>
 </section>
 
