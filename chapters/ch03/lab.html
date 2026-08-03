@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第三章 · 本章实验 · 温控风扇（从零拼装）</title>
+<title>第三章 · 本章实验 · 继电器控制风扇（GPIO 输出）</title>
 <style>
   :root {
     --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -83,46 +83,22 @@
     body { padding-left: 0; }
     .toc { display: none; }
   }
-/* course-nav-css */
-
-  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
-  .page-nav {
-    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
-    margin: 48px 0 24px; padding: 24px 0 8px;
-    border-top: 1px solid var(--line, #d4cfc4);
-    font-size: 16px;
-  }
-  .page-nav a {
-    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
-    line-height: 1.45;
-  }
-  .page-nav a:hover { text-decoration: underline; }
-  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
-  .page-nav .next { text-align: right; margin-left: auto; }
 </style>
 </head>
 <body>
 
 <nav class="toc">
   <h4>本章实验</h4>
-<!-- course-nav-toc -->
-  <a class="course-rail" href="../../index.html">课程总览</a>
-  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
-  <a class="course-rail" href="lecture.html">本章讲义</a>
-  <a class="course-rail" href="../ch04/lecture.html">下一章 · 第四章</a>
-  <div class="divider"></div>
   <a href="#intro">这节课要做成什么样</a>
   <a href="#parts">桌上要摆什么</a>
-  <a href="#flow">整体流程图</a>
+  <a href="#flow">整体数据流</a>
   <div class="divider"></div>
   <a href="#pinmap">荔枝派排针怎么认</a>
   <a href="#wire">接线总表（照抄）</a>
   <a href="#step-wire">步骤 1：接线</a>
-  <a href="#step-code">步骤 2：改程序里的数字</a>
-  <a href="#step-sim">步骤 3：假温度先跑通风扇</a>
-  <a href="#step-real">步骤 4：接真传感器</a>
-  <a href="#step-err">步骤 5：故意松线看报错</a>
-  <a href="#step-devmem">步骤 6：只读核对（可选加深）</a>
+  <a href="#step-code">步骤 2：编译运行</a>
+  <a href="#step-accept">步骤 3：假温度验收</a>
+  <a href="#step-deep">步骤 4：改阈值加深</a>
   <div class="divider"></div>
   <a href="#trouble">常见故障</a>
   <a href="#accept">验收表</a>
@@ -132,16 +108,16 @@
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
-  <h1>本章实验 · 温控风扇</h1>
-  <p class="meta">从零拼装：DHT22 + 继电器 + 风扇 + 电平转换 · 荔枝派 4A</p>
+  <h1>本章实验 · 继电器控制风扇</h1>
+  <p class="meta">GPIO 输出：继电器直连 · 假温度阈值 · 荔枝派 4A</p>
 </header>
 
 <section id="intro">
 <h2>这节课要做成什么样</h2>
-<p>用一句话：<strong>板子周期读温度；温度高了风扇转，温度低了风扇停；传感器线松了程序还继续跑，只打印出错信息。</strong></p>
-<p>你不需要先成为电子工程师。本页按「认零件 → 认排针 → 一根根接线 → 改程序里几个数字 → 编译上传 → 看现象」写。每出现一个专有词，都会先用人话解释。</p>
+<p>用一句话：<strong>程序里一段「假温度」来回变化；超过上限，继电器吸合、风扇转；低于下限，继电器释放、风扇停。</strong>第三章不读任何传感器——它只教你一件事：<strong>怎么用一根 GPIO 脚输出高/低，去驱动执行器</strong>。</p>
+<p>你不需要先成为电子工程师。本页按「认零件 → 认排针 → 一根根接线 → 编译运行 → 看现象」写。真传感器（DHT22）第四章再接。</p>
 <div class="ok">
-  <strong>成功时你能演示：</strong>终端里周期性打印温度；温度升过上限出现风扇开、风扇真转；温度降下来风扇停；故意松传感器数据线，出现带 <code>[ERR]</code> 的一行字，程序不退出。
+  <strong>成功时你能演示：</strong>终端周期性打印假温度；温度升过上限出现 <code>[INFO] fan ON</code>，风扇真转；温度降下来 <code>fan OFF</code>，风扇停。
 </div>
 <div class="warn">
   <strong>安全：</strong>风扇的大电流不要直接接在板子的「信号脚」上——必须经过继电器。板子上标着 Fan Power 的白色插座是板载散热风扇用的，跟本实验风扇无关，别插错。接线时尽量断电操作。
@@ -152,224 +128,159 @@
 <h2>桌上要摆什么</h2>
 <table>
   <tr><th>东西</th><th>它干什么（人话）</th></tr>
-  <tr><td>荔枝派 4A</td><td>跑 Linux 的小电脑；右边一排针用来接线</td></tr>
-  <tr><td>DHT22 温湿度模块</td><td>测温度（和湿度）；三根针：电源、地、数据线</td></tr>
-  <tr><td>继电器模块（1 路，5V）</td><td>用小信号扳动的「自动开关」，去通断风扇电源</td></tr>
+  <tr><td>荔枝派 4A</td><td>跑 Linux 的小电脑；排针用来接线</td></tr>
+  <tr><td>继电器模块（1 路，5V）</td><td>小信号扳动的「自动开关」，去通断风扇电源</td></tr>
   <tr><td>5V 小风扇</td><td>被继电器开关的负载；红线正极、黑线负极</td></tr>
-  <tr><td>TXS0108E 小板</td><td>信号翻译器：板子脚约 1.8V，模块侧约 3.3V，中间靠它互译</td></tr>
-  <tr><td>AMS1117-1.8V 小板</td><td>把排针上的 3.3V 变成 1.8V，专门喂给翻译器缺的那一侧电源</td></tr>
-  <tr><td>杜邦线</td><td>各种公头/母头跳线，用来对接</td></tr>
+  <tr><td>面包板 + 杜邦线</td><td>把各个模块连起来</td></tr>
 </table>
-<p>电脑上还要：能 SSH 登录板子、能交叉编译（与第一章相同的工具链）。程序目录：<code>chapters/ch03/code/temp-fan/</code>。</p>
+<p>没有 DHT22、没有电平转换板、没有额外的降压板——第三章就这几样。</p>
 </section>
 
 <section id="flow">
-<h2>整体流程图</h2>
-<pre class="diagram">┌────────────┐     读温度数字      ┌────────────┐
-│  DHT22     │ ─────────────────► │  板子上的  │
-│  传感器    │                    │  温控程序  │
-└────────────┘                    └─────┬──────┘
-                                      │
-                         温度 &gt; 上限？ │ 温度 &lt; 下限？
-                                      ▼
-                               ┌────────────┐
-                               │  继电器    │  ← 小信号开/关
-                               └─────┬──────┘
-                                      │ 通断 5V 电源
-                                      ▼
-                               ┌────────────┐
-                               │  5V 风扇   │
-                               └────────────┘
-
-信号电压不一样时：
-  板子脚(约1.8V) ◄─► [TXS0108E 翻译器] ◄─► 传感器/继电器(约3.3V)
-  翻译器低压侧电源 ← [1.8V 降压小板] ← 排针 3.3V</pre>
-<p>建议做实验的顺序：</p>
-<pre class="diagram">接线对齐  →  假温度模式跑通风扇  →  真传感器捂热验收  →  松线看 [ERR]</pre>
+<h2>整体数据流</h2>
+<pre class="diagram">程序内部假温度 T（24 ↔ 31°C 循环）
+              │
+              ▼
+       阈值判断（滞回）
+   T &gt; 28 → 开；T &lt; 26 → 关；中间保持
+              │
+              ▼
+       GPIO 输出 高/低（IO1_5）
+              │
+              ▼
+       继电器 吸合 / 释放
+              │  通断 5V 电源
+              ▼
+        5V 风扇 转 / 停</pre>
+<p>整条链：<strong>决策（阈值）→ 执行（GPIO → 继电器 → 风扇）</strong>。传感器那一段留到第四章。</p>
 </section>
 
 <section id="pinmap">
 <h2>荔枝派排针怎么认</h2>
 <p>板子侧面那排竖针，叫 <strong>20 针排针</strong>（两排，每排 10 根）。本课只用其中几根。</p>
-<p>官方文档写明：这些<strong>信号脚</strong>的「高电平」大约是 <strong>1.8V</strong>（不是常见的 3.3V）。所以传感器、继电器信号要经过翻译器。排针上的 <strong>电源脚</strong>另有：</p>
+<p>关键事实：这些<strong>信号脚</strong>的高电平约 <strong>1.8V</strong>（不是常见的 3.3V）。本课继电器是光耦隔离的，1.8V 直连就能触发——不用电平转换。</p>
 <table>
   <tr><th>排针上的字</th><th>本课用途</th></tr>
   <tr><td><strong>5V</strong></td><td>给继电器线圈供电；给风扇供电（经继电器）</td></tr>
-  <tr><td><strong>3.3V</strong></td><td>给 DHT22、翻译器高压侧、1.8V 降压小板的输入</td></tr>
-  <tr><td><strong>GND</strong></td><td>地线；所有模块的地都要连到这里（共地）</td></tr>
-  <tr><td><strong>IO1_3</strong></td><td>本课默认：风扇/继电器信号脚</td></tr>
-  <tr><td><strong>IO1_4</strong></td><td>本课默认：DHT22 数据线</td></tr>
+  <tr><td><strong>GND</strong></td><td>地线；所有模块的地都连到这里（共地）</td></tr>
+  <tr><td><strong>IO1_5</strong></td><td>本课默认：继电器/风扇信号脚</td></tr>
+  <tr><td><strong>IO1_6</strong></td><td>备用（第四章接 DHT22）</td></tr>
 </table>
 <div class="info">
   插针方位图见仓库 <code>chapters/ch03/manuals/lpi4a-wiki-assets/io_map.png</code>。以文档图为准；早期板丝印可能不准。
 </div>
-<p>程序里怎么对应：官方示例用设备节点 <code>/dev/gpiochip1</code>，其中 <strong>第 3 路</strong>对应 <strong>IO1_3</strong>，<strong>第 4 路</strong>对应 <strong>IO1_4</strong>。下面源码宏已按此写好。</p>
+<p>程序里怎么对应：本课板子（RevyOS）上排针 GPIO 在 <code>gpiochip5</code>，其中 <strong>line 5</strong> 对应丝印 <strong>IO1_5</strong>。代码宏已经写好；若你的板子编号不同，按讲义「认脚要认丝印、编号要查运行时」一节现查现改。</p>
 </section>
 
 <section id="wire">
 <h2>接线总表（照抄）</h2>
 <p>先认清每块板子上的<strong>丝印文字</strong>（印在绿/黑板上的字母），再接线。丝印若和表不完全一致，以实物丝印为准，逻辑按下表「角色」对应。</p>
 
-<h3>A. 供电与地（先接这些）</h3>
+<h3>A. 继电器（信号 + 供电）</h3>
 <table>
   <tr><th>从</th><th>到</th><th>说明</th></tr>
-  <tr><td>排针 <strong>GND</strong></td><td>所有模块的 GND / V- / 「-」</td><td>漏接共地 = 程序在跑、硬件没反应</td></tr>
-  <tr><td>排针 <strong>3.3V</strong></td><td>DHT22 的 VCC；翻译器的 <strong>VCCB</strong>；1.8V 小板的 <strong>IN</strong></td><td>3.3V 侧电源</td></tr>
-  <tr><td>排针 <strong>5V</strong></td><td>继电器的 V+ / VCC</td><td>继电器线圈要 5V</td></tr>
-  <tr><td>1.8V 小板的 <strong>OUT</strong></td><td>翻译器的 <strong>VCCA</strong></td><td>给翻译器低压侧供电</td></tr>
-  <tr><td>翻译器的 <strong>OE</strong></td><td>接到高电平（常接到 VCCA 一侧的高，或按小板说明短接使能）</td><td>OE = 使能脚；不拉高时翻译器不工作</td></tr>
+  <tr><td>排针 <strong>IO1_5</strong></td><td>继电器信号脚 <strong>IN</strong> / X1</td><td>GPIO 直连，不经过任何转换板</td></tr>
+  <tr><td>排针 <strong>5V</strong></td><td>继电器 <strong>V+</strong> / VCC</td><td>继电器线圈要 5V</td></tr>
+  <tr><td>排针 <strong>GND</strong></td><td>继电器 <strong>V-</strong> / GND</td><td>共地，必接</td></tr>
 </table>
+<p>继电器上的跳线帽拨到 <strong>H</strong>（高电平有效）：程序写「开」时给高，继电器吸合。</p>
 
-<h3>B. 信号线（经翻译器）</h3>
-<table>
-  <tr><th>板子侧（约 1.8V）</th><th>翻译器</th><th>模块侧（约 3.3V）</th></tr>
-  <tr><td>排针 <strong>IO1_3</strong></td><td>A1 ←→ B1</td><td>继电器信号脚 <strong>IN</strong> / X1</td></tr>
-  <tr><td>排针 <strong>IO1_4</strong></td><td>A2 ←→ B2</td><td>DHT22 的 <strong>DAT</strong> / DOUT / OUT</td></tr>
-</table>
-<p>翻译器：<strong>A 排靠近低压（板子）</strong>，<strong>B 排靠近高压（模块）</strong>。同一编号 A1 与 B1 是一对。</p>
-
-<h3>C. 风扇电源（走继电器触点）</h3>
+<h3>B. 风扇（走继电器触点，大电流不进 GPIO）</h3>
 <table>
   <tr><th>接法</th><th>说明</th></tr>
   <tr><td>排针 <strong>5V</strong> → 继电器 <strong>NO</strong>（常开）</td><td>平时断开</td></tr>
   <tr><td>继电器 <strong>COM</strong>（公共）→ 风扇<strong>红线</strong></td><td>继电器吸合后红线才有电</td></tr>
   <tr><td>风扇<strong>黑线</strong> → 排针 <strong>GND</strong></td><td>负极回地</td></tr>
 </table>
-<div class="warn">
-  继电器上的跳线帽拨到 <strong>H</strong>（高电平有效）。程序写「开」时给高电平，才和说明书一致。拨在 L 时，用 3.3V 信号 + 5V 供电容易出现「怎么写都像在吸合」的怪现象。
-</div>
 
 <pre class="diagram">排针 5V ──► [继电器 NO]──(吸合时接通)──[COM]──► 风扇红线
-排针 GND ─────────────────────────────────────► 风扇黑线
-板子 IO1_3 ──► 翻译器 ──► 继电器 IN
-板子 IO1_4 ──► 翻译器 ──► DHT22 DAT</pre>
+排针 GND ──────────────────────────────────────► 风扇黑线
+排针 IO1_5 ──► 继电器 IN / X1（直连）
+排针 5V  ──► 继电器 V+      排针 GND ──► 继电器 V-</pre>
 </section>
 
 <section id="step-wire">
 <h2>步骤 1：接线</h2>
 <ol>
   <li>板子断电（拔电源更安心）。</li>
-  <li>按上一节总表，先接完所有 <strong>GND</strong>，再接 3.3V / 5V，再接信号线，最后接风扇。</li>
+  <li>按上一节总表接：先接 GND（共地），再接 5V，再接信号线 IO1_5 → IN，最后接风扇。</li>
   <li>确认继电器跳线帽在 <strong>H</strong>。</li>
   <li>确认没碰到 Fan Power 白色插座。</li>
   <li>再上电。</li>
 </ol>
-<p><strong>本步成功判据：</strong>各模块电源指示灯（若有）亮；继电器未触发时风扇不转；你能指着线说出「这根是地 / 这根是风扇信号」。</p>
+<p><strong>本步成功判据：</strong>继电器模块电源指示灯亮；未触发时风扇不转；你能指着线说出「这根是地 / 这根是信号」。</p>
 </section>
 
 <section id="step-code">
-<h2>步骤 2：改程序里的数字</h2>
-<p>打开 <code>chapters/ch03/code/temp-fan/main.c</code> 顶部宏。本课默认已按「IO1_3 / IO1_4」写好；若你脚位不同，只改这里的数字：</p>
-<pre><span class="k">#define</span> GPIO_CHIP_PATH   <span class="c">"/dev/gpiochip1"</span>
-<span class="k">#define</span> DHT_LINE         4   <span class="c">/* IO1_4 */</span>
-<span class="k">#define</span> FAN_LINE         3   <span class="c">/* IO1_3 */</span>
-<span class="k">#define</span> T_HIGH           28.0f
-<span class="k">#define</span> T_LOW            26.0f
-<span class="k">#define</span> SAMPLE_MS        2000
-<span class="k">#define</span> SIMULATE_SENSOR  1   <span class="c">/* 先用假温度；真传感器再改 0 */</span></pre>
-<p><strong>人话：</strong><code>SIMULATE_SENSOR</code> 为 1 时，程序内部假装温度慢慢升降，不读 DHT——用来先验证「阈值逻辑 + 风扇会转」。接好真传感器后再改成 0，重新编译上传。</p>
+<h2>步骤 2：编译运行</h2>
+<p>程序在 <code>chapters/ch03/code/temperature-fan/</code>。它申请 IO1_5 为输出，用假温度跑阈值判断。板端原生编译最省事：</p>
+<pre><span class="p">$</span> ssh user@board-ip 'cd ~/ruyi-riscv-embedded/ch03-lab && make && sudo ./temperature_fan'</pre>
+<p>把 <code>user@board-ip</code> 换成你第一章能登录的账号和地址。若代码还没拷到板子，先按第一章的 SCP 传过去。</p>
+<div class="info">
+  <strong>为什么 <code>sudo</code>？</strong><code>/dev/gpiochip*</code> 默认归 root，普通用户打不开。也可以用第一章教的主机交叉编译 + <code>scp</code> 的方式。
+</div>
 </section>
 
-<section id="step-sim">
-<h2>步骤 3：假温度模式跑通风扇</h2>
-<pre><span class="p">$</span> cd chapters/ch03/code/temp-fan
-<span class="p">$</span> make clean && make
-<span class="p">$</span> file temp-fan
-<span class="c"># 成功：输出里有 RISC-V / UCB RISC-V；若是 x86-64 说明没用交叉工具链</span>
-<span class="p">$</span> scp temp-fan 用户名@板子IP:~/
-<span class="p">$</span> ssh 用户名@板子IP './temp-fan'</pre>
-<p>把 <code>用户名@板子IP</code> 换成你第一章能登录的账号和地址。</p>
+<section id="step-accept">
+<h2>步骤 3：假温度验收</h2>
 <p>预期：</p>
 <ul>
-  <li>启动有 <code>SIMULATE_SENSOR=1</code> 一类提示，并打印 <code>T_HIGH</code> / <code>T_LOW</code>。</li>
-  <li>周期性打印 <code>[INFO] temp=… hum=… fan=ON|OFF</code>。</li>
-  <li>假温度升过上限 → <code>[INFO] fan ON</code>，继电器吸合（常有「咔」一声或工作灯亮），风扇转。</li>
-  <li>假温度降过下限 → <code>[INFO] fan OFF</code>，风扇停。</li>
+  <li>启动打印 <code>fake temperature: T_HIGH=28.0 T_LOW=26.0</code>，并说明继电器在 IO1_5。</li>
+  <li>周期性打印 <code>[INFO] temp=…C fan=OFF|ON</code>，假温度在 24~31 之间来回。</li>
+  <li>升过 28°C → <code>[INFO] fan ON</code>，继电器吸合（常有「咔」一声或工作灯亮），<strong>风扇转</strong>。</li>
+  <li>降到 26°C 以下 → <code>[INFO] fan OFF</code>，风扇停。</li>
+  <li>中间区间（26~28）保持上一状态，不会狂抖。</li>
 </ul>
 <p>停程序：在 SSH 里按 <code>Ctrl+C</code>。</p>
-<p><strong>本步成功判据：</strong>能演示超温开 / 降温关（假温度即可）。</p>
+<p><strong>本步成功判据：</strong>能演示超温开 / 降温关，风扇真的跟着假温度转。</p>
 </section>
 
-<section id="step-real">
-<h2>步骤 4：接真传感器</h2>
-<ol>
-  <li>确认 DHT22 的 VCC / GND / DAT 已按总表接好（DAT 经翻译器到 IO1_4）。</li>
-  <li>把 <code>SIMULATE_SENSOR</code> 改成 <code>0</code>，重新 <code>make</code>、<code>scp</code>、SSH 运行。</li>
-  <li>用手掌捂住 DHT22 白壳，或靠近热源（注意安全，别烫坏），看温度数字上升。</li>
-  <li>超过 <code>T_HIGH</code>（默认 28）应开风扇；离开捂热、温度降到低于 <code>T_LOW</code>（默认 26）应关风扇。</li>
-</ol>
-<div class="info">
-  室温若已高于 28，可把 <code>T_HIGH</code> / <code>T_LOW</code> 临时改成「比当前室温高一点 / 低一点」的两个数，方便验收；改完重新编译。
-</div>
-<p><strong>本步成功判据：</strong>真温度能打印；捂热开、降温关可演示。</p>
-</section>
-
-<section id="step-err">
-<h2>步骤 5：故意松线看报错</h2>
-<p>程序在跑、真传感器模式时，轻轻拔松 DHT22 的 <strong>DAT</strong> 线（或翻译器上对应那根），不要拔电源乱拔一气。</p>
-<p>预期：终端出现类似 <code>[ERR] DHT22 read failed …</code> 的一行；进程<strong>不退出</strong>，继续下一轮采样。插回线后应恢复打印温度。</p>
-<p><strong>本步成功判据：</strong>有 <code>[ERR]</code> 且程序还在跑。</p>
-</section>
-
-<section id="step-devmem">
-<h2>步骤 6：只读核对（加深理解，固定纪律）</h2>
-<p><strong>devmem</strong> 是一个小工具：按「物理地址」去读（或写）内存里映射出来的外设寄存器。本课纪律：<strong>只用它读，禁止用它写</strong>——写会和系统里的 GPIO 驱动抢硬件，行为不可预期。</p>
-<p>目的：当你用程序（经翻译器）把风扇脚置高时，内核驱动会改某个寄存器里的某一位。你在改之前读一次、改之后再读同一地址，若对应那一位从 0 变 1（或反过来），就证明「程序 → 内核 → 寄存器位」这条链真实发生过。</p>
-<ol>
-  <li>向当堂材料或讲义深入理解节，拿到本板要用的<strong>地址</strong>和<strong>第几位</strong>（不要猜）。</li>
-  <li>风扇仍为 OFF 时：<code>sudo devmem 0x地址 32</code>，抄下读数，标「改前」。</li>
-  <li>让程序进入 fan ON（或单独把该脚置高）。</li>
-  <li>再读同一地址，标「改后」，指出哪一位翻转。</li>
-  <li>全程不要带「写入数值」参数的 devmem 命令。</li>
-</ol>
-<p>若当堂尚未下发地址，本步可记为「待补地址」；前五步验收仍可先完成。</p>
+<section id="step-deep">
+<h2>步骤 4：改阈值加深</h2>
+<p>打开 <code>temperature_fan.c</code> 顶部宏，把 <code>T_HIGH</code> / <code>T_LOW</code> 改成别的数（比如 27 / 25），重新 <code>make</code> 再跑，观察风扇开/关的温度点变了。</p>
+<p>也可以把 <code>STEP_DELTA</code> 改大（温度变化更快），更容易看到开关切换。</p>
+<p><strong>目的：</strong>体会到「阈值是程序里的变量，硬件只需要跟着高低电平走」——这就是第三章的完整心智。</p>
 </section>
 
 <section id="trouble">
 <h2>常见故障</h2>
 <table>
   <tr><th>现象</th><th>先查什么</th></tr>
-  <tr><td>程序在跑，风扇完全不动</td><td>共地？继电器 5V？跳帽是否在 H？翻译器 OE 是否使能？NO/COM 是否接风扇红线？</td></tr>
+  <tr><td>程序报 <code>Permission denied</code></td><td>用 <code>sudo ./temperature_fan</code> 跑</td></tr>
+  <tr><td>程序报 busy / 打不开 gpiochip</td><td>有没有残留的 <code>gpioset</code> 占着 line 5？<code>sudo pkill -x gpioset</code> 后重试</td></tr>
+  <tr><td>程序在跑，风扇完全不动</td><td>共地？继电器 5V？跳帽是否 H？NO/COM 是否接风扇红线？信号线是否真在 IO1_5？</td></tr>
   <tr><td>继电器灯亮，风扇不转</td><td>风扇 5V 回路：NO–COM–红线–黑线回 GND</td></tr>
-  <tr><td>真传感器一直 [ERR]</td><td>DAT 是否经翻译器；VCC/GND；上电后等一两秒；线是否虚接</td></tr>
-  <tr><td>file 显示 x86-64</td><td>交叉工具链没生效，检查 <code>CROSS_COMPILE</code> / PATH</td></tr>
-  <tr><td>打不开 gpiochip</td><td>用 <code>ls /dev/gpiochip*</code>；可能需要 root 或加入 gpio 组：<code>sudo ./temp-fan</code> 先验证</td></tr>
+  <tr><td>某根脚怎么都拉不高（换根脚就好）</td><td>这就是讲义「前沿板卡要运行时查证」：换一根可用脚，并记进实验记录</td></tr>
+  <tr><td>file 显示 x86-64</td><td>交叉工具链没生效，检查 <code>CROSS_COMPILE</code> / PATH；或干脆板端原生编译</td></tr>
 </table>
+<p>排查方法详见讲义「故障排查：信号链五环」——先软件后硬件，每环拿证据。</p>
 </section>
 
 <section id="accept">
 <h2>验收表</h2>
 <table>
   <tr><th>验收项</th><th>通过条件</th><th>□</th></tr>
-  <tr><td>编译</td><td>主机交叉编译成功，<code>file</code> 为 RISC-V</td><td></td></tr>
-  <tr><td>接线</td><td>按总表接好；含翻译器与 1.8V 供电；跳帽 H；共地</td><td></td></tr>
-  <tr><td>采样</td><td>板端周期打印温度（假或真）</td><td></td></tr>
-  <tr><td>控制</td><td>可演示超温开 / 降温关</td><td></td></tr>
-  <tr><td>异常</td><td>读失败有 <code>[ERR]</code> 且程序继续跑</td><td></td></tr>
-  <tr><td>devmem 只读</td><td>有地址时：改前后各读一次并记录翻转位；全程未写寄存器</td><td></td></tr>
+  <tr><td>编译</td><td><code>make</code> 成功（板端原生或交叉都行），<code>file</code> 为 RISC-V</td><td></td></tr>
+  <tr><td>接线</td><td>IO1_5 直连继电器 IN；继电器 5V/GND；风扇走 NO–COM；跳帽 H；共地</td><td></td></tr>
+  <tr><td>运行</td><td><code>sudo ./temperature_fan</code> 打印假温度</td><td></td></tr>
+  <tr><td>控制</td><td>超 28°C 开、低于 26°C 关，风扇真转/真停</td><td></td></tr>
+  <tr><td>加深</td><td>改过阈值并观察到开/关点变化</td><td></td></tr>
 </table>
 
 <h3>记录表（自填）</h3>
 <table>
   <tr><th>项</th><th>你的结果</th></tr>
-  <tr><td>风扇脚 / 温度脚（chip + line）</td><td>默认 gpiochip1 line3 / line4</td></tr>
-  <tr><td>T_HIGH / T_LOW / SAMPLE_MS</td><td></td></tr>
-  <tr><td>验收方式（假温度 / 真捂热）</td><td></td></tr>
-  <tr><td>超温时风扇是否动作</td><td></td></tr>
-  <tr><td>读失败时的日志原文（一行）</td><td></td></tr>
-  <tr><td>devmem 地址 / 改前 / 改后 / 翻转的 bit</td><td></td></tr>
+  <tr><td>继电器脚（chip + line / 丝印）</td><td>gpiochip5 line 5 / IO1_5</td></tr>
+  <tr><td>T_HIGH / T_LOW</td><td></td></tr>
+  <tr><td>风扇转时继电器工作灯</td><td></td></tr>
+  <tr><td>实测哪根脚拉不高（若有）</td><td></td></tr>
 </table>
 
 <div class="ok">
-  <strong>完成标志：</strong>验收表该勾的都勾了；记录表填完。进入下一章。
+  <strong>完成标志：</strong>验收表该勾的都勾了；记录表填完。带着「GPIO 输出能驱动执行器」这个事实，进入第四章读传感器。
 </div>
 </section>
 
-<!-- course-nav-foot -->
-<nav class="page-nav" aria-label="章节翻页">
-  <a class="prev" href="lecture.html"><span class="dir">上一篇</span>第三章 · 讲义<br>GPIO 与执行器</a>
-  <a class="next" href="../ch04/lecture.html"><span class="dir">下一篇</span>第四章 · 讲义<br>串口对话与温控</a>
-</nav>
 </article>
 </body>
 </html>
