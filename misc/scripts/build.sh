@@ -12,7 +12,9 @@ COURSE_PATH="ruyi-riscv-book"
 cd "$ROOT"
 
 echo "━━━ 1/2 提交课程仓库 ━━━"
-git add index.html docs/CourseOutline.html docs/index.html chapters/ misc/scripts/inject_course_nav.py misc/scripts/build.sh
+git add -A index.html docs/CourseOutline.html chapters/ misc/scripts/inject_course_nav.py misc/scripts/build.sh
+# 去掉已废弃的跳转页（若仍在索引里）
+git rm -f --ignore-unmatch CourseOutline.html docs/index.html
 if git diff --cached --quiet; then
   echo "  (no changes)"
 else
@@ -31,10 +33,8 @@ mkdir -p "$DST/docs"
 
 cp index.html "$DST/index.html"
 cp docs/CourseOutline.html "$DST/docs/CourseOutline.html"
-cp docs/index.html "$DST/docs/index.html"
-# 旧书签 /CourseOutline.html → 跳到 docs/（避免根路径下 ../chapters 链失效）
-cp CourseOutline.html "$DST/CourseOutline.html"
-# GitHub Pages / Jekyll：避免偶发忽略路径
+# 不再部署任何「兼容跳转」页；并删掉站点上遗留的坏链文件
+rm -f "$DST/CourseOutline.html" "$DST/docs/index.html"
 touch "$DST/.nojekyll"
 
 for ch in ch01 ch02 ch03 ch04 ch05 ch06; do
@@ -57,9 +57,8 @@ rm -rf "$PAGES_DIR"
 echo ""
 echo "━━━ Done ━━━"
 BASE="https://enzoding-rgb.github.io/$COURSE_PATH"
-echo "  入口(总览):    $BASE/"
+echo "  课程主页:      $BASE/"
 echo "  CourseOutline: $BASE/docs/CourseOutline.html"
-echo "  (兼容旧链):    $BASE/CourseOutline.html"
 for ch in ch01 ch02 ch03 ch04 ch05 ch06; do
   echo "  $ch lecture:  $BASE/chapters/$ch/lecture.html"
   echo "  $ch lab:      $BASE/chapters/$ch/lab.html"
