@@ -5,7 +5,7 @@
  * 不读 DHT22（真传感器在第四章，DHT22 已挪到那边）。
  *
  * 板：荔枝派 4A + RevyOS。libgpiod v2 API。全程 C 语言（不用 C++）。
- * 脚位：IO1_4 → gpiochip5 line 4 → 继电器信号端（直连）。
+ * 脚位：IO1_5 → gpiochip5 line 5 → 继电器信号端（直连）。
  *       （本板 IO1_3 实测拉不高，已在讲义「前沿板卡」一节说明。）
  *
  * 编译（板端原生）：make
@@ -16,7 +16,7 @@
 #include <unistd.h>
 
 #define GPIO_CHIP_PATH   "/dev/gpiochip5"
-#define FAN_LINE         4   /* IO1_4 */
+#define FAN_LINE         5   /* IO1_5 */
 
 #define T_HIGH           28.0f
 #define T_LOW            26.0f
@@ -84,7 +84,7 @@ int main(void)
 
 	printf("[INFO] fake temperature: T_HIGH=%.1f T_LOW=%.1f\n",
 	       T_HIGH, T_LOW);
-	printf("[INFO] relay/fan on IO1_4 (gpiochip5 line 4); Ctrl+C to stop\n");
+	printf("[INFO] relay/fan on IO1_5 (gpiochip5 line 5); Ctrl+C to stop\n");
 
 	for (;;) {
 		t += dir * STEP_DELTA;

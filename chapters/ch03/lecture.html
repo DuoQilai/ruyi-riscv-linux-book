@@ -135,14 +135,14 @@
   <a class="sub" href="#s3.1-model">I/O 模型</a>
   <a class="sub" href="#s3.1-mmio">寄存器与用户态</a>
   <div class="divider"></div>
-  <a href="#s3.2">3.2 GPIO：用 gpiod 控灯与继电器</a>
+  <a href="#s3.2">3.2 GPIO：用 gpiod 控继电器与风扇</a>
   <a class="sub" href="#s3.2-what">一根脚能做什么</a>
   <a class="sub" href="#s3.2-chip">chip 与 line</a>
   <a class="sub" href="#s3.2-level">高、低与本板电压</a>
   <a class="sub" href="#s3.2-gpiod">向内核借一根脚</a>
   <a class="sub" href="#s3.2-busy">独占与「被占用」</a>
-  <a class="sub" href="#s3.2-relay">灯与继电器</a>
-  <a class="sub" href="#s3.2-blink">跟做 blink</a>
+  <a class="sub" href="#s3.2-relay">继电器与风扇</a>
+  <a class="sub" href="#s3.2-follow">跟做 temperature_fan</a>
   <a class="sub" href="#s3.2-diagnose">故障排查：信号链五环</a>
   <div class="divider"></div>
   <a href="#s3.3">3.3 温控闭环</a>
@@ -157,10 +157,10 @@
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
   <h1>GPIO 与执行器</h1>
-  <p class="subtitle">外设与 I/O · gpiod 控灯与继电器<br>温控闭环 · 寄存器位怎么翻<br>— 3.1 / 3.2 / 3.3 / 深入理解 —</p>
+  <p class="subtitle">外设与 I/O · gpiod 控继电器与风扇<br>决策—执行闭环 · 寄存器位怎么翻<br>— 3.1 / 3.2 / 3.3 / 深入理解 —</p>
   <div class="meta">
-    <span>示例：blink</span>
-    <span>实验：temp-fan</span>
+    <span>示例：temperature_fan</span>
+    <span>实验：继电器控制风扇</span>
     <span>API：libgpiod</span>
   </div>
 </div>
@@ -171,23 +171,23 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置：</strong>已完成第一、二章——交叉编译、Makefile、SSH/SCP 可用，C 代码能读能改。本章在荔枝派 4A 的用户态用 C 控外设；温控风扇闭环在 <code>lab.html</code> 完成。读完 3.1–3.3 后进入「深入理解」，用 <code>devmem</code> 只读看清寄存器位翻转。
+  <strong>前置：</strong>已完成第一、二章——能编译 C（板端原生 <code>gcc</code> 或主机交叉编译都行）、SSH/SCP 可用。本章在荔枝派 4A 的用户态用 C 控外设：让 GPIO 输出高低，去驱动继电器、开关风扇。读完 3.1–3.3 后进入「深入理解」，用 <code>devmem</code> 只读看清寄存器位翻转。
 </div>
 
 <h3>你需要准备什么</h3>
 
 <div class="card-grid card-grid-3">
-  <div class="card"><h4>主机 + 工具链</h4><p><code>riscv64-unknown-linux-gnu-gcc</code>；板端 SSH 可用。</p></div>
-  <div class="card"><h4>荔枝派 4A + 套件</h4><p>课程 LED、杜邦线、DHT22、风扇 + 继电器模块。风扇由课程提供。</p></div>
-  <div class="card"><h4>代码</h4><p>讲义跟做 <code>chapters/ch03/code/blink/</code>；实验脚手架 <code>chapters/ch03/code/temp-fan/</code>。</p></div>
+  <div class="card"><h4>编译</h4><p>板端原生 <code>gcc</code>（最简单），或主机交叉工具链。见第一章。</p></div>
+  <div class="card"><h4>荔枝派 4A + 套件</h4><p>继电器模块（1 路 5V）、5V 风扇、面包板、杜邦线。继电器和风扇由课程提供。</p></div>
+  <div class="card"><h4>代码</h4><p>讲义跟做 <code>chapters/ch03/code/temperature-fan/</code>；实验接线在 <code>lab.html</code>。</p></div>
 </div>
 
 <h3>本章你会学到什么</h3>
 
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>3.1 外设与 I/O</h4><p>物理量如何变成程序里的数；用户态经内核接口访问硬件。</p></div>
-  <div class="card"><h4>3.2 GPIO：用 gpiod 控灯与继电器</h4><p>弄清 chip/line、高低电平与申请规则；用同一套接口先控灯，再理解继电器信号端。</p></div>
-  <div class="card"><h4>3.3 温控闭环</h4><p>温度 → 阈值 → 风扇开/关；建立「传感—决策—执行」数据流。</p></div>
+  <div class="card"><h4>3.2 GPIO：用 gpiod 控继电器与风扇</h4><p>弄清 chip/line、高低电平与申请规则；用同一套接口驱动继电器信号端，让风扇转。</p></div>
+  <div class="card"><h4>3.3 决策 → 执行</h4><p>假温度 → 阈值 → 继电器 → 风扇；建立「决策—执行」数据流。真传感器在第四章。</p></div>
 </div>
 </section>
 
@@ -201,9 +201,9 @@
 
 <div class="diagram">物理世界          电气层              软件层
   温度 / 按键  →  电压 / 电平  →  驱动读寄存器或缓冲
-  LED / 风扇   ←  高/低、开关  ←  程序写「开/关」</div>
+  继电器 / 风扇 ←  高/低、开关  ←  程序写「开/关」</div>
 
-<p>同一条 GPIO 脚，配置成输出就能驱动 LED；配置成输入就能读按键。传感器、执行器再复杂，对用户态程序来说，最终仍是「读到一个值」或「写出一个命令」。下一节我们会把这根脚在 Linux 里的名字（chip / line）和本板的 1.8 V 电平讲清楚——否则「写了 1 却不见亮」会很难排查。</p>
+<p>同一条 GPIO 脚，配置成输出就能驱动执行器（如继电器、风扇的信号端）；配置成输入就能读按键。执行器再复杂，对用户态程序来说，最终仍是「写出一个命令」。下一节我们会把这根脚在 Linux 里的名字（chip / line）和本板的 1.8 V 电平讲清楚——否则「写了 1 却不见动」会很难排查。</p>
 
 <h3 id="s3.1-mmio">寄存器、MMIO 与用户态边界</h3>
 <p><strong>寄存器</strong>是芯片内部一组可读写的控制位，用来配置外设、读状态、写输出。<strong>MMIO</strong>（Memory-Mapped I/O，内存映射 I/O）把这些寄存器映射到 CPU 可见的地址空间：驱动对某个地址的读写，实际落到外设控制逻辑，而不是普通 RAM。</p>
@@ -224,11 +224,11 @@
 内核驱动 ──► MMIO 寄存器 ──► 物理引脚 / 外设</div>
 
 <div class="info">
-  <strong>记住一句：</strong>板上有 MMIO，但本课业务程序走内核暴露的接口（如 gpiod）。「深入理解」会用 <code>devmem</code> <strong>只读</strong>核对某一位是否翻转，用来对照理解驱动写了寄存器——不拿它当日常控灯手段。
+  <strong>记住一句：</strong>板上有 MMIO，但本课业务程序走内核暴露的接口（如 gpiod）。「深入理解」会用 <code>devmem</code> <strong>只读</strong>核对某一位是否翻转，用来对照理解驱动写了寄存器——不拿它当日常控外设手段。
 </div>
 
 <div class="warn">
-  <strong>安全边界：</strong>不要把 GPIO 接到市电或大电流负载；风扇等执行器必须经继电器或驱动模块，GPIO 只控<strong>信号端</strong>。另外：荔枝派 4A 的原生 GPIO 逻辑电平是 <strong>1.8 V</strong>（不是常见的 3.3 V）——接 3.3 V 模块时要做电平匹配，细节在 3.2。
+  <strong>安全边界：</strong>不要把 GPIO 接到市电或大电流负载；风扇等执行器必须经继电器或驱动模块，GPIO 只控<strong>信号端</strong>。另外：荔枝派 4A 的原生 GPIO 逻辑电平是 <strong>1.8 V</strong>（不是常见的 3.3 V）。本课继电器是光耦隔离的，1.8 V 直连即可；需要电平匹配的模块我们到第四章再说。
 </div>
 
 <div class="info" style="margin-top:32px;">
@@ -239,15 +239,15 @@
 <!-- ═══ 3.2 ═══ -->
 <section id="s3.2">
 <div class="section-num">3.2</div>
-<h2>GPIO：用 gpiod 控灯与继电器</h2>
+<h2>GPIO：用 gpiod 控继电器与风扇</h2>
 
-<p>这一节我们把「外设」落到一根具体的脚上。读完你应该能回答四个问题：<strong>GPIO 是什么</strong>、<strong>Linux 怎么给脚编号</strong>、<strong>高低电平在本板上意味着什么</strong>、<strong>为什么程序要先「申请」才能改电平</strong>。灯和继电器只是同一套道理的两种负载。</p>
+<p>这一节我们把「外设」落到一根具体的脚上。读完你应该能回答四个问题：<strong>GPIO 是什么</strong>、<strong>Linux 怎么给脚编号</strong>、<strong>高低电平在本板上意味着什么</strong>、<strong>为什么程序要先「申请」才能改电平</strong>。继电器和风扇是这套道理落地的地方。</p>
 
 <h3 id="s3.2-what">一根脚能做什么</h3>
-<p><strong>GPIO</strong>（General-Purpose Input/Output，通用输入输出）是芯片上可以由软件配置方向的引脚。配置成<strong>输出</strong>时，程序决定它是高还是低，外面的世界跟着变（灯亮灭、继电器吸合）。配置成<strong>输入</strong>时，程序去读外面世界此刻是高还是低（按键有没有按下）。</p>
+<p><strong>GPIO</strong>（General-Purpose Input/Output，通用输入输出）是芯片上可以由软件配置方向的引脚。配置成<strong>输出</strong>时，程序决定它是高还是低，外面的世界跟着变（继电器吸合、风扇转）。配置成<strong>输入</strong>时，程序去读外面世界此刻是高还是低（按键有没有按下）。</p>
 <p>对学生来说，最有用的心智模型是：</p>
 <ul>
-  <li><strong>输出</strong>＝程序对世界说话：「请亮」「请灭」。</li>
+  <li><strong>输出</strong>＝程序对世界说话：「请吸合」「请释放」。</li>
   <li><strong>输入</strong>＝程序听世界说话：「现在按下了吗？」</li>
   <li>同一根物理脚，同一时刻通常只做一件事：要么说，要么听。</li>
 </ul>
@@ -255,35 +255,35 @@
 
 <h3 id="s3.2-chip">Linux 怎么称呼一根脚：chip 与 line</h3>
 <p>一块板子上往往有<strong>多组</strong> GPIO 控制器。Linux 把每一组暴露成一个字符设备，名字像 <code>/dev/gpiochip0</code>、<code>/dev/gpiochip1</code>……每一个叫一个 <strong>gpiochip</strong>（芯片控制器节点，不一定等于「整颗 SoC」）。</p>
-<p>在某一个 chip 里面，脚按编号排列，这个编号叫 <strong>line</strong>（线号 / offset）。本课默认控灯、控风扇信号脚用的是：</p>
+<p>在某一个 chip 里面，脚按编号排列，这个编号叫 <strong>line</strong>（线号 / offset）。本课默认控继电器/风扇信号脚用的是：</p>
 
-<pre><span class="k">#define</span> GPIO_CHIP_PATH  <span class="c">"/dev/gpiochip1"</span>
-<span class="k">#define</span> LED_LINE        3    <span class="c">/* 对应排针丝印 IO1_3；换脚只改数字 */</span></pre>
+<pre><span class="k">#define</span> GPIO_CHIP_PATH  <span class="c">"/dev/gpiochip5"</span>
+<span class="k">#define</span> FAN_LINE        5    <span class="c">/* 对应排针丝印 IO1_5；换脚只改数字 */</span></pre>
 
 <p>请把这两个名字一起记住：<strong>chip 告诉你在哪一组控制器上，line 告诉你是这一组里的第几根</strong>。只说「GPIO3」而不说 chip，在多控制器的板上会说不清到底是哪一根；只说 chip 不说 line，内核也不知道你要哪一根。</p>
 
 <table>
   <tr><th>说法</th><th>指什么</th><th>本课例子</th></tr>
-  <tr><td>排针丝印</td><td>硬件手册上的名字，接线时认这个</td><td>IO1_3、IO1_4</td></tr>
-  <tr><td><code>/dev/gpiochipN</code></td><td>内核暴露的某一组 GPIO 控制器</td><td><code>gpiochip1</code></td></tr>
-  <tr><td>line 编号</td><td>该 chip 内从 0 起的偏移</td><td>line 3 → IO1_3</td></tr>
-  <tr><td>内核 debug 全局号</td><td><code>/sys/kernel/debug/gpio</code> 里的 <code>gpio-538</code> 一类</td><td>基址 + line；<strong>不要</strong>和 line 数字混用</td></tr>
+  <tr><td>排针丝印</td><td>硬件手册上的名字，接线时认这个</td><td>IO1_5、IO1_6</td></tr>
+  <tr><td><code>/dev/gpiochipN</code></td><td>内核暴露的某一组 GPIO 控制器</td><td><code>gpiochip5</code></td></tr>
+  <tr><td>line 编号</td><td>该 chip 内从 0 起的偏移</td><td>line 5 → IO1_5</td></tr>
+  <tr><td>内核 debug 全局号</td><td><code>/sys/kernel/debug/gpio</code> 里的 <code>gpio-651</code> 一类</td><td>基址 + line；<strong>不要</strong>和 line 数字混用</td></tr>
 </table>
 
 <div class="info">
-  <strong>为什么 debug 里看到 gpio-538，程序却写 line 3？</strong>内核会给全板 GPIO 分配一段全局编号（基址因内核版本而变）。<code>gpiochip1</code> 若从 535 起算，则 line 3 对应全局号 538。日常编程用 <strong>chip + line</strong>；debug 文件用来排查「到底谁占着这根脚」，不要把 538 抄进 C 宏当 line。再提醒一句：<code>gpiochipN</code> 的 N 由内核按探测顺序动态分配，换个镜像（如如意 OS / RevyOS）可能整体平移——默认镜像的 <code>gpiochip1</code>，在别处未必还是它。换系统后第一件事是重新认脚（见下方「故障排查」）。
+  <strong>为什么 debug 里看到 gpio-651，程序却写 line 5？</strong>内核会给全板 GPIO 分配一段全局编号（基址因内核版本而变）。<code>gpiochip5</code> 在本板从 646 起算，则 line 5 对应全局号 651。日常编程用 <strong>chip + line</strong>；debug 文件用来排查「到底谁占着这根脚」，不要把 651 抄进 C 宏当 line。再提醒一句：<code>gpiochipN</code> 的 N 由内核按探测顺序动态分配，换个镜像（如如意 OS / RevyOS）可能整体平移——教程写的 <code>gpiochip1</code>，在别处未必还是它。换系统后第一件事是重新认脚（见下方「故障排查」）。
 </div>
 
-<div class="diagram">排针丝印 IO1_3
+<div class="diagram">排针丝印 IO1_5
         │  （查课程接线表）
         ▼
-  /dev/gpiochip1  的  line 3
+  /dev/gpiochip5  的  line 5
         │
         ▼
-  内核里可能显示为 gpio-538（基址+3）
+  内核里可能显示为 gpio-651（基址+5）
         │
         ▼
-  物理引脚电平  ←→  LED / 继电器信号端</div>
+  物理引脚电平  ←→  继电器信号端</div>
 
 <h3 id="s3.2-level">「高」「低」在本板上是什么意思</h3>
 <p>程序里写 <code>1</code> / <code>0</code>（或 active / inactive），最终变成引脚上的电压：</p>
@@ -294,23 +294,22 @@
 <p>许多教材默认「GPIO = 3.3 V」。荔枝派 4A <strong>不是</strong>：官方说明里，SoC <strong>原生 IO 为 1.8 V</strong>。排针上的 3.3 V / 5 V 电源脚是给外设供电的，<strong>不等于</strong>信号脚也是 3.3 V。</p>
 
 <table>
-  <tr><th>你接什么</th><th>1.8 V GPIO 通常能不能直接扛</th><th>本课态度</th></tr>
-  <tr><td>红光 LED + 限流电阻</td><td>常常可以（灯可能偏暗）</td><td>讲义 blink、验证「程序能动世界」的首选</td></tr>
-  <tr><td>按键到 GND（内部上拉）</td><td>可以学输入</td><td>输入实验可用</td></tr>
-  <tr><td>常见 3.3 V/5 V 继电器信号端、DHT22 数据线</td><td>常常带不动或电平不匹配</td><td>需要<strong>电平转换</strong>（见 lab）；不要用杜邦线硬怼长期试验</td></tr>
+  <tr><th>你接什么</th><th>1.8 V GPIO 能不能直接扛</th><th>本课态度</th></tr>
+  <tr><td>本课继电器（5V 光耦隔离模块）</td><td>可以：输入侧就是一颗光耦 LED，1.8 V 足够触发</td><td><strong>直连 GPIO（IO1_5）</strong>，不需要电平转换</td></tr>
+  <tr><td>需要 3.3 V/5 V 电平的传感器（如第四章的 DHT22）</td><td>不行：高电平不够、还可能超压</td><td>第四章再讲电平转换模块</td></tr>
 </table>
 
-<p><strong>电平转换板</strong>（芯片型号常见为 TXS0108E，课里就叫电平转换板）做的事很单一：在「板子说的 1.8 V」和「模块听的 3.3 V」之间当翻译。它不测温、不转风扇，也不负责「把电流喂给模块」——电压翻译对了，不代表电流也够；继电器信号端要毫安级电流，翻译板常常喂不动。风扇仍由继电器触点去开关电源。接线细节与验收步骤在 <a href="lab.html">lab.html</a>，这里先建立「为什么需要翻译」。</p>
+<p>为什么继电器能直连？因为它是<strong>光耦隔离</strong>的：输入侧只是一颗光耦 LED，1.8 V 就能点亮并触发内部继电器；而模块自己的 5 V 线圈与输入信号在电气上<strong>不相通</strong>，所以不存在电平打架。反过来，某些传感器（如 DHT22）的数据线要 3.3 V 电平，直接接 1.8 V 脚会「叫不醒、还可能烧脚」——那部分留到第四章。</p>
 
 <div class="warn">
-  <strong>共地：</strong>无论灯、按键还是模块，板子的 GND 与外设 GND 必须连在一起。没有公共地，「高」「低」没有共同参考，现象会随机、难复现。
+  <strong>共地：</strong>无论继电器还是任何模块，板子的 GND 与外设 GND 必须连在一起。没有公共地，「高」「低」没有共同参考，现象会随机、难复现。
 </div>
 
 <h3 id="s3.2-gpiod">向内核借一根脚：gpiod / libgpiod</h3>
-<p>在 Linux 用户态，你<strong>不直接</strong>去改芯片寄存器来控日常业务。你向内核说：「我想使用 <code>gpiochip1</code> 的 line 3，请把它配成输出，初始为低。」内核同意后，你再请求「请设为高」「请设为低」。这套用户态库和命令行工具，统称 <strong>gpiod</strong>（库名常见 <code>libgpiod</code>，链接 <code>-lgpiod</code>）。</p>
+<p>在 Linux 用户态，你<strong>不直接</strong>去改芯片寄存器来控日常业务。你向内核说：「我想使用 <code>gpiochip5</code> 的 line 5，请把它配成输出，初始为低。」内核同意后，你再请求「请设为高」「请设为低」。这套用户态库和命令行工具，统称 <strong>gpiod</strong>（库名常见 <code>libgpiod</code>，链接 <code>-lgpiod</code>）。</p>
 
 <div class="diagram">你的 C 程序
-    │  打开 chip → 取得 line → 申请方向 → 读写电平 → 用完释放
+    │  打开 chip → 配置 line → 申请 → 写电平 → 用完释放
     ▼
 libgpiod
     │  系统调用
@@ -318,9 +317,9 @@ libgpiod
 内核 GPIO 子系统 / 驱动
     │  真正写 MMIO、改引脚
     ▼
-物理脚 ──► LED /（经电平转换后）继电器信号端</div>
+物理脚 ──► 继电器信号端 ──► 风扇电源通断</div>
 
-<p>为什么要绕这一圈？因为同一根脚可能被别的进程、某个内核驱动、或你上次没退干净的命令占用。内核统一仲裁，才不会两个人各写各的、互相踩。日常控灯、控继电器信号端，走 gpiod；「深入理解」里用 <code>devmem</code> <strong>只读</strong>核对寄存器位，那是旁路验证，不是第二条业务路径。</p>
+<p>为什么要绕这一圈？因为同一根脚可能被别的进程、某个内核驱动、或你上次没退干净的命令占用。内核统一仲裁，才不会两个人各写各的、互相踩。日常控继电器/风扇信号端，走 gpiod；「深入理解」里用 <code>devmem</code> <strong>只读</strong>核对寄存器位，那是旁路验证，不是第二条业务路径。</p>
 
 <p>板端常见的配套命令（版本不同，参数写法略有差异；本课板子多为 libgpiod 2.x）：</p>
 <ul>
@@ -330,17 +329,15 @@ libgpiod
 </ul>
 <p>注意：许多板上<strong>没有</strong>名叫 <code>gpio</code> 的万能命令；看到的是上面这一组。需要权限时用 <code>sudo</code>，或把用户加入 gpio 组（以课程环境为准）。</p>
 
-<pre><span class="c">/* 讲义 blink 的骨架：打开 → 申请输出 → 翻转 → 释放 */</span>
-chip = gpiod_chip_open(<span class="p">"/dev/gpiochip1"</span>);
-line = gpiod_chip_get_line(chip, 3);
-gpiod_line_request_output(line, <span class="p">"ch03-blink"</span>, 0);  <span class="c">/* 消费者名字会出现在占用信息里 */</span>
-gpiod_line_set_value(line, 1);   <span class="c">/* 高 */</span>
-gpiod_line_set_value(line, 0);   <span class="c">/* 低 */</span>
-gpiod_line_release(line);
-gpiod_chip_close(chip);</pre>
+<pre><span class="c">/* temperature_fan 的核心（libgpiod v2；完整代码见 code/temperature-fan/） */</span>
+chip = gpiod_chip_open(<span class="p">"/dev/gpiochip5"</span>);       <span class="c">/* 打开控制器 */</span>
+fan_req = line_request(FAN_LINE, OUTPUT, 0);  <span class="c">/* 申请 line 5 为输出，初始低（封装见代码） */</span>
+gpiod_line_request_set_value(fan_req, FAN_LINE, 1);   <span class="c">/* 高：继电器吸合 → 风扇转 */</span>
+gpiod_line_request_set_value(fan_req, FAN_LINE, 0);   <span class="c">/* 低：继电器释放 → 风扇停 */</span>
+gpiod_line_request_release(fan_req);                  <span class="c">/* 用完释放 */</span></pre>
 
 <div class="info">
-  <strong>消费者名字（consumer）</strong>不是装饰。申请时传入的字符串会出现在 <code>gpioinfo</code> / <code>debug/gpio</code> 里。调试「谁占着我的脚」时，能一眼看出是 <code>gpioset</code>、<code>ch03-blink</code> 还是别的程序——所以起名要诚实。
+  <strong>消费者名字（consumer）</strong>不是装饰。申请时传入的字符串会出现在 <code>gpioinfo</code> / <code>debug/gpio</code> 里。调试「谁占着我的脚」时，能一眼看出是 <code>gpioset</code>、<code>temperature-fan</code> 还是别的程序——所以起名要诚实。
 </div>
 
 <h3 id="s3.2-busy">独占与「Device or resource busy」</h3>
@@ -348,56 +345,55 @@ gpiod_chip_close(chip);</pre>
 <p>这不是板子坏了，而是规则在起作用。课堂上最常见的情况是：</p>
 <ol>
   <li>你用 <code>gpioset</code> 把脚设成高或低做试验，命令<strong>一直占着</strong>不退出；</li>
-  <li>随后再跑 blink、再 <code>gpioget</code>，全部失败；</li>
+  <li>随后再跑 temperature_fan、再 <code>gpioget</code>，全部失败；</li>
   <li>查占用信息，会看到 consumer 写成 <code>gpioset</code>，方向是 output，电平是 lo 或 hi。</li>
 </ol>
 <p>处理思路也很「嵌入式」：先弄清<strong>谁</strong>占着，再决定是结束那个进程，还是改用另一根 line。不要同时开两个程序抢同一根脚「看谁赢」——赢的是内核的报错，输的是你的耐心。</p>
 
 <div class="diagram">正常：
-  程序 A 申请 line 3 → 使用 → 释放 → 程序 B 才能再申请
+  程序 A 申请 line 5 → 使用 → 释放 → 程序 B 才能再申请
 
 踩坑：
-  gpioset 占着 line 3=0 不退出
+  gpioset 占着 line 5=0 不退出
        │
        ▼
-  blink / gpioget → busy（对的，该拒绝）</div>
+  temperature_fan / gpioget → busy（对的，该拒绝）</div>
 
-<h3 id="s3.2-relay">灯与继电器：同一套 GPIO，两种负载</h3>
-<p><strong>灯</strong>是最小执行器：电流很小，适合验证「我的 chip/line 选对了、程序真的改到了电平」。本课讲义跟做以 LED 为准——看见亮灭，GPIO 故事才算落地。</p>
-<p><strong>继电器</strong>把「小信号」变成「能不能给大电流通路通电」：GPIO（往往再经电平转换）只驱动继电器的<strong>信号端</strong>（丝印可能是 IN / X1）；风扇电机的电源走继电器触点（NO / COM 一类）。你的程序仍然只是在写高/低，并没有「直接驱动电机」。</p>
+<h3 id="s3.2-relay">继电器与风扇：GPIO 命令 + 大电流电闸</h3>
+<p><strong>继电器</strong>把「小信号」变成「能不能给大电流通路通电」：GPIO 直连驱动继电器的<strong>信号端</strong>（丝印 IN / X1，高电平吸合）；风扇电机的电源走继电器触点（NO / COM 一类）。你的程序仍然只是在写高/低，并没有「直接驱动电机」。</p>
 
 <table>
   <tr><th>对象</th><th>GPIO 在做什么</th><th>你要建立的直觉</th></tr>
-  <tr><td>LED</td><td>输出高/低 → 灯亮/灭</td><td>程序 ↔ 物理世界的最短闭环</td></tr>
-  <tr><td>继电器 → 风扇</td><td>输出高/低 → 信号端有效 → 触点通断电源</td><td>GPIO 管命令；大电流不进 SoC 脚</td></tr>
+  <tr><td>继电器 → 风扇</td><td>输出高/低 → 信号端有效 → 触点通断 5V 电源</td><td>GPIO 管命令；大电流不进 SoC 脚</td></tr>
 </table>
 
-<p>实验里风扇、DHT22、电平转换如何接线，以 <a href="lab.html">lab.html</a> 为准。讲义这一节只要求你：<strong>先会用 gpiod 诚实地点亮一盏灯</strong>；继电器是同一 API 换负载，不是另一套「风扇专用系统调用」。</p>
+<p>接线细节以 <a href="lab.html">lab.html</a> 为准。讲义这一节只要求你：<strong>会用 gpiod 诚实地让继电器吸合/释放</strong>，让风扇跟着转。</p>
 
-<h3 id="s3.2-blink">跟做 blink：让一根脚学会眨眼</h3>
-<p><code>chapters/ch03/code/blink/</code> 做的事只有一件：按规定的 chip/line 申请输出，然后周期翻转高低。你要验证的不是「命令背得熟」，而是三件事同时成立：</p>
+<h3 id="s3.2-follow">跟做 temperature_fan：让风扇按假温度转</h3>
+<p><code>chapters/ch03/code/temperature-fan/</code> 做的事：申请 IO1_5 为输出，用一段<strong>假温度</strong>（程序内部自己变化）跑阈值判断——超过上限让继电器吸合（风扇转），低于下限释放（风扇停）。你要验证三件事同时成立：</p>
 <ol>
-  <li>宏里的 chip、line 与排针接线一致；</li>
-  <li>交叉编译出的程序在板上能打开 gpiochip（权限够）；</li>
-  <li>LED 真的闪——世界响应了程序。</li>
+  <li>宏里的 chip、line 与排针接线一致（<code>gpiochip5</code> line 5 = 丝印 IO1_5）；</li>
+  <li>程序能打开 gpiochip（权限够，用 <code>sudo</code>）；</li>
+  <li>风扇真的转了——世界响应了程序。</li>
 </ol>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>认脚</strong><br>打开接线表，确认你插的是哪根排针，对应 <code>gpiochip?</code> 与 line ?。改 <code>main.c</code> 里的宏，不要猜。</div></li>
-  <li><span class="step-num">2</span><div><strong>先排除「被占用」</strong><br>若板上刚做过手动拉高/拉低，先确认没有残留的 <code>gpioset</code> 占着同一 line，否则 blink 会申请失败。</div></li>
-  <li><span class="step-num">3</span><div><strong>交叉编译并上板运行</strong><br>主机 <code>make</code> → <code>scp</code> → 板端运行。预期：灯周期性闪烁，终端有 <code>[INFO] blinking line …</code>。</div></li>
-  <li><span class="step-num">4</span><div><strong>灯不闪时怎么想</strong><br>顺序建议：脚号/接线 → 共地与限流电阻 → 程序是否申请成功 → 是否 1.8 V 驱动不动该负载。先别跳到改内核或乱写寄存器。</div></li>
+  <li><span class="step-num">1</span><div><strong>认脚</strong><br>接线表确认：继电器信号端 X1 接排针 <strong>IO1_5</strong>，V+ 接 5V，V- 接 GND，跳帽 H。改宏，不猜。</div></li>
+  <li><span class="step-num">2</span><div><strong>先排除「被占用」</strong><br>板上若有残留的 <code>gpioset</code> 占着 line 5，程序会申请失败。</div></li>
+  <li><span class="step-num">3</span><div><strong>编译（板端原生最省事）</strong><br>SSH 到板子，<code>cd code/temperature-fan && make</code>；也可在主机交叉编译后 scp（第一章的路）。</div></li>
+  <li><span class="step-num">4</span><div><strong>运行并验收</strong><br><code>sudo ./temperature_fan</code>。预期：终端打印假温度，超过 28°C 出现 <code>[INFO] fan ON</code>、继电器「咔」、风扇转；降到 26°C 以下 <code>fan OFF</code>、风扇停。Ctrl+C 退出。</div></li>
 </ol>
 
-<pre><span class="c"># 主机</span>
-<span class="p">$</span> cd chapters/ch03/code/blink
-<span class="p">$</span> make clean && make
-<span class="p">$</span> file blink
-<span class="p">$</span> scp blink user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip './blink'</pre>
+<pre><span class="c"># 板端原生（最省事）</span>
+<span class="p">$</span> ssh user@board-ip 'cd ruyi-riscv-embedded/ch03-lab && make && sudo ./temperature_fan'
+
+<span class="c"># 或主机交叉编译 + scp（第一章的路）</span>
+<span class="p">$</span> make CROSS_COMPILE=riscv64-unknown-linux-gnu-
+<span class="p">$</span> scp temperature_fan user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip 'sudo ./temperature_fan'</pre>
 
 <div class="info">
-  <strong>Makefile：</strong><code>CROSS_COMPILE</code> 默认为 <code>riscv64-unknown-linux-gnu-</code>，并链接 <code>-lgpiod</code>。产物名 <code>blink</code>；<code>file</code> 应显示 RISC-V ELF。板端需有 libgpiod 运行库。
+  <strong>为什么要 sudo？</strong><code>/dev/gpiochip*</code> 设备默认归 root，普通用户打不开（报 <code>Permission denied</code>）。用 <code>sudo</code> 跑，或把用户加进 gpio 组。
 </div>
 
 <!-- ═══ 3.2 故障排查 ═══ -->
@@ -407,11 +403,11 @@ gpiod_chip_close(chip);</pre>
 
 <h4>先建心智模型：信号要走过五环</h4>
 
-<div class="diagram">① 程序想做的事    ② 内核状态          ③ 编号 ↔ 排针       ④ 引脚电压   ⑤ 模块与接线
-   "我想拉高"   →  谁占着？什么值？  →  这个 chip/line 是不是那根针  →  真有 1.8V？ →  共地？吃得动？
+<div class="diagram">① 程序想做的事    ② 内核状态          ③ 编号 ↔ 排针       ④ 执行器响应   ⑤ 模块与接线
+   "我想拉高"   →  谁占着？什么值？  →  这个 chip/line 是不是那根针  →  继电器动了吗？ →  共地？吃得动？
                    │                  │                    │                  │
                    ▼                  ▼                    ▼                  ▼
-                ps 看进程          debug 看状态          pinmux 查映射       万用表/LED    拔线对照</div>
+                ps 看进程          debug 看状态          pinmux 查映射       软件状态/执行器  拔线对照</div>
 
 <p>继电器不动，问题一定出在这五环之一。<strong>排查不是挨个重试</strong>——换个模块、再插一遍、多按几下——而是每一环都拿到<strong>证据</strong>，把看不见的中间环节逐段点亮。断在哪一环，就修哪一环。</p>
 
@@ -443,71 +439,65 @@ gpiod_chip_close(chip);</pre>
   <strong>教训：</strong>排针丝印（IO1_3）是硬件事实，稳定不变；<code>(chip, line)</code> 是内核动态编号，随镜像/内核而变。<strong>认脚要认丝印，编号要查运行时。</strong>换了系统，第一件事就是重新确认 chip/line，别照抄旧教程。
 </div>
 
-<h4>第四环：给「看不见的高/低」一个可见证据</h4>
-<p>软件说高，不等于引脚上真有电压。最直接的是万用表：红笔接目标脚、黑笔接 GND，程序写 1 应读到约 <strong>1.8 V</strong>（本板 GPIO 电平），写 0 读到 0 V。没有万用表时，用一颗红 LED 当探针——但 1.8 V 直接喂红 LED 常常点不亮（它的导通电压就压在 1.8–2 V 附近），所以改成 3.3 V 供电、让 GPIO 当开关：</p>
-<pre>3.3V ──► 红LED ──► 电阻（约 330Ω）──► GPIO 脚（LED 负极朝 GPIO）
+<h4>第四环：让软件状态和执行器自己说话</h4>
+<p>软件说「高」还不够，要看两样东西对上：<strong>① 内核状态</strong>——<code>/sys/kernel/debug/gpio</code> 里那根 line 是 <code>out hi</code> 还是 <code>out lo</code>；<strong>② 执行器响应</strong>——继电器有没有「咔」、风扇转不转。软件写高 + 内核显示 hi + 继电器没动 → 问题在模块/接线那一环；软件写高 + 内核显示 lo → 问题在更前面。这样就把链条切成两段，一半一半地查。</p>
 
-GPIO 低(0V)   → LED 亮
-GPIO 高(1.8V) → 压差只剩 1.5V → LED 灭</pre>
-<p>来回写高/低，看灯亮灭切换，就用眼睛「看见」了软件在动——它瞬间戳破「我以为高了」的错觉。</p>
-
-<h4>第五环：还剩一种可能——脚被外部拉住</h4>
-<p>真实排查里我们还遇到一根脚<strong>怎么拉都是低</strong>：程序写 1，debug 里仍是 <code>out lo</code>。这时别怀疑内核坏了，先做对照实验：<strong>把连在这根脚上的模块全部拔掉再测</strong>。拔掉后能拉高，就是外部电路（某根线、某个模块、共地接错）把它拖到地；拔掉后仍拉不高，才是脚本身或配置的问题。这一步把「板子 vs 接线」干净地切成两半。</p>
+<h4>第五环：脚被外部拉住，或这根脚本身就拉不高</h4>
+<p>真实案例：这块板子的 IO1_3 <strong>从没接过任何线</strong>，但程序写 1、debug 里它恒为 <code>out lo</code>——拉不高；同一条命令，IO1_4/5/6 全部正常。排除了接线后，这就是板级问题（引脚失效或板上有硬下拉）。做法不是修它，而是<strong>换一根脚</strong>，并把「实测哪根能用」记进实验记录。本课统一用 IO1_5（继电器）与 IO1_6（传感器），正是运行时验证后的结果——这就是<strong>前沿板卡要运行时查证</strong>的典型：教程说 IO1_3 是默认脚，但你的板子未必照办。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>整条思路一句话：</strong>先软件后硬件，每一环都拿证据、不靠猜。程序 → 内核状态 → 编号↔排针 → 引脚电压 → 模块接线，五环逐段点亮，断在哪修哪。顺带记住两个事实：<strong>chip 编号是活的</strong>（换系统要重认）；<strong>电平转换板是翻译器不是电源</strong>（它管电压、不管电流，喂不动要吃毫安的继电器光耦）。
+  <strong>整条思路一句话：</strong>先软件后硬件，每一环都拿证据、不靠猜。程序 → 内核状态 → 编号↔排针 → 执行器响应 → 模块接线，五环逐段点亮，断在哪修哪。最重要的认知：<strong>chip/line 编号是活的</strong>（换系统要重认，认脚以丝印 + 运行时为准）；<strong>前沿板卡要运行时查证</strong>（教程会过期，实测为准）。
 </div>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能用自己的话解释 chip/line、高低电平与本板 1.8 V · 理解为何要经 gpiod 申请且会 busy · 用 blink 点亮 LED · 能说明继电器只是「GPIO 命令 + 大电流电闸」 · 会用信号链五环做故障排查（<code>ps</code> / <code>pkill -x</code> / debug 文件 / 万用表或 LED 探针）。
+  <strong>本节成果：</strong>能用自己的话解释 chip/line、高低电平与本板 1.8 V · 理解为何要经 gpiod 申请且会 busy · 用 temperature_fan 让继电器吸合、风扇转 · 会用信号链五环做故障排查（<code>ps</code> / <code>pkill -x</code> / debug 文件 / 执行器响应）· 明白前沿板卡要运行时查证。
 </div>
 </section>
 
 <!-- ═══ 3.3 ═══ -->
 <section id="s3.3">
 <div class="section-num">3.3</div>
-<h2>温控闭环</h2>
+<h2>决策 → 执行：假温度怎么驱动风扇</h2>
 
-<h3 id="s3.3-loop">传感 → 决策 → 执行</h3>
-<p><strong>DHT22</strong> 是温湿度探头，用一根数据线接 GPIO，周期上报温度和湿度。它按严格时序一位一位收发数据；时序稍紧或线上干扰时，用户态读取可能偶发失败——属预期：打 <code>[ERR]</code> 并进入下一采样周期，让程序继续跑。</p>
-<p><strong>执行侧</strong>本课主线是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成滞回（第二章已定义：中间区间保持上一状态），避免温度在临界附近风扇狂抖。</p>
+<h3 id="s3.3-loop">数据流：决策 → 执行</h3>
+<p>第三章的程序<strong>不读任何传感器</strong>——温度是程序内部自己变的一段<strong>假温度</strong>（从 24°C 缓慢升到 31°C 再降回来），专门用来演示「决策 → 执行」这条链路：假温度 → 阈值判断 → 继电器 → 风扇。真传感器（DHT22）到第四章再接。</p>
+<p><strong>执行侧</strong>是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成<strong>滞回</strong>（第二章已定义：中间区间保持上一状态），避免温度在临界附近风扇狂抖。</p>
 
-<div class="diagram">DHT22 ──► 温度 T
-              │
-              ▼
-        阈值判断
-         T &gt; T_HIGH → 风扇开（继电器吸合）
-         T &lt; T_LOW  → 风扇关（继电器释放）
-         中间区间   → 保持上一状态
-              │
-              ▼
-        gpiod 写 FAN_LINE ──► 继电器信号端 ──► 风扇</div>
+<div class="diagram">假温度 T（程序内部自变）
+        │
+        ▼
+   阈值判断
+    T &gt; T_HIGH → 风扇开（继电器吸合）
+    T &lt; T_LOW  → 风扇关（继电器释放）
+    中间区间   → 保持上一状态
+        │
+        ▼
+   gpiod 写 FAN_LINE(IO1_5) ──► 继电器信号端 ──► 风扇</div>
 
-<pre><span class="c">/* 伪代码：完整主循环在 lab 的 temp-fan 里落地 */</span>
-<span class="k">if</span> (读温度失败) { 打 [ERR]; 继续下一轮; }
-<span class="k">else if</span> (T &gt; T_HIGH) 风扇_开();
-<span class="k">else if</span> (T &lt; T_LOW)  风扇_关();</pre>
+<pre><span class="c">/* 伪代码：完整主循环在 code/temperature-fan 里落地 */</span>
+<span class="k">if</span> (假温度 &gt; T_HIGH) 风扇_开();
+<span class="k">else if</span> (假温度 &lt; T_LOW)  风扇_关();</pre>
 
-<p>脚手架：<code>chapters/ch03/code/temp-fan/</code>。默认 <code>SIMULATE_SENSOR=1</code> 用假温度演示阈值；接好 DHT22 后改为 <code>0</code>。完整从零拼装（零件、排针、电平转换、逐根接线、验收）见 <a href="lab.html">lab.html</a>。</p>
+<p>代码：<code>chapters/ch03/code/temperature-fan/</code>，阈值 <code>T_HIGH=28</code> / <code>T_LOW=26</code> 可改。完整从零拼装（认零件、接线、验收）见 <a href="lab.html">lab.html</a>。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能说清 DHT22 → 阈值 → 继电器 → 风扇的数据流。下一节深入理解用 <code>devmem</code> 只读核对「写灯时寄存器位真的翻了」。
+  <strong>本节成果：</strong>能说清「决策（阈值判断）→ 执行（继电器 → 风扇）」的数据流，并理解滞回的意义。真传感器闭环到第四章再补。
 </div>
 </section>
 
 <!-- ═══ 深入理解 ═══ -->
 <section id="s3-deep">
 <div class="section-num">深入理解</div>
-<h2>gpiod 写灯之后：内核如何翻寄存器位，以及你如何亲眼看见</h2>
+<h2>gpiod 写继电器之后：内核如何翻寄存器位，以及你如何亲眼看见</h2>
 
 <h3 id="s3-deep-chain">原因：用户态 API 并不直接碰芯片寄存器</h3>
-<p>你在 C 里调用 <code>gpiod_line_set_value(line, 1)</code>，看起来只是「把灯打开」。真正改硬件的，是<strong>内核里的 GPIO 驱动</strong>：它通过系统调用接到你的请求后，往某个 MMIO 地址写一笔，把对应引脚那一位从 0 翻成 1（或反过来）。引脚电平变了，LED 才亮。</p>
+<p>你在 C 里调用 <code>gpiod_line_set_value(line, 1)</code>，看起来只是「让继电器吸合」。真正改硬件的，是<strong>内核里的 GPIO 驱动</strong>：它通过系统调用接到你的请求后，往某个 MMIO 地址写一笔，把对应引脚那一位从 0 翻成 1（或反过来）。引脚电平变了，继电器才吸合、风扇才转。</p>
 <p>回顾几个词，串成一条链：</p>
 <ul>
-  <li><strong>GPIO</strong>：通用输入输出引脚；Linux 上用 <strong>chip + line</strong> 定位，本课用来输出高/低控灯或继电器信号端。</li>
+  <li><strong>GPIO</strong>：通用输入输出引脚；Linux 上用 <strong>chip + line</strong> 定位，本课用来输出高/低控继电器/风扇信号端。</li>
   <li><strong>继电器</strong>：小信号开关大电流；GPIO 只管信号，风扇电源走继电器触点。</li>
   <li><strong>MMIO</strong>：设备寄存器被映射成「像内存一样」的地址；驱动对地址的写，落到硬件控制逻辑。</li>
-  <li><strong>devmem</strong>：按物理地址读/写内存映射区域的小工具。本课<strong>只读</strong>，用来核对某一位是否翻转，绝不拿它当日常控灯手段。</li>
+  <li><strong>devmem</strong>：按物理地址读/写内存映射区域的小工具。本课<strong>只读</strong>，用来核对某一位是否翻转，绝不拿它当日常控外设手段。</li>
 </ul>
 
 <div class="diagram">① 应用：gpiod_line_set_value(..., 1)
@@ -520,35 +510,35 @@ GPIO 高(1.8V) → 压差只剩 1.5V → LED 灭</pre>
 ③ 硬件寄存器（某物理地址上的一个字）
         │
         ▼
-④ 物理引脚电平变高 / 变低 ──► LED 亮 / 灭
+④ 物理引脚电平变高 / 变低 ──► 继电器吸合/释放（风扇转/停）
 
 旁路核对（只读，不当业务路径）：
-  点灯前：devmem 读该寄存器 → 记下那一位是 0
-  点灯后：devmem 再读同一地址 → 那一位变成 1</div>
+  改电平前：devmem 读该寄存器 → 记下那一位是 0
+  改电平后：devmem 再读同一地址 → 那一位变成 1</div>
 
 <p>读图：左边主路径是业务程序该走的路——永远经 gpiod / 内核。右边旁路是课堂验证：你不改驱动源码，也能用只读 <code>devmem</code> 看见「那一位确实翻了」，从而相信主路径终点落在寄存器上。</p>
 
-<h3 id="s3-deep-devmem">机制落地：点灯前后各读一次</h3>
+<h3 id="s3-deep-devmem">机制落地：改电平前后各读一次</h3>
 <p>寄存器地址与「哪一位对应哪根脚」来自芯片手册与板卡文档，本课由<strong>当堂下发</strong>（具体 <code>0x……</code> 与 bit 编号以课堂材料为准，勿自行猜测）。你要做的是固定同一地址、同一位，做前后对比。</p>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>先用 gpiod 控灯</strong><br>跑 <code>blink</code>，或写一个只置一次高/低的小程序，确认 LED 有可见变化。没有可见变化时，先查接线与 line 编号，不要先怪寄存器。</div></li>
-  <li><span class="step-num">2</span><div><strong>拿到课堂给出的地址与 bit</strong><br>例如：某 GPIO 数据寄存器物理地址 <code>0xADDRESS</code>，你的 LED 对应第 N 位。把地址和 N 记在实验记录里。</div></li>
-  <li><span class="step-num">3</span><div><strong>点灯前只读一次</strong><br><code>sudo devmem 0xADDRESS 32</code>，得到一个 32 位十六进制值。按课堂说明标出第 N 位当前是 0 还是 1。</div></li>
-  <li><span class="step-num">4</span><div><strong>点灯后再读同一地址</strong><br>保持其他条件不变，只改变 gpiod 写出的电平，再跑一次 <code>devmem</code>。对比：第 N 位应随灯的亮灭翻转；其余位通常不变（若变了，说明读错地址或脚位映射理解有误）。</div></li>
+  <li><span class="step-num">1</span><div><strong>先用 gpiod 控继电器</strong><br>跑 <code>temperature_fan</code>，或写一个只置一次高/低的小程序，确认风扇有可见变化。没有可见变化时，先查接线与 line 编号，不要先怪寄存器。</div></li>
+  <li><span class="step-num">2</span><div><strong>拿到课堂给出的地址与 bit</strong><br>例如：某 GPIO 数据寄存器物理地址 <code>0xADDRESS</code>，你的继电器信号脚对应第 N 位。把地址和 N 记在实验记录里。</div></li>
+  <li><span class="step-num">3</span><div><strong>改电平前只读一次</strong><br><code>sudo devmem 0xADDRESS 32</code>，得到一个 32 位十六进制值。按课堂说明标出第 N 位当前是 0 还是 1。</div></li>
+  <li><span class="step-num">4</span><div><strong>改电平后再读同一地址</strong><br>保持其他条件不变，只改变 gpiod 写出的电平，再跑一次 <code>devmem</code>。对比：第 N 位应随继电器吸合/释放翻转；其余位通常不变（若变了，说明读错地址或脚位映射理解有误）。</div></li>
 </ol>
 
 <pre><span class="c"># 地址与位以课堂下发为准；以下仅为命令形态</span>
 <span class="p">$</span> sudo devmem 0xADDRESS 32
 <span class="c"># 例如输出：0x00000000  → 记下第 N 位</span>
 
-<span class="c"># 用 gpiod 把灯打开（blink 或单独 set）</span>
+<span class="c"># 用 gpiod 把继电器吸合（temperature_fan 或单独 set）</span>
 
 <span class="p">$</span> sudo devmem 0xADDRESS 32
 <span class="c"># 例如输出：0x00020000  → 同一第 N 位已翻</span></pre>
 
 <div class="warn">
-  <strong>纪律：</strong>本课对 MMIO 只做 <code>devmem</code> <strong>读</strong>。不要用它写寄存器控灯——会与内核驱动抢硬件，行为不可预期，也可能把脚配成危险状态。
+  <strong>纪律：</strong>本课对 MMIO 只做 <code>devmem</code> <strong>读</strong>。不要用它写寄存器控外设——会与内核驱动抢硬件，行为不可预期，也可能把脚配成危险状态。
 </div>
 
 <h3 id="s3-deep-driver">对照：内核驱动里「写寄存器」的那一行</h3>
@@ -562,13 +552,13 @@ GPIO 高(1.8V) → 压差只剩 1.5V → LED 灭</pre>
 
 你亲眼看见：
   devmem 前后对比 → 第 N 位 0→1（或 1→0）
-  LED 同时亮灭变化</div>
+  继电器吸合/释放、风扇转/停</div>
 
-<p>读图：上层 API、驱动写语句、硬件位、肉眼可见的灯，四者应同时一致。若灯亮了但位没变，多半是地址/位号对错了脚；若位变了灯不亮，多半是接线或高低电平有效极性问题——回到 3.2 查硬件，而不是怀疑「Linux 魔法」。</p>
-<p>整条故事：<strong>gpiod 写灯 → 系统调用 → 内核 GPIO 驱动写 MMIO → 寄存器某一 bit 翻转 → 引脚电平变 → LED 亮；用 <code>devmem</code> 只读在点灯前后核对同一 bit，并对照课堂给出的驱动写寄存器那一行。</strong></p>
+<p>读图：上层 API、驱动写语句、硬件位、执行器动作，四者应同时一致。若继电器动了但位没变，多半是地址/位号对错了脚；若位变了继电器没反应，多半是接线或高低电平有效极性问题——回到 3.2 查硬件，而不是怀疑「Linux 魔法」。</p>
+<p>整条故事：<strong>gpiod 写继电器 → 系统调用 → 内核 GPIO 驱动写 MMIO → 寄存器某一 bit 翻转 → 引脚电平变 → 继电器吸合、风扇转；用 <code>devmem</code> 只读在改电平前后核对同一 bit，并对照课堂给出的驱动写寄存器那一行。</strong></p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能口述 GPIO / 继电器 / MMIO / <code>devmem</code> · 能用 blink + <code>devmem</code> 只读完成位翻转对照 · 带着概念进入本章实验组装完整温控闭环。
+  <strong>本节成果：</strong>能口述 GPIO / 继电器 / MMIO / <code>devmem</code> · 能用 temperature_fan + <code>devmem</code> 只读完成位翻转对照 · 带着概念进入本章实验组装完整温控闭环。
 </div>
 </section>
 
