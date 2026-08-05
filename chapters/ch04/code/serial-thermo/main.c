@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <gpiod.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,6 +61,14 @@ static struct thermo_state g_st = {
 static struct gpiod_chip *chip;
 static struct gpiod_line_request *fan_req;
 static int cmd_fd = -1;
+static volatile sig_atomic_t g_running = 1;
+
+/* Ctrl+C / kill：只翻旗标，主循环自己收尾（先关风扇再释放 GPIO） */
+static void on_signal(int sig)
+{
+	(void)sig;
+	g_running = 0;
+}
 
 /* libgpiod v2：申请一根线。direction 为 OUTPUT 时立即置 val。 */
 static struct gpiod_line_request *line_request(unsigned int offset,
@@ -420,7 +429,7 @@ static void main_loop(void)
 	struct timespec ts;
 	int cmd_open = 1;   /* stdin 读到 EOF 后不再等命令，专心采样 */
 
-	for (;;) {
+	while (g_running) {
 		fd_set rfds;
 		struct timeval tv;
 		int n;
@@ -438,6 +447,8 @@ static void main_loop(void)
 			FD_SET(cmd_fd, &rfds);
 		n = select(cmd_fd + 1, &rfds, NULL, NULL, &tv);
 		if (n < 0) {
+			if (errno == EINTR)
+				break;               /* Ctrl+C 打断了 select */
 			perror("select");
 			break;
 		}
@@ -481,13 +492,19 @@ int main(void)
 	printf("[INFO] T_HIGH=%.1f T_LOW=%.1f sample=%d ms\n",
 	       g_st.t_high, g_st.t_low, SAMPLE_MS);
 
+	signal(SIGINT, on_signal);
+	signal(SIGTERM, on_signal);
+
 	main_loop();
 
+	/* 优雅收尾：先把继电器拉低（模块输入悬浮会自己飘高），再释放 */
+	fan_set(0);
 	if (fan_req)
 		gpiod_line_request_release(fan_req);
 	gpiod_chip_close(chip);
 #if !USE_STDIO
 	close(cmd_fd);
 #endif
+	printf("[INFO] cleaned up, fan off\n");
 	return 0;
 }
