@@ -47,8 +47,8 @@ struct thermo_state {
 };
 
 static struct thermo_state g_st = {
-	.t_high = 28.0f,
-	.t_low = 26.0f,
+	.t_high = 29.0f,  /* 高于室温，捂热过 29 开风扇 */
+	.t_low = 27.0f,   /* 凉到 27 以下关风扇 */
 	.fan_on = 0,
 	.has_sample = 0,
 };
