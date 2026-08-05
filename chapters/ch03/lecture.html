@@ -249,7 +249,6 @@
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能口述物理世界 → 电气 → 软件的路径 · 理解 MMIO 与用户态 API 的分工。
-</div>
 
 <div class="think">
   <strong>想一想：</strong>用户态程序为什么不直接读写 MMIO 寄存器，而要经过 gpiod / 内核接口？
@@ -518,7 +517,6 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能说清「决策（阈值判断）→ 执行（继电器 → 风扇）」的数据流，并理解滞回的意义。真传感器闭环到第四章再补。
-</div>
 
 <div class="think">
   <strong>想一想：</strong>为什么用两个阈值（滞回）而不是一个？
@@ -601,7 +599,6 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能口述 GPIO / 继电器 / MMIO / <code>devmem</code> · 能用 temperature_fan + <code>devmem</code> 只读完成位翻转对照 · 带着概念进入本章实验组装完整温控闭环。
-</div>
 
 <div class="think">
   <strong>想一想：</strong>为什么 <code>devmem</code> 只读、绝不拿它写寄存器？
