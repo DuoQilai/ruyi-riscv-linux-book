@@ -21,7 +21,7 @@
 #define T_HIGH           28.0f
 #define T_LOW            26.0f
 #define STEP_MS          250
-#define STEP_DELTA       0.4f
+#define STEP_DELTA       0.5f
 
 static struct gpiod_chip *chip;
 static struct gpiod_line_request *fan_req;
