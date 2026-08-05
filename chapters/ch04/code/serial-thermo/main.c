@@ -32,6 +32,10 @@
 #define DHT_RETRY        3
 #define LINE_MAX         128
 
+/* 湿度控制：湿度过高（哈气、湿气重）也开风扇；回落后才允许关 */
+#define H_ON             80.0f
+#define H_OFF            70.0f
+
 /* 1 = 假温度演示；接真 DHT22 用 -DSIMULATE_SENSOR=0 覆盖 */
 #ifndef SIMULATE_SENSOR
 #define SIMULATE_SENSOR  1
@@ -270,13 +274,16 @@ static void sample_and_control(void)
 	g_st.last_temp = t;
 	g_st.last_hum = h;
 	g_st.has_sample = 1;
-	printf("[INFO] temp=%.1fC hum=%.1f%% fan=%s thr=%.1f/%.1f\n",
-	       t, h, g_st.fan_on ? "ON" : "OFF", g_st.t_high, g_st.t_low);
+	printf("[INFO] temp=%.1fC hum=%.1f%% fan=%s thr=%.1f/%.1f H=%.0f/%.0f\n",
+	       t, h, g_st.fan_on ? "ON" : "OFF",
+	       g_st.t_high, g_st.t_low, H_ON, H_OFF);
 	fflush(stdout);
 
-	if (t > g_st.t_high && !g_st.fan_on)
+	/* 开：温度过高，或湿度过高（哈气/湿气重），都开风扇 */
+	if ((t > g_st.t_high || h > H_ON) && !g_st.fan_on)
 		fan_set(1);
-	else if (t < g_st.t_low && g_st.fan_on)
+	/* 关：温度回落 且 湿度回落，才关风扇 */
+	else if (t < g_st.t_low && h < H_OFF && g_st.fan_on)
 		fan_set(0);
 }
 
