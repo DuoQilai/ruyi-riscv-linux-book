@@ -8,10 +8,15 @@
  * 脚位：IO1_5 → gpiochip5 line 5 → 继电器信号端（直连）。
  *       （本板 IO1_3 实测拉不高，已在讲义「前沿板卡」一节说明。）
  *
+ * 优雅收尾：Ctrl+C（SIGINT/SIGTERM）→ 置 running=0 → 循环退出 →
+ *           显式把继电器拉低再释放。为什么必须显式拉低？因为本模块
+ *           输入脚悬浮时会「自己飘高」→ 继电器保持吸合 → 风扇一直转。
+ *
  * 编译（板端原生）：make
  * 交叉编译（主机）：make CROSS_COMPILE=riscv64-unknown-linux-gnu-
  */
 #include <gpiod.h>
+#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -25,6 +30,14 @@
 
 static struct gpiod_chip *chip;
 static struct gpiod_line_request *fan_req;
+static volatile sig_atomic_t g_running = 1;
+
+/* Ctrl+C / kill：只翻旗标，让主循环自己收尾 */
+static void on_signal(int sig)
+{
+	(void)sig;
+	g_running = 0;
+}
 
 /* 用 libgpiod v2 申请一根输出线：direction=OUTPUT 时立即置 val */
 static struct gpiod_line_request *line_request(unsigned int offset,
@@ -70,6 +83,9 @@ int main(void)
 	int dir = 1;
 	int fan = 0;
 
+	signal(SIGINT, on_signal);
+	signal(SIGTERM, on_signal);
+
 	chip = gpiod_chip_open(GPIO_CHIP_PATH);
 	if (!chip) {
 		perror("gpiod_chip_open");
@@ -86,7 +102,7 @@ int main(void)
 	       T_HIGH, T_LOW);
 	printf("[INFO] relay/fan on IO1_5 (gpiochip5 line 5); Ctrl+C to stop\n");
 
-	for (;;) {
+	while (g_running) {
 		t += dir * STEP_DELTA;
 		if (t > 31.0f)
 			dir = -1;
@@ -106,5 +122,10 @@ int main(void)
 		usleep((useconds_t)STEP_MS * 1000);
 	}
 
+	/* 优雅收尾：必须显式拉低再释放，悬浮会让继电器保持吸合 */
+	fan_set(0);
+	gpiod_line_request_release(fan_req);
+	gpiod_chip_close(chip);
+	printf("[INFO] cleaned up, fan off\n");
 	return 0;
 }

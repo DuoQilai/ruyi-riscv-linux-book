@@ -83,6 +83,22 @@
     body { padding-left: 0; }
     .toc { display: none; }
   }
+
+  /* 思考部分：.think 是问题框，.hint 是 bracket 提示（默认隐藏，按钮显示） */
+  .think {
+    background: #fbfaf5; border-left: 3px solid var(--faint);
+    padding: 16px 20px; margin: 20px 0; font-size: 17px; color: var(--muted); line-height: 1.7;
+  }
+  .think strong { color: var(--text); }
+  .hint { display: none; color: var(--faint); font-size: 0.92em; margin-top: 8px; line-height: 1.7; }
+  .hint::before { content: "▸ 提示："; color: var(--accent); font-weight: 700; }
+  .hint.revealed { display: block; }
+  #hint-toggle {
+    position: fixed; top: 12px; right: 12px; z-index: 99;
+    border: 1px solid var(--line); background: #fff; color: var(--accent);
+    padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: var(--sans);
+  }
+  #hint-toggle:hover { background: var(--code-bg); }
 </style>
 </head>
 <body>
@@ -232,7 +248,10 @@
   <li>中间区间（26~28）保持上一状态，不会狂抖。</li>
 </ul>
 <p>停程序：在 SSH 里按 <code>Ctrl+C</code>。</p>
-<p><strong>本步成功判据：</strong>能演示超温开 / 降温关，风扇真的跟着假温度转。</p>
+<div class="info">
+  <strong>代码设计的巧思——优雅收尾：</strong>Ctrl+C 不能直接默认退出。若只释放 GPIO，这根脚会<strong>悬浮</strong>，而本继电器模块输入悬浮时会「自己飘高」→ 继电器保持吸合 → 风扇一直转。正确做法（见 <code>temperature_fan.c</code> 的 <code>on_signal()</code> 与收尾段）：捕获信号 → 置 <code>running=0</code> → 主循环退出 → <strong>显式把继电器拉低</strong> → 再释放 GPIO → 关闭。另：程序退出后内核会把 GPIO 释放回悬浮，纯软件管不住；想让退出后也稳定关闭，在继电器 X1 到 GND 加一颗 10kΩ 下拉电阻。
+</div>
+<p><strong>本步成功判据：</strong>能演示超温开 / 降温关，风扇真的跟着假温度转；Ctrl+C 后程序打印收尾信息、风扇不再持续转（或靠 X1 下拉稳定关断）。</p>
 </section>
 
 <section id="step-deep">
@@ -249,11 +268,23 @@
   <tr><td>程序报 <code>Permission denied</code></td><td>用 <code>sudo ./temperature_fan</code> 跑</td></tr>
   <tr><td>程序报 busy / 打不开 gpiochip</td><td>有没有残留的 <code>gpioset</code> 占着 line 5？<code>sudo pkill -x gpioset</code> 后重试</td></tr>
   <tr><td>程序在跑，风扇完全不动</td><td>共地？继电器 5V？跳帽是否 H？NO/COM 是否接风扇红线？信号线是否真在 IO1_5？</td></tr>
+  <tr><td>置 1 没反应 / 程序在跑但风扇不动</td><td><strong>查 chip 编号：</strong>排针 GPIO 在 <code>gpiochip5</code>，不是 <code>gpiochip1</code>（那是板子内部控制器，不在排针上）。用 <code>sudo cat /sys/kernel/debug/gpio</code> 运行时验证到底哪根脚在动</td></tr>
+  <tr><td>Ctrl+C 后风扇还在转</td><td>程序退出后 GPIO 悬浮，本模块输入会飘高。程序已做「退出前显式拉低」；更稳的做法：继电器 X1 到 GND 加 10kΩ 下拉电阻</td></tr>
   <tr><td>继电器灯亮，风扇不转</td><td>风扇 5V 回路：NO–COM–红线–黑线回 GND</td></tr>
   <tr><td>某根脚怎么都拉不高（换根脚就好）</td><td>这就是讲义「前沿板卡要运行时查证」：换一根可用脚，并记进实验记录</td></tr>
   <tr><td>file 显示 x86-64</td><td>交叉工具链没生效，检查 <code>CROSS_COMPILE</code> / PATH；或干脆板端原生编译</td></tr>
 </table>
 <p>排查方法详见讲义「故障排查：信号链五环」——先软件后硬件，每环拿证据。</p>
+
+<div class="think">
+  <strong>现象不对，按什么顺序想（debug 心路）：</strong>风扇不动 / 置 1 没反应时，别先动手拆线。
+  <span class="hint">顺序：①先查 chip 编号——排针 GPIO 在 <code>gpiochip5</code>，不是 <code>gpiochip1</code>（我们真实栽在这：信号打进了内部控制器，排针没动静）。②查残留进程——<code>sudo pkill -x gpioset</code> 后重试，别让旧进程占着脚。③查内核状态——<code>sudo cat /sys/kernel/debug/gpio</code> 看那根脚是不是真的 <code>out hi</code>。④才轮到接线——共地 / 5V / 跳帽 H / NO-COM。每查一步就缩小一半范围，而不是瞎换模块重头再来。</span>
+</div>
+
+<div class="think">
+  <strong>现象不对，按什么顺序想（优雅收尾）：</strong>Ctrl+C 后风扇还在转，是程序问题还是硬件问题？
+  <span class="hint">先分清楚：程序退出时内核会把 GPIO 释放回悬浮，而这模块输入悬浮会「自己飘高」→ 继电器保持吸合 → 风扇一直转。所以①纯软件要在退出前显式拉低（代码已做），②退出后软件管不住——加 X1→GND 的 10kΩ 下拉才稳。判断依据是「模块输入悬浮时的行为」，不是程序 bug。</span>
+</div>
 </section>
 
 <section id="accept">
@@ -282,5 +313,21 @@
 </section>
 
 </article>
+
+<script>
+(function () {
+  var btn = document.createElement('button');
+  btn.id = 'hint-toggle';
+  btn.textContent = '显示提示';
+  btn.onclick = function () {
+    var showing = btn.textContent.indexOf('隐藏') >= 0;
+    var hs = document.querySelectorAll('.hint');
+    for (var i = 0; i < hs.length; i++)
+      hs[i].classList.toggle('revealed', !showing);
+    btn.textContent = showing ? '显示提示' : '隐藏提示';
+  };
+  document.body.appendChild(btn);
+})();
+</script>
 </body>
 </html>

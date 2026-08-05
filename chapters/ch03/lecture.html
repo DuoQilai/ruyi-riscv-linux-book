@@ -118,6 +118,22 @@
   .page-nav a:hover { text-decoration: underline; }
   .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
   .page-nav .next { text-align: right; margin-left: auto; }
+
+  /* 思考部分：.think 是问题框，.hint 是 bracket 提示（默认隐藏，按钮显示） */
+  .think {
+    background: #fbfaf5; border-left: 3px solid var(--faint);
+    padding: 16px 20px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
+  }
+  .think strong { color: var(--text); }
+  .hint { display: none; color: var(--faint); font-size: 0.92em; margin-top: 8px; line-height: 1.7; }
+  .hint::before { content: "▸ 提示："; color: var(--accent); font-weight: 700; }
+  .hint.revealed { display: block; }
+  #hint-toggle {
+    position: fixed; top: 12px; right: 12px; z-index: 99;
+    border: 1px solid var(--line); background: #fff; color: var(--accent);
+    padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: var(--sans);
+  }
+  #hint-toggle:hover { background: var(--code-bg); }
 </style>
 </head>
 <body>
@@ -234,6 +250,12 @@
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能口述物理世界 → 电气 → 软件的路径 · 理解 MMIO 与用户态 API 的分工。
 </div>
+
+<div class="think">
+  <strong>想一想：</strong>用户态程序为什么不直接读写 MMIO 寄存器，而要经过 gpiod / 内核接口？
+  <span class="hint">因为内核统一仲裁「谁占着这根脚」、屏蔽芯片细节、做权限管理。直接写会跟别的进程或驱动抢硬件——我们排查 busy 时看到过：GPIO 是独占申请的。这正是「用户态 API → 内核 → MMIO」这条链存在的意义。</span>
+</div>
+</div>
 </section>
 
 <!-- ═══ 3.2 ═══ -->
@@ -303,6 +325,11 @@
 
 <div class="warn">
   <strong>共地：</strong>无论继电器还是任何模块，板子的 GND 与外设 GND 必须连在一起。没有公共地，「高」「低」没有共同参考，现象会随机、难复现。
+</div>
+
+<div class="think">
+  <strong>想一想：</strong>1.8V 直连就能驱动这个继电器，为什么不用电平转换？
+  <span class="hint">因为它是<strong>光耦隔离</strong>的：输入侧就一颗 LED（光耦），1.8V 够点亮；模块自己的 5V 线圈和输入信号在电气上不相通，没有电平打架。要是换 3.3V 电平的传感器（第四章 DHT22），1.8V 就叫不醒、还可能烧脚——那时才需要 TXS。判断依据是「模块输入侧是什么」，不是「模块标了多少伏」。</span>
 </div>
 
 <h3 id="s3.2-gpiod">向内核借一根脚：gpiod / libgpiod</h3>
@@ -439,6 +466,11 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
   <strong>教训：</strong>排针丝印（IO1_3）是硬件事实，稳定不变；<code>(chip, line)</code> 是内核动态编号，随镜像/内核而变。<strong>认脚要认丝印，编号要查运行时。</strong>换了系统，第一件事就是重新确认 chip/line，别照抄旧教程。
 </div>
 
+<div class="think">
+  <strong>想一想：</strong>教程明明写着 <code>gpiochip1</code>，为什么你这块板不认？
+  <span class="hint">因为 gpiochip 编号由内核按探测顺序动态分配，换个镜像/内核版本就整体平移。教程按某一版镜像写的，不代表你的板子。别照抄——用 <code>/sys/kernel/debug/gpio</code> 和 pinmux 现场确认「排针 GPIO 到底在哪个 chip」。我们就是栽在 <code>gpiochip1</code> 上：信号打进了内部控制器，排针那根脚毫无反应。</span>
+</div>
+
 <h4>第四环：让软件状态和执行器自己说话</h4>
 <p>软件说「高」还不够，要看两样东西对上：<strong>① 内核状态</strong>——<code>/sys/kernel/debug/gpio</code> 里那根 line 是 <code>out hi</code> 还是 <code>out lo</code>；<strong>② 执行器响应</strong>——继电器有没有「咔」、风扇转不转。软件写高 + 内核显示 hi + 继电器没动 → 问题在模块/接线那一环；软件写高 + 内核显示 lo → 问题在更前面。这样就把链条切成两段，一半一半地查。</p>
 
@@ -451,6 +483,10 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能用自己的话解释 chip/line、高低电平与本板 1.8 V · 理解为何要经 gpiod 申请且会 busy · 用 temperature_fan 让继电器吸合、风扇转 · 会用信号链五环做故障排查（<code>ps</code> / <code>pkill -x</code> / debug 文件 / 执行器响应）· 明白前沿板卡要运行时查证。
+</div>
+<div class="think">
+  <strong>想一想：</strong>排查「继电器不动」，为什么必须按「软件 → 硬件」顺序、不能先瞎换模块？
+  <span class="hint">每一环都要拿证据，断在哪修哪：①程序真写了高吗（<code>ps</code> 看进程和值）②内核状态（<code>debug/gpio</code> 是 <code>out hi</code> 还是 <code>out lo</code>）③chip/line 是不是排针（pinmux）④执行器动没动 ⑤模块接线（共地/供电/跳帽）。我们的真实教训是 chip 打到了内部控制器，还碰到一根脚本身拉不高——都靠运行时查证才定位。先换模块等于重头再来，浪费时间。</span>
 </div>
 </section>
 
@@ -482,6 +518,12 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能说清「决策（阈值判断）→ 执行（继电器 → 风扇）」的数据流，并理解滞回的意义。真传感器闭环到第四章再补。
+</div>
+
+<div class="think">
+  <strong>想一想：</strong>为什么用两个阈值（滞回）而不是一个？
+  <span class="hint">一个阈值时，温度在临界附近抖一下，风扇就狂开狂关。两个阈值（高 28 开、低 26 关），中间区间保持上一状态，平滑不抖。真实温控都这么做——这是第三章就建立的控制逻辑心智。</span>
+</div>
 </div>
 </section>
 
@@ -560,6 +602,12 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能口述 GPIO / 继电器 / MMIO / <code>devmem</code> · 能用 temperature_fan + <code>devmem</code> 只读完成位翻转对照 · 带着概念进入本章实验组装完整温控闭环。
 </div>
+
+<div class="think">
+  <strong>想一想：</strong>为什么 <code>devmem</code> 只读、绝不拿它写寄存器？
+  <span class="hint">写会绕过内核驱动直接碰硬件，和驱动抢寄存器、行为不可预期，还可能把脚配成危险状态。读是「旁路核对」——只用来证明「程序 → 内核 → 寄存器位」这条链真的发生过，不当业务手段。这也呼应 3.1 那条「业务走内核接口」的原则。</span>
+</div>
+</div>
 </section>
 
 <!-- course-nav-foot -->
@@ -568,5 +616,21 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
   <a class="next" href="lab.html"><span class="dir">下一篇</span>第三章 · 实验<br>温控风扇</a>
 </nav>
 </div>
+
+<script>
+(function () {
+  var btn = document.createElement('button');
+  btn.id = 'hint-toggle';
+  btn.textContent = '显示提示';
+  btn.onclick = function () {
+    var showing = btn.textContent.indexOf('隐藏') >= 0;
+    var hs = document.querySelectorAll('.hint');
+    for (var i = 0; i < hs.length; i++)
+      hs[i].classList.toggle('revealed', !showing);
+    btn.textContent = showing ? '显示提示' : '隐藏提示';
+  };
+  document.body.appendChild(btn);
+})();
+</script>
 </body>
 </html>
