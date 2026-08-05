@@ -289,30 +289,56 @@ static void sample_and_control(void)
 
 /* ========== 学生 TODO：命令处理 ========== */
 
-/*
- * TODO: 打印 g_st 中的温度、湿度、风扇、阈值。
- * 无有效采样时也要说明「尚无采样」。
- */
+/* 打印当前状态：温度、湿度、风扇、阈值；尚无采样时说明清楚 */
 static int cmd_status(char *args)
 {
 	(void)args;
-	/* TODO: 实现 status */
-	printf("[TODO] cmd_status not implemented\n");
+	if (!g_st.has_sample) {
+		printf("[INFO] no sample yet — waiting for DHT22\n");
+		fflush(stdout);
+		return 0;
+	}
+	printf("[INFO] temp=%.1fC hum=%.1f%% fan=%s thr=%.1f/%.1f H=%.0f/%.0f\n",
+	       g_st.last_temp, g_st.last_hum,
+	       g_st.fan_on ? "ON" : "OFF",
+	       g_st.t_high, g_st.t_low, H_ON, H_OFF);
 	fflush(stdout);
-	return -1;
+	return 0;
 }
 
-/*
- * TODO: 解析 "high <数>" 或 "low <数>"，写入 g_st。
- * 要求 low < high；失败打印 [ERR] 并返回非 0。
- */
+/* 解析 "high <数>" 或 "low <数>"，写入 g_st；要求 low < high */
 static int cmd_set(char *args)
 {
-	(void)args;
-	/* TODO: 实现 set high / set low */
-	printf("[TODO] cmd_set not implemented\n");
+	char what[16];
+	float v;
+
+	if (sscanf(args, "%15s %f", what, &v) != 2) {
+		printf("[ERR] usage: set high <N> | set low <N>\n");
+		fflush(stdout);
+		return -1;
+	}
+	if (strcmp(what, "high") == 0) {
+		if (v <= g_st.t_low) {
+			printf("[ERR] high must be > low (%.1f)\n", g_st.t_low);
+			fflush(stdout);
+			return -1;
+		}
+		g_st.t_high = v;
+	} else if (strcmp(what, "low") == 0) {
+		if (v >= g_st.t_high) {
+			printf("[ERR] low must be < high (%.1f)\n", g_st.t_high);
+			fflush(stdout);
+			return -1;
+		}
+		g_st.t_low = v;
+	} else {
+		printf("[ERR] unknown: set %s\n", what);
+		fflush(stdout);
+		return -1;
+	}
+	printf("[INFO] threshold -> high=%.1f low=%.1f\n", g_st.t_high, g_st.t_low);
 	fflush(stdout);
-	return -1;
+	return 0;
 }
 
 struct cmd_entry {
@@ -320,13 +346,10 @@ struct cmd_entry {
 	int (*handler)(char *args);
 };
 
-/*
- * TODO: 把 status / set 挂进表（末尾用 {NULL,NULL} 结束）。
- */
 static const struct cmd_entry g_cmds[] = {
-	/* TODO: { "status", cmd_status }, */
-	/* TODO: { "set",    cmd_set }, */
-	{ NULL, NULL },
+	{ "status", cmd_status },
+	{ "set",    cmd_set    },
+	{ NULL,     NULL       },
 };
 
 /* 按名字查找并调用；未知命令返回 -1 */
@@ -382,23 +405,43 @@ static int read_command_line(void)
 	return 0;
 }
 
-/*
- * TODO: 用 select 同时等 cmd_fd 可读 与 采样超时。
- * 超时 → sample_and_control()；可读 → read_command_line()。
- * 提示：处理命令后应扣减剩余等待时间，避免采样越来越稀。
- */
+/* 用 select 同时等命令可读与采样超时：
+ * 超时 → 采样控温；命令可读 → 处理一行。
+ * deadline 用墙上时钟算「距下次采样还剩多少」，处理命令后不重置，
+ * 采样节奏就不会被打字拖慢。 */
 static void main_loop(void)
 {
-	/* 占位：阻塞式「先采样再睡」，两边不能同时工作。
-	 * 请改成 select 版本（见讲义 4.3 与深入理解）。 */
-	log_info("TODO: replace this loop with select()");
+	double deadline = 0.0;
+	struct timespec ts;
+	int cmd_open = 1;   /* stdin 读到 EOF 后不再等命令，专心采样 */
+
 	for (;;) {
-		sample_and_control();
-		/* TODO: 不要只用 sleep；改为 select + 剩余超时 */
-		usleep((useconds_t)SAMPLE_MS * 1000);
-		/* TODO: 在 select 可读分支里调用 read_command_line() */
-		(void)cmd_fd;
-		(void)read_command_line; /* 防未使用告警；实现后删除此行 */
+		fd_set rfds;
+		struct timeval tv;
+		int n;
+
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		double now_s = ts.tv_sec + ts.tv_nsec / 1e9;
+		if (deadline <= now_s)
+			deadline = now_s + SAMPLE_MS / 1000.0;
+		double remain = deadline - now_s;
+		tv.tv_sec = (long)remain;
+		tv.tv_usec = (long)((remain - tv.tv_sec) * 1e6);
+
+		FD_ZERO(&rfds);
+		if (cmd_open)
+			FD_SET(cmd_fd, &rfds);
+		n = select(cmd_fd + 1, &rfds, NULL, NULL, &tv);
+		if (n < 0) {
+			perror("select");
+			break;
+		}
+		if (n == 0) {
+			sample_and_control();           /* 超时：该采样了 */
+		} else if (cmd_open && FD_ISSET(cmd_fd, &rfds)) {
+			if (read_command_line() < 0)
+				cmd_open = 0;               /* EOF：输入结束 */
+		}
 	}
 }
 
