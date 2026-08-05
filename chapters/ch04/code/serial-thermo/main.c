@@ -33,8 +33,8 @@
 #define LINE_MAX         128
 
 /* 湿度控制：湿度过高（哈气、湿气重）也开风扇；回落后才允许关 */
-#define H_ON             80.0f
-#define H_OFF            70.0f
+#define H_ON             90.0f
+#define H_OFF            72.0f
 
 /* 1 = 假温度演示；接真 DHT22 用 -DSIMULATE_SENSOR=0 覆盖 */
 #ifndef SIMULATE_SENSOR
@@ -51,8 +51,8 @@ struct thermo_state {
 };
 
 static struct thermo_state g_st = {
-	.t_high = 29.0f,  /* 高于室温，捂热过 29 开风扇 */
-	.t_low = 27.0f,   /* 凉到 27 以下关风扇 */
+	.t_high = 31.0f,  /* 高于室温：捂热过 31 开风扇 */
+	.t_low = 29.5f,   /* 凉回 29.5 以下（且湿度回落）关风扇 */
 	.fan_on = 0,
 	.has_sample = 0,
 };
@@ -229,6 +229,11 @@ static int dht22_read(float *temp_c, float *hum_pct)
 	*temp_c = ((data[2] << 8) | data[3]) / 10.0f;
 	if (data[2] & 0x80)
 		*temp_c = -(((data[2] & 0x7F) << 8) | data[3]) / 10.0f;
+	/* 合理性过滤：校验和过了但数值离谱（对齐偶发错位）的直接丢弃 */
+	if (*hum_pct < 0.0f || *hum_pct > 100.0f)
+		return -1;
+	if (*temp_c < -40.0f || *temp_c > 80.0f)
+		return -1;
 	return 0;
 
 fail:
