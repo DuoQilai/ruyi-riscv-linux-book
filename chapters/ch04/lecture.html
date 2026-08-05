@@ -255,13 +255,13 @@
 <p><strong>TXS</strong>（TXS0108E）是双向电平转换模块：A 排接低压侧（板子 1.8V），B 排接高压侧（模块 3.3V），同一编号 A1↔B1 是一对。它把两边的电压互译，让 1.8V 的板子和 3.3V 的传感器能对话。</p>
 <p><strong>先焊接：</strong>你买的 TXS 是散件，排针没焊。烙铁预热 → 排针插进模块孔位 → 背面逐脚上锡 → 检查有无连锡。安全：烙铁放回架、注意通风、别摸烙铁头。</p>
 
-<h4>接线（DHT22 数据线走 TXS 第二路）</h4>
+<h4>接线（DHT22 数据线走 TXS 第一路）</h4>
 <table>
   <tr><th>从</th><th>到</th><th>说明</th></tr>
   <tr><td>排针 3.3V</td><td>DHT22 正（VCC）</td><td>传感器供电</td></tr>
   <tr><td>排针 GND</td><td>DHT22 负（GND）</td><td>共地</td></tr>
-  <tr><td>DHT22 OUT</td><td>TXS <strong>B2</strong></td><td>高压侧（3.3V）</td></tr>
-  <tr><td>TXS <strong>A2</strong></td><td>排针 <strong>IO1_6</strong></td><td>低压侧（1.8V）接板子 GPIO</td></tr>
+  <tr><td>DHT22 OUT</td><td>TXS <strong>B1</strong></td><td>高压侧（3.3V）</td></tr>
+  <tr><td>TXS <strong>A1</strong></td><td>排针 <strong>IO1_6</strong></td><td>低压侧（1.8V）接板子 GPIO</td></tr>
   <tr><td>AMS1117 的 IN</td><td>排针 3.3V</td><td>1.8V 降压输入</td></tr>
   <tr><td>AMS1117 的 OUT</td><td>TXS <strong>VA</strong></td><td>TXS 低压侧电源 1.8V</td></tr>
   <tr><td>排针 3.3V</td><td>TXS <strong>VB</strong></td><td>TXS 高压侧电源 3.3V</td></tr>

@@ -118,8 +118,8 @@
   <tr><th>从</th><th>到</th><th>说明</th></tr>
   <tr><td>排针 3.3V</td><td>DHT22 正（VCC）</td><td>传感器供电</td></tr>
   <tr><td>排针 GND</td><td>DHT22 负（GND）</td><td>共地</td></tr>
-  <tr><td>DHT22 OUT</td><td>TXS B2</td><td>高压侧 3.3V</td></tr>
-  <tr><td>TXS A2</td><td>排针 IO1_6</td><td>低压侧 1.8V 接板子</td></tr>
+  <tr><td>DHT22 OUT</td><td>TXS B1</td><td>高压侧 3.3V</td></tr>
+  <tr><td>TXS A1</td><td>排针 IO1_6</td><td>低压侧 1.8V 接板子</td></tr>
   <tr><td>AMS1117 OUT</td><td>TXS VA</td><td>低压侧电源 1.8V（IN 接排针 3.3V）</td></tr>
   <tr><td>排针 3.3V</td><td>TXS VB</td><td>高压侧电源 3.3V</td></tr>
   <tr><td>TXS OE</td><td>接高</td><td>使能</td></tr>
@@ -193,6 +193,10 @@
   <li>故意敲非法组合（例如把 low 设得不低于 high），确认被拒绝并有 <code>[ERR]</code>。</li>
   <li>在模拟升温或捂热过程中，确认风扇仍按阈值动作；同时连续敲几次 <code>status</code>，确认打字回复不卡住采样（日志不会长时间停更）。</li>
 </ol>
+
+<div class="info">
+  <strong>Ctrl+C 优雅收尾：</strong>程序捕获 <code>SIGINT</code>/<code>SIGTERM</code>，Ctrl+C 时先把继电器拉低、再释放 GPIO、再退出——终端会出现 <code>[INFO] cleaned up, fan off</code>。这是因为本继电器模块输入悬浮时会「自己飘高」：若直接退出让 GPIO 悬空，继电器会保持吸合、风扇一直转。想退出后也稳定关闭，在继电器 X1 到 GND 加一颗 10kΩ 下拉电阻（与第三章同一个教训）。
+</div>
 </section>
 
 <section id="accept">
