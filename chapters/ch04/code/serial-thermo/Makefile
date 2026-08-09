@@ -1,18 +1,32 @@
-# 默认板端原生编译（板子自带 gcc）：make
-# 主机交叉编译：make CROSS_COMPILE=riscv64-unknown-linux-gnu-
-CROSS_COMPILE ?=
-CC      := $(CROSS_COMPILE)gcc
-CFLAGS  := -Wall -Wextra -O2
-LDFLAGS := -lgpiod
-TARGET  := serial-thermo
-SRC     := main.c
+# serial-thermo — 第四章：SSH 终端命令 + 温湿度控风扇
+#
+# 默认编学生版：make
+# 参考实现：    make sol
+# 板端原生：    make
+# 主机交叉：    make CROSS_COMPILE=riscv64-unknown-linux-gnu-
 
-.PHONY: all clean
+CROSS_COMPILE ?=
+CC            ?= $(CROSS_COMPILE)gcc
+CFLAGS        ?= -Wall -Wextra -O2
+LDLIBS        ?= -lgpiod
+
+TARGET        := serial-thermo
+SRC           := main.c
+
+SOL_TARGET    := serial-thermo-sol
+SOL_SRC       := main-sol.c
 
 all: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $@ $< $(LDLIBS)
+
+sol: $(SOL_TARGET)
+
+$(SOL_TARGET): $(SOL_SRC)
+	$(CC) $(CFLAGS) -o $@ $< $(LDLIBS)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(SOL_TARGET)
+
+.PHONY: all sol clean

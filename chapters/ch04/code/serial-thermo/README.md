@@ -1,24 +1,30 @@
-# serial-thermo · 串口命令温控
+# serial-thermo · 串口命令温控（第四章）
 
-荔枝派 4A 上：自动阈值控风扇，同时用终端敲 `status` / `set`。
+荔枝派 4A：自动按温度/湿度控风扇，同时在 SSH 终端敲 `status` / `set`。
 
-交叉工具链默认 `riscv64-unknown-linux-gnu-`（RuyiSDK）。板端需 libgpiod。
+## 你要写
 
-## 你要补全
+`main.c` 中实现（契约见 `lab.html`）：
 
-`main.c` 中 TODO：
+1. `cmd_status` / `cmd_set`
+2. 命令表 `g_cmds[]` 与 `dispatch_command`
+3. `main_loop`（`select` 同时等采样超时与 stdin）
 
-1. `cmd_status` / `cmd_set` 实现  
-2. 命令表 `g_cmds[]` 注册与查找  
-3. `select` 主循环：同时等采样超时与串口（stdin）输入  
+脚手架已提供：DHT 读取、风扇、`sample_and_control`、`read_command_line`、`main`。
+
+对照答案：`main-sol.c`（`make sol`）。先自己写，过关后再看。
 
 ## 构建
 
 ```bash
-make
-file serial-thermo
-scp serial-thermo user@board-ip:~/
-ssh user@board-ip './serial-thermo'
+make          # 学生版 → ./serial-thermo
+make sol      # 参考实现 → ./serial-thermo-sol
 ```
 
-默认 `USE_STDIO=1`、`SIMULATE_SENSOR=1`，SSH 终端即可联调。接真 DHT 时把 `SIMULATE_SENSOR` 改为 `0`，并核对 GPIO 宏。
+默认 `SIMULATE_SENSOR=1`（假温度）。接真 DHT22 后：
+
+```bash
+make CFLAGS='-Wall -Wextra -O2 -DSIMULATE_SENSOR=0'
+```
+
+命令一律从 SSH 终端标准输入读入；本课不要求另接物理串口线。
