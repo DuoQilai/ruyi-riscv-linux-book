@@ -183,7 +183,7 @@
 <div class="card-grid card-grid-3" style="margin-bottom:0;">
   <div class="card"><h4>4.1 聊天线</h4><p>敲的字如何变成程序里的一行；回复如何打回 SSH 窗口。</p></div>
   <div class="card"><h4>4.2 传感器与命令</h4><p>DHT22 + TXS 的因果；命令表与 <code>status</code> / <code>set</code> 语义。</p></div>
-  <div class="card"><h4>4.3 两边同时</h4><p>两种错误写法；<code>select</code> 与 remain；温湿度联合开/关。</p></div>
+  <div class="card"><h4>4.3 两边同时</h4><p>两种错误写法；<code>select</code>「有事叫我」；温湿度联合开/关。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
@@ -291,6 +291,8 @@ printf("[INFO] got: %s", line);</pre>
 <div class="section-num">4.3</div>
 <h2>两边同时工作</h2>
 
+<p><strong>一句话：</strong>有事叫我（你敲了字，或采样时间到了），没事就睡觉——别干等打字把风扇饿死，也别用固定 <code>sleep</code> 让命令迟迟不回。</p>
+
 <h3 id="s4.3-problem">为何「先读命令再采样」串成一条线不行</h3>
 <p>程序要同时做两件事：约每 2 秒采样并按阈值开/关风扇；随时响应你敲的 <code>status</code> / <code>set</code>。</p>
 
@@ -304,30 +306,30 @@ printf("[INFO] got: %s", line);</pre>
   敲 status / set 立刻有回复</div>
 
 <h3 id="s4.3-select">正确机制：select</h3>
-<p><code>select</code> 让你告诉内核：「这些文件描述符里谁就绪了，或者超时到了，再叫醒我。」把 stdin（命令）放进读集合；超时设成「距下次采样还剩多久」。</p>
+<p><code>select</code> 就是把上面那句话交给内核：盯着 stdin；再设一个超时。谁先到谁叫醒你。</p>
 
 <table>
   <tr><th>select 返回</th><th>含义</th><th>本课该做什么</th></tr>
   <tr><td><code>&lt; 0</code></td><td>出错（含被信号打断）</td><td><code>perror</code>；按策略退出或重试</td></tr>
-  <tr><td><code>0</code></td><td>超时</td><td>调用采样控温；设定下一轮 deadline</td></tr>
-  <tr><td><code>&gt; 0</code></td><td>有描述符就绪</td><td>stdin 可读则读一行并派发命令；<strong>deadline 不变</strong>，只缩短下一次 remain</td></tr>
+  <tr><td><code>0</code></td><td>超时（该采样了）</td><td>调用 <code>sample_and_control</code></td></tr>
+  <tr><td><code>&gt; 0</code></td><td>有字可读</td><td>读一行并派发命令</td></tr>
 </table>
-
-<div class="diagram">t=0.0  采样，设 deadline=2.0
-t=0.0  select(remain≈2s)
-t=0.7  敲 status → 立刻回复
-       再 select(remain≈1.3s)  ← 不重置成 2s
-t=2.0  超时 → 采样，设 deadline=4.0</div>
-
-<p>处理命令<strong>不等于</strong>采样时钟重新开始。实验里你实现 <code>main_loop</code> 时按墙上时钟维护 deadline / remain。</p>
 
 <pre><span class="c">/* 伪代码：方向示意；完整实现在实验由你写 */</span>
 <span class="k">for</span> (;;) {
-    准备 rfds（cmd_fd）与 tv（remain）;
+    准备 rfds（cmd_fd）与超时;
     n = select(...);
     <span class="k">if</span> (n == 0) sample_and_control();
     <span class="k">else if</span> (FD_ISSET(cmd_fd, &amp;rfds)) read_command_line();
 }</pre>
+
+<p><strong>写主循环时注意：</strong>处理完命令<strong>不要</strong>把采样时钟重新拨成满 2 秒。超时要用「距下次采样还剩多久」，否则风扇节奏会被打字打乱。时间轴示意：</p>
+
+<div class="diagram">t=0.0  采样，下次该在 t=2.0
+t=0.0  select(还剩 ≈2s)
+t=0.7  敲 status → 立刻回复
+       再 select(还剩 ≈1.3s)  ← 不重置成 2s
+t=2.0  超时 → 再采样</div>
 
 <h3 id="s4.3-hum">温湿度怎么一起控风扇</h3>
 <p>DHT22 同时给出温度和湿度。脚手架里的决策是：</p>
