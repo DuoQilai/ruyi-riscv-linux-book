@@ -80,7 +80,7 @@
   <header class="hero">
     <div class="tag">RISC-V Linux 嵌入式实践课</div>
     <h1>课程总览</h1>
-    <p class="lead">荔枝派 4A + RuyiSDK + C。六章讲义与实验递进：工具链 → 够用的 C → GPIO → 串口温控 → MQTT → 多线程，最后综合项目。</p>
+    <p class="lead">荔枝派 4A + RuyiSDK + C。六章讲义与实验递进：工具链 → 够用的 C → GPIO 风扇 → 命令对话温控 → MQTT → 多线程，最后综合项目。</p>
     <div class="actions">
       <a class="primary" href="docs/CourseOutline.html">完整 Course Outline</a>
       <a href="chapters/ch01/lecture.html">从第一章讲义开始</a>
@@ -94,7 +94,7 @@
       <a class="env" href="chapters/ch01/lecture.html"><span class="n">ch01</span><span class="t">环境与工具链</span></a>
       <a class="env" href="chapters/ch02/lecture.html"><span class="n">ch02</span><span class="t">够用的 C</span></a>
       <a class="board" href="chapters/ch03/lecture.html"><span class="n">ch03</span><span class="t">GPIO 与执行器</span></a>
-      <a class="linux" href="chapters/ch04/lecture.html"><span class="n">ch04</span><span class="t">串口与温控</span></a>
+      <a class="linux" href="chapters/ch04/lecture.html"><span class="n">ch04</span><span class="t">命令与温控</span></a>
       <a class="linux" href="chapters/ch05/lecture.html"><span class="n">ch05</span><span class="t">网络与 MQTT</span></a>
       <a class="linux" href="chapters/ch06/lecture.html"><span class="n">ch06</span><span class="t">线程与协同</span></a>
     </div>
@@ -130,7 +130,7 @@
           <td>够用的 C 语言基础</td>
           <td><a href="chapters/ch02/lecture.html">lecture.html</a></td>
           <td><a href="chapters/ch02/lab.html">lab.html</a></td>
-          <td>假温控闯关：读懂、改得动本课 C</td>
+          <td>软件假温控闯关（不上板）：读懂、改得动本课 C</td>
           <td>⬜ 未验证</td>
         </tr>
         <tr>
@@ -143,10 +143,10 @@
         </tr>
         <tr>
           <td>ch04</td>
-          <td>串口对话与温控</td>
+          <td>命令对话与温控</td>
           <td><a href="chapters/ch04/lecture.html">lecture.html</a></td>
           <td><a href="chapters/ch04/lab.html">lab.html</a></td>
-          <td>命令表 + select：边控温边听打字</td>
+          <td>真 DHT22 + 命令表 + select（SSH 边控温边打字）</td>
           <td>✅ 已验证</td>
         </tr>
         <tr>

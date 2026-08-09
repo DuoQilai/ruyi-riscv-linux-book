@@ -258,7 +258,7 @@
   <h1>Course Outline</h1>
   <p class="note">
     <strong>Linux 嵌入式实践课</strong> · 荔枝派 4A + RuyiSDK + <strong>C 语言</strong> ·
-    顺序学完六章 · 每章讲义三节（x.1–x.3）加一节独立「深入理解」+ 一个本章实验 ·
+    顺序学完六章 · 每章讲义 + 本章实验（讲义把概念在首次出现处讲透；实验接线/写代码验收）·
     最后做综合项目（老师提供模型权重，学生在板上接推理）
   </p>
 
@@ -277,12 +277,12 @@
       <a class="ch-exp-ch mod-board" href="../chapters/ch03/lecture.html" style="text-decoration:none;color:inherit;">
         <span class="flow-ch">ch03</span>
         <p class="flow-title">GPIO 与执行器</p>
-        <p class="flow-desc">控灯、控风扇；温度传感器 DHT22</p>
+        <p class="flow-desc">gpiod 控继电器/风扇；假温度闭环</p>
       </a>
       <a class="ch-exp-ch mod-linux" href="../chapters/ch04/lecture.html" style="text-decoration:none;color:inherit;">
         <span class="flow-ch">ch04</span>
-        <p class="flow-title">串口对话与温控</p>
-        <p class="flow-desc">读 DHT22；打字改阈值、查状态</p>
+        <p class="flow-title">命令对话与温控</p>
+        <p class="flow-desc">真 DHT22；SSH 打字查状态、改阈值</p>
       </a>
       <a class="ch-exp-ch mod-linux" href="../chapters/ch05/lecture.html" style="text-decoration:none;color:inherit;">
         <span class="flow-ch">ch05</span>
@@ -304,17 +304,17 @@
       <a class="ch-exp-lab mod-lab" href="../chapters/ch02/lab.html" style="text-decoration:none;color:inherit;">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">改代码闯关</p>
-        <p class="flow-desc">假温控半成品，改出可见行为</p>
+        <p class="flow-desc">软件假温控半成品，改出可见行为（不上板）</p>
       </a>
       <a class="ch-exp-lab mod-lab" href="../chapters/ch03/lab.html" style="text-decoration:none;color:inherit;">
         <span class="exp-tag todo">本章实验</span>
-        <p class="flow-title">温控风扇</p>
-        <p class="flow-desc">捂热风扇转、降温停；看寄存器翻位</p>
+        <p class="flow-title">继电器控制风扇</p>
+        <p class="flow-desc">自己写三函数；假温度驱动真风扇</p>
       </a>
       <a class="ch-exp-lab mod-lab" href="../chapters/ch04/lab.html" style="text-decoration:none;color:inherit;">
         <span class="exp-tag todo">本章实验</span>
-        <p class="flow-title">串口命令温控</p>
-        <p class="flow-desc">自动控温同时，打字查状态、改阈值</p>
+        <p class="flow-title">命令温控（cmd-thermo）</p>
+        <p class="flow-desc">接 DHT22；补命令与 select；SSH 联调</p>
       </a>
       <a class="ch-exp-lab mod-lab" href="../chapters/ch05/lab.html" style="text-decoration:none;color:inherit;">
         <span class="exp-tag todo">本章实验</span>
@@ -354,21 +354,21 @@
       <tbody>
         <tr>
           <td><strong>讲义</strong>（lecture）</td>
-          <td>零件是什么、接口怎么用；每章三节加一节独立<strong>深入理解</strong>；带跟做小例子</td>
-          <td>跟做后单项能力会了，例如灯会闪、会打一行串口日志</td>
+          <td>零件是什么、接口怎么用；概念在首次出现处讲透；带跟做小例子</td>
+          <td>跟做后单项能力会了，例如 <code>gpioset</code> 控继电器、能解释 <code>select</code></td>
         </tr>
         <tr>
           <td><strong>本章实验</strong>（lab）</td>
-          <td>用本章零件做一场完整实验；给 C 脚手架 + 规格 + 验收标准</td>
-          <td>能演示约定现象，例如捂热风扇转，并填简单验收记录</td>
+          <td>用本章零件做完整验收；给 C 脚手架 + 契约 + 验收标准</td>
+          <td>能演示约定现象（如风扇开/关、敲 status 有回复），并填记录表</td>
         </tr>
       </tbody>
     </table>
   </div>
   <ul class="relations">
-    <li>每章讲义三节（x.1 / x.2 / x.3），另有一节独立「深入理解」；本章实验是一整块。</li>
-    <li>实验正文写差量步骤和验收标准；安装 / <code>make</code> / <code>scp</code> 等基础操作以讲义为准。</li>
-    <li>全文直接写「做什么、看到什么」；每章深入理解写死一种做法，步骤人人相同。</li>
+    <li>讲义 → 同章实验 → 下一章讲义；底栏有「上一篇 / 下一篇」。</li>
+    <li>实验写差量步骤与验收；安装 / <code>make</code> / <code>scp</code> 等基础操作以讲义为准。</li>
+    <li>同一故事线递进：ch02 软件假温控 → ch03 假温度+真风扇 → ch04 真传感+命令对话。</li>
   </ul>
 
   <h2>术语表</h2>
@@ -404,39 +404,43 @@
         </tr>
         <tr>
           <td>GPIO</td>
-          <td>板子上一排针脚。程序可读（按键、传感器）或可写（灯、继电器）。</td>
+          <td>板子上一排针脚。本课主要写输出（继电器信号端）；也可读输入（传感器数据线）。</td>
         </tr>
         <tr>
           <td>gpiod</td>
-          <td>Linux 上读写 GPIO 针脚的常用接口库；本课用它控灯和风扇继电器。</td>
+          <td>Linux 上读写 GPIO 的常用接口库；ch03 用它控风扇继电器。</td>
         </tr>
         <tr>
           <td>MMIO</td>
-          <td>把硬件寄存器当成内存地址来读写。Linux 里内核管着这些地址；用户程序经 <code>gpiod</code> 等接口间接访问。ch03 用只读方式亲眼看某一位翻了。</td>
+          <td>把硬件寄存器当成内存地址来读写。Linux 里内核管着这些地址；用户程序经 <code>gpiod</code> 间接访问。ch03 用只读方式核对某一位翻转。</td>
         </tr>
         <tr>
           <td>devmem</td>
-          <td>在板子上按地址读/写内存的小工具。ch03 <strong>只读</strong>：点灯前后各读一次，看到那一位从 0 变成 1。</td>
+          <td>按地址读/写内存的小工具。ch03 <strong>只读</strong>：改 GPIO 电平前后各读一次，看到对应位翻转。</td>
         </tr>
         <tr>
           <td>DHT22</td>
-          <td>温湿度探头物料。插在 GPIO 针脚上；程序问它「现在几度」，得到温度数字。</td>
+          <td>温湿度探头。数据线经电平转换接 GPIO；ch04 起用，综合项目继续用。</td>
+        </tr>
+        <tr>
+          <td>TXS / AMS1117</td>
+          <td><strong>TXS0108E</strong>：1.8 V↔3.3 V 双向电平转换。<strong>AMS1117-1.8V</strong>：给 TXS 低压侧（VA）供电。ch04 接 DHT22 时用。</td>
         </tr>
         <tr>
           <td>继电器</td>
-          <td>用小信号开关大电流的模块。板子 GPIO 驱动继电器，继电器再给风扇通断电。</td>
+          <td>用小信号开关大电流的模块。板子 GPIO 驱动继电器，继电器再给风扇通断电。ch03 起用。</td>
         </tr>
         <tr>
-          <td>阈值控制</td>
-          <td>温度高于某值开风扇，低于某值关。数字可写在程序里，ch04 起可用串口命令现场改。</td>
+          <td>阈值 / 滞回</td>
+          <td>高于上限开、低于下限关，中间保持。ch02 在软件里练；ch03 接到真风扇；ch04 可用 <code>set</code> 现场改温度上下限。</td>
         </tr>
         <tr>
-          <td>串口命令</td>
-          <td>你在串口黑窗口打字，板子认命令。例：<code>status</code> 查状态，<code>set 30</code> 把阈值改成 30。</td>
+          <td>终端命令</td>
+          <td>在 SSH 窗口打字，程序认命令。例：<code>status</code> 查状态，<code>set high 30</code> 改上限。工程目录 <code>cmd-thermo/</code>。</td>
         </tr>
         <tr>
           <td>select</td>
-          <td>让程序同时盯几个输入源。ch04：一边等 DHT22 采样周期到，一边等你打字进串口。</td>
+          <td>让程序同时盯几个输入源。ch04：一边等采样周期到，一边等你在 SSH 里打字。</td>
         </tr>
         <tr>
           <td>MQTT</td>
@@ -523,7 +527,7 @@
         </tr>
         <tr>
           <td>USB 转串口线</td>
-          <td>串口登录与打字对话（ch04）</td>
+          <td>可选：烧录/排障时的串口登录（日常开发以 SSH 为主；ch04 命令也走 SSH stdin）</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
@@ -532,13 +536,18 @@
           <td class="provider">课程提供</td>
         </tr>
         <tr>
-          <td>DHT22 温湿度探头</td>
-          <td>插 GPIO 读温度；ch03 起用，综合项目继续用</td>
+          <td>风扇 + 继电器模块</td>
+          <td>GPIO 控继电器，继电器给风扇通断电；ch03 假温度闭环；综合项目联动</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
-          <td>风扇 + 继电器模块</td>
-          <td>GPIO 控继电器，继电器给风扇通断电；ch03 阈值控风；综合项目联动</td>
+          <td>DHT22 温湿度探头</td>
+          <td>经 TXS 接 GPIO 读温湿度；ch04 起用，综合项目继续用</td>
+          <td class="provider">课程提供</td>
+        </tr>
+        <tr>
+          <td>TXS0108E + AMS1117-1.8V</td>
+          <td>电平转换与低压侧供电；ch04 接 DHT22 数据线时用</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
@@ -586,25 +595,25 @@
           <td>够用的 C 语言基础</td>
           <td>读懂、改得动本课后续 C 代码</td>
           <td>改代码闯关</td>
-          <td>假温控半成品按关卡改完；阈值与错误分支行为符合关卡表</td>
+          <td>假温控半成品按关卡改完（软件、不上板）；阈值与错误分支符合关卡表</td>
           <td>具备继续做外设实验的语言基础</td>
         </tr>
         <tr class="mod-board">
           <td>ch03</td>
           <td>外设篇</td>
           <td>GPIO 与执行器</td>
-          <td>会用 <code>gpiod</code> 控针脚；理解寄存器与 API 的关系；温控风扇闭环跑通</td>
-          <td>温控风扇</td>
-          <td>超阈值风扇转、降温停；点灯前后 <code>devmem</code> 只读看到寄存器位翻转；读失败有日志且程序继续跑</td>
-          <td>外设能力 + 本地温控闭环</td>
+          <td>会用 <code>gpiod</code> 控针脚；理解寄存器与 API；假温度驱动真继电器/风扇</td>
+          <td>继电器控制风扇</td>
+          <td>自己写三函数后：超阈值风扇转、降温停；可选 <code>devmem</code> 只读核对位翻转</td>
+          <td>外设能力 + 假温度本地闭环</td>
         </tr>
         <tr class="mod-linux">
           <td>ch04</td>
           <td>Linux 应用篇</td>
-          <td>串口对话与温控</td>
-          <td>DHT22 持续读温控风扇；串口打字查状态、改阈值；两边同时工作</td>
-          <td>串口命令温控</td>
-          <td>捂热风扇仍自动转；敲 <code>status</code> 有回复；敲 <code>set</code> 后阈值立刻变</td>
+          <td>命令对话与温控</td>
+          <td>接 DHT22；命令表 <code>status</code>/<code>set</code>；<code>select</code> 边采样边听 SSH 打字</td>
+          <td>命令温控（cmd-thermo）</td>
+          <td>自动控温同时，敲 <code>status</code> 有回复、敲 <code>set</code> 阈值立刻变</td>
           <td>可对话的本地温控程序</td>
         </tr>
         <tr class="mod-linux">
@@ -639,7 +648,7 @@
   </div>
 
   <h2>章节细则</h2>
-  <p class="note">每章讲义目录为 x.1、x.2、x.3，再加一节独立的<strong>深入理解</strong>（与三节并列，写完整逻辑链条）。「本章实验」单独一栏。实验给 <strong>C 脚手架</strong>，学生按讲义补全，结合板上硬件看到现象。最右栏为本名词。</p>
+  <p class="note">每章讲义按节推进（常见 x.1–x.3）；概念在首次出现处讲透。「本章实验」单独验收。实验给 <strong>C 脚手架</strong>，学生按契约补全或改 bug，结合板上看现象（ch02 可不上板）。最右栏为本名词。</p>
   <div class="table-wrap">
     <table class="detail">
       <colgroup>
@@ -700,40 +709,38 @@
         <tr class="mod-env"><td class="section">深入理解：多个 .c 如何编译链接成可执行文件；main 之前发生了什么</td></tr>
 
         <tr class="mod-board">
-          <td rowspan="4" class="merge">ch03</td>
-          <td rowspan="4" class="merge">外设篇</td>
-          <td class="section">3.1 外设与 I/O：从物理世界到程序</td>
-          <td rowspan="4" class="merge section">会用 gpiod 控针脚；理解寄存器与 API；温控风扇闭环跑通</td>
-          <td rowspan="4" class="merge section"><strong>温控风扇</strong>：接线；周期读 DHT22 + 阈值开/关风扇；读失败打日志且程序继续；点灯前后 <code>devmem</code> 只读核对寄存器位</td>
-          <td rowspan="4" class="merge section">外设能力 + 本地闭环</td>
-          <td rowspan="4" class="merge glossary section"><dl>
-            <dt>GPIO / gpiod</dt><dd>针脚与读写接口。</dd>
-            <dt>DHT22</dt><dd>温湿度探头，接 GPIO。</dd>
-            <dt>继电器</dt><dd>GPIO 控通断，再驱动风扇。</dd>
-            <dt>深入理解</dt><dd><code>gpiod</code> 写灯 → <code>devmem</code> 只读看那一位翻转 → 对照内核 gpio 驱动里写寄存器的那一行。</dd>
+          <td rowspan="3" class="merge">ch03</td>
+          <td rowspan="3" class="merge">外设篇</td>
+          <td class="section">3.1 外设与 I/O</td>
+          <td rowspan="3" class="merge section">会用 gpiod 控继电器；假温度驱动真风扇；可选只读核对寄存器位</td>
+          <td rowspan="3" class="merge section"><strong>继电器控制风扇</strong>：接线；学生实现 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>；假温度闭环；改阈值验收</td>
+          <td rowspan="3" class="merge section">外设能力 + 假温度本地闭环</td>
+          <td rowspan="3" class="merge glossary section"><dl>
+            <dt>GPIO / gpiod</dt><dd>针脚与用户态读写接口。</dd>
+            <dt>继电器</dt><dd>GPIO 控信号端，触点驱动风扇。</dd>
+            <dt>滞回</dt><dd>高低两档阈值，中间保持。</dd>
+            <dt>devmem（只读）</dt><dd>核对 set_value 后寄存器位是否翻转。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-board"><td class="section">3.2 GPIO：用 gpiod 控灯与继电器</td></tr>
-        <tr class="mod-board"><td class="section">3.3 温控闭环</td></tr>
-        <tr class="mod-board"><td class="section">深入理解：gpiod 写灯后，用 devmem 只读看见寄存器位翻转</td></tr>
+        <tr class="mod-board"><td class="section">3.2 GPIO：用 gpiod 控继电器与风扇</td></tr>
+        <tr class="mod-board"><td class="section">3.3 决策 → 执行（假温度）</td></tr>
 
         <tr class="mod-linux">
-          <td rowspan="4" class="merge">ch04</td>
-          <td rowspan="4" class="merge">Linux 应用篇</td>
+          <td rowspan="3" class="merge">ch04</td>
+          <td rowspan="3" class="merge">Linux 应用篇</td>
           <td class="section">4.1 串口是聊天线：字节怎么进出</td>
-          <td rowspan="4" class="merge section">DHT22 控风扇同时，串口打字查状态、改阈值</td>
-          <td rowspan="4" class="merge section"><strong>串口命令温控</strong>：脚手架已接 DHT22 与风扇；补全命令表（<code>status</code> / <code>set</code>）；自动控温与打字回复同时工作</td>
-          <td rowspan="4" class="merge section">可对话的本地温控</td>
-          <td rowspan="4" class="merge glossary section"><dl>
-            <dt>串口</dt><dd>USB 连上后的打字窗口。</dd>
-            <dt>命令表</dt><dd>字符串对应函数，如 <code>status</code> → 打印状态。</dd>
-            <dt>select</dt><dd>同时等采样时刻与串口输入。</dd>
-            <dt>深入理解</dt><dd>程序如何同时盯温度采样与你的打字，两边都及时响应。</dd>
+          <td rowspan="3" class="merge section">接 DHT22；命令表；select 边采样边听 SSH 打字</td>
+          <td rowspan="3" class="merge section"><strong>命令温控（cmd-thermo）</strong>：焊 TXS、接线；学生实现 <code>status</code>/<code>set</code>/dispatch/<code>select</code> 主循环</td>
+          <td rowspan="3" class="merge section">可对话的本地温控</td>
+          <td rowspan="3" class="merge glossary section"><dl>
+            <dt>DHT22 / TXS</dt><dd>真温湿度；数据线经电平转换。</dd>
+            <dt>命令表</dt><dd>字符串对应函数，如 <code>status</code>。</dd>
+            <dt>select</dt><dd>同时等采样超时与 stdin 输入。</dd>
+            <dt>SSH stdin</dt><dd>本课命令入口；不要求另接物理串口线。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-linux"><td class="section">4.2 读 DHT22 + 串口命令：status / set</td></tr>
-        <tr class="mod-linux"><td class="section">4.3 两边同时工作</td></tr>
-        <tr class="mod-linux"><td class="section">深入理解：用 select 同时等待温度采样时刻与串口打字</td></tr>
+        <tr class="mod-linux"><td class="section">4.2 接传感器与命令表</td></tr>
+        <tr class="mod-linux"><td class="section">4.3 两边同时工作（select）</td></tr>
 
         <tr class="mod-linux">
           <td rowspan="4" class="merge">ch05</td>
