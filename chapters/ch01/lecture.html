@@ -165,8 +165,11 @@
 <section id="overview">
 <h2>开始之前</h2>
 
-<div class="warn" style="margin-bottom:32px;">
-  <strong>本章三节按顺序完成：</strong>1.1 认识板子并装好 RuyiSDK → 1.2 烧录系统并打通开发通道 → 1.3 弄清交叉编译并<strong>编出</strong> RISC-V 的 CoreMark（用 <code>file</code> 验收架构）。SCP 上板与跑分属于本章实验，讲义阶段不要做。每节约 90–120 分钟（含跟做命令）。
+<p>本章目标是把开发环境与上板通道真正打通：你能在电脑上安装并使用 RuyiSDK 交叉工具链，把 RevyOS 烧到荔枝派 4A，用串口或 SSH 登录板子，并理解为什么必须用交叉编译才能生成板子可执行的程序。学完本章，你应当能在主机上交叉编出一份 RISC-V 架构的 CoreMark，并用 <code>file</code> 确认产物架构正确。</p>
+<p>整章可以看成一条链：先认清板子与工具（1.1），再把系统烧进去并打通登录与传文件的通道（1.2），最后弄清交叉编译并用 Makefile 编出 CoreMark（1.3）。把这份 RISC-V 可执行文件传到板子上跑出分数、并留下可复查的证据，在本章实验里完成；讲义 1.3 负责把程序编对、用 <code>file</code> 验过架构。</p>
+
+<div class="info" style="margin-bottom:32px;">
+  <strong>阅读与跟做顺序：</strong>按 1.1 → 1.2 → 1.3 进行。每一节都含跟做命令；建议边做边保存关键终端输出。每节约 90–120 分钟。
 </div>
 
 <h3>你需要准备什么</h3>
@@ -191,11 +194,11 @@
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>1.1 荔枝派 4A 与 RuyiSDK</h4><p>认清板子接口；安装 ruyi；验证交叉编译器能编出 RISC-V 程序。</p></div>
   <div class="card"><h4>1.2 烧录、开发通道与一键准备/一键编译</h4><p>把系统写到板子上；打通串口、SSH、SCP；掌握一键准备与一键编译的用法。</p></div>
-  <div class="card"><h4>1.3 交叉编译、Makefile 与 CoreMark</h4><p>弄清为何本机 gcc 不能上板；用 Makefile 交叉编出 CoreMark；<code>file</code> 确认是 RISC-V。上板跑分见实验。</p></div>
+  <div class="card"><h4>1.3 交叉编译、Makefile 与 CoreMark</h4><p>弄清本机编译与交叉编译的差别；用 Makefile 交叉编出 CoreMark；用 <code>file</code> 确认产物是 RISC-V。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>学习建议：</strong>每步都有「你应该看到…」。验证不过就停下来核对命令与路径。讲义保存工具链与 <code>file</code> 日志；CoreMark 上板与完整证据包在 <code>lab.html</code> 归档。
+  <strong>学习建议：</strong>每一步都对照「你应该看到…」核对输出；对不上就先停在当前命令查路径与工具链。讲义侧重把工具链与交叉编译学透；上板跑分与完整证据归档在本章实验中完成。
 </div>
 </section>
 
@@ -474,8 +477,8 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <span class="p">$</span> file coremark.exe
 coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 
-<div class="warn">
-  <strong>讲义阶段到此为止：</strong>产物文件名因版本而异（常见 <code>coremark.exe</code>）。确认 <code>file</code> 含 RISC-V / UCB RISC-V 字样后保存该文件与日志。<strong>不要在讲义阶段 SCP 上板或跑分</strong>——否则本章实验只剩填表。上板、完整性校验、跑分与证据包见 <a href="lab.html">lab.html</a>。
+<div class="info">
+  <strong>本节收口：</strong>产物文件名因版本而异（常见 <code>coremark.exe</code>）。请确认 <code>file</code> 输出中含 RISC-V 或 UCB RISC-V 字样，并保存该可执行文件与对应终端日志。接下来把文件传到荔枝派 4A、核对完整性、在板端跑出分数并整理证据，请打开 <a href="lab.html">本章实验</a> 继续。
 </div>
 
 <div class="info" style="margin-top:32px;">

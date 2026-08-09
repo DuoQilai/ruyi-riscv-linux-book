@@ -110,24 +110,22 @@
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
   <h1>本章实验 · 上板通道验收</h1>
-  <p class="meta">接讲义 1.1 / 1.2 / 1.3 · 主机已有 RISC-V CoreMark → SCP 上板 → 跑分与证据包</p>
+  <p class="meta">把交叉编好的 CoreMark 传到荔枝派 4A，跑出分数，留下可复查的证据</p>
 </header>
 
 <section id="intro">
-<h2>说明</h2>
-<p>本章实验<strong>不是</strong>再讲一遍安装或交叉编译。讲义 1.1–1.3 已要求：工具链可用、板子可登录、主机上已交叉编出 RISC-V 的 CoreMark（<code>file</code> 过关）。</p>
-<p>本页完成<strong>上板闭环与可复查证据包</strong>：SCP 传输 → 两端哈希一致 → 板端跑出分数并归档日志。分数高低不重要；链路可证明才重要。</p>
+<h2>本实验要做什么</h2>
+<p>本实验要证明一件事：你在主机上用交叉工具链编出的 RISC-V 程序，能够完整传到荔枝派 4A，并在板端真正跑起来。我们用 CoreMark 作为这份程序——分数本身不是重点，整条「编译产物 → 传输 → 板端执行」的通道能够被证据复核，才是本章实验的目标。</p>
+<p>开始之前，请确认讲义 1.1 至 1.3 已经做完：交叉工具链可用，板子可以登录，主机上已经交叉编出 CoreMark，并且用 <code>file</code> 确认产物架构是 RISC-V。交叉编译的完整命令以讲义为准；本页从「核对已有产物」开始，完成传输、跑分与归档。</p>
+<p>你将依次完成这些事：在主机上再次用 <code>file</code> 与 <code>sha256sum</code> 核对产物；用 SCP 把文件传到板子并确认两端哈希一致；在板端加上执行权限并跑出 CoreMark 分数；把分数、日志与通道自证输出写入记录表。</p>
 <div class="info">
-  <strong>硬性目标：</strong>主机交叉编译产物 → SCP 到荔枝派 4A → 板端跑出 CoreMark 分数并写入记录表；同时留下 SSH、<code>uname -m</code>、工具链三元组三份自证输出。
-</div>
-<div class="warn">
-  <strong>验收只认交叉路径：</strong>必须使用讲义 1.3 在<strong>主机</strong>上交叉编出的 RISC-V 可执行文件。板端原生 <code>gcc</code> 就地编译（讲义里的对照路径）<strong>不能</strong>代替本章实验通过条件。
+  <strong>通过标准：</strong>记录表与验收表中的项目全部齐全。本章实验采用主机交叉编译得到的可执行文件完成上板；讲义中介绍的板端原生编译可作为对照理解，但本章实验的通过条件以交叉编译产物为准。
 </div>
 </section>
 
 <section id="prep">
 <h2>前提自检</h2>
-<p>下表每一项都必须先满足。缺哪一项，回对应讲义小节补齐，再继续。不要跳过自检直接上板。</p>
+<p>请先确认下表每一项都已具备。若有缺项，回到对应讲义小节补齐后再继续本页步骤。</p>
 <table>
   <tr><th>前提</th><th>你怎么确认「已经具备」</th><th>对应讲义</th><th>□</th></tr>
   <tr>
@@ -149,8 +147,8 @@
     <td></td>
   </tr>
   <tr>
-    <td>主机已有 RISC-V 的 CoreMark 产物（尚未要求上板）</td>
-    <td>对产物执行 <code>file</code>，输出含 <code>RISC-V</code> 或 <code>UCB RISC-V</code>（不是 x86-64）。讲义阶段不应已跑过分</td>
+    <td>主机上已有 RISC-V 架构的 CoreMark 可执行文件</td>
+    <td>对产物执行 <code>file</code>，输出中含 <code>RISC-V</code> 或 <code>UCB RISC-V</code>（架构为 x86-64 则需回到讲义 1.3 重编）</td>
     <td>1.3</td>
     <td></td>
   </tr>
@@ -159,7 +157,7 @@
 
 <section id="steps">
 <h2>步骤</h2>
-<p>以下步骤是本章实验的<strong>主内容</strong>（讲义未要求你在此处之前上板跑 CoreMark）。完整交叉编译命令以讲义 1.3 为准。</p>
+<p>下面是本实验的主体步骤。若交叉编译命令需要重做，请回到讲义 1.3。</p>
 
 <h3>1. 在主机确认 CoreMark 产物架构</h3>
 <p>在主机 CoreMark 构建目录中执行（产物文件名以你讲义 1.3 实际生成为准，常见为 <code>coremark.exe</code>）：</p>
@@ -183,7 +181,7 @@
 <span class="c"># 已进入板端 shell 后：</span>
 <span class="p">$</span> chmod +x /tmp/coremark.exe
 <span class="p">$</span> /tmp/coremark.exe</pre>
-<p>程序会运行一段时间后打印结果。从输出中抄录 CoreMark 分数——常见字段为 <code>Iterations/Sec</code>，或汇总行里的 CoreMark 总分。把<strong>完整终端输出</strong>另存为日志文件（截图或重定向均可），不要只记一个数字。</p>
+<p>程序会运行一段时间后打印结果。请从输出中抄录 CoreMark 分数（常见字段为 <code>Iterations/Sec</code>，或汇总行里的 CoreMark 总分），并把完整终端输出另存为日志文件（截图或重定向均可），同时写入下方「必记字段」表。</p>
 <p><strong>本步成功判据：</strong>程序正常结束并打出分数；你已把分数与运行日期写入「必记字段」表，并保存完整日志。</p>
 
 <div class="warn">
