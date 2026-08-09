@@ -142,7 +142,7 @@
   <a class="sub" href="#s3.2-gpiod">经内核改电平</a>
   <a class="sub" href="#s3.2-devmem">set_value 之后：只读核对</a>
   <a class="sub" href="#s3.2-busy">独占与「被占用」</a>
-  <a class="sub" href="#s3.2-relay">继电器与风扇</a>
+  <a class="sub" href="#s3.2-relay">继电器：信号端</a>
   <a class="sub" href="#s3.2-follow">跟做：gpioset 控继电器</a>
   <a class="sub" href="#s3.2-diagnose">故障排查（本章）</a>
   <div class="divider"></div>
@@ -168,7 +168,7 @@
 
 <div class="info" style="margin-bottom:28px;">
   <strong>本章要干什么：</strong>在荔枝派 4A 上，用 C 经 Linux 的 GPIO 接口改排针电平，经继电器驱动 5V 风扇。<br>
-  <strong>你能学到什么：</strong>分层因果（程序 → libgpiod → 内核 → 引脚 → 继电器 → 风扇）、chip/line 寻址、申请与写入、用观察手段核对位翻转、用滞回阈值触发开/关（完整假温度闭环在实验完成）。
+  <strong>你能学到什么：</strong>分层因果（程序 → libgpiod → 内核 → 引脚 → 继电器）、chip/line 寻址、申请与写入、用观察手段核对位翻转、滞回如何驱动执行链。风扇整板与自己写 C，在实验完成。
 </div>
 
 <div class="warn" style="margin-bottom:32px;">
@@ -180,19 +180,19 @@
 <div class="card-grid card-grid-3">
   <div class="card"><h4>编译</h4><p>板端原生 <code>gcc</code>（最简单），或主机交叉工具链。见第一章。</p></div>
   <div class="card"><h4>荔枝派 4A + 套件</h4><p>继电器模块（1 路 5V）、5V 风扇、面包板、杜邦线。继电器和风扇由课程提供。</p></div>
-  <div class="card"><h4>代码</h4><p>讲义跟做命令行 <code>gpioset</code>；完整假温度程序在 <code>chapters/ch03/code/temperature-fan/</code>，整板验收在实验。</p></div>
+  <div class="card"><h4>代码</h4><p>讲义跟做命令行 <code>gpioset</code>。实验里你在 <code>temperature-fan/</code> 自己实现三个 C 函数；参考实现为 <code>temperature_fan-sol.c</code>。</p></div>
 </div>
 
 <h3>三节各自打透什么</h3>
 
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>3.1 外设与 I/O</h4><p>物理量如何变成程序里的数；寄存器 / MMIO；用户态经内核接口访问硬件。</p></div>
-  <div class="card"><h4>3.2 GPIO：用 gpiod 控继电器与风扇</h4><p>chip/line、本板 1.8 V、申请与写入；<code>gpioset</code> 跟做；只读 <code>devmem</code> 核对位翻转。</p></div>
-  <div class="card"><h4>3.3 决策 → 执行</h4><p>假温度与滞回阈值如何驱动执行链。真传感器在第四章。</p></div>
+  <div class="card"><h4>3.2 GPIO：用 gpiod 控继电器</h4><p>chip/line、本板 1.8 V、信号端接线、<code>gpioset</code> 跟做；只读 <code>devmem</code> 核对位翻转。</p></div>
+  <div class="card"><h4>3.3 决策 → 执行</h4><p>假温度与滞回如何驱动执行链。真传感器在第四章。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>讲义与实验怎么衔接：</strong>讲义一次打透边界、编号、gpiod 与可观察的位翻转，并用 <code>gpioset</code> 跟做控一次继电器。实验接着讲义终点：按表接线，跑 <code>temperature_fan</code> 做假温度闭环，再改阈值验收。
+  <strong>讲义与实验怎么衔接：</strong>讲义打透边界与信号链，并用 <code>gpioset</code> 控一次继电器。实验接上风扇负载，由你写出 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>，跑通假温度闭环并改阈值。
 </div>
 </section>
 
@@ -274,7 +274,7 @@
 </div>
 
 <div class="diagram">排针丝印 IO1_5
-        │  （查课程接线表）
+        │
         ▼
   /dev/gpiochip5  的  line 5
         │
@@ -328,12 +328,12 @@ libgpiod
 </ul>
 <p>许多板上没有名叫 <code>gpio</code> 的万能命令。需要权限时用 <code>sudo</code>，或把用户加入 gpio 组（以课程环境为准）。</p>
 
-<pre><span class="c">/* temperature_fan 的核心（libgpiod v2；完整代码见 code/temperature-fan/） */</span>
-chip = gpiod_chip_open(<span class="p">"/dev/gpiochip5"</span>);       <span class="c">/* 打开控制器 */</span>
-fan_req = line_request(FAN_LINE, OUTPUT, 0);  <span class="c">/* 申请 line 5 为输出，初始低（封装见代码） */</span>
-gpiod_line_request_set_value(fan_req, FAN_LINE, 1);   <span class="c">/* 高：继电器吸合 */</span>
-gpiod_line_request_set_value(fan_req, FAN_LINE, 0);   <span class="c">/* 低：继电器释放 */</span>
-gpiod_line_request_release(fan_req);                  <span class="c">/* 用完释放 */</span></pre>
+<pre><span class="c">/* libgpiod v2 调用轮廓（实验里你将亲手实现申请与 set_value 封装） */</span>
+chip = gpiod_chip_open(<span class="p">"/dev/gpiochip5"</span>);
+<span class="c">/* 申请 line 为输出并给出初值 → 得到 line_request */</span>
+gpiod_line_request_set_value(req, line, 1);   <span class="c">/* 高：继电器吸合 */</span>
+gpiod_line_request_set_value(req, line, 0);   <span class="c">/* 低：继电器释放 */</span>
+gpiod_line_request_release(req);</pre>
 
 <div class="info">
   <strong>消费者名字（consumer）</strong>会出现在 <code>gpioinfo</code> / <code>debug/gpio</code> 里。调试「谁占着我的脚」时，能看出是 <code>gpioset</code>、<code>temperature-fan</code> 还是别的程序——起名要诚实。
@@ -385,24 +385,32 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
 <span class="p">$</span> sudo pkill -x gpioset   <span class="c"># -x：按进程名精确匹配</span>
 <span class="p">$</span> sudo cat /sys/kernel/debug/gpio</pre>
 
-<h3 id="s3.2-relay">继电器与风扇：信号端与负载端</h3>
-<p><strong>继电器</strong>把小信号变成大电流通路的通断：GPIO 驱动继电器的<strong>信号端</strong>（丝印 IN / X1，高电平吸合）；风扇电机的电源走继电器触点（NO / COM）。程序仍然只是在写高/低，并没有直接驱动电机电流。</p>
+<h3 id="s3.2-relay">继电器：信号端与负载端</h3>
+<p><strong>继电器</strong>把小信号变成大电流通路的通断：GPIO 驱动<strong>信号端</strong>（丝印 IN / X1，高电平吸合）；风扇等大电流走触点（NO / COM）。程序只写高/低，电机电流不进 SoC 脚。</p>
 
 <table>
   <tr><th>对象</th><th>GPIO 在做什么</th><th>要建立的因果</th></tr>
-  <tr><td>继电器 → 风扇</td><td>输出高/低 → 信号端有效 → 触点通断 5V 电源</td><td>GPIO 管命令；大电流不进 SoC 脚</td></tr>
+  <tr><td>继电器信号端</td><td>输出高/低 → IN 有效 → 线圈侧动作</td><td>讲义跟做打通这一段</td></tr>
+  <tr><td>风扇电源（触点）</td><td>触点通断 5V</td><td>实验接上 NO–COM 负载</td></tr>
 </table>
 
-<p>完整接线表与断电操作顺序以 <a href="lab.html">lab.html</a> 为准。讲义要求：能用 gpiod / <code>gpioset</code> 让继电器吸合/释放，并理解负载不进 GPIO。</p>
+<h4>跟做前：信号端三线</h4>
+<table>
+  <tr><th>从</th><th>到</th></tr>
+  <tr><td>排针 <strong>IO1_5</strong></td><td>继电器 <strong>IN</strong> / X1</td></tr>
+  <tr><td>排针 <strong>5V</strong></td><td>继电器 <strong>V+</strong> / VCC</td></tr>
+  <tr><td>排针 <strong>GND</strong></td><td>继电器 <strong>V-</strong> / GND</td></tr>
+</table>
+<p>跳线帽拨到 <strong>H</strong>。此时即可听吸合或看工作灯；风扇电源回路放到实验再接。</p>
 
 <h3 id="s3.2-follow">跟做：用 gpioset 控一次继电器</h3>
-<p>目的：在进入实验的完整假温度程序之前，先用命令行证明「chip + line → 引脚电平 → 继电器」这条链。若课堂上已接好信号端（IO1_5 → IN，5V/GND、跳帽 H），应能听到继电器吸合或看到工作灯；风扇整板接线留到实验。</p>
+<p>目的：证明「chip + line → 引脚电平 → 继电器信号端」。</p>
 
 <ol class="steps">
   <li><span class="step-num">1</span><div><strong>确认脚</strong><br>本课默认：<code>gpiochip5</code> line 5 = 丝印 IO1_5。若镜像不同，用 <code>sudo cat /sys/kernel/debug/gpio</code> 与 pinmux 现查。</div></li>
   <li><span class="step-num">2</span><div><strong>清占用</strong><br><code>sudo pkill -x gpioset</code>（若有残留）。</div></li>
-  <li><span class="step-num">3</span><div><strong>拉高 / 拉低</strong><br><code>sudo gpioset -c gpiochip5 5=1</code>，观察继电器；再 <code>5=0</code> 释放。进程占着脚时可用另一终端读 debug。</div></li>
-  <li><span class="step-num">4</span><div><strong>只读核对（可选但建议）</strong><br>改电平前后各跑一次 <code>sudo devmem 0xffec006000 32</code>，对照第 5 位。</div></li>
+  <li><span class="step-num">3</span><div><strong>拉高 / 拉低</strong><br><code>sudo gpioset -c gpiochip5 5=1</code>，观察继电器；再 <code>5=0</code> 释放。</div></li>
+  <li><span class="step-num">4</span><div><strong>只读核对（建议）</strong><br>改电平前后各跑一次 <code>sudo devmem 0xffec006000 32</code>，对照第 5 位。</div></li>
 </ol>
 
 <pre><span class="p">$</span> sudo gpioset -c gpiochip5 5=1
@@ -414,19 +422,15 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
   <strong>为什么要 sudo？</strong><code>/dev/gpiochip*</code> 默认归 root，普通用户打不开（<code>Permission denied</code>）。
 </div>
 
-<div class="info">
-  <strong>与实验的分界：</strong>讲义跟做到「能诚实改电平并可选看见位翻转」。假温度循环、完整接线与改阈值验收在 <a href="lab.html">lab.html</a>，不在此处重跑 <code>temperature_fan</code>。
-</div>
-
-<h3 id="s3.2-diagnose">故障排查（本章）</h3>
-<p>继电器未动时，按<strong>软件状态 → 编号是否对应排针 → 接线</strong>取证。</p>
+<h3 id="s3.2-diagnose">故障排查（信号链）</h3>
+<p>继电器未动时，按<strong>软件状态 → 编号是否对应排针 → 信号端接线</strong>取证。</p>
 
 <table>
   <tr><th>先查</th><th>证据</th><th>常见结论</th></tr>
   <tr><td>进程与占用</td><td><code>ps</code> / <code>gpioinfo</code> / <code>debug/gpio</code></td><td>残留 <code>gpioset</code>；或写的是 0 却以为写了 1</td></tr>
   <tr><td>chip / line 是否排针</td><td>pinmux、<code>debug/gpio</code></td><td>旧材料写的 <code>gpiochip1</code> 在本课 RevyOS 上是内部控制器；排针在 <code>gpiochip5</code></td></tr>
-  <tr><td>内核状态 vs 执行器</td><td>line 为 <code>out hi</code> 且继电器未动</td><td>查模块与接线（共地、5V、跳帽 H、NO–COM）</td></tr>
-  <tr><td>某脚恒 <code>out lo</code></td><td>换 IO1_4/5/6 对比</td><td>板级脚失效或硬下拉：换脚并记进实验记录</td></tr>
+  <tr><td>内核状态 vs 继电器</td><td>line 为 <code>out hi</code> 且继电器未动</td><td>查共地、5V、跳帽 H、IN 是否接到 IO1_5</td></tr>
+  <tr><td>某脚恒 <code>out lo</code></td><td>换 IO1_4/5/6 对比</td><td>板级脚失效或硬下拉：换脚并记下</td></tr>
 </table>
 
 <div class="info">
@@ -457,14 +461,15 @@ gpiod_line_request_release(fan_req);                  <span class="c">/* 用完�
         ▼
    gpiod 写 FAN_LINE(IO1_5) ──► 继电器信号端 ──► 风扇</div>
 
-<pre><span class="c">/* 伪代码：完整主循环在 code/temperature-fan 里落地 */</span>
-<span class="k">if</span> (假温度 &gt; T_HIGH) 风扇_开();
-<span class="k">else if</span> (假温度 &lt; T_LOW)  风扇_关();</pre>
+<pre><span class="c">/* 伪代码：实验里由你实现 fan_decide，再经 fan_set 落地 */</span>
+<span class="k">if</span> (假温度 &gt; T_HIGH) 风扇应开;
+<span class="k">else if</span> (假温度 &lt; T_LOW)  风扇应关;
+<span class="c">/* 中间区间：保持上一状态 */</span></pre>
 
-<p>两个阈值的作用：高开、低关，中间区间保持——真实温控普遍如此。代码目录：<code>chapters/ch03/code/temperature-fan/</code>，默认 <code>T_HIGH=28</code> / <code>T_LOW=26</code>。讲义到此把数据流与滞回说清；整板接线、编译运行、假温度验收与改阈值，见 <a href="lab.html">lab.html</a>。</p>
+<p>两个阈值的作用：高开、低关，中间区间保持——真实温控普遍如此。默认 <code>T_HIGH=28</code> / <code>T_LOW=26</code>。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>下一步：</strong>打开 <code>lab.html</code>。按表接线后，跑通 <code>temperature_fan</code>，再改阈值观察开/关点变化。
+  <strong>下一步：</strong>打开 <a href="lab.html">lab.html</a>——接上风扇负载，在 <code>temperature_fan.c</code> 实现三个函数，跑通闭环并改阈值。
 </div>
 </section>
 

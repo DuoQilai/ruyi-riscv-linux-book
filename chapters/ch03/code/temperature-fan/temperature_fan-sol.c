@@ -1,11 +1,8 @@
 /*
- * temperature_fan.c — 第三章学生版（脚手架）
+ * temperature_fan-sol.c — 第三章参考实现（solution）
  *
- * 在 main 上方实现 lab.html 给出的三个函数：
- *   line_request / fan_set / fan_decide
- * 实现前 make 会因「未声明的函数」失败——这是预期现象。
- *
- * 对照答案：temperature_fan-sol.c（make sol）
+ * 默认 make 编的是 temperature_fan.c（学生版）。
+ * 对照本文件：make sol && sudo ./temperature_fan-sol
  *
  * 板：荔枝派 4A + RevyOS。libgpiod v2。全程 C。
  * 脚：IO1_5 → gpiochip5 line 5 → 继电器信号端（直连）。
@@ -33,10 +30,60 @@ static void on_signal(int sig)
 	g_running = 0;
 }
 
+/* 申请一根脚：direction 为 OUTPUT 时立刻置 val（0/1） */
+struct gpiod_line_request *line_request(unsigned int offset,
+                                        int direction, int val)
+{
+	struct gpiod_line_settings *s = gpiod_line_settings_new();
+	struct gpiod_line_config *lc = gpiod_line_config_new();
+	struct gpiod_request_config *rc = gpiod_request_config_new();
+	struct gpiod_line_request *r;
+	unsigned int offs[1] = { offset };
+
+	if (!s || !lc || !rc)
+		return NULL;
+	gpiod_line_settings_set_direction(s, direction);
+	gpiod_line_config_add_line_settings(lc, offs, 1, s);
+	gpiod_request_config_set_consumer(rc, "temperature-fan");
+
+	r = gpiod_chip_request_lines(chip, rc, lc);
+	gpiod_request_config_free(rc);
+	gpiod_line_config_free(lc);
+	gpiod_line_settings_free(s);
+
+	if (r && direction == GPIOD_LINE_DIRECTION_OUTPUT)
+		gpiod_line_request_set_value(r, offset, val);
+	return r;
+}
+
+/* 写继电器信号端：on=1 吸合，on=0 释放；并打日志 */
+void fan_set(int on)
+{
+	if (!fan_req)
+		return;
+	if (gpiod_line_request_set_value(fan_req, FAN_LINE, on ? 1 : 0) < 0) {
+		perror("fan set_value");
+		return;
+	}
+	printf("[INFO] fan %s\n", on ? "ON" : "OFF");
+	fflush(stdout);
+}
+
 /*
- * TODO：在 main 上方实现三个函数（函数名：line_request、fan_set、fan_decide）。
- * 完整原型、参数契约与思考题只在 lab.html —— 请打开实验页再写。
+ * 滞回决策：只改 *fan_on，不碰 GPIO。
+ *   temp > T_HIGH → 开
+ *   temp < T_LOW  → 关
+ *   中间区间      → 保持 *fan_on
  */
+void fan_decide(float temp_c, int *fan_on)
+{
+	if (!fan_on)
+		return;
+	if (temp_c > T_HIGH)
+		*fan_on = 1;
+	else if (temp_c < T_LOW)
+		*fan_on = 0;
+}
 
 int main(void)
 {
