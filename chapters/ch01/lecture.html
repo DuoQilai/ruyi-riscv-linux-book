@@ -143,19 +143,16 @@
   <a class="sub" href="#s1.2-oneclick">一键准备与一键编译</a>
   <div class="divider"></div>
   <a href="#s1.3">1.3 交叉编译、Makefile 与 CoreMark</a>
-  <a class="sub" href="#s1.3-cross">交叉编译与 Makefile</a>
-  <a class="sub" href="#s1.3-coremark">构建 CoreMark</a>
-  <div class="divider"></div>
-  <a href="#s1-deep">深入理解</a>
-  <a class="sub" href="#s1-deep-isa">指令集为何不同</a>
-  <a class="sub" href="#s1-deep-paths">同一 main.c 两条路</a>
-  <a class="sub" href="#s1-deep-verify">如何亲自验证</a>
+  <a class="sub" href="#s1.3-why">为何必须交叉编译</a>
+  <a class="sub" href="#s1.3-paths">同一源码三条路径</a>
+  <a class="sub" href="#s1.3-cross">Makefile 跟做</a>
+  <a class="sub" href="#s1.3-coremark">编出 CoreMark（到 file）</a>
 </nav>
 
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
   <h1>环境与工具链</h1>
-  <p class="subtitle">荔枝派 4A · RuyiSDK · 烧录与开发通道<br>交叉编译 · Makefile · CoreMark<br>— 1.1 / 1.2 / 1.3 / 深入理解 —</p>
+  <p class="subtitle">荔枝派 4A · RuyiSDK · 烧录与开发通道<br>交叉编译 · Makefile · CoreMark<br>— 1.1 / 1.2 / 1.3 —</p>
   <div class="meta">
     <span>目标板：荔枝派 4A</span>
     <span>系统：RevyOS</span>
@@ -169,7 +166,7 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>本章三节按顺序完成：</strong>1.1 认识板子并装好 RuyiSDK → 1.2 烧录系统并打通开发通道 → 1.3 交叉编译并编出 CoreMark。读完后进入「深入理解」，把「电脑编、板子跑」讲清楚。每节约 90–120 分钟（含跟做命令）。
+  <strong>本章三节按顺序完成：</strong>1.1 认识板子并装好 RuyiSDK → 1.2 烧录系统并打通开发通道 → 1.3 弄清交叉编译并<strong>编出</strong> RISC-V 的 CoreMark（用 <code>file</code> 验收架构）。SCP 上板与跑分属于本章实验，讲义阶段不要做。每节约 90–120 分钟（含跟做命令）。
 </div>
 
 <h3>你需要准备什么</h3>
@@ -194,11 +191,11 @@
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>1.1 荔枝派 4A 与 RuyiSDK</h4><p>认清板子接口；安装 ruyi；验证交叉编译器能编出 RISC-V 程序。</p></div>
   <div class="card"><h4>1.2 烧录、开发通道与一键准备/一键编译</h4><p>把系统写到板子上；打通串口、SSH、SCP；掌握一键准备与一键编译的用法。</p></div>
-  <div class="card"><h4>1.3 交叉编译、Makefile 与 CoreMark</h4><p>用 Makefile 固定交叉编译参数；编出 CoreMark 并上板运行。</p></div>
+  <div class="card"><h4>1.3 交叉编译、Makefile 与 CoreMark</h4><p>弄清为何本机 gcc 不能上板；用 Makefile 交叉编出 CoreMark；<code>file</code> 确认是 RISC-V。上板跑分见实验。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>学习建议：</strong>每步都有「你应该看到…」。验证不过就停下来核对命令与路径。完整终端日志是本章实验（<code>lab.html</code>）的验收材料——从现在开始保存日志。
+  <strong>学习建议：</strong>每步都有「你应该看到…」。验证不过就停下来核对命令与路径。讲义保存工具链与 <code>file</code> 日志；CoreMark 上板与完整证据包在 <code>lab.html</code> 归档。
 </div>
 </section>
 
@@ -385,16 +382,45 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <div class="section-num">1.3</div>
 <h2>交叉编译、Makefile 与 CoreMark</h2>
 
-<h3 id="s1.3-cross">交叉编译与 Makefile</h3>
-<p><strong>交叉编译</strong>：在电脑（x86_64）上编译，生成能在荔枝派 4A（riscv64）上运行的程序。编译器、汇编器、链接器都必须用面向 RISC-V 的版本——即 1.1 装好的 <code>riscv64-unknown-linux-gnu-gcc</code> 系列。</p>
+<h3 id="s1.3-why">为何必须交叉编译</h3>
+<p>开发电脑的 CPU 执行 <strong>x86_64</strong>（少数机器是 ARM）机器码；荔枝派 4A 执行 <strong>riscv64</strong> 机器码。两边指令编码不同。</p>
+<p>在电脑上用本机 <code>gcc main.c -o app</code>，得到的是本机架构的 ELF，只能在本机跑。拷到板端，Linux 内核会拒绝加载，常见报错是 <code>Exec format error</code>。板端编好的 RISC-V 程序拷回电脑，同样跑不了。</p>
+<p><strong>交叉工具链</strong>仍在电脑上运行，但专门生成 RISC-V 机器码，并链接面向 RISC-V Linux 的 C 库。本课经 RuyiSDK 安装，前缀是 <code>riscv64-unknown-linux-gnu-</code>。<strong>三元组</strong> <code>riscv64-unknown-linux-gnu</code> 标明：CPU 为 riscv64、系统为 Linux、用户态约定为 GNU。选成 <code>unknown-elf</code> 会得到裸机工具链，不适合本课跑 Linux 用户程序。</p>
 
-<div class="diagram">源代码（.c）
-    ↓  riscv64-unknown-linux-gnu-gcc（在电脑上跑）
-RISC-V 可执行文件（ELF）
-    ↓  scp
-荔枝派 4A（riscv64，实际运行）</div>
+<h3 id="s1.3-paths">同一份源码，三条编译路径</h3>
+<p>同一份 <code>main.c</code> 可以走出三种产物。分清「编给谁、能在哪跑」：</p>
 
-<p><strong>Makefile</strong> 是描述「怎么编这个工程」的脚本；敲 <code>make</code> 就会按规则调用编译器。把交叉前缀写进 Makefile，避免每次手敲冗长命令：</p>
+<div class="diagram">同一份 main.c
+        │
+        ├───────────────┬──────────────────┬───────────────
+        │               │                  │
+        ▼               ▼                  ▼
+  电脑自带 gcc     riscv64-unknown-    板端自带 gcc
+  （本机工具链）    linux-gnu-gcc       （板子上的 RISC-V gcc）
+        │               │                  │
+        │ 生成 x86_64   │ 生成 RISC-V      │ 生成 RISC-V
+        ▼               ▼                  ▼
+  app-host           app-riscv          app-board
+  只能在电脑跑       架构正确，须传到板端   可在板端就地跑
+  上板 → Exec format   （本章实验走这条）   （对照路径，非本章实验硬门槛）
+  error</div>
+
+<p>抓住三点：① 编译器选错，架构就错；② 用 <code>file</code> 读 ELF 架构字段验收；③ <strong>交叉编译只解决「编对架构」</strong>——把文件传到板端并运行，是传输与加载的另一步，由本章实验完成。</p>
+<p>交叉工具链内部仍是编译 → 汇编 → 链接，目标一律是 RISC-V：产出 RISC-V 汇编与 <code>.o</code>，再链上 RISC-V 版 C 运行库（sysroot）。</p>
+
+<div class="diagram">交叉编译内部（都在电脑上执行）
+  main.c
+    ↓  编译器：C → RISC-V 汇编
+  main.s
+    ↓  汇编器：汇编 → 目标文件
+  main.o
+    ↓  链接器：.o + RISC-V C 库 → 可执行文件
+  app-riscv（ELF，riscv64）</div>
+
+<p>板端若已安装 <code>gcc</code>，可在板子上直接编译就地运行（上图第三条路）。本课后续章节会用到；<strong>本章实验硬验收只认主机交叉编译产物</strong>，板端原生不能代替该门槛。</p>
+
+<h3 id="s1.3-cross">Makefile 跟做：本机 vs 交叉</h3>
+<p><strong>Makefile</strong> 描述如何编译工程；敲 <code>make</code> 按规则调用编译器。把交叉前缀写进 Makefile，避免每次手敲冗长命令。</p>
 
 <pre><span class="c"># Makefile — 交叉编译模板</span>
 <span class="k">CROSS_COMPILE</span> := riscv64-unknown-linux-gnu-
@@ -410,16 +436,29 @@ RISC-V 可执行文件（ELF）
 
 <span class="k">.PHONY</span>: clean</pre>
 
-<pre><span class="p">$</span> make
+<p>用同一份源码对照两条路径（讲义跟做到 <code>file</code> 为止，不必 SCP）：</p>
+
+<pre><span class="p">$</span> printf 'int main(void) { return 0; }\n' &gt; main.c
+
+<span class="p">$</span> gcc main.c -o app-host
+<span class="p">$</span> file app-host
+<span class="c"># … ELF … x86-64 …（本机架构）</span>
+<span class="p">$</span> ./app-host
+<span class="c"># 本机可执行</span>
+
+<span class="p">$</span> make
+<span class="c"># 或：riscv64-unknown-linux-gnu-gcc main.c -o app</span>
 <span class="p">$</span> file app
-app: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
+<span class="c"># … ELF … UCB RISC-V …</span>
+<span class="p">$</span> ./app
+<span class="c"># 本机应失败（指令集不对）</span></pre>
 
 <div class="warn">
-  <strong>常见陷阱：</strong>忘记设 <code>CC</code> 会默默用电脑自带的 GCC，产物在板端报 Exec format error。先用 <code>file</code> 查架构，再查运行问题。Makefile 命令行必须用 Tab 缩进。
+  <strong>常见陷阱：</strong>忘记设 <code>CC</code> / <code>CROSS_COMPILE</code> 会默默用本机 GCC，产物在板端报 <code>Exec format error</code>。先用 <code>file</code> 查架构。Makefile 配方行必须以 Tab 缩进。
 </div>
 
-<h3 id="s1.3-coremark">构建 CoreMark</h3>
-<p><strong>CoreMark</strong> 是测处理器算力的小基准程序，输出可比较的分数（常见为 iterations/sec）。本课用它走通「编译 → 传输 → 运行 → 读数」；分数高低不是重点，链路走通才是。</p>
+<h3 id="s1.3-coremark">构建 CoreMark（讲义收口：编出 + file）</h3>
+<p><strong>CoreMark</strong> 是测处理器算力的小基准程序，输出可比较的分数。本章用它走通工具链：先在主机交叉编出 RISC-V 可执行文件；<strong>传到板端并跑出分数</strong>是本章实验的硬目标。</p>
 
 <pre><span class="c"># 获取源码（地址以课程指引为准）</span>
 <span class="p">$</span> git clone https://github.com/eembc/coremark.git
@@ -435,94 +474,12 @@ app: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <span class="p">$</span> file coremark.exe
 coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 
-<p>产物文件名因版本而异（常见 <code>coremark.exe</code>）。编好后用 SCP 传到板端、SSH 运行并记录分数——完整验收见 <code>lab.html</code>。</p>
-
-<div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>交叉编译 Makefile 模板 · 一次可运行的 <code>app</code> · CoreMark 的 RISC-V 可执行文件。上板跑分见本章实验；「为什么必须交叉编译」见下一节深入理解。
+<div class="warn">
+  <strong>讲义阶段到此为止：</strong>产物文件名因版本而异（常见 <code>coremark.exe</code>）。确认 <code>file</code> 含 RISC-V / UCB RISC-V 字样后保存该文件与日志。<strong>不要在讲义阶段 SCP 上板或跑分</strong>——否则本章实验只剩填表。上板、完整性校验、跑分与证据包见 <a href="lab.html">lab.html</a>。
 </div>
-</section>
-
-<!-- ═══════════════════════════════════════════ -->
-<section id="s1-deep">
-<div class="section-num">深入理解</div>
-<h2>电脑编、板子跑：同一份源码为何不能直接执行</h2>
-
-<h3 id="s1-deep-isa">原因：电脑与荔枝派 4A 的指令集不同</h3>
-<p>你的开发电脑是一台普通 PC：CPU 按 <strong>x86_64</strong>（或少数机器上的 ARM）指令集执行机器码。荔枝派 4A 的 CPU 按 <strong>riscv64</strong> 指令集执行机器码。两边「加一条、跳一下」的二进制编码不一样——就像两种不同的机器语言。</p>
-<p>因此：在电脑上敲普通的 <code>gcc main.c -o app</code>，得到的是<strong>本机架构</strong>的 ELF。这个文件只能在本机跑；拷到荔枝派 4A 上，内核会拒绝加载（常见报错是 <code>Exec format error</code>）。反过来，板子上编好的 RISC-V 程序拷回电脑，也一样跑不了。</p>
-<p>要让程序在板子上跑，必须在电脑上使用<strong>交叉工具链</strong>：一套仍然跑在电脑上的编译器全家桶，但它专门生成 RISC-V 机器码，并链接面向 RISC-V Linux 的 C 库。本课通过 RuyiSDK 安装，前缀是 <code>riscv64-unknown-linux-gnu-</code>。</p>
-
-<h3 id="s1-deep-paths">机制：同一份 main.c，三条编译路径</h3>
-<p>下面这张图把「同一份源码、三种产物」画清楚：左边是电脑本机编译，中间是交叉编译，右边是<strong>板端原生编译</strong>。请顺着箭头读：关键在哪里分叉、产物各自能去哪里。</p>
-
-<div class="diagram">同一份 main.c
-        │
-        ├───────────────┬──────────────────┬───────────────
-        │               │                  │
-        ▼               ▼                  ▼
-  电脑自带 gcc     riscv64-unknown-    板端自带 gcc
-  （本机工具链）    linux-gnu-gcc       （荔枝派 4A 上的
-                  （交叉工具链，         RISC-V 编译器）
-                   经 RuyiSDK 安装）         │
-        │               │                  │ 生成 RISC-V
-        │ 生成 x86_64   │ 生成 RISC-V      │ 机器指令
-        │ 机器指令      │ 机器指令         │
-        ▼               ▼                  ▼
-  app-host（ELF）  app-riscv（ELF）   app-board（ELF）
-  架构：x86_64       架构：RISC-V       架构：RISC-V
-        │               │                  │
-        ▼               ▼                  ▼
-  只能在电脑跑    用 SCP 拷到板子    直接在板子上
-  拷到板子会     再 ssh 执行          ./app-board
-  Exec format    → 板端加载运行        就地运行
-  error</div>
-
-<p>读图时抓住三步。第一，<strong>编译器选错，架构就错</strong>：本机 gcc 把 C 翻成电脑 CPU 认得的指令；交叉 gcc 把同一份 C 翻成板子 CPU 认得的指令。第二，<strong>产物用 <code>file</code> 一眼可辨</strong>：输出里写 x86-64 还是 UCB RISC-V，就是验收标准。第三，<strong>传输与运行是两件事</strong>：交叉编译只解决「编对架构」；还要用 SCP 把文件送到板子，再在板端执行——板端的 Linux 负责加载这个 RISC-V ELF。</p>
-<p>交叉工具链内部仍然是「编译 → 汇编 → 链接」，只是每一步的目标都是 RISC-V：编译器产出 RISC-V 汇编，汇编器变成 <code>.o</code>，链接器再链上 RISC-V 版的 C 运行库（sysroot）。调用约定、系统调用号都按板子来，这样程序在板端跑起来才像「正常 Linux 程序」。</p>
-
-<div class="diagram">交叉编译内部（都在电脑上执行）
-  main.c
-    ↓  编译器：C → RISC-V 汇编
-  main.s
-    ↓  汇编器：汇编 → 目标文件
-  main.o
-    ↓  链接器：.o + RISC-V C 库 → 可执行文件
-  app-riscv（ELF，riscv64）
-    ↓  scp
-  荔枝派 4A：./app-riscv</div>
-
-<p><strong>三元组</strong> <code>riscv64-unknown-linux-gnu</code> 里每一段都在回答「编给谁」：CPU 是 riscv64、系统是 Linux、用户态约定是 GNU。选错成 <code>unknown-elf</code> 会得到裸机工具链，不适合本课跑 Linux 用户程序的场景。</p>
-
-<h3 id="s1-deep-verify">学生如何亲自验证这条链</h3>
-<p>不要只背结论——用同一份 <code>main.c</code> 走两遍，对照 <code>file</code> 输出，再决定能不能上板。</p>
-
-<ol class="steps">
-  <li><span class="step-num">1</span><div><strong>写同一份源码</strong><br><code>printf 'int main(void) { return 0; }\n' &gt; main.c</code></div></li>
-  <li><span class="step-num">2</span><div><strong>本机路径</strong><br><code>gcc main.c -o app-host</code>，再 <code>file app-host</code>。应看到 x86-64（或你电脑对应的本机架构）。在电脑上 <code>./app-host</code> 能跑。</div></li>
-  <li><span class="step-num">3</span><div><strong>交叉路径</strong><br><code>riscv64-unknown-linux-gnu-gcc main.c -o app-riscv</code>，再 <code>file app-riscv</code>。应看到 UCB RISC-V。在电脑上 <code>./app-riscv</code> 应失败。</div></li>
-  <li><span class="step-num">4</span><div><strong>上板</strong><br><code>scp app-riscv user@board-ip:~/</code>，再 <code>ssh user@board-ip './app-riscv'</code>。板端应能执行；若报 Exec format error，先核对 <code>file</code> 是否真是 RISC-V。</div></li>
-  <li><span class="step-num">5</span><div><strong>补：板端原生路径（更省事）</strong><br><code>ssh user@board-ip 'gcc main.c -o app-board; file app-board; ./app-board'</code>。板子自带 RISC-V 的 gcc，就地编译就地运行——不需要交叉工具链、不需要 SCP。前提是板子装得下 gcc（本课板子可以）。</div></li>
-</ol>
-
-<pre><span class="p">$</span> gcc main.c -o app-host
-<span class="p">$</span> file app-host
-<span class="c"># … ELF … x86-64 …</span>
-
-<span class="p">$</span> riscv64-unknown-linux-gnu-gcc main.c -o app-riscv
-<span class="p">$</span> file app-riscv
-<span class="c"># … ELF … UCB RISC-V …</span>
-
-<span class="p">$</span> scp app-riscv user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip './app-riscv; echo exit:$?'
-
-<span class="c"># 第三条路：直接在板子上编译（前提：板子装了 gcc）</span>
-<span class="p">$</span> ssh user@board-ip 'gcc main.c -o app-board; file app-board; ./app-board; echo exit:$?'
-<span class="c"># file 应显示 UCB RISC-V；就地编译、就地运行</span></pre>
-
-<p>整条故事可以收成一句话：<strong>指令集不同 → 本机 gcc 编不出板子能跑的二进制 → 经 RuyiSDK 安装的交叉工具链专门生成 RISC-V Linux ELF → <code>file</code> 确认架构 → SCP 上板 → 板端执行。</strong>此外还有一条更省事的路——<strong>板端原生编译</strong>：板子自带的 gcc 同样是 RISC-V 编译器，就地编译就地跑。两条路各有取舍：原生简单直接，但要求板子装得下 gcc、性能够；交叉编译是目标机太弱或装不了编译器时的专业选择。本课后续章节两种都会用到，届时会明确提示走哪条。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能口述指令集 / 交叉编译 / 三元组；能画「同一 main.c 三条路」（本机 / 交叉 / 板端原生）；能用 <code>file</code> + SCP 亲自验证。带着这条链进入本章实验跑 CoreMark。
+  <strong>本节成果：</strong>能口述指令集差异与交叉编译原因 · 能画三条路径并说明本章实验走哪条 · Makefile 交叉模板 · 本机/交叉 <code>file</code> 对照 · CoreMark 的 RISC-V 可执行文件（尚未上板）。
 </div>
 </section>
 
