@@ -23,14 +23,14 @@
 | 章 | 名称 | 本章实验（一句话） |
 |----|------|-------------------|
 | ch01 | 环境与工具链 | 上板通道验收（CoreMark 硬性跑分） |
-| ch02 | 够用的 C 语言基础 | 假温控半成品改代码闯关 |
-| ch03 | GPIO / UART / 外设 | 温控风扇（拼装闭环） |
-| ch04 | 文件 / 配置 / 日志 | 配置化温控（C：配置 + 历史 + 告警） |
-| ch05 | 网络与 MQTT | MQTT 远程控灯（手机联调） |
-| ch06 | 线程与协同 | 采集∥控制真风扇 + Ctrl+C 干净停 |
+| ch02 | 够用的 C 语言基础 | 假温控改代码闯关 |
+| ch03 | GPIO 与执行器 | 继电器控制风扇（假温度） |
+| ch04 | 串口对话与温控 | DHT22 + status/set 温控 |
+| ch05 | 网络与 MQTT | MQTT 远程控灯 |
+| ch06 | 线程与协同 | 三线程协同 |
 | 综合 | 智能环境终端 | 总装 + 老师权重 + 手写前向 |
 
-在线大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/CourseOutline.html
+在线大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html
 
 ---
 

@@ -50,10 +50,13 @@ docs/course-evaluation-standard.md   ← 课程质量自评标准
 bash misc/scripts/build.sh "update message"
 ```
 
-线上入口：`https://enzoding-rgb.github.io/ruyi-riscv-book/`  
-大纲直链：`https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html`  
-课程主页：`https://enzoding-rgb.github.io/ruyi-riscv-book/`  
-评价标准：`https://enzoding-rgb.github.io/ruyi-riscv-book/course-evaluation-standard.md`
+线上入口：https://enzoding-rgb.github.io/ruyi-riscv-book/  
+大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html  
+评价标准：https://enzoding-rgb.github.io/ruyi-riscv-book/course-evaluation-standard.md  
+ch03 讲义：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch03/lecture.html  
+ch03 实验：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch03/lab.html  
+ch04 讲义：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch04/lecture.html  
+ch04 实验：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch04/lab.html
 
 ## 仓库结构
 
