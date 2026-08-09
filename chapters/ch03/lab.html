@@ -83,22 +83,6 @@
     body { padding-left: 0; }
     .toc { display: none; }
   }
-
-  /* 思考部分：.think 是问题框，.hint 是 bracket 提示（默认隐藏，按钮显示） */
-  .think {
-    background: #fbfaf5; border-left: 3px solid var(--faint);
-    padding: 16px 20px; margin: 20px 0; font-size: 17px; color: var(--muted); line-height: 1.7;
-  }
-  .think strong { color: var(--text); }
-  .hint { display: none; color: var(--faint); font-size: 0.92em; margin-top: 8px; line-height: 1.7; }
-  .hint::before { content: "▸ 提示："; color: var(--accent); font-weight: 700; }
-  .hint.revealed { display: block; }
-  #hint-toggle {
-    position: fixed; top: 12px; right: 12px; z-index: 99;
-    border: 1px solid var(--line); background: #fff; color: var(--accent);
-    padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: var(--sans);
-  }
-  #hint-toggle:hover { background: var(--code-bg); }
 </style>
 </head>
 <body>
@@ -124,24 +108,29 @@
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
   <h1>本章实验 · 继电器控制风扇</h1>
-  <p class="meta">接讲义 3.1–3.3 · 接线后首次跑 temperature_fan，再改阈值</p>
+  <p class="meta">接讲义 3.1–3.3 · 整板接线 · temperature_fan 假温度闭环 · 改阈值</p>
 </header>
 
 <section id="intro">
 <h2>说明</h2>
-<p>讲义已打透：用户态经内核改 GPIO、chip/line 与本板 1.8 V、独占申请、以及 <code>set_value</code> 之后可用只读 <code>devmem</code> 看见寄存器位翻转；并用 <code>gpioset</code> 跟做控过继电器信号端。</p>
-<p>本实验在此之上<strong>递进</strong>：按表完成整板接线（含风扇负载回路），第一次跑通 <code>temperature_fan</code> 假温度闭环，再改阈值观察开/关点变化。不再重讲 MMIO / gpiod 机制，也不再把讲义里的 <code>gpioset</code> 跟做重写一遍。</p>
+
+<div class="info" style="margin-bottom:20px;">
+  <strong>本实验要干什么：</strong>按表完成整板接线（含风扇负载回路），跑通 <code>temperature_fan</code> 假温度闭环，再改阈值观察开/关点变化。<br>
+  <strong>你能学到什么：</strong>把讲义里的 gpiod 跟做接到真实负载；用假温度与滞回阈值验收「决策 → 执行」；用改阈值证明控制点在软件。
+</div>
+
+<p>讲义已打透：用户态经内核改 GPIO、chip/line 与本板 1.8 V、独占申请、以及 <code>set_value</code> 之后可用只读 <code>devmem</code> 看见寄存器位翻转；并用 <code>gpioset</code> 跟做控过继电器信号端。本实验在此之上<strong>递进</strong>——机制与命令行跟做见讲义；这里做接线、闭环与阈值验收。</p>
 <ul>
   <li><strong>工程：</strong><code>chapters/ch03/code/temperature-fan/</code></li>
   <li><strong>脚：</strong>本课 RevyOS 默认 <code>gpiochip5</code> line 5 / 丝印 IO1_5</li>
-  <li><strong>输入：</strong>程序内部假温度（无 DHT22）</li>
+  <li><strong>输入：</strong>程序内部假温度（第三章不接 DHT22）</li>
   <li><strong>输出：</strong>终端假温度与 <code>fan ON/OFF</code>；继电器吸合/释放；风扇转/停</li>
 </ul>
 <div class="ok">
   <strong>成功时你能演示：</strong>终端周期性打印假温度；升过上限 <code>[INFO] fan ON</code> 且风扇转；降到下限以下 <code>fan OFF</code> 且风扇停；改过阈值后开/关点跟着变。
 </div>
 <div class="warn">
-  <strong>安全：</strong>风扇大电流必须经继电器触点，不要直接接信号脚。板子上标着 Fan Power 的白色插座是板载散热风扇用的，跟本实验风扇无关，别插错。接线时尽量断电。
+  <strong>安全：</strong>风扇大电流经继电器触点；GPIO 只接信号端。板子上标着 Fan Power 的白色插座是板载散热风扇用的，与本实验风扇无关。接线时尽量断电。
 </div>
 </section>
 
@@ -227,7 +216,7 @@
   <li>周期性打印 <code>[INFO] temp=…C fan=OFF|ON</code>，假温度在 24~31 之间来回。</li>
   <li>升过 28°C → <code>[INFO] fan ON</code>，继电器吸合，<strong>风扇转</strong>。</li>
   <li>降到 26°C 以下 → <code>[INFO] fan OFF</code>，风扇停。</li>
-  <li>中间区间（26~28）保持上一状态，不狂抖。</li>
+  <li>中间区间（26~28）保持上一状态。</li>
 </ul>
 <p>停程序：SSH 里 <code>Ctrl+C</code>。</p>
 <div class="info">
@@ -240,7 +229,7 @@
 <h2>步骤 4：改阈值</h2>
 <p>打开 <code>temperature_fan.c</code> 顶部宏，把 <code>T_HIGH</code> / <code>T_LOW</code> 改成别的数（例如 27 / 25），重新 <code>make</code> 再跑，观察风扇开/关的温度点变了。</p>
 <p>也可以把 <code>STEP_DELTA</code> 改大，让温度变化更快、更容易看到切换。</p>
-<p><strong>本步要证明的：</strong>阈值是程序变量；硬件只跟着高低电平走。这是相对讲义跟做的递进，不是再跑一遍相同验收。</p>
+<p><strong>本步要证明的：</strong>阈值是程序变量；硬件只跟着高低电平走。相对讲义 <code>gpioset</code> 跟做，这里验收的是决策点可改。</p>
 </section>
 
 <section id="trouble">
@@ -250,18 +239,13 @@
   <tr><td>程序报 <code>Permission denied</code></td><td><code>sudo ./temperature_fan</code></td></tr>
   <tr><td>busy / 打不开 gpiochip</td><td>残留 <code>gpioset</code>？<code>sudo pkill -x gpioset</code></td></tr>
   <tr><td>程序在跑，风扇完全不动</td><td>共地？继电器 5V？跳帽 H？NO/COM？信号是否 IO1_5？</td></tr>
-  <tr><td>置 1 没反应</td><td>排针在 <code>gpiochip5</code>，不是 <code>gpiochip1</code>；用 <code>sudo cat /sys/kernel/debug/gpio</code> 看是否 <code>out hi</code></td></tr>
+  <tr><td>置 1 没反应</td><td>排针用 <code>gpiochip5</code>（本课 RevyOS）；用 <code>sudo cat /sys/kernel/debug/gpio</code> 看是否 <code>out hi</code></td></tr>
   <tr><td>Ctrl+C 后风扇还在转</td><td>退出前显式拉低（代码已做）；更稳：X1→GND 10kΩ 下拉</td></tr>
   <tr><td>继电器灯亮，风扇不转</td><td>风扇 5V 回路：NO–COM–红线–黑线回 GND</td></tr>
   <tr><td>某根脚怎么都拉不高</td><td>换可用脚并记进记录表（讲义已说明板级可能）</td></tr>
   <tr><td>file 显示 x86-64</td><td>检查 <code>CROSS_COMPILE</code> / PATH；或板端原生编译</td></tr>
 </table>
-<p>机制与 chip 动态编号的因果见讲义 3.2；本表只列实验现场优先动作。</p>
-
-<div class="think">
-  <strong>风扇不动时按什么顺序取证？</strong>
-  <span class="hint">① chip 是否排针（本课默认 gpiochip5）② 清残留 gpioset ③ debug/gpio 是否 out hi ④ 再查接线（共地 / 5V / 跳帽 H / NO–COM）。每步缩小范围，不要先换模块。</span>
-</div>
+<p>取证顺序：chip 是否排针 → 清残留 <code>gpioset</code> → <code>debug/gpio</code> 是否 <code>out hi</code> → 再查接线。机制与 chip 编号见讲义 3.2。</p>
 </section>
 
 <section id="accept">
@@ -291,20 +275,5 @@
 
 </article>
 
-<script>
-(function () {
-  var btn = document.createElement('button');
-  btn.id = 'hint-toggle';
-  btn.textContent = '显示提示';
-  btn.onclick = function () {
-    var showing = btn.textContent.indexOf('隐藏') >= 0;
-    var hs = document.querySelectorAll('.hint');
-    for (var i = 0; i < hs.length; i++)
-      hs[i].classList.toggle('revealed', !showing);
-    btn.textContent = showing ? '显示提示' : '隐藏提示';
-  };
-  document.body.appendChild(btn);
-})();
-</script>
 </body>
 </html>
