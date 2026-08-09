@@ -1,6 +1,6 @@
 # 假温控 · 改代码闯关
 
-半成品在 `src/thermo.c`，故意埋了比较、结构体字段、指针与错误分支问题。  
+半成品在 `src/thermo.c`（全文即学生动手区），标了 `STUDENT TODO [L1]`–`[L4]`：比较、结构体字段、指针与错误分支。  
 默认 **本机 gcc**；也可 `make CROSS_COMPILE=riscv64-unknown-linux-gnu-`。
 
 ## 构建

@@ -40,7 +40,11 @@ touch "$DST/.nojekyll"
 for ch in ch01 ch02 ch03 ch04 ch05 ch06; do
   cp "chapters/$ch/lecture.html" "$DST/chapters/$ch/"
   cp "chapters/$ch/lab.html"     "$DST/chapters/$ch/"
-  cp -r "chapters/$ch/code"      "$DST/chapters/$ch/" 2>/dev/null || true
+  # 整目录替换，避免 Pages 上残留已删除的工程子目录（如旧 serial-thermo）
+  rm -rf "$DST/chapters/$ch/code"
+  if [ -d "chapters/$ch/code" ]; then
+    cp -r "chapters/$ch/code" "$DST/chapters/$ch/"
+  fi
 done
 
 cd "$PAGES_DIR"
