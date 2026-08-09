@@ -1,19 +1,17 @@
-# serial-thermo — 第四章：SSH 终端命令 + 温湿度控风扇
+# cmd-thermo — 第四章：SSH 终端命令 + 温湿度控风扇
 #
 # 默认编学生版：make
 # 参考实现：    make sol
-# 板端原生：    make
-# 主机交叉：    make CROSS_COMPILE=riscv64-unknown-linux-gnu-
 
 CROSS_COMPILE ?=
 CC            ?= $(CROSS_COMPILE)gcc
 CFLAGS        ?= -Wall -Wextra -O2
 LDLIBS        ?= -lgpiod
 
-TARGET        := serial-thermo
+TARGET        := cmd-thermo
 SRC           := main.c
 
-SOL_TARGET    := serial-thermo-sol
+SOL_TARGET    := cmd-thermo-sol
 SOL_SRC       := main-sol.c
 
 all: $(TARGET)

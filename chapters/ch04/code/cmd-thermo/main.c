@@ -1,11 +1,11 @@
 /*
- * main.c — 第四章学生版（脚手架）
+ * main.c — 第四章学生版（脚手架）· 工程目录 cmd-thermo/
  *
- * 在文件中实现 lab.html 给出的：
- *   cmd_status / cmd_set / dispatch_command / main_loop
- * （含命令表 g_cmds[]）
+ * 【学生动手】只改本文件里标了 STUDENT TODO 的区块。
+ * 要实现：cmd_status / cmd_set / g_cmds[] / dispatch_command / main_loop
  * 实现前 make 会因未声明的函数失败——这是预期现象。
  *
+ * 契约与思考题：chapters/ch04/lab.html
  * 对照答案：main-sol.c（make sol）
  *
  * 板：荔枝派 4A + RevyOS。libgpiod v2。全程 C。
@@ -78,7 +78,7 @@ static struct gpiod_line_request *line_request(unsigned int offset,
 		return NULL;
 	gpiod_line_settings_set_direction(s, direction);
 	gpiod_line_config_add_line_settings(lc, offs, 1, s);
-	gpiod_request_config_set_consumer(rc, "serial-thermo");
+	gpiod_request_config_set_consumer(rc, "cmd-thermo");
 
 	r = gpiod_chip_request_lines(chip, rc, lc);
 	gpiod_request_config_free(rc);
@@ -277,13 +277,19 @@ static void sample_and_control(void)
 		fan_set(0);
 }
 
-/*
- * TODO：在本注释与 read_command_line 之间实现（契约见 lab.html）：
- *   cmd_status / cmd_set / g_cmds[] / dispatch_command / main_loop
+/* ========================================================================
+ * STUDENT TODO — 在本注释与下方 read_command_line() 之间写下实现
+ * ------------------------------------------------------------------------
+ * 1) cmd_status(char *args)
+ * 2) cmd_set(char *args)
+ * 3) struct cmd_entry + g_cmds[]（注册 status / set，表尾 NULL）
+ * 4) dispatch_command(char *line)   — 拆词、查表、调用
+ * 5) main_loop(void)                — select：超时→sample_and_control；
+ *                                    stdin 可读→read_command_line
  *
- * 下面 read_command_line() 会调用你的 dispatch_command；
- * main() 会调用你的 main_loop。你可调用脚手架的 sample_and_control()。
- */
+ * 原型与成功判据只在 lab.html，不要只靠猜。
+ * 可调用本文件已有的：sample_and_control / g_st / cmd_fd / g_running …
+ * ======================================================================== */
 
 static int read_command_line(void)
 {

@@ -1,10 +1,11 @@
 /*
- * temperature_fan.c — 第三章学生版（脚手架）
+ * temperature_fan.c — 第三章学生版（脚手架）· 工程目录 temperature-fan/
  *
- * 在 main 上方实现 lab.html 给出的三个函数：
- *   line_request / fan_set / fan_decide
+ * 【学生动手】只改本文件里标了 STUDENT TODO 的区块。
+ * 要实现：line_request / fan_set / fan_decide（写在 main 上方）
  * 实现前 make 会因「未声明的函数」失败——这是预期现象。
  *
+ * 契约与思考题：chapters/ch03/lab.html
  * 对照答案：temperature_fan-sol.c（make sol）
  *
  * 板：荔枝派 4A + RevyOS。libgpiod v2。全程 C。
@@ -33,10 +34,15 @@ static void on_signal(int sig)
 	g_running = 0;
 }
 
-/*
- * TODO：在 main 上方实现三个函数（函数名：line_request、fan_set、fan_decide）。
- * 完整原型、参数契约与思考题只在 lab.html —— 请打开实验页再写。
- */
+/* ========================================================================
+ * STUDENT TODO — 在本注释与下方 main() 之间写下三个函数
+ * ------------------------------------------------------------------------
+ * 1) line_request(offset, direction, val)
+ * 2) fan_set(on)
+ * 3) fan_decide(temp_c, fan_on)
+ *
+ * 完整原型、参数契约与思考题只在 lab.html。
+ * ======================================================================== */
 
 int main(void)
 {

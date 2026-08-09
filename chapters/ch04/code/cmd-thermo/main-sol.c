@@ -1,11 +1,11 @@
 /*
- * main-sol.c — 第四章参考实现（make sol）
+ * main-sol.c — 第四章参考实现（make sol）· 工程目录 cmd-thermo/
  *
- * 学生版见 main.c。先自己写，过关后再对照。
+ * 学生版见 main.c（STUDENT TODO 区块）。先自己写，过关后再对照。
  *
  * 板：荔枝派 4A + RevyOS。libgpiod v2。全程 C。
- * 脚位：继电器 IO1_5（gpiochip5 line 5）、DHT22 IO1_6（line 6，经 TXS）。
- * 命令从 SSH 终端 stdin 读入（本课不用另接物理串口线）。
+ * 脚位：继电器 IO1_5、DHT22 IO1_6（经 TXS）。
+ * 命令从 SSH 终端 stdin 读入。
  */
 #include <errno.h>
 #include <gpiod.h>
@@ -74,7 +74,7 @@ static struct gpiod_line_request *line_request(unsigned int offset,
 		return NULL;
 	gpiod_line_settings_set_direction(s, direction);
 	gpiod_line_config_add_line_settings(lc, offs, 1, s);
-	gpiod_request_config_set_consumer(rc, "serial-thermo");
+	gpiod_request_config_set_consumer(rc, "cmd-thermo");
 
 	r = gpiod_chip_request_lines(chip, rc, lc);
 	gpiod_request_config_free(rc);

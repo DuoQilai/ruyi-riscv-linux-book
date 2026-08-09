@@ -1,6 +1,10 @@
 /*
- * ch03 uart-echo — 串口回显（讲义 3.2）
- * 默认打开 UART_DEV；若课堂无第二路串口，可改用 stdin/stdout 模式（见 USE_STDIO）。
+ * uart-echo — 可选演示：终端/串口回显
+ *
+ * 【非第三章实验必做】本章实验工程是 temperature-fan/。
+ * 本目录仅作「stdin 读写」可选练习；默认 USE_STDIO=1，不必接物理串口。
+ *
+ * 若改 USE_STDIO=0：把下行 UART_DEV 改成板子上真实设备节点。
  */
 #include <errno.h>
 #include <fcntl.h>
@@ -9,10 +13,10 @@
 #include <termios.h>
 #include <unistd.h>
 
-/* 1 = 用终端 stdin/stdout 练逻辑；0 = 打开真实串口设备 */
+/* 1 = 用终端 stdin/stdout；0 = 打开真实串口设备（可选） */
 #define USE_STDIO 1
 
-#define UART_DEV "/dev/ttyS1" /* TODO: 按板卡修改；USE_STDIO=0 时生效 */
+#define UART_DEV "/dev/ttyS1" /* 仅 USE_STDIO=0 时需要；按板卡修改 */
 #define BAUD     B115200
 
 static int setup_tty(int fd)
@@ -54,7 +58,7 @@ int main(void)
 		return 1;
 	}
 	fd_out = fd_in;
-	fprintf(stderr, "[INFO] echoing on %s\n", UART_DEV);
+	printf("[INFO] echo on %s\n", UART_DEV);
 #endif
 
 	while ((n = read(fd_in, buf, sizeof(buf))) > 0) {
@@ -63,7 +67,6 @@ int main(void)
 			break;
 		}
 	}
-
 	if (n < 0)
 		perror("read");
 

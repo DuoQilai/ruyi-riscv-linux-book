@@ -130,7 +130,7 @@
 </div>
 <p>讲义已讲清：字节进出、为何要 TXS、命令表思路、<code>select</code> 机制。本实验递进：整板接线 + 你自己写出可跑的对话层。</p>
 <ul>
-  <li><strong>工程：</strong><code>chapters/ch04/code/serial-thermo/</code></li>
+  <li><strong>工程：</strong><code>chapters/ch04/code/cmd-thermo/</code></li>
   <li><strong>学生文件：</strong><code>main.c</code>（默认 <code>make</code>）</li>
   <li><strong>参考实现：</strong><code>main-sol.c</code>（<code>make sol</code>；先自己写，过关后再对照）</li>
   <li><strong>脚：</strong>风扇 IO1_5；DHT22 IO1_6（经 TXS）</li>
@@ -177,7 +177,7 @@
 
 <section id="step-impl">
 <h2>实现命令与 select</h2>
-<p>打开 <code>main.c</code>。脚手架已提供 DHT 读取、风扇、<code>sample_and_control</code>、<code>read_command_line</code>、<code>main</code>。<strong>你要在 TODO 注释与 <code>read_command_line</code> 之间自己写出</strong>命令函数、命令表、<code>dispatch_command</code>、<code>main_loop</code>。</p>
+<p>打开 <code>main.c</code>。脚手架已提供 DHT 读取、风扇、<code>sample_and_control</code>、<code>read_command_line</code>、<code>main</code>。<strong>只改标了 <code>STUDENT TODO</code> 的区块</strong>：在该注释与 <code>read_command_line</code> 之间写出命令函数、命令表、<code>dispatch_command</code>、<code>main_loop</code>。</p>
 <p>先直接 <code>make</code>：应看到类似 <code>implicit declaration of function 'dispatch_command'</code> 或 <code>main_loop</code>——这是预期起点。</p>
 
 <h3>你要写的契约</h3>
@@ -226,20 +226,20 @@
   <strong>select 线索：</strong>讲义 4.3 已给出返回值表与 deadline / remain 时间轴。全局 <code>cmd_fd</code> 在 <code>main</code> 里已设为 <code>STDIN_FILENO</code>。
 </div>
 <div class="warn">
-  <strong>对照答案：</strong><code>main-sol.c</code>。<code>make sol</code> 得到 <code>serial-thermo-sol</code>。建议过关后再打开；卡住超过一刻钟再对照某一个函数。
+  <strong>对照答案：</strong><code>main-sol.c</code>。<code>make sol</code> 得到 <code>cmd-thermo-sol</code>。建议过关后再打开；卡住超过一刻钟再对照某一个函数。
 </div>
 </section>
 
 <section id="step-run">
 <h2>编译运行</h2>
-<pre><span class="p">$</span> cd chapters/ch04/code/serial-thermo   <span class="c"># 或板上对应目录</span>
+<pre><span class="p">$</span> cd chapters/ch04/code/cmd-thermo   <span class="c"># 或板上对应目录</span>
 <span class="p">$</span> make
-<span class="p">$</span> sudo ./serial-thermo</pre>
-<p>需要 <code>sudo</code> 是因为访问 <code>/dev/gpiochip*</code>。助教自检：<code>make sol && sudo ./serial-thermo-sol</code>。</p>
+<span class="p">$</span> sudo ./cmd-thermo</pre>
+<p>需要 <code>sudo</code> 是因为访问 <code>/dev/gpiochip*</code>。助教自检：<code>make sol && sudo ./cmd-thermo-sol</code>。</p>
 <p>接真 DHT 后示例：</p>
 <pre><span class="p">$</span> make clean
 <span class="p">$</span> make CFLAGS='-Wall -Wextra -O2 -DSIMULATE_SENSOR=0'
-<span class="p">$</span> sudo ./serial-thermo</pre>
+<span class="p">$</span> sudo ./cmd-thermo</pre>
 </section>
 
 <section id="step-accept">
@@ -265,7 +265,7 @@
   <tr><td>能编译，敲命令没反应</td><td><code>main_loop</code> 是否把 <code>cmd_fd</code> 放进 <code>select</code>？是否调用了 <code>read_command_line</code>？</td></tr>
   <tr><td>命令有回复，风扇日志停更</td><td>是否卡在阻塞读或固定 sleep？超时分支是否调用 <code>sample_and_control</code>？</td></tr>
   <tr><td>真 DHT 一直 <code>[ERR]</code></td><td>TXS 焊接、VA/VB、OE、共地、IO1_6；先 <code>SIMULATE_SENSOR=1</code> 验证软件</td></tr>
-  <tr><td>Permission denied</td><td><code>sudo ./serial-thermo</code></td></tr>
+  <tr><td>Permission denied</td><td><code>sudo ./cmd-thermo</code></td></tr>
 </table>
 </section>
 
