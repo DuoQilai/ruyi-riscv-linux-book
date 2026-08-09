@@ -51,7 +51,8 @@ bash misc/scripts/build.sh "update message"
 ```
 
 线上入口：`https://enzoding-rgb.github.io/ruyi-riscv-book/`  
-大纲直链：`https://enzoding-rgb.github.io/ruyi-riscv-book/CourseOutline.html`  
+大纲直链：`https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html`  
+课程主页：`https://enzoding-rgb.github.io/ruyi-riscv-book/`  
 评价标准：`https://enzoding-rgb.github.io/ruyi-riscv-book/course-evaluation-standard.md`
 
 ## 仓库结构
