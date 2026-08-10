@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第三章 GPIO 与执行器 · 讲义 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+  }
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 80px 40px; border-bottom: 1px solid var(--line);
+  }
+  .hero .chapter-tag {
+    font-size: 42px; letter-spacing: 0.12em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero h1 { font-size: 64px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+  .hero .subtitle { font-size: 22px; color: var(--muted); line-height: 1.6; max-width: 700px; }
+  .hero .meta { margin-top: 48px; display: flex; gap: 40px; font-size: 17px; color: var(--faint); }
+  .content { max-width: 1000px; margin: 0 auto; padding: 0 48px 120px; }
+  section { padding: 80px 0; border-bottom: 1px solid var(--line-light); }
+  section:last-of-type { border-bottom: none; }
+  .section-num { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+  section h2 { font-size: 40px; font-weight: 700; margin-bottom: 40px; line-height: 1.3; }
+  section h3 { font-size: 24px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  section h4 { font-size: 19px; font-weight: 700; margin: 28px 0 10px; color: var(--muted); }
+  section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
+  section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 24px 28px; margin: 20px 0 28px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.75; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 17px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-light); }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: #8c5440; line-height: 1.7;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
+  }
+  .diagram {
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
+    white-space: pre; overflow-x: auto;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 1px solid var(--line); padding: 28px 30px; }
+  .card h4 { font-size: 20px; font-weight: 700; margin: 0 0 10px; color: var(--text); }
+  .card p { font-size: 17px; margin: 0; }
+  .steps { list-style: none; padding: 0; }
+  .steps li {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--line-light);
+    font-size: 18px; color: var(--muted); line-height: 1.6;
+  }
+  .steps li .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+  body { padding-left: 240px; }
+  @media print {
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
+    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
+    .content { max-width: none; padding: 0 36px; }
+    section { padding: 36px 0; page-break-before: always; }
+    section:first-of-type { page-break-before: avoid; }
+    pre, .diagram { font-size: 11pt; }
+  }
+/* course-nav-css */
+
+  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line, #d4cfc4);
+    font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
+    line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>目录</h4>
+<!-- course-nav-toc -->
+  <a class="course-rail" href="../../index.html">课程总览</a>
+  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
+  <a class="course-rail" href="lab.html">本章实验</a>
+  <div class="divider"></div>
+  <a href="#overview">本章概览</a>
+  <div class="divider"></div>
+  <a href="#s3.1">3.1 外设与 I/O</a>
+  <a class="sub" href="#s3.1-model">I/O 模型</a>
+  <a class="sub" href="#s3.1-mmio">寄存器与用户态</a>
+  <div class="divider"></div>
+  <a href="#s3.2">3.2 GPIO：用 gpiod 控继电器与风扇</a>
+  <a class="sub" href="#s3.2-what">一根脚能做什么</a>
+  <a class="sub" href="#s3.2-chip">chip 与 line</a>
+  <a class="sub" href="#s3.2-level">高、低与本板电压</a>
+  <a class="sub" href="#s3.2-gpiod">经内核改电平</a>
+  <a class="sub" href="#s3.2-devmem">set_value 之后：只读核对</a>
+  <a class="sub" href="#s3.2-busy">独占与「被占用」</a>
+  <a class="sub" href="#s3.2-relay">继电器：信号端</a>
+  <a class="sub" href="#s3.2-follow">跟做：gpioset 控继电器</a>
+  <a class="sub" href="#s3.2-diagnose">故障排查（本章）</a>
+  <div class="divider"></div>
+  <a href="#s3.3">3.3 决策 → 执行</a>
+  <a class="sub" href="#s3.3-loop">假温度 → 继电器 → 风扇</a>
+</nav>
+
+<div class="hero">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
+  <h1>GPIO 与执行器</h1>
+  <p class="subtitle">外设与 I/O · gpiod 控继电器 · 决策—执行闭环<br>用户态边界 · 寄存器位怎么翻<br>— 3.1 / 3.2 / 3.3 —</p>
+  <div class="meta">
+    <span>跟做：gpioset + 只读核对</span>
+    <span>本章实验：接线 + temperature_fan</span>
+    <span>API：libgpiod</span>
+  </div>
+</div>
+
+<div class="content">
+
+<section id="overview">
+<h2>开始之前</h2>
+
+<div class="info" style="margin-bottom:28px;">
+  <strong>本章要干什么：</strong>在荔枝派 4A 上，用 C 经 Linux 的 GPIO 接口改排针电平，经继电器驱动 5V 风扇。<br>
+  <strong>你能学到什么：</strong>分层因果（程序 → libgpiod → 内核 → 引脚 → 继电器）、chip/line 寻址、申请与写入、用观察手段核对位翻转、滞回如何驱动执行链。风扇整板与自己写 C，在实验完成。
+</div>
+
+<div class="warn" style="margin-bottom:32px;">
+  <strong>前置：</strong>已完成第一、二章——能编译 C（板端原生 <code>gcc</code> 或主机交叉编译都行）、SSH/SCP 可用。
+</div>
+
+<h3>你需要准备什么</h3>
+
+<div class="card-grid card-grid-3">
+  <div class="card"><h4>编译</h4><p>板端原生 <code>gcc</code>（最简单），或主机交叉工具链。见第一章。</p></div>
+  <div class="card"><h4>荔枝派 4A + 套件</h4><p>继电器模块（1 路 5V）、5V 风扇、面包板、杜邦线。继电器和风扇由课程提供。</p></div>
+  <div class="card"><h4>代码</h4><p>讲义跟做命令行 <code>gpioset</code>。实验里你在 <code>temperature-fan/</code> 自己实现三个 C 函数；参考实现为 <code>temperature_fan-sol.c</code>。</p></div>
+</div>
+
+<h3>三节各自打透什么</h3>
+
+<div class="card-grid" style="margin-bottom:0;">
+  <div class="card"><h4>3.1 外设与 I/O</h4><p>物理量如何变成程序里的数；寄存器 / MMIO；用户态经内核接口访问硬件。</p></div>
+  <div class="card"><h4>3.2 GPIO：用 gpiod 控继电器</h4><p>chip/line、本板 1.8 V、信号端接线、<code>gpioset</code> 跟做；只读 <code>devmem</code> 核对位翻转。</p></div>
+  <div class="card"><h4>3.3 决策 → 执行</h4><p>假温度与滞回如何驱动执行链。真传感器在第四章。</p></div>
+</div>
+
+<div class="info" style="margin-top:28px;">
+  <strong>讲义与实验怎么衔接：</strong>讲义打透边界与信号链，并用 <code>gpioset</code> 控一次继电器。实验接上风扇负载，由你写出 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>，跑通假温度闭环并改阈值。
+</div>
+</section>
+
+<!-- ═══ 3.1 ═══ -->
+<section id="s3.1">
+<div class="section-num">3.1</div>
+<h2>外设与 I/O</h2>
+
+<h3 id="s3.1-model">I/O：物理世界怎么进程序</h3>
+<p><strong>外设</strong>是 CPU 之外、用来感知或驱动外部世界的硬件模块——传感器、LED、风扇驱动等都算。<strong>I/O</strong>（Input/Output）是程序与这些硬件打交道的总称：输入把外界变成程序里的数，输出把程序里的决定变成外界动作。</p>
+
+<div class="diagram">物理世界          电气层              软件层
+  温度 / 按键  →  电压 / 电平  →  驱动读寄存器或缓冲
+  继电器 / 风扇 ←  高/低、开关  ←  程序写「开/关」</div>
+
+<p>同一条 GPIO 脚，配置成输出就能驱动执行器（如继电器信号端）；配置成输入就能读按键。对用户态程序来说，最终仍是「经内核接口写出一个命令」。下一节把这根脚在 Linux 里的名字（chip / line）和本板的 1.8 V 电平讲清楚——否则「写了 1 却不见动」会很难排查。</p>
+
+<h3 id="s3.1-mmio">寄存器、MMIO 与用户态边界</h3>
+<p><strong>寄存器</strong>是芯片内部一组可读写的控制位，用来配置外设、读状态、写输出。<strong>MMIO</strong>（Memory-Mapped I/O，内存映射 I/O）把这些寄存器映射到 CPU 可见的地址空间：驱动对某个地址的读写，实际落到外设控制逻辑，而不是普通 RAM。</p>
+
+<table>
+  <tr><th>说法</th><th>含义</th><th>本课怎么用</th></tr>
+  <tr><td>MMIO</td><td>用「访存」方式访问设备寄存器</td><td>建立因果链；业务程序经 gpiod / 内核访问</td></tr>
+  <tr><td>设备节点</td><td>如 <code>/dev/gpiochip5</code></td><td>应用通过 open / 库 API 访问</td></tr>
+  <tr><td>内核驱动</td><td>独占硬件、做权限与时序管理</td><td>多进程仲裁、屏蔽芯片细节</td></tr>
+</table>
+
+<div class="diagram">应用 C 代码
+    │  gpiod_* / open / ioctl
+    ▼
+设备节点（/dev/...）
+    │  系统调用
+    ▼
+内核驱动 ──► MMIO 寄存器 ──► 物理引脚 / 外设</div>
+
+<div class="info">
+  <strong>边界：</strong>板上有 MMIO，但本课业务程序只走内核暴露的接口（gpiod）。在 <code>set_value</code> 之后，会用 <code>devmem</code> <strong>只读</strong>核对某一位是否翻转——用来观察驱动确实写了寄存器，不当日常控外设手段。
+</div>
+
+<div class="warn">
+  <strong>电气边界：</strong>GPIO 只控<strong>信号端</strong>；风扇等大电流负载走继电器触点。荔枝派 4A 原生 GPIO 逻辑电平是 <strong>1.8 V</strong>。本课继电器是光耦隔离的，1.8 V 直连即可；需要 3.3 V 数据线匹配的模块到第四章再讲。
+</div>
+
+<div class="info">
+  <strong>为何走内核接口：</strong>内核统一仲裁「谁占着这根脚」、屏蔽芯片细节、做权限管理。GPIO line 是独占申请的；业务路径保持 gpiod → 内核 → MMIO，多进程才能共用同一套规则。
+</div>
+</section>
+
+<!-- ═══ 3.2 ═══ -->
+<section id="s3.2">
+<div class="section-num">3.2</div>
+<h2>GPIO：用 gpiod 控继电器与风扇</h2>
+
+<p>这一节把「外设」落到一根具体的脚上。读完应能回答：GPIO 是什么、Linux 怎么给脚编号、高低电平在本板上意味着什么、为什么要先申请再改电平，以及 <code>set_value</code> 之后如何用只读手段看见寄存器位翻转。</p>
+
+<h3 id="s3.2-what">一根脚能做什么</h3>
+<p><strong>GPIO</strong>（General-Purpose Input/Output，通用输入输出）是芯片上可以由软件配置方向的引脚。配置成<strong>输出</strong>时，程序决定它是高还是低，引脚电平驱动外部模块（继电器吸合、风扇转）。配置成<strong>输入</strong>时，程序读外部此刻是高还是低（按键有没有按下）。同一根物理脚，同一时刻通常只做一件事：要么输出，要么输入。</p>
+<p>风扇、传感器模块内部可能很复杂；对 GPIO 这一层，常常仍然是「某一根脚输出高/低」或「某一根脚被拉高/拉低」。你的程序首先要管好自己的那根脚。</p>
+
+<h3 id="s3.2-chip">Linux 怎么称呼一根脚：chip 与 line</h3>
+<p>一块板子上往往有<strong>多组</strong> GPIO 控制器。Linux 把每一组暴露成一个字符设备，名字像 <code>/dev/gpiochip0</code>、<code>/dev/gpiochip1</code>……每一个叫一个 <strong>gpiochip</strong>（芯片控制器节点，不一定等于「整颗 SoC」）。</p>
+<p>在某一个 chip 里面，脚按编号排列，这个编号叫 <strong>line</strong>（线号 / offset）。本课默认控继电器信号脚用的是：</p>
+
+<pre><span class="k">#define</span> GPIO_CHIP_PATH  <span class="c">"/dev/gpiochip5"</span>
+<span class="k">#define</span> FAN_LINE        5    <span class="c">/* 对应排针丝印 IO1_5；换脚只改数字 */</span></pre>
+
+<p><strong>chip</strong> 指出哪一组控制器，<strong>line</strong> 指出这一组里的第几根。只说「GPIO3」而不说 chip，在多控制器的板上会说不清到底是哪一根。</p>
+
+<table>
+  <tr><th>说法</th><th>指什么</th><th>本课例子</th></tr>
+  <tr><td>排针丝印</td><td>硬件手册上的名字，接线时认这个</td><td>IO1_5、IO1_6</td></tr>
+  <tr><td><code>/dev/gpiochipN</code></td><td>内核暴露的某一组 GPIO 控制器</td><td><code>gpiochip5</code></td></tr>
+  <tr><td>line 编号</td><td>该 chip 内从 0 起的偏移</td><td>line 5 → IO1_5</td></tr>
+  <tr><td>内核 debug 全局号</td><td><code>/sys/kernel/debug/gpio</code> 里的 <code>gpio-651</code> 一类</td><td>基址 + line；编程宏里只写 line，全局号留给排查</td></tr>
+</table>
+
+<div class="info">
+  <strong>本课默认与核对：</strong>排针 IO1_5 ↔ <code>/dev/gpiochip5</code> line 5。日常编程用 <strong>chip + line</strong>。<code>/sys/kernel/debug/gpio</code> 用来看占用与方向。<code>gpiochipN</code> 的 N 随内核探测顺序变化：本课 RevyOS 上排针在 <code>gpiochip5</code>；旧材料里的 <code>gpiochip1</code> 在本板上是另一组内部控制器。换镜像后，用运行时核对再写宏。
+</div>
+
+<div class="diagram">排针丝印 IO1_5
+        │
+        ▼
+  /dev/gpiochip5  的  line 5
+        │
+        ▼
+  内核里可能显示为 gpio-651（基址+5）
+        │
+        ▼
+  物理引脚电平  ←→  继电器信号端</div>
+
+<h3 id="s3.2-level">「高」「低」在本板上是什么意思</h3>
+<p>程序里写 <code>1</code> / <code>0</code>（或 active / inactive），最终变成引脚上的电压：</p>
+<ul>
+  <li><strong>高（high）</strong>：接近该脚所在电源域的电压。</li>
+  <li><strong>低（low）</strong>：接近地（GND）。</li>
+</ul>
+<p>许多教材默认「GPIO = 3.3 V」。荔枝派 4A 的 SoC <strong>原生 IO 为 1.8 V</strong>。排针上的 3.3 V / 5 V 电源脚是给外设供电的；信号脚仍是 1.8 V 域。</p>
+
+<table>
+  <tr><th>你接什么</th><th>1.8 V GPIO 与模块的关系</th><th>本课态度</th></tr>
+  <tr><td>本课继电器（5V 光耦隔离模块）</td><td>输入侧是光耦 LED，1.8 V 足够触发</td><td><strong>直连 GPIO（IO1_5）</strong></td></tr>
+  <tr><td>需要 3.3 V 电平的传感器（如第四章的 DHT22）</td><td>信号电平要对齐 3.3 V</td><td>第四章再讲电平转换</td></tr>
+</table>
+
+<div class="warn">
+  <strong>共地：</strong>板子的 GND 与外设 GND 连在一起。「高」「低」才有共同参考，现象才可复现。
+</div>
+
+<p>本课继电器能直连，因为输入侧是<strong>光耦隔离</strong>：1.8 V 足以触发光耦；模块 5 V 线圈与输入信号在电气上不相通。第四章 DHT22 的数据线要 3.3 V 电平，那时再接电平转换。</p>
+
+<h3 id="s3.2-gpiod">经内核改电平：gpiod / libgpiod</h3>
+<p>在 Linux 用户态，日常业务经内核改芯片寄存器。你向内核请求：「使用 <code>gpiochip5</code> 的 line 5，配成输出，初始为低。」内核同意后，再请求设为高或低。这套用户态库和命令行工具统称 <strong>gpiod</strong>（库名常见 <code>libgpiod</code>，链接 <code>-lgpiod</code>）。</p>
+
+<div class="diagram">你的 C 程序
+    │  打开 chip → 配置 line → 申请 → 写电平 → 用完释放
+    ▼
+libgpiod
+    │  系统调用
+    ▼
+内核 GPIO 子系统 / 驱动
+    │  真正写 MMIO、改引脚
+    ▼
+物理脚 ──► 继电器信号端 ──► 风扇电源通断</div>
+
+<p>同一根脚可能被别的进程、某个内核驱动、或上次没退干净的命令占用。内核统一仲裁，才不会两个人各写各的。日常控继电器信号端走 gpiod；下面用 <code>devmem</code> 只读核对寄存器位，是旁路观察。</p>
+
+<p>板端常见命令（本课板子多为 libgpiod 2.x）：</p>
+<ul>
+  <li><code>gpioinfo</code>：看某个 chip 上每根 line 的方向、占用者。</li>
+  <li><code>gpioset</code>：申请并保持某根脚为指定电平（进程活着时通常一直占着）。</li>
+  <li><code>gpioget</code>：读电平——若该脚正被别人以输出方式占用，往往会失败。</li>
+</ul>
+<p>许多板上没有名叫 <code>gpio</code> 的万能命令。需要权限时用 <code>sudo</code>，或把用户加入 gpio 组（以课程环境为准）。</p>
+
+<pre><span class="c">/* libgpiod v2 调用轮廓（实验里你将亲手实现申请与 set_value 封装） */</span>
+chip = gpiod_chip_open(<span class="p">"/dev/gpiochip5"</span>);
+<span class="c">/* 申请 line 为输出并给出初值 → 得到 line_request */</span>
+gpiod_line_request_set_value(req, line, 1);   <span class="c">/* 高：继电器吸合 */</span>
+gpiod_line_request_set_value(req, line, 0);   <span class="c">/* 低：继电器释放 */</span>
+gpiod_line_request_release(req);</pre>
+
+<div class="info">
+  <strong>消费者名字（consumer）</strong>会出现在 <code>gpioinfo</code> / <code>debug/gpio</code> 里。调试「谁占着我的脚」时，能看出是 <code>gpioset</code>、<code>temperature-fan</code> 还是别的程序——起名要诚实。
+</div>
+
+<h3 id="s3.2-devmem">set_value 之后：只读核对寄存器位</h3>
+<p>调用 <code>gpiod_line_request_set_value(..., 1)</code> 之后，真正改硬件的是<strong>内核 GPIO 驱动</strong>：经系统调用接到请求，往某个 MMIO 地址写一笔，把对应引脚那一位从 0 翻成 1（或反过来）。引脚电平变了，继电器才吸合。</p>
+
+<div class="diagram">① 应用：gpiod set_value(..., 1)
+        │  系统调用进入内核
+        ▼
+② 内核 GPIO 驱动写 MMIO（某一 bit）
+        ▼
+③ 物理引脚电平变 → 继电器吸合/释放
+
+旁路观察（只读，不当业务路径）：
+  改电平前：devmem 读该寄存器 → 记下那一位
+  改电平后：devmem 再读同一地址 → 那一位翻转</div>
+
+<p>本课板子（RevyOS）排针 GPIO 在 <code>gpiochip5</code>（GPIO1），数据寄存器物理地址 <code>0xffec006000</code>；IO1_5 对应第 <strong>5</strong> 位（值 <code>0x20</code>）。板端若无 <code>devmem</code>：<code>sudo apt install devmem2</code>，或按 wiki 从源码编译（https://github.com/VCTLabs/devmem2）。</p>
+
+<pre><span class="c"># 固定地址与位：0xffec006000，IO1_5 = 第 5 位</span>
+<span class="p">$</span> sudo devmem 0xffec006000 32
+<span class="c"># 例如 0x00000000 → 第 5 位为 0</span>
+
+<span class="c"># 用 gpioset（或程序）把继电器吸合后再读</span>
+<span class="p">$</span> sudo gpioset -c gpiochip5 5=1
+<span class="p">$</span> sudo devmem 0xffec006000 32
+<span class="c"># 例如 0x00000020 → 第 5 位变 1</span></pre>
+
+<div class="warn">
+  <strong>纪律：</strong>本课对 MMIO 只用 <code>devmem</code> <strong>读</strong>。业务控外设走 gpiod；读用来证明「程序 → 内核 → 寄存器位」这条链发生过。
+</div>
+
+<h3 id="s3.2-busy">独占与「Device or resource busy」</h3>
+<p>GPIO line 通常<strong>独占申请</strong>：同一时刻一个成功的请求占住这根脚，别人再申请或用另一种方式去读，就可能得到 <code>Device or resource busy</code>。</p>
+<p>课堂上常见情况：用 <code>gpioset</code> 试验后命令一直占着；随后跑程序或 <code>gpioget</code> 失败。先弄清<strong>谁</strong>占着，再结束那个进程或换另一根 line。同一根脚上保持一个占用者。</p>
+
+<div class="diagram">正常：
+  程序 A 申请 line 5 → 使用 → 释放 → 程序 B 再申请
+
+占用未释放：
+  gpioset 占着 line 5
+       │
+       ▼
+  temperature_fan / gpioget → busy（内核按规则拒绝）</div>
+
+<pre><span class="p">$</span> ps aux | grep gpioset
+<span class="p">$</span> sudo pkill -x gpioset   <span class="c"># -x：按进程名精确匹配</span>
+<span class="p">$</span> sudo cat /sys/kernel/debug/gpio</pre>
+
+<h3 id="s3.2-relay">继电器：信号端与负载端</h3>
+<p><strong>继电器</strong>把小信号变成大电流通路的通断：GPIO 驱动<strong>信号端</strong>（丝印 IN / X1，高电平吸合）；风扇等大电流走触点（NO / COM）。程序只写高/低，电机电流不进 SoC 脚。</p>
+
+<table>
+  <tr><th>对象</th><th>GPIO 在做什么</th><th>要建立的因果</th></tr>
+  <tr><td>继电器信号端</td><td>输出高/低 → IN 有效 → 线圈侧动作</td><td>讲义跟做打通这一段</td></tr>
+  <tr><td>风扇电源（触点）</td><td>触点通断 5V</td><td>实验接上 NO–COM 负载</td></tr>
+</table>
+
+<h4>跟做前：信号端三线</h4>
+<table>
+  <tr><th>从</th><th>到</th></tr>
+  <tr><td>排针 <strong>IO1_5</strong></td><td>继电器 <strong>IN</strong> / X1</td></tr>
+  <tr><td>排针 <strong>5V</strong></td><td>继电器 <strong>V+</strong> / VCC</td></tr>
+  <tr><td>排针 <strong>GND</strong></td><td>继电器 <strong>V-</strong> / GND</td></tr>
+</table>
+<p>跳线帽拨到 <strong>H</strong>。此时即可听吸合或看工作灯；风扇电源回路放到实验再接。</p>
+
+<h3 id="s3.2-follow">跟做：用 gpioset 控一次继电器</h3>
+<p>目的：证明「chip + line → 引脚电平 → 继电器信号端」。</p>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>确认脚</strong><br>本课默认：<code>gpiochip5</code> line 5 = 丝印 IO1_5。若镜像不同，用 <code>sudo cat /sys/kernel/debug/gpio</code> 与 pinmux 现查。</div></li>
+  <li><span class="step-num">2</span><div><strong>清占用</strong><br><code>sudo pkill -x gpioset</code>（若有残留）。</div></li>
+  <li><span class="step-num">3</span><div><strong>拉高 / 拉低</strong><br><code>sudo gpioset -c gpiochip5 5=1</code>，观察继电器；再 <code>5=0</code> 释放。</div></li>
+  <li><span class="step-num">4</span><div><strong>只读核对（建议）</strong><br>改电平前后各跑一次 <code>sudo devmem 0xffec006000 32</code>，对照第 5 位。</div></li>
+</ol>
+
+<pre><span class="p">$</span> sudo gpioset -c gpiochip5 5=1
+<span class="p">$</span> sudo cat /sys/kernel/debug/gpio | head -n 80
+<span class="c"># 找到 gpiochip5 / line 5：应为 out hi</span>
+<span class="p">$</span> sudo gpioset -c gpiochip5 5=0</pre>
+
+<div class="info">
+  <strong>为什么要 sudo？</strong><code>/dev/gpiochip*</code> 默认归 root，普通用户打不开（<code>Permission denied</code>）。
+</div>
+
+<h3 id="s3.2-diagnose">故障排查（信号链）</h3>
+<p>继电器未动时，按<strong>软件状态 → 编号是否对应排针 → 信号端接线</strong>取证。</p>
+
+<table>
+  <tr><th>先查</th><th>证据</th><th>常见结论</th></tr>
+  <tr><td>进程与占用</td><td><code>ps</code> / <code>gpioinfo</code> / <code>debug/gpio</code></td><td>残留 <code>gpioset</code>；或写的是 0 却以为写了 1</td></tr>
+  <tr><td>chip / line 是否排针</td><td>pinmux、<code>debug/gpio</code></td><td>旧材料写的 <code>gpiochip1</code> 在本课 RevyOS 上是内部控制器；排针在 <code>gpiochip5</code></td></tr>
+  <tr><td>内核状态 vs 继电器</td><td>line 为 <code>out hi</code> 且继电器未动</td><td>查共地、5V、跳帽 H、IN 是否接到 IO1_5</td></tr>
+  <tr><td>某脚恒 <code>out lo</code></td><td>换 IO1_4/5/6 对比</td><td>板级脚失效或硬下拉：换脚并记下</td></tr>
+</table>
+
+<div class="info">
+  <strong>本课默认：</strong>丝印 IO1_5 ↔ <code>gpiochip5</code> line 5。丝印是硬件事实；<code>(chip, line)</code> 随镜像变化——认脚认丝印，编号查运行时。
+</div>
+
+<pre><span class="p">$</span> sudo cat /sys/kernel/debug/pinctrl/*/pinmux-pins
+<span class="p">$</span> sudo cat /sys/kernel/debug/gpio</pre>
+</section>
+
+<!-- ═══ 3.3 ═══ -->
+<section id="s3.3">
+<div class="section-num">3.3</div>
+<h2>决策 → 执行：假温度怎么驱动风扇</h2>
+
+<h3 id="s3.3-loop">数据流：决策 → 执行</h3>
+<p>第三章的程序用程序内部自变的<strong>假温度</strong>（约 24°C → 31°C 再降回）演示「决策 → 执行」：假温度 → 阈值判断 → 继电器 → 风扇。真传感器（DHT22）到第四章再接。</p>
+<p><strong>执行侧</strong>是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成<strong>滞回</strong>（第二章已定义：中间区间保持上一状态），温度在临界附近时风扇保持上一状态。</p>
+
+<div class="diagram">假温度 T（程序内部自变）
+        │
+        ▼
+   阈值判断
+    T &gt; T_HIGH → 风扇开（继电器吸合）
+    T &lt; T_LOW  → 风扇关（继电器释放）
+    中间区间   → 保持上一状态
+        │
+        ▼
+   gpiod 写 FAN_LINE(IO1_5) ──► 继电器信号端 ──► 风扇</div>
+
+<pre><span class="c">/* 伪代码：实验里由你实现 fan_decide，再经 fan_set 落地 */</span>
+<span class="k">if</span> (假温度 &gt; T_HIGH) 风扇应开;
+<span class="k">else if</span> (假温度 &lt; T_LOW)  风扇应关;
+<span class="c">/* 中间区间：保持上一状态 */</span></pre>
+
+<p>两个阈值的作用：高开、低关，中间区间保持——真实温控普遍如此。默认 <code>T_HIGH=28</code> / <code>T_LOW=26</code>。</p>
+
+<div class="info" style="margin-top:32px;">
+  <strong>下一步：</strong>打开 <a href="lab.html">lab.html</a>——接上风扇负载，在 <code>temperature_fan.c</code> 实现三个函数，跑通闭环并改阈值。
+</div>
+</section>
+
+</div>
+
+<!-- course-nav-foot -->
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="../ch02/lab.html"><span class="dir">上一篇</span>第二章 · 实验<br>改代码闯关</a>
+  <a class="next" href="lab.html"><span class="dir">下一篇</span>第三章 · 实验<br>继电器控制风扇</a>
+</nav>
+</body>
+</html>
