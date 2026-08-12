@@ -46,7 +46,7 @@ struct gpiod_line_request *line_request(unsigned int offset,
 		return NULL;
 	gpiod_line_settings_set_direction(s, direction);
 	gpiod_line_config_add_line_settings(lc, offs, 1, s);
-	gpiod_request_config_set_consumer(rc, "temperature-fan");
+	gpiod_request_config_set_consumer(rc, "temperature_fan");
 
 	r = gpiod_chip_request_lines(chip, rc, lc);
 	gpiod_request_config_free(rc);

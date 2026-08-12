@@ -144,7 +144,7 @@
 
 <p>讲义已用 <code>gpioset</code> 跟做过信号链。本实验递进两步：接上风扇负载，并把讲义里的路径写成你自己的 C。</p>
 <ul>
-  <li><strong>工程：</strong><code>chapters/ch03/code/temperature-fan/</code></li>
+  <li><strong>工程：</strong><code>chapters/ch03/code/</code>（板上：<code>~/ruyi-riscv-embedded/chapter03-lab/</code>）</li>
   <li><strong>学生文件：</strong><code>temperature_fan.c</code>（默认 <code>make</code>）</li>
   <li><strong>参考实现：</strong><code>temperature_fan-sol.c</code>（<code>make sol</code>；先自己写，过关后再对照）</li>
   <li><strong>脚：</strong><code>gpiochip5</code> line 5 / 丝印 IO1_5</li>
@@ -259,7 +259,7 @@
 </ul>
 
 <div class="info">
-  <strong>libgpiod v2 线索：</strong>讲义 3.2 的片段已展示 settings → line_config → request_config → <code>gpiod_chip_request_lines</code> → <code>gpiod_line_request_set_value</code>。consumer 名字建议 <code>"temperature-fan"</code>，方便 <code>gpioinfo</code> 认人。
+  <strong>libgpiod v2 线索：</strong>讲义 3.2 的片段已展示 settings → line_config → request_config → <code>gpiod_chip_request_lines</code> → <code>gpiod_line_request_set_value</code>。consumer 名字建议 <code>"temperature_fan"</code>，方便 <code>gpioinfo</code> 认人。
 </div>
 <div class="warn">
   <strong>对照答案：</strong>同目录 <code>temperature_fan-sol.c</code>。建议过关后再打开；卡住超过一刻钟再对照某一函数即可。
@@ -269,7 +269,7 @@
 <section id="step-run">
 <h2>步骤 3：编译运行</h2>
 <p>板端原生编译最省事。把代码放到板子上（SCP 或仓库同步）后：</p>
-<pre><span class="p">$</span> cd ~/path/to/temperature-fan
+<pre><span class="p">$</span> cd ~/ruyi-riscv-embedded/chapter03-lab
 <span class="p">$</span> make
 <span class="p">$</span> sudo ./temperature_fan</pre>
 <p>若讲义跟做留下的 <code>gpioset</code> 仍占着 line 5，先 <code>sudo pkill -x gpioset</code>。</p>

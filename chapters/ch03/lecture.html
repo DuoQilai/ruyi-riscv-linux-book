@@ -180,7 +180,7 @@
 <div class="card-grid card-grid-3">
   <div class="card"><h4>编译</h4><p>板端原生 <code>gcc</code>（最简单），或主机交叉工具链。见第一章。</p></div>
   <div class="card"><h4>荔枝派 4A + 套件</h4><p>继电器模块（1 路 5V）、5V 风扇、面包板、杜邦线。继电器和风扇由课程提供。</p></div>
-  <div class="card"><h4>代码</h4><p>讲义跟做命令行 <code>gpioset</code>。实验里你在 <code>temperature-fan/</code> 自己实现三个 C 函数；参考实现为 <code>temperature_fan-sol.c</code>。</p></div>
+  <div class="card"><h4>代码</h4><p>讲义跟做命令行 <code>gpioset</code>。实验里你在 <code>chapters/ch03/code/</code> 自己实现三个 C 函数；参考实现为 <code>temperature_fan-sol.c</code>。</p></div>
 </div>
 
 <h3>三节各自打透什么</h3>
@@ -336,7 +336,7 @@ gpiod_line_request_set_value(req, line, 0);   <span class="c">/* 低：继电器
 gpiod_line_request_release(req);</pre>
 
 <div class="info">
-  <strong>消费者名字（consumer）</strong>会出现在 <code>gpioinfo</code> / <code>debug/gpio</code> 里。调试「谁占着我的脚」时，能看出是 <code>gpioset</code>、<code>temperature-fan</code> 还是别的程序——起名要诚实。
+  <strong>消费者名字（consumer）</strong>会出现在 <code>gpioinfo</code> / <code>debug/gpio</code> 里。调试「谁占着我的脚」时，能看出是 <code>gpioset</code>、<code>temperature_fan</code> 还是别的程序——起名要诚实。
 </div>
 
 <h3 id="s3.2-devmem">set_value 之后：只读核对寄存器位</h3>

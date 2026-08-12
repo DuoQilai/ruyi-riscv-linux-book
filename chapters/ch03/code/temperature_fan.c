@@ -1,5 +1,5 @@
 /*
- * temperature_fan.c — 第三章学生版（脚手架）· 工程目录 temperature-fan/
+ * temperature_fan.c — 第三章学生版（脚手架）· chapters/ch03/code/
  *
  * 【学生动手】只改本文件里标了 STUDENT TODO 的区块。
  * 要实现：line_request / fan_set / fan_decide（写在 main 上方）

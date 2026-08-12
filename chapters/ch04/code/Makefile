@@ -1,18 +1,19 @@
-# cmd-thermo — 第四章：SSH 终端命令 + 温湿度控风扇
+# cmd_thermo — 第四章：SSH 终端命令 + 温湿度控风扇
 #
 # 默认编学生版：make
 # 参考实现：    make sol
+# 板上目录约定：~/ruyi-riscv-embedded/chapter04-lab/
 
 CROSS_COMPILE ?=
 CC            ?= $(CROSS_COMPILE)gcc
 CFLAGS        ?= -Wall -Wextra -O2
 LDLIBS        ?= -lgpiod
 
-TARGET        := cmd-thermo
-SRC           := main.c
+TARGET        := cmd_thermo
+SRC           := cmd_thermo.c
 
-SOL_TARGET    := cmd-thermo-sol
-SOL_SRC       := main-sol.c
+SOL_TARGET    := cmd_thermo-sol
+SOL_SRC       := cmd_thermo-sol.c
 
 all: $(TARGET)
 

@@ -1,15 +1,10 @@
 /*
- * main.c — 第四章学生版（脚手架）· 工程目录 cmd-thermo/
+ * cmd_thermo-sol.c — 第四章参考实现（make sol）· chapters/ch04/code/
  *
- * 【学生动手】只改本文件里标了 STUDENT TODO 的区块。
- * 要实现：cmd_status / cmd_set / g_cmds[] / dispatch_command / main_loop
- * 实现前 make 会因未声明的函数失败——这是预期现象。
- *
- * 契约与思考题：chapters/ch04/lab.html
- * 对照答案：main-sol.c（make sol）
+ * 学生版见 cmd_thermo.c（STUDENT TODO 区块）。先自己写，过关后再对照。
  *
  * 板：荔枝派 4A + RevyOS。libgpiod v2。全程 C。
- * 脚：继电器 IO1_5、DHT22 IO1_6（经 TXS）。
+ * 脚位：继电器 IO1_5、DHT22 IO1_6（经 TXS）。
  * 命令从 SSH 终端 stdin 读入。
  */
 #include <errno.h>
@@ -31,6 +26,7 @@
 #define DHT_RETRY        3
 #define LINE_MAX         128
 
+/* 湿度过高也开风扇；回落后才允许关（与温度阈值一起用） */
 #define H_ON             90.0f
 #define H_OFF            72.0f
 
@@ -78,7 +74,7 @@ static struct gpiod_line_request *line_request(unsigned int offset,
 		return NULL;
 	gpiod_line_settings_set_direction(s, direction);
 	gpiod_line_config_add_line_settings(lc, offs, 1, s);
-	gpiod_request_config_set_consumer(rc, "cmd-thermo");
+	gpiod_request_config_set_consumer(rc, "cmd_thermo");
 
 	r = gpiod_chip_request_lines(chip, rc, lc);
 	gpiod_request_config_free(rc);
@@ -253,7 +249,6 @@ static int read_temp_retry(float *t, float *h)
 	return -1;
 }
 
-/* 脚手架已提供：采样 + 温湿度联合控风扇。你实现命令与 select 主循环。 */
 static void sample_and_control(void)
 {
 	float t, h;
@@ -270,26 +265,102 @@ static void sample_and_control(void)
 	       g_st.t_high, g_st.t_low, H_ON, H_OFF);
 	fflush(stdout);
 
-	/* 开：温度过高 或 湿度过高；关：温度与湿度都回落 */
 	if ((t > g_st.t_high || h > H_ON) && !g_st.fan_on)
 		fan_set(1);
 	else if (t < g_st.t_low && h < H_OFF && g_st.fan_on)
 		fan_set(0);
 }
 
-/* ========================================================================
- * STUDENT TODO — 在本注释与下方 read_command_line() 之间写下实现
- * ------------------------------------------------------------------------
- * 1) cmd_status(char *args)
- * 2) cmd_set(char *args)
- * 3) struct cmd_entry + g_cmds[]（注册 status / set，表尾 NULL）
- * 4) dispatch_command(char *line)   — 拆词、查表、调用
- * 5) main_loop(void)                — select：超时→sample_and_control；
- *                                    stdin 可读→read_command_line
- *
- * 原型与成功判据只在 lab.html，不要只靠猜。
- * 可调用本文件已有的：sample_and_control / g_st / cmd_fd / g_running …
- * ======================================================================== */
+static int cmd_status(char *args)
+{
+	(void)args;
+	if (!g_st.has_sample) {
+		printf("[INFO] no sample yet — waiting for DHT22\n");
+		fflush(stdout);
+		return 0;
+	}
+	printf("[INFO] temp=%.1fC hum=%.1f%% fan=%s thr=%.1f/%.1f H=%.0f/%.0f\n",
+	       g_st.last_temp, g_st.last_hum,
+	       g_st.fan_on ? "ON" : "OFF",
+	       g_st.t_high, g_st.t_low, H_ON, H_OFF);
+	fflush(stdout);
+	return 0;
+}
+
+static int cmd_set(char *args)
+{
+	char what[16];
+	float v;
+
+	if (sscanf(args, "%15s %f", what, &v) != 2) {
+		printf("[ERR] usage: set high <N> | set low <N>\n");
+		fflush(stdout);
+		return -1;
+	}
+	if (strcmp(what, "high") == 0) {
+		if (v <= g_st.t_low) {
+			printf("[ERR] high must be > low (%.1f)\n", g_st.t_low);
+			fflush(stdout);
+			return -1;
+		}
+		g_st.t_high = v;
+	} else if (strcmp(what, "low") == 0) {
+		if (v >= g_st.t_high) {
+			printf("[ERR] low must be < high (%.1f)\n", g_st.t_high);
+			fflush(stdout);
+			return -1;
+		}
+		g_st.t_low = v;
+	} else {
+		printf("[ERR] unknown: set %s\n", what);
+		fflush(stdout);
+		return -1;
+	}
+	printf("[INFO] threshold -> high=%.1f low=%.1f\n", g_st.t_high, g_st.t_low);
+	fflush(stdout);
+	return 0;
+}
+
+struct cmd_entry {
+	const char *name;
+	int (*handler)(char *args);
+};
+
+static const struct cmd_entry g_cmds[] = {
+	{ "status", cmd_status },
+	{ "set",    cmd_set    },
+	{ NULL,     NULL       },
+};
+
+static int dispatch_command(char *line)
+{
+	char *cmd, *args;
+	const struct cmd_entry *e;
+
+	while (*line == ' ' || *line == '\t')
+		line++;
+	if (*line == '\0' || *line == '\n')
+		return 0;
+
+	cmd = line;
+	args = cmd;
+	while (*args && *args != ' ' && *args != '\t' && *args != '\n')
+		args++;
+	if (*args) {
+		*args = '\0';
+		args++;
+		while (*args == ' ' || *args == '\t')
+			args++;
+	}
+
+	for (e = g_cmds; e->name; e++) {
+		if (strcmp(e->name, cmd) == 0)
+			return e->handler(args);
+	}
+	printf("[ERR] unknown command: %s\n", cmd);
+	fflush(stdout);
+	return -1;
+}
 
 static int read_command_line(void)
 {
@@ -303,6 +374,44 @@ static int read_command_line(void)
 		buf[--len] = '\0';
 	dispatch_command(buf);
 	return 0;
+}
+
+static void main_loop(void)
+{
+	double deadline = 0.0;
+	struct timespec ts;
+	int cmd_open = 1;
+
+	while (g_running) {
+		fd_set rfds;
+		struct timeval tv;
+		int n;
+
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		double now_s = ts.tv_sec + ts.tv_nsec / 1e9;
+		if (deadline <= now_s)
+			deadline = now_s + SAMPLE_MS / 1000.0;
+		double remain = deadline - now_s;
+		tv.tv_sec = (long)remain;
+		tv.tv_usec = (long)((remain - tv.tv_sec) * 1e6);
+
+		FD_ZERO(&rfds);
+		if (cmd_open)
+			FD_SET(cmd_fd, &rfds);
+		n = select(cmd_fd + 1, &rfds, NULL, NULL, &tv);
+		if (n < 0) {
+			if (errno == EINTR)
+				break;
+			perror("select");
+			break;
+		}
+		if (n == 0) {
+			sample_and_control();
+		} else if (cmd_open && FD_ISSET(cmd_fd, &rfds)) {
+			if (read_command_line() < 0)
+				cmd_open = 0;
+		}
+	}
 }
 
 int main(void)

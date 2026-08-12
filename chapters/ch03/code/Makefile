@@ -6,6 +6,7 @@
 # 主机交叉：    make CROSS_COMPILE=riscv64-unknown-linux-gnu-
 #
 # 全程 C 语言，不用 C++。
+# 板上目录约定：~/ruyi-riscv-embedded/chapter03-lab/
 
 CROSS_COMPILE ?=
 CC            ?= $(CROSS_COMPILE)gcc
