@@ -2,6 +2,7 @@
 #
 # 默认编学生版：make
 # 参考实现：    make sol
+# 强制关风扇：  make fan-off && sudo ./fan_off
 # 板上目录约定：~/ruyi-riscv-embedded/chapter04-lab/
 
 CROSS_COMPILE ?=
@@ -15,6 +16,9 @@ SRC           := cmd_thermo.c
 SOL_TARGET    := cmd_thermo-sol
 SOL_SRC       := cmd_thermo-sol.c
 
+FANOFF_TARGET := fan_off
+FANOFF_SRC    := fan_off.c
+
 all: $(TARGET)
 
 $(TARGET): $(SRC)
@@ -25,7 +29,12 @@ sol: $(SOL_TARGET)
 $(SOL_TARGET): $(SOL_SRC)
 	$(CC) $(CFLAGS) -o $@ $< $(LDLIBS)
 
-clean:
-	rm -f $(TARGET) $(SOL_TARGET)
+fan-off: $(FANOFF_TARGET)
 
-.PHONY: all sol clean
+$(FANOFF_TARGET): $(FANOFF_SRC)
+	$(CC) $(CFLAGS) -o $@ $< $(LDLIBS)
+
+clean:
+	rm -f $(TARGET) $(SOL_TARGET) $(FANOFF_TARGET)
+
+.PHONY: all sol fan-off clean

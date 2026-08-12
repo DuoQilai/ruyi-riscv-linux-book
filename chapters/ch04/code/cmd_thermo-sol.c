@@ -464,10 +464,13 @@ int main(void)
 
 	main_loop();
 
+	/* 先拉低再释放：释放后脚可能悬浮，继电器会自己飘高导致风扇一直转 */
 	fan_set(0);
+	usleep(200000);
 	if (fan_req)
 		gpiod_line_request_release(fan_req);
 	gpiod_chip_close(chip);
-	printf("[INFO] cleaned up, fan off\n");
+	printf("[INFO] 已清理；若风扇仍转，请执行: make fan-off && sudo ./fan_off\n");
+	printf("[INFO] 根治：继电器 IN(X1) 到 GND 加 10kΩ 下拉\n");
 	return 0;
 }

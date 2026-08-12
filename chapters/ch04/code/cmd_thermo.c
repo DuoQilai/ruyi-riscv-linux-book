@@ -357,9 +357,10 @@ int main(void)
 	main_loop();
 
 	fan_set(0);
+	usleep(200000);
 	if (fan_req)
 		gpiod_line_request_release(fan_req);
 	gpiod_chip_close(chip);
-	printf("[INFO] cleaned up, fan off\n");
+	printf("[INFO] 已清理；若风扇仍转: make fan-off && sudo ./fan_off\n");
 	return 0;
 }
