@@ -27,8 +27,8 @@
 #define LINE_MAX         128
 
 /* 湿度过高也开风扇；回落后才允许关（与温度阈值一起用） */
-#define H_ON             90.0f
-#define H_OFF            72.0f
+#define H_ON             85.0f
+#define H_OFF            70.0f
 
 #ifndef SIMULATE_SENSOR
 #define SIMULATE_SENSOR  1
@@ -44,8 +44,8 @@ struct thermo_state {
 };
 
 static struct thermo_state g_st = {
-	.t_high = 31.0f,
-	.t_low = 29.5f,
+	.t_high = 28.0f,
+	.t_low = 26.5f,
 	.fan_on = 0,
 	.has_sample = 0,
 };
@@ -252,11 +252,20 @@ static int read_temp_retry(float *t, float *h)
 static void sample_and_control(void)
 {
 	float t, h;
+	static int fail_streak;
 
 	if (read_temp_retry(&t, &h) < 0) {
-		log_err("DHT22 read failed — retry next cycle");
+		fail_streak++;
+		/* 用户态 DHT 偶发失败正常；已有有效样本时不刷屏 */
+		if (!g_st.has_sample)
+			log_err("DHT22 read failed — waiting for first sample");
+		else if (fail_streak >= 10) {
+			log_err("DHT22 read flaky — keeping last good sample");
+			fail_streak = 0;
+		}
 		return;
 	}
+	fail_streak = 0;
 	g_st.last_temp = t;
 	g_st.last_hum = h;
 	g_st.has_sample = 1;
