@@ -250,7 +250,7 @@
   <li>敲 <code>status</code>：立刻打印完整状态（或「尚无采样」提示）。</li>
   <li>敲 <code>set temp 30</code>，再 <code>status</code>：温度 bar 已变。</li>
   <li>敲 <code>set humidity 80</code>，再 <code>status</code>：湿度 bar 已变。</li>
-  <li>控温进行中连续敲 <code>status</code>：每次立刻出现 <code>[STATUS]</code>；风扇开/关仍只在状态变化时打 <code>[INFO] fan …</code>。</li>
+  <li>控温进行中连续敲 <code>status</code>：每次立刻出现 <code>[STATUS]</code>；风扇开/关瞬间打印上一采样与本次采样（无 <code>[STATUS]</code> 前缀）及「选择开/关风扇」。</li>
   <li>（可选，真 DHT）哈气提高湿度，观察是否按湿度 bar 开风扇。</li>
 </ol>
 <div class="info">

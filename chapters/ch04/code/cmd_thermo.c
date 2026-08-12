@@ -114,8 +114,6 @@ static void fan_set(int on)
 		return;
 	}
 	g_st.fan_on = on;
-	printf("[INFO] fan %s\n", on ? "ON" : "OFF");
-	fflush(stdout);
 }
 
 #if !SIMULATE_SENSOR
@@ -276,18 +274,35 @@ static void sample_and_control(void)
 		return;
 	}
 	fail_streak = 0;
-	g_st.last_temp = t;
-	g_st.last_hum = h;
-	g_st.has_sample = 1;
-	/* 温湿度不刷屏：敲 status 再看；这里只做阈值决策 */
 
 	{
+		float prev_t = g_st.last_temp;
+		float prev_h = g_st.last_hum;
+		int had_prev = g_st.has_sample;
 		int want_on = (t > g_st.t_bar || h > g_st.h_bar);
 
-		if (want_on && !g_st.fan_on)
+		g_st.last_temp = t;
+		g_st.last_hum = h;
+		g_st.has_sample = 1;
+		/* 平时不刷温湿度；仅在开/关瞬间打印上一拍与本次决策依据 */
+
+		if (want_on && !g_st.fan_on) {
+			if (had_prev)
+				printf("上一采样: 温度=%.1f°C 湿度=%.1f%%\n", prev_t, prev_h);
+			else
+				printf("上一采样: （尚无）\n");
+			printf("本次采样: 温度=%.1f°C 湿度=%.1f%% → 选择开风扇\n", t, h);
+			fflush(stdout);
 			fan_set(1);
-		else if (!want_on && g_st.fan_on)
+		} else if (!want_on && g_st.fan_on) {
+			if (had_prev)
+				printf("上一采样: 温度=%.1f°C 湿度=%.1f%%\n", prev_t, prev_h);
+			else
+				printf("上一采样: （尚无）\n");
+			printf("本次采样: 温度=%.1f°C 湿度=%.1f%% → 选择关风扇\n", t, h);
+			fflush(stdout);
 			fan_set(0);
+		}
 	}
 }
 
