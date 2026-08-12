@@ -145,7 +145,10 @@ static int dht22_read(float *temp_c, float *hum_pct)
 	{
 		int seen_low = 0, seen_high = 0;
 		for (i = 0; i < 2000; i++) {
-			int v = gpiod_line_request_get_value(r, DHT_LINE);
+			int v;
+			if (!g_running)
+				goto fail;
+			v = gpiod_line_request_get_value(r, DHT_LINE);
 			if (v < 0)
 				goto fail;
 			if (!seen_low && v == 0)
@@ -160,13 +163,18 @@ static int dht22_read(float *temp_c, float *hum_pct)
 	}
 
 	for (j = 0; j < 40; j++) {
-		int low_c, high_c;
+		int low_c, high_c, spin;
+		if (!g_running)
+			goto fail;
 		for (;;) {
-			while (gpiod_line_request_get_value(r, DHT_LINE) == 1)
-				;
+			spin = 0;
+			while (gpiod_line_request_get_value(r, DHT_LINE) == 1) {
+				if (!g_running || ++spin > 10000)
+					goto fail;
+			}
 			low_c = 0;
 			while (gpiod_line_request_get_value(r, DHT_LINE) == 0) {
-				if (++low_c > 300)
+				if (!g_running || ++low_c > 300)
 					goto fail;
 			}
 			if (low_c >= 5)
@@ -175,13 +183,16 @@ static int dht22_read(float *temp_c, float *hum_pct)
 		if (j < 39) {
 			high_c = 0;
 			while (gpiod_line_request_get_value(r, DHT_LINE) == 1) {
-				if (++high_c > 300)
+				if (!g_running || ++high_c > 300)
 					goto fail;
 			}
 		} else {
 			high_c = 0;
-			while (gpiod_line_request_get_value(r, DHT_LINE) == 1 && high_c < 60)
+			while (gpiod_line_request_get_value(r, DHT_LINE) == 1 && high_c < 60) {
+				if (!g_running)
+					goto fail;
 				high_c++;
+			}
 		}
 		bits[j] = (high_c > low_c) ? 1 : 0;
 	}
@@ -239,6 +250,8 @@ static int read_temp_retry(float *t, float *h)
 {
 	int k;
 	for (k = 0; k < DHT_RETRY; k++) {
+		if (!g_running)
+			return -1;
 		if (dht22_read(t, h) == 0)
 			return 0;
 		usleep(100000);
@@ -408,10 +421,12 @@ static void main_loop(void)
 		n = select(cmd_fd + 1, &rfds, NULL, NULL, &tv);
 		if (n < 0) {
 			if (errno == EINTR)
-				break;
+				continue; /* Ctrl+C 置 g_running=0，下轮 while 退出 */
 			perror("select");
 			break;
 		}
+		if (!g_running)
+			break;
 		if (n == 0) {
 			sample_and_control();
 		} else if (cmd_open && FD_ISSET(cmd_fd, &rfds)) {
