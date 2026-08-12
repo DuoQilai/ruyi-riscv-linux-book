@@ -15,10 +15,12 @@
 #define GPIO_CHIP_PATH   "/dev/gpiochip5"
 #define FAN_LINE         5   /* IO1_5 */
 
-#define T_HIGH           28.0f
-#define T_LOW            26.0f
+#define T_HIGH           29.0f
+#define T_LOW            25.0f
 #define STEP_MS          250
 #define STEP_DELTA       0.5f
+#define T_SWEEP_MIN      24.0f
+#define T_SWEEP_MAX      30.0f
 
 static struct gpiod_chip *chip;
 static struct gpiod_line_request *fan_req;
@@ -113,9 +115,9 @@ int main(void)
 
 	while (g_running) {
 		t += dir * STEP_DELTA;
-		if (t > 31.0f)
+		if (t > T_SWEEP_MAX)
 			dir = -1;
-		if (t < 24.0f)
+		if (t < T_SWEEP_MIN)
 			dir = 1;
 
 		prev = fan;
