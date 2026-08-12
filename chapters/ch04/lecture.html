@@ -254,16 +254,16 @@ printf("[INFO] got: %s", line);</pre>
 <h3 id="s4.2-cmd">命令表：字符串对应函数</h3>
 <p><strong>命令表</strong>是「名字 → 处理函数」。收到一行后先拆出命令名，再查表调用。比一长串 <code>if/else</code> 清晰；后面加命令只多一行。</p>
 
-<div class="diagram">输入行："set high 30"
+<div class="diagram">输入行："set temp 30"
         │
         ▼
-   拆词：cmd="set", args="high 30"
+   拆词：cmd="set", args="temp 30"
         │
         ▼
    查表 → cmd_set(...)
         │
         ▼
-   改 t_high，打印确认</div>
+   改温度 bar，打印确认</div>
 
 <pre><span class="k">struct</span> cmd_entry {
     <span class="k">const char</span> *name;
@@ -275,9 +275,9 @@ printf("[INFO] got: %s", line);</pre>
 <h3 id="s4.2-status">status 与 set</h3>
 <table>
   <tr><th>命令</th><th>例子</th><th>行为</th></tr>
-  <tr><td><code>status</code></td><td><code>status</code></td><td>打印最近温度、湿度、风扇、阈值</td></tr>
-  <tr><td><code>set high &lt;数&gt;</code></td><td><code>set high 30</code></td><td>改上限；须保持 low &lt; high</td></tr>
-  <tr><td><code>set low &lt;数&gt;</code></td><td><code>set low 25</code></td><td>改下限；非法关系拒绝并 <code>[ERR]</code></td></tr>
+  <tr><td><code>status</code></td><td><code>status</code></td><td>打印最近温度、湿度、风扇、两条 bar</td></tr>
+  <tr><td><code>set temp &lt;数&gt;</code></td><td><code>set temp 30</code></td><td>改温度 bar（高于开、低于关）</td></tr>
+  <tr><td><code>set humidity &lt;数&gt;</code></td><td><code>set humidity 80</code></td><td>改湿度 bar（同上）</td></tr>
 </table>
 
 <p>命令只改<strong>内存里的阈值</strong>，下一轮采样决策立刻用上，不必重启进程。</p>
@@ -332,12 +332,12 @@ t=0.7  敲 status → 立刻回复
 t=2.0  超时 → 再采样</div>
 
 <h3 id="s4.3-hum">温湿度怎么一起控风扇</h3>
-<p>DHT22 同时给出温度和湿度。脚手架里的决策是：</p>
+<p>DHT22 同时给出温度和湿度。脚手架里是两条<strong>单阈值 bar</strong>：</p>
 <ul>
-  <li><strong>开：</strong>温度高于 <code>t_high</code>，<strong>或</strong> 湿度高于 <code>H_ON</code></li>
-  <li><strong>关：</strong>温度低于 <code>t_low</code>，<strong>并且</strong> 湿度低于 <code>H_OFF</code></li>
+  <li><strong>开：</strong>温度高于温度 bar，<strong>或</strong> 湿度高于湿度 bar</li>
+  <li><strong>关：</strong>温度低于温度 bar，<strong>并且</strong> 湿度低于湿度 bar</li>
 </ul>
-<p>模拟模式（默认）里湿度大致恒定，主要靠假温度演示；接真传感器后可哈气观察湿度支路。命令 <code>set</code> 只改温度上下限；湿度阈值是宏 <code>H_ON</code> / <code>H_OFF</code>。</p>
+<p>模拟模式（默认）里湿度大致恒定，主要靠假温度演示；接真传感器后可哈气观察湿度支路。命令 <code>set temp</code> / <code>set humidity</code> 分别改两条 bar。</p>
 
 <div class="info" style="margin-top:32px;">
   <strong>下一步：</strong>打开 <a href="lab.html">lab.html</a>——焊接与接线，实现命令与 <code>select</code> 主循环，在 SSH 里验收「两边同时」。

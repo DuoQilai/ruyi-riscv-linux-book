@@ -31,16 +31,14 @@
 #define DHT_RETRY        3
 #define LINE_MAX         128
 
-#define H_ON             85.0f
-#define H_OFF            70.0f
-
 #ifndef SIMULATE_SENSOR
 #define SIMULATE_SENSOR  1
 #endif
 
+/* 单阈值：温度 / 湿度各一条 bar —— 高于开，低于关 */
 struct thermo_state {
-	float t_high;
-	float t_low;
+	float t_bar;
+	float h_bar;
 	float last_temp;
 	float last_hum;
 	int fan_on;
@@ -48,8 +46,8 @@ struct thermo_state {
 };
 
 static struct thermo_state g_st = {
-	.t_high = 28.0f,
-	.t_low = 26.5f,
+	.t_bar = 28.0f,
+	.h_bar = 85.0f,
 	.fan_on = 0,
 	.has_sample = 0,
 };
@@ -276,11 +274,14 @@ static void sample_and_control(void)
 	g_st.has_sample = 1;
 	/* 温湿度不刷屏：敲 status 再看；这里只做阈值决策 */
 
-	/* 开：温度过高 或 湿度过高；关：温度与湿度都回落 */
-	if ((t > g_st.t_high || h > H_ON) && !g_st.fan_on)
-		fan_set(1);
-	else if (t < g_st.t_low && h < H_OFF && g_st.fan_on)
-		fan_set(0);
+	{
+		int want_on = (t > g_st.t_bar || h > g_st.h_bar);
+
+		if (want_on && !g_st.fan_on)
+			fan_set(1);
+		else if (!want_on && g_st.fan_on)
+			fan_set(0);
+	}
 }
 
 /* ========================================================================
@@ -324,13 +325,18 @@ int main(void)
 	}
 
 	cmd_fd = STDIN_FILENO;
-	log_info("commands on stdin — type: status | set high N | set low N");
+	printf("[INFO] 命令: status | set temp <数> | set humidity <数>\n");
+	printf("[规则] 温度高于 %.1f°C，或湿度高于 %.1f%% → 开风扇\n",
+	       g_st.t_bar, g_st.h_bar);
+	printf("[规则] 温度低于 %.1f°C，且湿度低于 %.1f%% → 关风扇\n",
+	       g_st.t_bar, g_st.h_bar);
+	fflush(stdout);
 
 #if SIMULATE_SENSOR
 	log_info("SIMULATE_SENSOR=1 — fake temperature ramp");
 #endif
-	printf("[INFO] T_HIGH=%.1f T_LOW=%.1f sample=%d ms\n",
-	       g_st.t_high, g_st.t_low, SAMPLE_MS);
+	printf("[INFO] 采样周期 %d ms\n", SAMPLE_MS);
+	fflush(stdout);
 
 	signal(SIGINT, on_signal);
 	signal(SIGTERM, on_signal);

@@ -26,17 +26,14 @@
 #define DHT_RETRY        3
 #define LINE_MAX         128
 
-/* 湿度过高也开风扇；回落后才允许关（与温度阈值一起用） */
-#define H_ON             85.0f
-#define H_OFF            70.0f
-
 #ifndef SIMULATE_SENSOR
 #define SIMULATE_SENSOR  1
 #endif
 
+/* 单阈值：温度 / 湿度各一条 bar —— 高于开，低于关（或关系开，且关系关） */
 struct thermo_state {
-	float t_high;
-	float t_low;
+	float t_bar;
+	float h_bar;
 	float last_temp;
 	float last_hum;
 	int fan_on;
@@ -44,8 +41,8 @@ struct thermo_state {
 };
 
 static struct thermo_state g_st = {
-	.t_high = 28.0f,
-	.t_low = 26.5f,
+	.t_bar = 28.0f,
+	.h_bar = 85.0f,
 	.fan_on = 0,
 	.has_sample = 0,
 };
@@ -271,24 +268,37 @@ static void sample_and_control(void)
 	g_st.has_sample = 1;
 	/* 温湿度不周期刷屏；敲 status 再看 */
 
-	if ((t > g_st.t_high || h > H_ON) && !g_st.fan_on)
-		fan_set(1);
-	else if (t < g_st.t_low && h < H_OFF && g_st.fan_on)
-		fan_set(0);
+	{
+		int want_on = (t > g_st.t_bar || h > g_st.h_bar);
+
+		if (want_on && !g_st.fan_on)
+			fan_set(1);
+		else if (!want_on && g_st.fan_on)
+			fan_set(0);
+	}
+}
+
+static void print_rules(void)
+{
+	printf("[规则] 温度高于 %.1f°C，或湿度高于 %.1f%% → 开风扇\n",
+	       g_st.t_bar, g_st.h_bar);
+	printf("[规则] 温度低于 %.1f°C，且湿度低于 %.1f%% → 关风扇\n",
+	       g_st.t_bar, g_st.h_bar);
+	fflush(stdout);
 }
 
 static int cmd_status(char *args)
 {
 	(void)args;
 	if (!g_st.has_sample) {
-		printf("[STATUS] no sample yet — waiting for DHT22\n");
+		printf("[STATUS] 尚无采样，正在等待 DHT22\n");
 		fflush(stdout);
 		return 0;
 	}
-	printf("[STATUS] temp=%.1fC hum=%.1f%% fan=%s thr=%.1f/%.1f H=%.0f/%.0f\n",
+	printf("[STATUS] 温度=%.1f°C 湿度=%.1f%% 风扇=%s | 温度bar=%.1f°C 湿度bar=%.1f%%\n",
 	       g_st.last_temp, g_st.last_hum,
-	       g_st.fan_on ? "ON" : "OFF",
-	       g_st.t_high, g_st.t_low, H_ON, H_OFF);
+	       g_st.fan_on ? "开" : "关",
+	       g_st.t_bar, g_st.h_bar);
 	fflush(stdout);
 	return 0;
 }
@@ -299,31 +309,22 @@ static int cmd_set(char *args)
 	float v;
 
 	if (sscanf(args, "%15s %f", what, &v) != 2) {
-		printf("[ERR] usage: set high <N> | set low <N>\n");
+		printf("[ERR] 用法: set temp <数> | set humidity <数>\n");
 		fflush(stdout);
 		return -1;
 	}
-	if (strcmp(what, "high") == 0) {
-		if (v <= g_st.t_low) {
-			printf("[ERR] high must be > low (%.1f)\n", g_st.t_low);
-			fflush(stdout);
-			return -1;
-		}
-		g_st.t_high = v;
-	} else if (strcmp(what, "low") == 0) {
-		if (v >= g_st.t_high) {
-			printf("[ERR] low must be < high (%.1f)\n", g_st.t_high);
-			fflush(stdout);
-			return -1;
-		}
-		g_st.t_low = v;
+	if (strcmp(what, "temp") == 0 || strcmp(what, "temperature") == 0) {
+		g_st.t_bar = v;
+		printf("[INFO] 温度 bar 已设为 %.1f°C（高于则开，低于则关）\n", g_st.t_bar);
+	} else if (strcmp(what, "humidity") == 0 || strcmp(what, "hum") == 0) {
+		g_st.h_bar = v;
+		printf("[INFO] 湿度 bar 已设为 %.1f%%（高于则开，低于则关）\n", g_st.h_bar);
 	} else {
-		printf("[ERR] unknown: set %s\n", what);
+		printf("[ERR] 未知: set %s（请用 temp 或 humidity）\n", what);
 		fflush(stdout);
 		return -1;
 	}
-	printf("[INFO] threshold -> high=%.1f low=%.1f\n", g_st.t_high, g_st.t_low);
-	fflush(stdout);
+	print_rules();
 	return 0;
 }
 
@@ -433,13 +434,15 @@ int main(void)
 	}
 
 	cmd_fd = STDIN_FILENO;
-	log_info("commands on stdin — type: status | set high N | set low N");
+	printf("[INFO] 命令: status | set temp <数> | set humidity <数>\n");
+	fflush(stdout);
 
 #if SIMULATE_SENSOR
 	log_info("SIMULATE_SENSOR=1 — fake temperature ramp");
 #endif
-	printf("[INFO] T_HIGH=%.1f T_LOW=%.1f sample=%d ms\n",
-	       g_st.t_high, g_st.t_low, SAMPLE_MS);
+	print_rules();
+	printf("[INFO] 采样周期 %d ms\n", SAMPLE_MS);
+	fflush(stdout);
 
 	signal(SIGINT, on_signal);
 	signal(SIGTERM, on_signal);

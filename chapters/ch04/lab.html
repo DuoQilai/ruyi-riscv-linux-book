@@ -181,16 +181,16 @@
 <p>先直接 <code>make</code>：应看到类似 <code>implicit declaration of function 'dispatch_command'</code> 或 <code>main_loop</code>——这是预期起点。</p>
 
 <h3>你要写的契约</h3>
-<pre><span class="c">/* 打印 g_st：用 [STATUS] 前缀输出温度、湿度、风扇、t_high/t_low（及 H_ON/H_OFF 可一并打印）。
+<pre><span class="c">/* 打印 g_st：用 [STATUS] 前缀输出温度、湿度、风扇、温度bar、湿度bar。
  * 尚无采样（has_sample==0）时打印明确提示，不要打垃圾数。
  * 注意：采样函数本身不刷温湿度；只有本命令才打印。
  * args 可忽略。成功返回 0。
  */</span>
 <span class="k">static int</span> cmd_status(<span class="k">char</span> *args);
 
-<span class="c">/* 解析 args："high &lt;数&gt;" 或 "low &lt;数&gt;"，写入 g_st.t_high / t_low。
- * 必须保持 low &lt; high；不满足则打印 [ERR] 并拒绝修改，返回非 0。
- * 用法错误同样 [ERR]。成功打印确认并返回 0。
+<span class="c">/* 解析 args："temp &lt;数&gt;" 或 "humidity &lt;数&gt;"（也可用 hum），
+ * 写入 g_st.t_bar / g_st.h_bar。用法错误打印 [ERR]。成功打印确认并返回 0。
+ * 逻辑：温度或湿度高于对应 bar → 开风扇；两者都低于 → 关风扇。
  */</span>
 <span class="k">static int</span> cmd_set(<span class="k">char</span> *args);
 
@@ -220,7 +220,7 @@
   <li><code>set</code> 改的是内存里的阈值：下一轮 <code>sample_and_control</code> 才会用上——如何用实验证明「立刻参与后续控温」？</li>
   <li>阻塞在 <code>fgets</code> 上，或固定 <code>sleep(2)</code> 再读命令，分别饿死哪一边？</li>
   <li>处理完一条命令后若把超时重新设成完整 2 秒，采样节奏会怎样？</li>
-  <li>脚手架里开风扇条件含「湿度 &gt; H_ON」：模拟模式湿度恒为 55，主要靠温度演示；真 DHT 时可哈气看湿度支路。</li>
+  <li>脚手架里开风扇条件含「湿度 &gt; 湿度 bar」：模拟模式湿度恒为 55，主要靠温度演示；真 DHT 时可哈气看湿度支路。</li>
 </ul>
 
 <div class="info">
@@ -248,10 +248,10 @@
 <ol>
   <li>启动后等几秒（让 DHT 先采到样），敲 <code>status</code>：应出现 <code>[STATUS] temp=… hum=…</code>；平时终端不应刷温湿度。</li>
   <li>敲 <code>status</code>：立刻打印完整状态（或「尚无采样」提示）。</li>
-  <li>敲 <code>set high 30</code>，再 <code>status</code>：上限已变。</li>
-  <li>故意把 low 设得不低于 high：被拒绝并有 <code>[ERR]</code>。</li>
+  <li>敲 <code>set temp 30</code>，再 <code>status</code>：温度 bar 已变。</li>
+  <li>敲 <code>set humidity 80</code>，再 <code>status</code>：湿度 bar 已变。</li>
   <li>控温进行中连续敲 <code>status</code>：每次立刻出现 <code>[STATUS]</code>；风扇开/关仍只在状态变化时打 <code>[INFO] fan …</code>。</li>
-  <li>（可选，真 DHT）哈气提高湿度，观察是否按 <code>H_ON</code> 开风扇。</li>
+  <li>（可选，真 DHT）哈气提高湿度，观察是否按湿度 bar 开风扇。</li>
 </ol>
 <div class="info">
   <strong>Ctrl+C：</strong>应先拉低继电器再退出（<code>cleaned up, fan off</code>）。与第三章同一教训：输入悬浮可能飘高。
@@ -277,7 +277,7 @@
   <tr><td>接线</td><td>DHT 经 TXS 到 IO1_6；风扇沿用第三章</td><td></td></tr>
   <tr><td>自己写的代码</td><td>命令 + dispatch + main_loop 在学生文件中；<code>make</code> 通过</td><td></td></tr>
   <tr><td>自动控温</td><td>超温（或超湿）开 / 回落关可演示</td><td></td></tr>
-  <tr><td>status / set</td><td>立刻回复；非法高低关系被拒绝</td><td></td></tr>
+  <tr><td>status / set</td><td>立刻回复；可改温度 bar 与湿度 bar</td><td></td></tr>
   <tr><td>同时工作</td><td>打字时采样不停更</td><td></td></tr>
 </table>
 <div class="ok">
