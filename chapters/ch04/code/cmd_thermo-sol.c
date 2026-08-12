@@ -465,6 +465,6 @@ int main(void)
 	if (fan_req)
 		gpiod_line_request_release(fan_req);
 	gpiod_chip_close(chip);
-	printf("[INFO] 已清理；若风扇仍转: sudo ./fan_off（或 IN→GND 加 10kΩ 下拉）\n");
+	printf("[INFO] 已清理；若风扇仍转: sudo ./fan_off\n");
 	return 0;
 }

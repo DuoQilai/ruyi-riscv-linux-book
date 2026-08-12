@@ -1,13 +1,8 @@
 /*
- * fan_off.c — 强制关风扇（继电器信号脚 IO1_5 / gpiochip5 line 5）
+ * fan_off.c — 强制关风扇（IO1_5 / gpiochip5 line 5）
  *
- * 为何需要：kill -9 / 崩溃后 GPIO 请求被内核收回，脚变高阻悬浮，
- * 继电器 IN 易被当成高电平，风扇继续转。正常 Ctrl+C 路径已在主程序里先拉低。
- *
- * 实践优先级：
- *   1) 硬件：IN → GND 加 10kΩ 下拉（唯一真正干净的 fail-safe）
- *   2) 软件：本工具主动驱动为低并保持占用，直到 Ctrl+C
- *      （退出后若不加下拉，脚仍可能再次悬浮）
+ * kill -9 / 崩溃后 GPIO 被内核收回，脚悬浮时继电器可能一直吸合。
+ * 正常 Ctrl+C 路径已在主程序里先拉低；本工具用于救急。
  *
  * 用法：
  *   make fan-off && sudo ./fan_off          # 保持关断，Ctrl+C 结束
@@ -71,7 +66,6 @@ int main(int argc, char **argv)
 
 	gpiod_line_settings_set_direction(s, GPIOD_LINE_DIRECTION_OUTPUT);
 	gpiod_line_settings_set_output_value(s, GPIOD_LINE_VALUE_INACTIVE);
-	/* 尽力请求下拉；SoC 不支持则忽略 */
 	gpiod_line_settings_set_bias(s, GPIOD_LINE_BIAS_PULL_DOWN);
 	gpiod_line_config_add_line_settings(lc, offs, 1, s);
 	gpiod_request_config_set_consumer(rc, "fan_off");
@@ -92,18 +86,17 @@ int main(int argc, char **argv)
 
 	if (once) {
 		usleep(200000);
-		printf("[INFO] 已拉低 IO1_5（--once）；无仍转请加 10kΩ 下拉或去掉 --once 保持占用\n");
+		printf("[INFO] 已拉低 IO1_5（--once）\n");
 	} else {
 		signal(SIGINT, on_signal);
 		signal(SIGTERM, on_signal);
-		printf("[INFO] 已关断并占用 IO1_5；Ctrl+C 结束（根治：继电器 IN→GND 10kΩ 下拉）\n");
+		printf("[INFO] 已关断并占用 IO1_5；Ctrl+C 结束\n");
 		fflush(stdout);
 		while (!g_stop)
 			sleep(1);
-		/* 退出前再确认一次低电平 */
 		gpiod_line_request_set_value(r, FAN_LINE, 0);
 		usleep(50000);
-		printf("[INFO] 已释放 GPIO；若无无下拉，风扇可能再次自启\n");
+		printf("[INFO] 已释放 GPIO\n");
 	}
 
 	gpiod_line_request_release(r);
