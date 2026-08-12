@@ -83,12 +83,6 @@ static struct gpiod_line_request *line_request(unsigned int offset,
 	return r;
 }
 
-static void log_info(const char *msg)
-{
-	printf("[INFO] %s\n", msg);
-	fflush(stdout);
-}
-
 static void log_err(const char *msg)
 {
 	fprintf(stderr, "[ERR] %s\n", msg);
@@ -453,7 +447,8 @@ int main(void)
 	fflush(stdout);
 
 #if SIMULATE_SENSOR
-	log_info("SIMULATE_SENSOR=1 — fake temperature ramp");
+	printf("[INFO] SIMULATE_SENSOR=1 — fake temperature ramp\n");
+	fflush(stdout);
 #endif
 	print_rules();
 	printf("[INFO] 采样周期 %d ms\n", SAMPLE_MS);
@@ -470,7 +465,6 @@ int main(void)
 	if (fan_req)
 		gpiod_line_request_release(fan_req);
 	gpiod_chip_close(chip);
-	printf("[INFO] 已清理；若风扇仍转，请执行: make fan-off && sudo ./fan_off\n");
-	printf("[INFO] 根治：继电器 IN(X1) 到 GND 加 10kΩ 下拉\n");
+	printf("[INFO] 已清理；若风扇仍转: sudo ./fan_off（或 IN→GND 加 10kΩ 下拉）\n");
 	return 0;
 }

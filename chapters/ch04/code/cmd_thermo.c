@@ -88,12 +88,6 @@ static struct gpiod_line_request *line_request(unsigned int offset,
 	return r;
 }
 
-static void log_info(const char *msg)
-{
-	printf("[INFO] %s\n", msg);
-	fflush(stdout);
-}
-
 static void log_err(const char *msg)
 {
 	fprintf(stderr, "[ERR] %s\n", msg);
@@ -346,7 +340,8 @@ int main(void)
 	fflush(stdout);
 
 #if SIMULATE_SENSOR
-	log_info("SIMULATE_SENSOR=1 — fake temperature ramp");
+	printf("[INFO] SIMULATE_SENSOR=1 — fake temperature ramp\n");
+	fflush(stdout);
 #endif
 	printf("[INFO] 采样周期 %d ms\n", SAMPLE_MS);
 	fflush(stdout);
