@@ -260,10 +260,7 @@ static void sample_and_control(void)
 	g_st.last_temp = t;
 	g_st.last_hum = h;
 	g_st.has_sample = 1;
-	printf("[INFO] temp=%.1fC hum=%.1f%% fan=%s thr=%.1f/%.1f H=%.0f/%.0f\n",
-	       t, h, g_st.fan_on ? "ON" : "OFF",
-	       g_st.t_high, g_st.t_low, H_ON, H_OFF);
-	fflush(stdout);
+	/* 温湿度不周期刷屏；敲 status 再看 */
 
 	if ((t > g_st.t_high || h > H_ON) && !g_st.fan_on)
 		fan_set(1);
@@ -275,11 +272,11 @@ static int cmd_status(char *args)
 {
 	(void)args;
 	if (!g_st.has_sample) {
-		printf("[INFO] no sample yet — waiting for DHT22\n");
+		printf("[STATUS] no sample yet — waiting for DHT22\n");
 		fflush(stdout);
 		return 0;
 	}
-	printf("[INFO] temp=%.1fC hum=%.1f%% fan=%s thr=%.1f/%.1f H=%.0f/%.0f\n",
+	printf("[STATUS] temp=%.1fC hum=%.1f%% fan=%s thr=%.1f/%.1f H=%.0f/%.0f\n",
 	       g_st.last_temp, g_st.last_hum,
 	       g_st.fan_on ? "ON" : "OFF",
 	       g_st.t_high, g_st.t_low, H_ON, H_OFF);

@@ -137,7 +137,7 @@
   <li><strong>打字入口：</strong>SSH 终端标准输入（本课不另接物理串口线）</li>
 </ul>
 <div class="ok">
-  <strong>成功时你能演示：</strong><code>make</code> 通过；周期日志里温度/湿度/风扇在动；敲 <code>status</code> 立刻有回复；<code>set</code> 改阈值立刻生效；打字时采样日志不停更。
+  <strong>成功时你能演示：</strong><code>make</code> 通过；后台静默采样控风扇；敲 <code>status</code> 立刻打出当前温湿度；<code>set</code> 改阈值立刻生效；打字时自动控温不停。
 </div>
 <div class="warn">
   <strong>安全：</strong>风扇仍走继电器触点（第三章接法）。焊接注意烙铁温度与通风。
@@ -181,8 +181,9 @@
 <p>先直接 <code>make</code>：应看到类似 <code>implicit declaration of function 'dispatch_command'</code> 或 <code>main_loop</code>——这是预期起点。</p>
 
 <h3>你要写的契约</h3>
-<pre><span class="c">/* 打印 g_st：温度、湿度、风扇、t_high/t_low（及 H_ON/H_OFF 可一并打印）。
+<pre><span class="c">/* 打印 g_st：用 [STATUS] 前缀输出温度、湿度、风扇、t_high/t_low（及 H_ON/H_OFF 可一并打印）。
  * 尚无采样（has_sample==0）时打印明确提示，不要打垃圾数。
+ * 注意：采样函数本身不刷温湿度；只有本命令才打印。
  * args 可忽略。成功返回 0。
  */</span>
 <span class="k">static int</span> cmd_status(<span class="k">char</span> *args);
@@ -245,11 +246,11 @@
 <section id="step-accept">
 <h2>联调验收</h2>
 <ol>
-  <li>启动后至少看两轮周期日志（温度 / 湿度 / 风扇 / 阈值）。</li>
+  <li>启动后等几秒（让 DHT 先采到样），敲 <code>status</code>：应出现 <code>[STATUS] temp=… hum=…</code>；平时终端不应刷温湿度。</li>
   <li>敲 <code>status</code>：立刻打印完整状态（或「尚无采样」提示）。</li>
   <li>敲 <code>set high 30</code>，再 <code>status</code>：上限已变。</li>
   <li>故意把 low 设得不低于 high：被拒绝并有 <code>[ERR]</code>。</li>
-  <li>控温进行中连续敲 <code>status</code>：回复立刻出现，采样日志不停更。</li>
+  <li>控温进行中连续敲 <code>status</code>：每次立刻出现 <code>[STATUS]</code>；风扇开/关仍只在状态变化时打 <code>[INFO] fan …</code>。</li>
   <li>（可选，真 DHT）哈气提高湿度，观察是否按 <code>H_ON</code> 开风扇。</li>
 </ol>
 <div class="info">
@@ -263,7 +264,7 @@
   <tr><th>现象</th><th>先查什么</th></tr>
   <tr><td><code>implicit declaration</code> / 编译不过</td><td>四个符号是否写在 <code>read_command_line</code> 上方？签名是否与契约一致？</td></tr>
   <tr><td>能编译，敲命令没反应</td><td><code>main_loop</code> 是否把 <code>cmd_fd</code> 放进 <code>select</code>？是否调用了 <code>read_command_line</code>？</td></tr>
-  <tr><td>命令有回复，风扇日志停更</td><td>是否卡在阻塞读或固定 sleep？超时分支是否调用 <code>sample_and_control</code>？</td></tr>
+  <tr><td>命令有回复，风扇不再动作</td><td>是否卡在阻塞读或固定 sleep？超时分支是否调用 <code>sample_and_control</code>？</td></tr>
   <tr><td>真 DHT 一直 <code>[ERR]</code></td><td>TXS 焊接、VA/VB、OE、共地、IO1_6；先 <code>SIMULATE_SENSOR=1</code> 验证软件</td></tr>
   <tr><td>Permission denied</td><td><code>sudo ./cmd_thermo</code></td></tr>
 </table>
