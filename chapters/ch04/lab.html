@@ -105,7 +105,7 @@
   <a class="course-rail" href="../ch05/lecture.html">下一章 · 第五章</a>
   <div class="divider"></div>
   <a href="#intro">说明</a>
-  <a href="#parts">桌上要摆什么</a>
+  <a href="#parts">实验器材</a>
   <a href="#wire">接线与焊接</a>
   <a href="#step-impl">实现命令与 select</a>
   <a href="#step-run">编译运行</a>
@@ -130,7 +130,7 @@
 </div>
 <p>讲义已讲清：字节进出、为何要 TXS、命令表思路、<code>select</code> 机制。本实验递进：整板接线 + 你自己写出可跑的对话层。</p>
 <ul>
-  <li><strong>工程：</strong><code>chapters/ch04/code/</code>（板上：<code>~/ruyi-riscv-embedded/chapter04-lab/</code>）</li>
+  <li><strong>工程：</strong><code>chapters/ch04/code/</code>（板上：<code>~/ruyi-riscv-embedded/ch04-lab/</code>）</li>
   <li><strong>学生文件：</strong><code>cmd_thermo.c</code>（默认 <code>make</code>）</li>
   <li><strong>参考实现：</strong><code>cmd_thermo-sol.c</code>（<code>make sol</code>；先自己写，过关后再对照）</li>
   <li><strong>脚：</strong>风扇 IO1_5；DHT22 IO1_6（经 TXS）</li>
@@ -145,7 +145,7 @@
 </section>
 
 <section id="parts">
-<h2>桌上要摆什么</h2>
+<h2>实验器材</h2>
 <table>
   <tr><th>东西</th><th>用途</th></tr>
   <tr><td>荔枝派 4A</td><td>跑 Linux；排针接线</td></tr>
@@ -233,16 +233,18 @@
 
 <section id="step-run">
 <h2>编译运行</h2>
-<pre><span class="p">$</span> cd ~/ruyi-riscv-embedded/chapter04-lab
-<span class="p">$</span> make
-<span class="p">$</span> sudo ./cmd_thermo</pre>
-<p>需要 <code>sudo</code> 是因为访问 <code>/dev/gpiochip*</code>。助教自检：<code>make sol && sudo ./cmd_thermo-sol</code>。</p>
-<p>接真 DHT 后示例：</p>
-<pre><span class="p">$</span> make clean
-<span class="p">$</span> make CFLAGS='-Wall -Wextra -O2 -DSIMULATE_SENSOR=0'
-<span class="p">$</span> sudo ./cmd_thermo</pre>
-</section>
+<p>主路径与第三章相同：在 <strong>x86 Linux</strong> 激活 <code>venv-gnu-ruyisdk</code> 后交叉编译，再拷到<strong>荔枝派</strong>运行；或在荔枝派上直接 <code>make</code>（Makefile 按机器自动选择编译器）。访问 GPIO 需要 <code>sudo</code>。</p>
+<pre><span class="c"># —— 在 x86 Linux 上 ——</span>
+<span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
+<span class="p">$</span> cd chapters/ch04/code
+<span class="p">$</span> make clean &amp;&amp; make sol fan-off
+<span class="p">$</span> file cmd_thermo-sol
 
+<span class="c"># —— 在荔枝派上 ——</span>
+<span class="p">$</span> cd ~/ruyi-riscv-embedded/ch04-lab
+<span class="p">$</span> make clean &amp;&amp; make sol fan-off CFLAGS='-Wall -Wextra -O2 -DSIMULATE_SENSOR=0'
+<span class="p">$</span> sudo ./cmd_thermo-sol</pre>
+<p>助教自检用 <code>make sol</code>。接真 DHT 时务必带上 <code>-DSIMULATE_SENSOR=0</code>。</p>
 <section id="step-accept">
 <h2>联调验收</h2>
 <ol>

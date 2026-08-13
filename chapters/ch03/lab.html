@@ -112,14 +112,14 @@
   <a class="course-rail" href="../ch04/lecture.html">下一章 · 第四章</a>
   <div class="divider"></div>
   <a href="#intro">说明</a>
-  <a href="#parts">桌上要摆什么</a>
+  <a href="#parts">实验器材</a>
   <div class="divider"></div>
   <a href="#pinmap">荔枝派排针怎么认</a>
   <a href="#wire">接线总表</a>
   <a href="#step-wire">步骤 1：接线</a>
   <a href="#step-impl">步骤 2：实现三个函数</a>
   <a href="#step-run">步骤 3：编译运行</a>
-  <a href="#step-accept">步骤 4：假温度验收</a>
+  <a href="#step-accept">步骤 4：模拟温度控制验收</a>
   <a href="#step-threshold">步骤 5：改阈值</a>
   <div class="divider"></div>
   <a href="#trouble">常见故障</a>
@@ -138,13 +138,13 @@
 <h2>说明</h2>
 
 <div class="info">
-  <strong>本实验要干什么：</strong>按表接好信号端与风扇负载；在脚手架里实现三个 C 函数；跑通假温度闭环；再改阈值观察开/关点。<br>
+  <strong>本实验要干什么：</strong>按表接好信号端与风扇负载；在脚手架里实现三个 C 函数；跑通模拟温度控制；再改阈值观察开/关点。<br>
   <strong>你能学到什么：</strong>经内核申请并改 GPIO；用滞回把「决策」接到真继电器；用改宏证明控制点在软件。
 </div>
 
 <p>讲义已用 <code>gpioset</code> 跟做过信号链。本实验递进两步：接上风扇负载，并把讲义里的路径写成你自己的 C。</p>
 <ul>
-  <li><strong>工程：</strong><code>chapters/ch03/code/</code>（板上：<code>~/ruyi-riscv-embedded/chapter03-lab/</code>）</li>
+  <li><strong>工程：</strong><code>chapters/ch03/code/</code>（板上：<code>~/ruyi-riscv-embedded/ch03-lab/</code>）</li>
   <li><strong>学生文件：</strong><code>temperature_fan.c</code>（默认 <code>make</code>）</li>
   <li><strong>参考实现：</strong><code>temperature_fan-sol.c</code>（<code>make sol</code>；先自己写，过关后再对照）</li>
   <li><strong>脚：</strong><code>gpiochip5</code> line 5 / 丝印 IO1_5</li>
@@ -159,7 +159,7 @@
 </section>
 
 <section id="parts">
-<h2>桌上要摆什么</h2>
+<h2>实验器材</h2>
 <table>
   <tr><th>东西</th><th>用途</th></tr>
   <tr><td>荔枝派 4A</td><td>跑 Linux；排针接线</td></tr>
@@ -215,7 +215,7 @@
 <section id="step-wire">
 <h2>步骤 1：接线</h2>
 <ol>
-  <li>板子断电（拔电源更安心）。</li>
+  <li>接线前断开开发板电源。</li>
   <li>按总表：先 GND（共地），再 5V，再信号线 IO1_5 → IN，最后接风扇。</li>
   <li>确认跳线帽在 <strong>H</strong>；没碰到 Fan Power 白色插座。</li>
   <li>再上电。</li>
@@ -268,10 +268,18 @@
 
 <section id="step-run">
 <h2>步骤 3：编译运行</h2>
-<p>板端原生编译最省事。把代码放到板子上（SCP 或仓库同步）后：</p>
-<pre><span class="p">$</span> cd ~/ruyi-riscv-embedded/chapter03-lab
-<span class="p">$</span> make
-<span class="p">$</span> sudo ./temperature_fan</pre>
+<p>主路径：在 <strong>x86 Linux</strong> 上激活第一章的 <code>venv-gnu-ruyisdk</code>，交叉编译后再拷到<strong>荔枝派</strong>运行。同一份 Makefile 在荔枝派上会自动改用板载 <code>gcc</code>（若主机交叉因缺少 <code>libgpiod</code> 失败，可直接在荔枝派上 <code>make</code>）。</p>
+<pre><span class="c"># —— 在 x86 Linux 上 ——</span>
+<span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
+<span class="p">$</span> cd chapters/ch03/code
+<span class="p">$</span> make clean &amp;&amp; make sol
+<span class="p">$</span> file temperature_fan-sol
+<span class="c"># 期望含 RISC-V；若报找不到 gpiod.h，改到荔枝派上编译（见下）</span>
+
+<span class="c"># —— 在荔枝派上（源码目录）——</span>
+<span class="p">$</span> cd ~/ruyi-riscv-embedded/ch03-lab
+<span class="p">$</span> make clean &amp;&amp; make sol
+<span class="p">$</span> sudo ./temperature_fan-sol</pre>
 <p>若讲义跟做留下的 <code>gpioset</code> 仍占着 line 5，先 <code>sudo pkill -x gpioset</code>。</p>
 <div class="info">
   <strong>为什么 <code>sudo</code>？</strong><code>/dev/gpiochip*</code> 默认归 root。
@@ -280,7 +288,7 @@
 </section>
 
 <section id="step-accept">
-<h2>步骤 4：假温度验收</h2>
+<h2>步骤 4：模拟温度控制验收</h2>
 <ul>
   <li>启动打印 <code>fake temperature: T_HIGH=28.0 T_LOW=26.0</code>，并说明继电器在 IO1_5。</li>
   <li>周期性打印 <code>[INFO] temp=…C fan=OFF|ON</code>，假温度在 24~31 之间来回。</li>
@@ -325,7 +333,7 @@
   <tr><td>接线</td><td>IO1_5 直连继电器 IN；继电器 5V/GND；风扇走 NO–COM；跳帽 H；共地</td><td></td></tr>
   <tr><td>自己写的函数</td><td><code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code> 在学生文件中实现；<code>make</code> 通过</td><td></td></tr>
   <tr><td>运行</td><td><code>sudo ./temperature_fan</code> 打印假温度</td><td></td></tr>
-  <tr><td>控制</td><td>超 28°C 开、低于 26°C 关，风扇真转/真停</td><td></td></tr>
+  <tr><td>控制</td><td>超 28°C 开、低于 26°C 关，风扇启动或停止</td><td></td></tr>
   <tr><td>改阈值</td><td>改过 T_HIGH/T_LOW（或 STEP_DELTA）并观察到开/关点变化</td><td></td></tr>
 </table>
 

@@ -192,7 +192,7 @@
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>讲义与实验怎么衔接：</strong>讲义打透边界与信号链，并用 <code>gpioset</code> 控一次继电器。实验接上风扇负载，由你写出 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>，跑通假温度闭环并改阈值。
+  <strong>讲义与实验怎么衔接：</strong>讲义打透边界与信号链，并用 <code>gpioset</code> 控一次继电器。实验接上风扇负载，由你写出 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>，跑通模拟温度控制并改阈值。
 </div>
 </section>
 
@@ -293,7 +293,7 @@
 <p>许多教材默认「GPIO = 3.3 V」。荔枝派 4A 的 SoC <strong>原生 IO 为 1.8 V</strong>。排针上的 3.3 V / 5 V 电源脚是给外设供电的；信号脚仍是 1.8 V 域。</p>
 
 <table>
-  <tr><th>你接什么</th><th>1.8 V GPIO 与模块的关系</th><th>本课态度</th></tr>
+  <tr><th>你接什么</th><th>1.8 V GPIO 与模块的关系</th><th>连接要求</th></tr>
   <tr><td>本课继电器（5V 光耦隔离模块）</td><td>输入侧是光耦 LED，1.8 V 足够触发</td><td><strong>直连 GPIO（IO1_5）</strong></td></tr>
   <tr><td>需要 3.3 V 电平的传感器（如第四章的 DHT22）</td><td>信号电平要对齐 3.3 V</td><td>第四章再讲电平转换</td></tr>
 </table>

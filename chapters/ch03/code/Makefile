@@ -1,23 +1,34 @@
-# temperature_fan — 第三章 GPIO 输出：假温度阈值控制继电器/风扇
+# temperature_fan — 第三章：模拟温度控制继电器/风扇
 #
 # 默认编学生版：make
 # 参考实现：    make sol
-# 板端原生（板子自带 gcc）：make
-# 主机交叉：    make CROSS_COMPILE=riscv64-unknown-linux-gnu-
 #
-# 全程 C 语言，不用 C++。
-# 板上目录约定：~/ruyi-riscv-embedded/chapter03-lab/
+# 在 x86 Linux 上（需先激活 venv-gnu-ruyisdk）：
+#   make / make sol
+#   file temperature_fan-sol    # 应含 RISC-V
+#   再将可执行文件拷到荔枝派运行
+#
+# 在荔枝派（riscv64）上：
+#   make / make sol
+#   sudo ./temperature_fan-sol
+#
+# 板上目录约定：~/ruyi-riscv-embedded/ch03-lab/
 
-CROSS_COMPILE ?=
-CC            ?= $(CROSS_COMPILE)gcc
-CFLAGS        ?= -Wall -Wextra -O2
-LDLIBS        ?= -lgpiod
+UNAME_M := $(shell uname -m)
+ifeq ($(UNAME_M),riscv64)
+  CROSS_COMPILE ?=
+else
+  CROSS_COMPILE ?= riscv64-ruyisdk-linux-gnu-
+endif
 
-TARGET        := temperature_fan
-SRC           := temperature_fan.c
+CC     := $(CROSS_COMPILE)gcc
+CFLAGS ?= -Wall -Wextra -O2
+LDLIBS ?= -lgpiod
 
-SOL_TARGET    := temperature_fan-sol
-SOL_SRC       := temperature_fan-sol.c
+TARGET     := temperature_fan
+SRC        := temperature_fan.c
+SOL_TARGET := temperature_fan-sol
+SOL_SRC    := temperature_fan-sol.c
 
 all: $(TARGET)
 

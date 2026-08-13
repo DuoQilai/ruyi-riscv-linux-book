@@ -241,42 +241,41 @@ RuyiSDK / ruyi（电脑上装工具链与镜像的入口）</div>
 
 <h3 id="s1.1-ruyi">安装 RuyiSDK</h3>
 <p><strong>RuyiSDK</strong> 是面向 RISC-V 开发的工具包集合；命令入口叫 <code>ruyi</code>，用来查包、装工具链、查设备支持。真正把 C 代码编成机器码的是里面的 <strong>GCC</strong>（GNU 编译器）。关系可以记成：ruyi 管「装什么」，GCC 管「怎么编」。</p>
-<p><strong>三元组</strong>（target triple）是编译器目标平台的简写，格式大致是「CPU-厂商-系统」。本课统一用 <code>riscv64-unknown-linux-gnu</code>：意思是「为 64 位 RISC-V CPU、跑 Linux、用 GNU 用户态约定」生成程序。</p>
+<p><strong>三元组</strong>（target triple）是编译器目标平台的简写，格式大致是「CPU-厂商-系统」。本课统一用 <code>riscv64-ruyisdk-linux-gnu</code>（经 RuyiSDK 的 gnu-ruyisdk 提供）：意思是「为 64 位 RISC-V CPU、跑 Linux、用 GNU 用户态约定」生成程序。</p>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>记录电脑环境</strong><br><code>uname -a</code> / <code>uname -m</code> — 确认是 x86_64，写入个人环境清单。</div></li>
-  <li><span class="step-num">2</span><div><strong>安装 ruyi</strong><br>按课程安装说明装好后：<code>command -v ruyi</code> 应给出路径；<code>ruyi --version</code> 记录版本号。</div></li>
-  <li><span class="step-num">3</span><div><strong>更新软件源并查工具链</strong><br><code>ruyi update</code>，再 <code>ruyi list | grep toolchain</code>，按说明安装 RISC-V GNU Toolchain。</div></li>
-  <li><span class="step-num">4</span><div><strong>确认目标三元组</strong><br><code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code> 应打印 <code>riscv64-unknown-linux-gnu</code>。</div></li>
+  <li><span class="step-num">1</span><div><strong>记录电脑环境</strong><br>在 <strong>x86 Linux</strong> 上执行 <code>uname -a</code> / <code>uname -m</code> — 确认是 x86_64。</div></li>
+  <li><span class="step-num">2</span><div><strong>安装 ruyi</strong><br><code>command -v ruyi</code> 应给出路径；<code>ruyi --version</code> 记录版本号。</div></li>
+  <li><span class="step-num">3</span><div><strong>更新并安装 gnu-ruyisdk 工具链</strong><br>在 <strong>x86 Linux</strong> 上：<code>ruyi update</code>，再 <code>ruyi install gnu-ruyisdk</code>。</div></li>
+  <li><span class="step-num">4</span><div><strong>创建并激活虚拟环境</strong><br>在 <strong>x86 Linux</strong> 上（目录自定，下文以家目录为例）：
+<pre style="margin:8px 0;">ruyi venv -t gnu-ruyisdk manual venv-gnu-ruyisdk
+. ~/venv-gnu-ruyisdk/bin/ruyi-activate</pre>
+每次新开终端都要重新激活。磁盘紧张时可加 <code>--without-sysroot</code>（仍能交叉编译本课 CoreMark）。</div></li>
+  <li><span class="step-num">5</span><div><strong>确认交叉编译器</strong><br><code>riscv64-ruyisdk-linux-gnu-gcc -v</code>；<code>riscv64-ruyisdk-linux-gnu-gcc -dumpmachine</code> 应打印 <code>riscv64-ruyisdk-linux-gnu</code>。</div></li>
 </ol>
 
-<pre><span class="c"># 电脑架构</span>
-<span class="p">$</span> uname -a
-
-<span class="c"># ruyi 位置与版本</span>
-<span class="p">$</span> command -v ruyi
-<span class="p">$</span> ruyi --version
-
-<span class="c"># 更新源并查询工具链</span>
+<pre><span class="c"># 以下均在 x86 Linux 上执行</span>
+<span class="p">$</span> uname -m
 <span class="p">$</span> ruyi update
-<span class="p">$</span> ruyi list | grep toolchain
-
-<span class="c"># 工具链三元组</span>
-<span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
-riscv64-unknown-linux-gnu</pre>
+<span class="p">$</span> ruyi install gnu-ruyisdk
+<span class="p">$</span> ruyi venv -t gnu-ruyisdk manual venv-gnu-ruyisdk
+<span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
+<span class="p">$</span> riscv64-ruyisdk-linux-gnu-gcc -v
+<span class="p">$</span> riscv64-ruyisdk-linux-gnu-gcc -dumpmachine
+riscv64-ruyisdk-linux-gnu</pre>
 
 <h3 id="s1.1-verify">最小编译验证</h3>
 <p>写一个空程序，用交叉编译器编一下，再用 <code>file</code> 看产物是不是 RISC-V。<strong>ELF</strong> 是 Linux 上可执行文件与目标文件的常见容器格式；<code>file</code> 会读出里面的架构字段。</p>
 
 <pre><span class="p">$</span> printf 'int main(void) { return 0; }\n' &gt; mini.c
-<span class="p">$</span> riscv64-unknown-linux-gnu-gcc mini.c -o mini-riscv
+<span class="p">$</span> riscv64-ruyisdk-linux-gnu-gcc mini.c -o mini-riscv
 <span class="p">$</span> file mini-riscv
 mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 
 <p>在电脑上直接 <code>./mini-riscv</code> 会失败——指令集不同。验收看 <code>file</code> 输出里有 RISC-V 字样即可。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>荔枝派 4A 接口标注 · 个人环境清单 · ruyi 路径与版本 · 三元组 <code>riscv64-unknown-linux-gnu</code> · 最小 RISC-V 可执行文件与 <code>file</code> 日志。
+  <strong>本节成果：</strong>荔枝派 4A 接口标注 · 个人环境清单 · ruyi 路径与版本 · 三元组 <code>riscv64-ruyisdk-linux-gnu</code> · 最小 RISC-V 可执行文件与 <code>file</code> 日志。
 </div>
 </section>
 
@@ -388,7 +387,7 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <h3 id="s1.3-why">为何必须交叉编译</h3>
 <p>开发电脑的 CPU 执行 <strong>x86_64</strong>（少数机器是 ARM）机器码；荔枝派 4A 执行 <strong>riscv64</strong> 机器码。两边指令编码不同。</p>
 <p>在电脑上用本机 <code>gcc main.c -o app</code>，得到的是本机架构的 ELF，只能在本机跑。拷到板端，Linux 内核会拒绝加载，常见报错是 <code>Exec format error</code>。板端编好的 RISC-V 程序拷回电脑，同样跑不了。</p>
-<p><strong>交叉工具链</strong>仍在电脑上运行，但专门生成 RISC-V 机器码，并链接面向 RISC-V Linux 的 C 库。本课经 RuyiSDK 安装，前缀是 <code>riscv64-unknown-linux-gnu-</code>。<strong>三元组</strong> <code>riscv64-unknown-linux-gnu</code> 标明：CPU 为 riscv64、系统为 Linux、用户态约定为 GNU。选成 <code>unknown-elf</code> 会得到裸机工具链，不适合本课跑 Linux 用户程序。</p>
+<p><strong>交叉工具链</strong>仍在电脑上运行，但专门生成 RISC-V 机器码，并链接面向 RISC-V Linux 的 C 库。本课经 RuyiSDK 安装，前缀是 <code>riscv64-ruyisdk-linux-gnu-</code>。<strong>三元组</strong> <code>riscv64-ruyisdk-linux-gnu</code> 标明：CPU 为 riscv64、系统为 Linux、用户态约定为 GNU。选成 <code>unknown-elf</code> 会得到裸机工具链，不适合本课跑 Linux 用户程序。</p>
 
 <h3 id="s1.3-paths">同一份源码，三条编译路径</h3>
 <p>同一份 <code>main.c</code> 可以走出三种产物。分清「编给谁、能在哪跑」：</p>
@@ -426,7 +425,7 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <p><strong>Makefile</strong> 描述如何编译工程；敲 <code>make</code> 按规则调用编译器。把交叉前缀写进 Makefile，避免每次手敲冗长命令。</p>
 
 <pre><span class="c"># Makefile — 交叉编译模板</span>
-<span class="k">CROSS_COMPILE</span> := riscv64-unknown-linux-gnu-
+<span class="k">CROSS_COMPILE</span> := riscv64-ruyisdk-linux-gnu-
 <span class="k">CC</span>            := $(CROSS_COMPILE)gcc
 <span class="k">CFLAGS</span>        := -O2 -Wall
 <span class="k">TARGET</span>        := app
@@ -450,7 +449,7 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <span class="c"># 本机可执行</span>
 
 <span class="p">$</span> make
-<span class="c"># 或：riscv64-unknown-linux-gnu-gcc main.c -o app</span>
+<span class="c"># 或：riscv64-ruyisdk-linux-gnu-gcc main.c -o app</span>
 <span class="p">$</span> file app
 <span class="c"># … ELF … UCB RISC-V …</span>
 <span class="p">$</span> ./app
@@ -463,19 +462,13 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <h3 id="s1.3-coremark">构建 CoreMark（讲义收口：编出 + file）</h3>
 <p><strong>CoreMark</strong> 是测处理器算力的小基准程序，输出可比较的分数。本章用它走通工具链：先在主机交叉编出 RISC-V 可执行文件；<strong>传到板端并跑出分数</strong>是本章实验的硬目标。</p>
 
-<pre><span class="c"># 获取源码（地址以课程指引为准）</span>
-<span class="p">$</span> git clone https://github.com/eembc/coremark.git
-<span class="p">$</span> cd coremark
-
-<span class="c"># 交叉编译</span>
-<span class="p">$</span> make PORT_DIR=linux64 \
-       CC=riscv64-unknown-linux-gnu-gcc \
-       LD=riscv64-unknown-linux-gnu-gcc \
-       CFLAGS="-O2 -DPERFORMANCE_RUN=1" \
-       XCFLAGS="-DFLAGS_STR=\"cross-riscv64\""
-
-<span class="p">$</span> file coremark.exe
-coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
+<pre><span class="c"># 在 x86 Linux 上：先激活虚拟环境，再进入课程仓库</span>
+<span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
+<span class="p">$</span> cd chapters/ch01/code
+<span class="p">$</span> make
+<span class="p">$</span> file coremark/coremark.exe
+coremark/coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
+<p>源码已放在 <code>chapters/ch01/code/coremark/</code>（官方 CoreMark）。Makefile 在 <strong>x86 Linux</strong> 上自动选用交叉编译器；在<strong>荔枝派</strong>上则自动使用板载 <code>gcc</code>。</p>
 
 <div class="info">
   <strong>本节收口：</strong>产物文件名因版本而异（常见 <code>coremark.exe</code>）。请确认 <code>file</code> 输出中含 RISC-V 或 UCB RISC-V 字样，并保存该可执行文件与对应终端日志。接下来把文件传到荔枝派 4A、核对完整性、在板端跑出分数并整理证据，请打开 <a href="lab.html">本章实验</a> 继续。

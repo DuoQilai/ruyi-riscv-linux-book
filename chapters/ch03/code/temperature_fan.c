@@ -8,7 +8,7 @@
  * 契约与思考题：chapters/ch03/lab.html
  * 对照答案：temperature_fan-sol.c（make sol）
  *
- * 板：荔枝派 4A + RevyOS。libgpiod v2。全程 C。
+ * 板：荔枝派 4A + RevyOS。libgpiod v2。模拟温度控制继电器/风扇。
  * 脚：IO1_5 → gpiochip5 line 5 → 继电器信号端（直连）。
  */
 #include <gpiod.h>

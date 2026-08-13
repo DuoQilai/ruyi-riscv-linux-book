@@ -130,7 +130,7 @@
   <tr><th>前提</th><th>你怎么确认「已经具备」</th><th>对应讲义</th><th>□</th></tr>
   <tr>
     <td>ruyi 与交叉工具链已安装</td>
-    <td>主机执行 <code>riscv64-unknown-linux-gnu-gcc -dumpmachine</code>，输出为 <code>riscv64-unknown-linux-gnu</code></td>
+    <td>在 <strong>x86 Linux</strong> 上激活 <code>venv-gnu-ruyisdk</code> 后执行 <code>riscv64-ruyisdk-linux-gnu-gcc -dumpmachine</code>，输出为 <code>riscv64-ruyisdk-linux-gnu</code></td>
     <td>1.1</td>
     <td></td>
   </tr>
@@ -160,18 +160,18 @@
 <p>下面是本实验的主体步骤。若交叉编译命令需要重做，请回到讲义 1.3。</p>
 
 <h3>1. 在主机确认 CoreMark 产物架构</h3>
-<p>在主机 CoreMark 构建目录中执行（产物文件名以你讲义 1.3 实际生成为准，常见为 <code>coremark.exe</code>）：</p>
-<pre><span class="p">$</span> file coremark.exe
+<p>在 <strong>x86 Linux</strong> 上进入 <code>chapters/ch01/code</code>（或板上同步目录 <code>~/ruyi-riscv-embedded/ch01-lab</code> 的主机交叉产物）：</p>
+<pre><span class="p">$</span> file coremark/coremark.exe
 <span class="c"># 成功：一行摘要里应出现 UCB RISC-V 或 RISC-V 字样</span>
 <span class="c"># 失败：若出现 x86-64 / Intel 80386，说明没用交叉工具链，回讲义 1.3 重编</span>
 
-<span class="p">$</span> sha256sum coremark.exe
+<span class="p">$</span> sha256sum coremark/coremark.exe
 <span class="c"># 记下这串哈希，稍后与板端对照，证明 SCP 传的是同一份文件</span></pre>
 <p><strong>本步成功判据：</strong><code>file</code> 确认是 RISC-V ELF；你已把 <code>sha256sum</code> 结果抄进下方「必记字段」表。</p>
 
 <h3>2. SCP 上传到荔枝派 4A 并核对完整性</h3>
 <p><strong>SCP</strong>（Secure Copy）通过 SSH 通道把文件拷到远端。把下面命令里的 <code>user</code> 和 <code>board-ip</code> 换成你板子的真实用户名与局域网 IP（可先在板端执行 <code>ip a</code> 查看）。</p>
-<pre><span class="p">$</span> scp coremark.exe user@board-ip:/tmp/
+<pre><span class="p">$</span> scp coremark/coremark.exe user@board-ip:/tmp/
 <span class="p">$</span> ssh user@board-ip 'sha256sum /tmp/coremark.exe'
 <span class="c"># 板端打印的哈希必须与主机上一步完全一致</span></pre>
 <p><strong>本步成功判据：</strong>两端哈希一致；板端路径 <code>/tmp/coremark.exe</code>（或你实际选用的路径）可被列出。</p>
@@ -206,9 +206,9 @@
 <span class="c"># uname -m 的期望输出：riscv64</span>
 
 <span class="c"># 主机：证明交叉工具链三元组正确</span>
-<span class="p">$</span> riscv64-unknown-linux-gnu-gcc -dumpmachine
-<span class="c"># 期望输出：riscv64-unknown-linux-gnu</span></pre>
-<p><strong>本步成功判据：</strong>三行输出均已保存；<code>uname -m</code> 为 <code>riscv64</code>；<code>-dumpmachine</code> 为 <code>riscv64-unknown-linux-gnu</code>。</p>
+<span class="p">$</span> riscv64-ruyisdk-linux-gnu-gcc -dumpmachine
+<span class="c"># 期望输出：riscv64-ruyisdk-linux-gnu</span></pre>
+<p><strong>本步成功判据：</strong>三行输出均已保存；<code>uname -m</code> 为 <code>riscv64</code>；<code>-dumpmachine</code> 为 <code>riscv64-ruyisdk-linux-gnu</code>。</p>
 </section>
 
 <section id="accept">
@@ -219,7 +219,7 @@
   <tr><td>烧录后荔枝派 4A 可启动</td><td>启动日志或串口/SSH 登录截图</td><td></td></tr>
   <tr><td>SSH 可登录板端</td><td><code>ssh … 'hostname; uname -m'</code> 输出</td><td></td></tr>
   <tr><td><code>uname -m</code> 为 <code>riscv64</code></td><td>同上日志中的架构行</td><td></td></tr>
-  <tr><td>工具链三元组正确</td><td><code>-dumpmachine</code> → <code>riscv64-unknown-linux-gnu</code></td><td></td></tr>
+  <tr><td>工具链三元组正确</td><td><code>-dumpmachine</code> → <code>riscv64-ruyisdk-linux-gnu</code></td><td></td></tr>
   <tr><td>CoreMark 交叉编译产物为 RISC-V</td><td>主机 <code>file</code> 输出</td><td></td></tr>
   <tr><td>SCP 上板成功且文件完整</td><td>两端 <code>sha256sum</code> 一致</td><td></td></tr>
   <tr><td>板端跑出 CoreMark 分数并已记录</td><td>完整运行日志 + 「必记字段」表</td><td></td></tr>

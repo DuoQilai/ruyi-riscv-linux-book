@@ -4,7 +4,7 @@
  * 默认 make 编的是 temperature_fan.c（学生版）。
  * 对照本文件：make sol && sudo ./temperature_fan-sol
  *
- * 板：荔枝派 4A + RevyOS。libgpiod v2。全程 C。
+ * 板：荔枝派 4A + RevyOS。libgpiod v2。模拟温度控制继电器/风扇。
  * 脚：IO1_5 → gpiochip5 line 5 → 继电器信号端（直连）。
  */
 #include <gpiod.h>
@@ -109,7 +109,7 @@ int main(void)
 		return 1;
 	}
 
-	printf("[INFO] fake temperature: T_HIGH=%.1f T_LOW=%.1f\n",
+	printf("[INFO] 模拟温度控制: T_HIGH=%.1f T_LOW=%.1f\n",
 	       T_HIGH, T_LOW);
 	printf("[INFO] relay/fan on IO1_5 (gpiochip5 line 5); Ctrl+C to stop\n");
 
