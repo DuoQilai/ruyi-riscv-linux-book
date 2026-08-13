@@ -68,3 +68,4 @@ chapters/**/manuals/**/*.png
 # Regenerated chapter printouts (not source of truth)
 chapters/*/lab.pdf
 chapters/*/lecture.pdf
+chapters/*/code/**/build/
