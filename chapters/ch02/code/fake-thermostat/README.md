@@ -1,14 +1,20 @@
 # 假温控 · 改代码闯关
 
-半成品在 `src/thermo.c`（全文即学生动手区），标了 `STUDENT TODO [L1]`–`[L4]`：比较、结构体字段、指针与错误分支。  
-默认 **本机 gcc**；也可 `make CROSS_COMPILE=riscv64-unknown-linux-gnu-`。
+半成品在 `src/thermo.c`（学生动手区），标了 `STUDENT TODO [L1]`–`[L4]`。  
+参考实现：`src/thermo-sol.c`，`make sol` → `./build/fake-thermo-sol`。
+
+默认 **本机 gcc**（在 x86 Linux 上验证；不必上板）。
 
 ## 构建
 
 ```bash
+# 学生半成品
 make
 ./build/fake-thermo
-printf '25\n27\n29\n27\n24\n-1\n' | ./build/fake-thermo --stdin
+
+# 教师/助教参考实现
+make sol
+printf '25\n27\n29\n27\n24\n-1\n' | ./build/fake-thermo-sol --stdin
 ```
 
 ## 修好后的期望行为
