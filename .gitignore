@@ -64,3 +64,7 @@ chapters/**/manuals/**/*.jpeg
 chapters/**/manuals/**/*.PNG
 chapters/**/manuals/**/*.png
 !chapters/**/manuals/**/lpi4a-wiki-assets/**
+
+# Regenerated chapter printouts (not source of truth)
+chapters/*/lab.pdf
+chapters/*/lecture.pdf
