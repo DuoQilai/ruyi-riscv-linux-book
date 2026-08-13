@@ -68,7 +68,7 @@ int main(void)
 		return 1;
 	}
 
-	printf("[INFO] fake temperature: T_HIGH=%.1f T_LOW=%.1f\n",
+	printf("[INFO] 模拟温度控制: T_HIGH=%.1f T_LOW=%.1f\n",
 	       T_HIGH, T_LOW);
 	printf("[INFO] relay/fan on IO1_5 (gpiochip5 line 5); Ctrl+C to stop\n");
 
