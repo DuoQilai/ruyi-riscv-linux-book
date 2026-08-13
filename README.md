@@ -46,9 +46,7 @@ docs/course-evaluation-standard.md   ← 课程质量自评标准
 
 ## 构建与发布
 
-```bash
-bash misc/scripts/build.sh "update message"
-```
+在 `enzo` 分支改完后正常 `git commit` / `git push` 即可。个人预览站需要更新时，把课程页面拷到个人 Pages 仓库对应目录。
 
 线上入口：https://enzoding-rgb.github.io/ruyi-riscv-book/  
 大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html  
@@ -72,7 +70,7 @@ ruyi-riscv-linux-book/
 │   └── ch01/ … ch06/
 ├── reference/
 └── misc/
-    ├── scripts/build.sh
+    ├── scripts/
     ├── boards/
     └── archive/
 ```
