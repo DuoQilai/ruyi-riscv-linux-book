@@ -195,6 +195,14 @@
   <tr><td>6</td><td>读失败（哨兵）</td><td>保持 OFF</td><td>打印 <code>READ_FAIL</code>，不根据垃圾温度改风扇</td></tr>
 </table>
 <p><strong>本步成功判据：</strong>六步输出与上表一致；能口头指出半成品里至少三类坑（比较、字段、指针、错误分支中任选）。</p>
+<figure>
+  <img src="assets/Figure_1.png" alt="x86 上 make sol 后 fake-thermo-sol 六步 OFF/ON/READ_FAIL">
+  <figcaption>图 1　参考实现 <code>make sol</code>：25 OFF、27 OFF、29 ON、27 ON、24 OFF、READ_FAIL 保持 OFF</figcaption>
+</figure>
+<figure>
+  <img src="assets/Figure_2.png" alt="荔枝派上同样跑通 fake-thermo-sol 六步">
+  <figcaption>图 2　荔枝派上用板载 <code>gcc</code> 复跑同一条 SOL 命令，输出一致</figcaption>
+</figure>
 </section>
 
 <section id="accept">

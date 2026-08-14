@@ -259,8 +259,8 @@
 <section id="step-accept">
 <h2>联调验收</h2>
 <figure>
-  <img src="assets/Figure_1.png" alt="荔枝派上编译运行 cmd_thermo-sol，file 为 RISC-V，status 读出温湿度">
-  <figcaption>图 1　在荔枝派上交叉/原生编译后运行参考实现：<code>file</code> 为 RISC-V；敲 <code>status</code> 得到温湿度与风扇状态</figcaption>
+  <img src="assets/Figure_1.png" alt="荔枝派上编译运行 cmd_thermo-sol，file 为 RISC-V，status 读出温湿度并 set temp 开风扇">
+  <figcaption>图 1　荔枝派上 <code>make sol</code>：产物为 RISC-V；<code>status</code> 读出温湿度；<code>set temp 20</code> 后选择开风扇</figcaption>
 </figure>
 <ol>
   <li>启动后等几秒（让 DHT 先采到样），敲 <code>status</code>：应出现 <code>[STATUS] temp=… hum=…</code>；平时终端不应刷温湿度。</li>

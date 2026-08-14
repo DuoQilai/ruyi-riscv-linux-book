@@ -175,6 +175,10 @@
 <span class="p">$</span> sha256sum coremark/coremark.exe
 <span class="c"># 记下这串哈希，稍后与板端对照，证明 SCP 传的是同一份文件</span></pre>
 <p><strong>本步成功判据：</strong><code>file</code> 确认是 RISC-V ELF；你已把 <code>sha256sum</code> 结果抄进下方「必记字段」表。</p>
+<figure>
+  <img src="assets/Figure_1.png" alt="x86 上交叉编译 CoreMark，file 显示 UCB RISC-V">
+  <figcaption>图 1　在 x86 Linux 上激活 <code>venv-gnu-ruyisdk</code> 后 <code>make</code>：产物为 RISC-V ELF</figcaption>
+</figure>
 
 <h3>2. SCP 上传到荔枝派 4A 并核对完整性</h3>
 <p><strong>SCP</strong>（Secure Copy）通过 SSH 通道把文件拷到远端。把下面命令里的 <code>user</code> 和 <code>board-ip</code> 换成你板子的真实用户名与局域网 IP（可先在板端执行 <code>ip a</code> 查看）。</p>
@@ -191,8 +195,8 @@
 <p>程序会运行一段时间后打印结果。请从输出中抄录 CoreMark 分数（常见字段为 <code>Iterations/Sec</code>，或汇总行里的 CoreMark 总分），并把完整终端输出另存为日志文件（截图或重定向均可），同时写入下方「必记字段」表。</p>
 <p><strong>本步成功判据：</strong>程序正常结束并打出分数；你已把分数与运行日期写入「必记字段」表，并保存完整日志。</p>
 <figure>
-  <img src="assets/Figure_1.png" alt="荔枝派上编译并运行 CoreMark：file 显示 RISC-V，Correct operation validated">
-  <figcaption>图 1　在荔枝派上 <code>make</code> 后运行 CoreMark：产物为 RISC-V，跑分通过校验</figcaption>
+  <img src="assets/Figure_2.png" alt="荔枝派上编译并运行 CoreMark：file 显示 RISC-V，Correct operation validated">
+  <figcaption>图 2　在荔枝派上 <code>make</code> 后运行 CoreMark：产物为 RISC-V，跑分通过校验</figcaption>
 </figure>
 
 <div class="warn">
