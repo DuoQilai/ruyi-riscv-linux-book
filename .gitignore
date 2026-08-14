@@ -69,3 +69,4 @@ chapters/**/manuals/**/*.png
 chapters/*/lab.pdf
 chapters/*/lecture.pdf
 chapters/*/code/**/build/
+chapters/ch02/code/hello/hello
