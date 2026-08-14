@@ -1,6 +1,6 @@
-# 假温控 · 改代码闯关
+# 假温控 · 写滞回 · 改读数
 
-半成品在 `src/thermo.c`（学生动手区），标了 `STUDENT TODO [L1]`–`[L4]`。  
+半成品在 `src/thermo.c`（学生动手区）：`thermo_decide` 是空函数，要你按契约写；`thermo_read` 里还埋了 L3/L4。  
 参考实现：`src/thermo-sol.c`，`make sol` → `./build/fake-thermo-sol`。
 
 默认 **本机 gcc**（在 x86 Linux 上验证；不必上板）。

@@ -3,10 +3,9 @@
  *
  * 【学生动手】本文件全部是你要改的区域。参考实现见 thermo-sol.c（make sol）。
  * STUDENT TODO 关卡（一次只改一类）：
- *   L1  比较方向写反
- *   L2  误用 period_ms 当阈值
- *   L3  未检查空指针就解引用
- *   L4  读失败仍返回「成功」并写出垃圾温度
+ *   W1  从空实现 thermo_decide（滞回 + 正确字段 + 空指针）
+ *   L3  thermo_read：未检查空指针就解引用
+ *   L4  thermo_read：读失败仍返回「成功」并写出垃圾温度
  *
  * 对照：chapters/ch02/lab.html 关卡表；脚手架 README.md
  */
@@ -39,12 +38,14 @@ int thermo_read(float *out_c)
 
 void thermo_decide(const ThermoConfig *cfg, float temp_c, int *fan_on)
 {
-	/* STUDENT TODO [L3]：cfg / fan_on 为空时安全返回 */
-	/* STUDENT TODO [L1]：比较方向写反（该开却关 / 该关却开） */
-	/* STUDENT TODO [L2]：用 period_ms 冒充 t_high —— 应使用 cfg->t_high */
-	if (temp_c > (float)cfg->period_ms) {
-		*fan_on = 0; /* BUG：该开却关 */
-	} else if (temp_c < cfg->t_low) {
-		*fan_on = 1; /* BUG：该关却开 */
-	}
+	/* STUDENT TODO [W1]：按 lab 契约从空写出本函数。
+	 * cfg 或 fan_on 为空 → 直接返回。
+	 * 只用 cfg->t_high / cfg->t_low，不要用 period_ms。
+	 * temp_c > t_high → *fan_on = 1
+	 * temp_c < t_low  → *fan_on = 0
+	 * 中间保持 *fan_on 不变。
+	 */
+	(void)cfg;
+	(void)temp_c;
+	(void)fan_on;
 }
