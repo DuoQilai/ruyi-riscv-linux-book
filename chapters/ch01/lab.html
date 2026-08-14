@@ -195,9 +195,10 @@
 <p>程序会运行一段时间后打印结果。请从输出中抄录 CoreMark 分数（常见字段为 <code>Iterations/Sec</code>，或汇总行里的 CoreMark 总分），并把完整终端输出另存为日志文件（截图或重定向均可），同时写入下方「必记字段」表。</p>
 <p><strong>本步成功判据：</strong>程序正常结束并打出分数；你已把分数与运行日期写入「必记字段」表，并保存完整日志。</p>
 <figure>
-  <img src="assets/Figure_2.png" alt="荔枝派上编译并运行 CoreMark：file 显示 RISC-V，Correct operation validated">
-  <figcaption>图 2　在荔枝派上 <code>make</code> 后运行 CoreMark：产物为 RISC-V，跑分通过校验</figcaption>
+  <img src="assets/Figure_2.png" alt="荔枝派上 native make 并运行 CoreMark：file 显示 RISC-V，Correct operation validated">
+  <figcaption>图 2　并列路径：在荔枝派上 <code>make</code> 后运行 CoreMark（不是步骤 2–3 的 SCP 交叉产物）；产物为 RISC-V，跑分通过校验</figcaption>
 </figure>
+<p>本实验验收走步骤 2–3 的 SCP 路径。图 2 是板上自己编译的对照，两条都会即可。</p>
 
 <div class="warn">
   <strong>排错：</strong>板端报 <code>Exec format error</code> 时，先回主机用 <code>file</code> 核对是否误用了主机 GCC；再核对 SCP 目标路径与 <code>chmod +x</code> 是否做过。若 SSH 连不上，回讲义 1.2 检查网线、IP 与防火墙。命令细节以讲义 1.2 / 1.3 为准。

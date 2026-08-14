@@ -259,8 +259,8 @@
 <section id="step-accept">
 <h2>联调验收</h2>
 <figure>
-  <img src="assets/Figure_1.png" alt="荔枝派上编译运行 cmd_thermo-sol，file 为 RISC-V，status 读出温湿度并 set temp 开风扇">
-  <figcaption>图 1　荔枝派上 <code>make sol</code>：产物为 RISC-V；<code>status</code> 读出温湿度；<code>set temp 20</code> 后选择开风扇</figcaption>
+  <img src="assets/Figure_1.png" alt="荔枝派上真 DHT 编译运行 cmd_thermo-sol：file 为 RISC-V，status 读出温湿度并 set temp 开风扇">
+  <figcaption>图 1　荔枝派上 <code>make sol</code>（真 DHT）：产物为 RISC-V；<code>status</code> 读出温湿度；<code>set temp 20</code> 后选择开风扇</figcaption>
 </figure>
 <ol>
   <li>启动后等几秒（让 DHT 先采到样），敲 <code>status</code>：应出现 <code>[STATUS] temp=… hum=…</code>；平时终端不应刷温湿度。</li>
@@ -271,8 +271,8 @@
   <li>（可选，真 DHT）哈气提高湿度，观察是否按湿度 bar 开风扇。</li>
 </ol>
 <figure>
-  <img src="assets/Figure_2.png" alt="荔枝派上 set temp / set humidity 后风扇从关到开">
-  <figcaption>图 2　改阈值后下一轮采样立刻参与控温：<code>set temp 20</code> 后本次采样选择开风扇，<code>status</code> 显示风扇=开</figcaption>
+  <img src="assets/Figure_2.png" alt="荔枝派模拟模式：status 风扇关，set temp 20 后选择开风扇，再 status 风扇开">
+  <figcaption>图 2　模拟传感器：<code>status</code> 时风扇=关；<code>set temp 20</code> 后本次采样选择开风扇；再 <code>status</code> 显示风扇=开</figcaption>
 </figure>
 <div class="info">
   <strong>Ctrl+C：</strong>主程序会先拉低再释放。若被 <code>kill -9</code> / 崩溃后风扇一直转：<code>make fan-off && sudo ./fan_off</code>（默认保持拉低直到 Ctrl+C；<code>--once</code> 只脉冲一次）。
