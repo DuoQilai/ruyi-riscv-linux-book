@@ -40,7 +40,7 @@
 
 ### 1. 仓库 `reference/`（嵌入式资料包）
 
-目录里主要是两类：较大的旧包 `embedded-course-materials/`，以及精简后的 `linux-emb-material2/`（笔记 + 学习路线图）。
+目录里主要是两类本地大包（git 不跟踪）：较大的旧包 `embedded-course-materials/`，以及精简后的 `linux-emb-material2/`。课程旧稿与板卡备忘在可跟踪的 `reference/archive/`、`reference/boards/`。
 
 | 态度 | 材料 | 用法 |
 |------|------|------|

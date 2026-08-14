@@ -19,8 +19,8 @@
 #define GPIO_CHIP_PATH   "/dev/gpiochip5"
 #define FAN_LINE         5   /* IO1_5 */
 
-#define T_HIGH           28.0f
-#define T_LOW            26.0f
+#define T_HIGH           29.0f
+#define T_LOW            25.0f
 #define STEP_MS          250
 #define STEP_DELTA       0.5f
 #define T_SWEEP_MIN      24.0f

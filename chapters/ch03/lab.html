@@ -309,11 +309,11 @@
 <section id="step-accept">
 <h2>步骤 4：模拟温度控制验收</h2>
 <ul>
-  <li>启动打印 <code>fake temperature: T_HIGH=28.0 T_LOW=26.0</code>，并说明继电器在 IO1_5。</li>
+  <li>启动打印 <code>[INFO] 模拟温度控制: T_HIGH=29.0 T_LOW=25.0</code>，并说明继电器在 IO1_5。</li>
   <li>周期性打印 <code>[INFO] temp=…C fan=OFF|ON</code>，假温度在 24~31 之间来回。</li>
-  <li>升过 28°C → <code>[INFO] fan ON</code>，继电器吸合，<strong>风扇转</strong>。</li>
-  <li>降到 26°C 以下 → <code>[INFO] fan OFF</code>，风扇停。</li>
-  <li>中间区间（26~28）保持上一状态。</li>
+  <li>升过 29°C → <code>[INFO] fan ON</code>，继电器吸合，<strong>风扇转</strong>。</li>
+  <li>降到 25°C 以下 → <code>[INFO] fan OFF</code>，风扇停。</li>
+  <li>中间区间（25~29）保持上一状态。</li>
 </ul>
 <p>停程序：SSH 里 <code>Ctrl+C</code>。</p>
 <div class="info">
@@ -324,8 +324,8 @@
 
 <section id="step-threshold">
 <h2>步骤 5：改阈值</h2>
-<p>改 <code>temperature_fan.c</code> 顶部 <code>T_HIGH</code> / <code>T_LOW</code>（例如 27 / 25），重新 <code>make</code> 再跑，观察开/关温度点变化。也可加大 <code>STEP_DELTA</code> 让扫温更快。</p>
-<p><strong>本步要证明的：</strong>阈值是你程序里的常量；硬件只跟着高低电平走。</p>
+<p>改 <code>temperature_fan.c</code> 顶部 <code>T_HIGH</code> / <code>T_LOW</code>（默认 29 / 25；例如改成 27 / 23），重新 <code>make</code> 再跑，观察开/关温度点变化。也可加大 <code>STEP_DELTA</code> 让扫温更快。把改后的数填进记录表即可；教材截图仍用默认 29 / 25 的图 3，不另拍改阈值终端。</p>
+<p><strong>本步要证明的：</strong>阈值是你程序里的常量；硬件只跟着高低电平走。改阈值前后的终端对照图见第四章实验的 <code>set temp</code>。</p>
 </section>
 
 <section id="trouble">
@@ -352,8 +352,8 @@
   <tr><td>接线</td><td>IO1_5 直连继电器 IN；继电器 5V/GND；风扇走 NO–COM；跳帽 H；共地</td><td></td></tr>
   <tr><td>自己写的函数</td><td><code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code> 在学生文件中实现；<code>make</code> 通过</td><td></td></tr>
   <tr><td>运行</td><td><code>sudo ./temperature_fan</code> 打印假温度</td><td></td></tr>
-  <tr><td>控制</td><td>超 28°C 开、低于 26°C 关，风扇启动或停止</td><td></td></tr>
-  <tr><td>改阈值</td><td>改过 T_HIGH/T_LOW（或 STEP_DELTA）并观察到开/关点变化</td><td></td></tr>
+  <tr><td>控制</td><td>超 29°C 开、低于 25°C 关，风扇启动或停止（与图 3 / 学生版默认常量一致）</td><td></td></tr>
+  <tr><td>改阈值</td><td>改过 T_HIGH/T_LOW（或 STEP_DELTA）并观察到开/关点变化。课程不另附第三章改阈值终端图；截图证据见第四章 <code>set temp</code></td><td></td></tr>
 </table>
 
 <h3>记录表（自填）</h3>

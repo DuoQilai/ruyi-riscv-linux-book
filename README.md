@@ -69,10 +69,10 @@ ruyi-riscv-linux-book/
 ├── chapters/
 │   └── ch01/ … ch06/
 ├── reference/
+│   ├── archive/          ← 旧稿（不作为当前讲义）
+│   └── boards/           ← 板卡备忘
 └── misc/
-    ├── scripts/
-    ├── boards/
-    └── archive/
+    └── scripts/
 ```
 
 ## 当前进度

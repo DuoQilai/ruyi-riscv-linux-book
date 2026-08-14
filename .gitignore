@@ -50,8 +50,12 @@ venv/
 # Dependencies
 node_modules/
 
-# Local reference dumps (books, installers, course zips — not course source)
-reference/
+# Local bulky dumps in reference/ (PDFs, extra material packs). Tracked: archive + boards.
+reference/*
+!reference/archive/
+!reference/archive/**
+!reference/boards/
+!reference/boards/**
 
 # Taobao product-page PDF dumps / phone photos (keep real datasheets only)
 chapters/**/manuals/**/*淘宝网.pdf

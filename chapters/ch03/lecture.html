@@ -466,7 +466,7 @@ gpiod_line_request_release(req);</pre>
 <span class="k">else if</span> (假温度 &lt; T_LOW)  风扇应关;
 <span class="c">/* 中间区间：保持上一状态 */</span></pre>
 
-<p>两个阈值的作用：高开、低关，中间区间保持——真实温控普遍如此。默认 <code>T_HIGH=28</code> / <code>T_LOW=26</code>。</p>
+<p>两个阈值的作用：高开、低关，中间区间保持——真实温控普遍如此。默认 <code>T_HIGH=29</code> / <code>T_LOW=25</code>（与实验学生版、图 3 一致）。</p>
 
 <div class="info" style="margin-top:32px;">
   <strong>下一步：</strong>打开 <a href="lab.html">lab.html</a>——接上风扇负载，在 <code>temperature_fan.c</code> 实现三个函数，跑通闭环并改阈值。
