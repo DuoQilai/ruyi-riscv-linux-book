@@ -102,7 +102,7 @@
 | 范围 | 状态 |
 |------|------|
 | CourseOutline（ch01–ch06 + 综合） | 已按定稿更新 |
-| ch01–ch03 讲义/实验 HTML | 有初稿；将按新大纲重写对齐 |
-| ch04–ch06 与综合正文 | 规划已定，内容待开发 |
+| ch01–ch04 讲义/实验 HTML | 已完成并实机验证 |
+| ch05–ch06 讲义/实验 HTML | 初稿完成，实机验证待补 |
 
-制作分支：`enzo`。Pages：https://enzoding-rgb.github.io/ruyi-riscv-book/
+发布分支：`main`（GitHub Pages 自动发布）。预览：https://enzoding-rgb.github.io/ruyi-riscv-book/

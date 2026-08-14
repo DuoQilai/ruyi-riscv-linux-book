@@ -46,11 +46,11 @@ docs/course-evaluation-standard.md   ← 课程质量自评标准
 
 ## 构建与发布
 
-在 `enzo` 分支改完后正常 `git commit` / `git push` 即可。个人预览站需要更新时，把课程页面拷到个人 Pages 仓库对应目录。
+课程页面为静态 HTML。主仓库 `main` 分支已配置自动发布 GitHub Pages。制作时在开发分支改稿，合入 `main` 即发布；个人预览站（`enzoding-rgb.github.io/ruyi-riscv-book/`）仅作内部预览，不作为正式源。
 
 线上入口：https://enzoding-rgb.github.io/ruyi-riscv-book/  
 大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html  
-评价标准：https://enzoding-rgb.github.io/ruyi-riscv-book/course-evaluation-standard.md  
+评价标准：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/course-evaluation-standard.md  
 ch03 讲义：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch03/lecture.html  
 ch03 实验：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch03/lab.html  
 ch04 讲义：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch04/lecture.html  
@@ -80,4 +80,4 @@ ruyi-riscv-linux-book/
 - **CourseOutline / ch01–ch06 讲义与实验：** 已按定稿上线 Pages  
 - **课程评价标准：** `docs/course-evaluation-standard.md` 已就绪  
 
-制作分支：`enzo`。
+发布分支：`main`（GitHub Pages 自动发布）。

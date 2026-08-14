@@ -277,7 +277,7 @@
       <a class="ch-exp-ch mod-board" href="../chapters/ch03/lecture.html" style="text-decoration:none;color:inherit;">
         <span class="flow-ch">ch03</span>
         <p class="flow-title">GPIO 与执行器</p>
-        <p class="flow-desc">gpiod 控继电器/风扇；假温度闭环</p>
+        <p class="flow-desc">gpiod 控继电器/风扇；模拟温度控制</p>
       </a>
       <a class="ch-exp-ch mod-linux" href="../chapters/ch04/lecture.html" style="text-decoration:none;color:inherit;">
         <span class="flow-ch">ch04</span>
@@ -436,7 +436,7 @@
         </tr>
         <tr>
           <td>终端命令</td>
-          <td>在 SSH 窗口打字，程序认命令。例：<code>status</code> 查状态，<code>set high 30</code> 改上限。工程目录 <code>chapters/ch04/code/</code>。</td>
+          <td>在 SSH 窗口打字，程序认命令。例：<code>status</code> 查状态，<code>set temp 30</code> 改温度 bar。工程目录 <code>chapters/ch04/code/</code>。</td>
         </tr>
         <tr>
           <td>select</td>
@@ -537,7 +537,7 @@
         </tr>
         <tr>
           <td>风扇 + 继电器模块</td>
-          <td>GPIO 控继电器，继电器给风扇通断电；ch03 假温度闭环；综合项目联动</td>
+          <td>GPIO 控继电器，继电器给风扇通断电；ch03 模拟温度控制；综合项目联动</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
@@ -605,7 +605,7 @@
           <td>会用 <code>gpiod</code> 控针脚；理解寄存器与 API；假温度驱动真继电器/风扇</td>
           <td>继电器控制风扇</td>
           <td>自己写三函数后：超阈值风扇转、降温停；可选 <code>devmem</code> 只读核对位翻转</td>
-          <td>外设能力 + 假温度本地闭环</td>
+          <td>外设能力 + 模拟温度控制</td>
         </tr>
         <tr class="mod-linux">
           <td>ch04</td>
@@ -713,8 +713,8 @@
           <td rowspan="3" class="merge">外设篇</td>
           <td class="section">3.1 外设与 I/O</td>
           <td rowspan="3" class="merge section">会用 gpiod 控继电器；假温度驱动真风扇；可选只读核对寄存器位</td>
-          <td rowspan="3" class="merge section"><strong>继电器控制风扇</strong>：接线；学生实现 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>；假温度闭环；改阈值验收</td>
-          <td rowspan="3" class="merge section">外设能力 + 假温度本地闭环</td>
+          <td rowspan="3" class="merge section"><strong>继电器控制风扇</strong>：接线；学生实现 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>；模拟温度控制；改阈值验收</td>
+          <td rowspan="3" class="merge section">外设能力 + 模拟温度控制</td>
           <td rowspan="3" class="merge glossary section"><dl>
             <dt>GPIO / gpiod</dt><dd>针脚与用户态读写接口。</dd>
             <dt>继电器</dt><dd>GPIO 控信号端，触点驱动风扇。</dd>

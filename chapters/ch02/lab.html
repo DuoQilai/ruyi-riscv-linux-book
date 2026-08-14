@@ -89,9 +89,9 @@
   <div class="divider"></div>
   <a href="#intro">说明</a>
   <div class="divider"></div>
-  <a href="#build-check">步骤 0：编译链接核对</a>
-  <a href="#write-decide">步骤：写出滞回</a>
-  <a href="#steps">步骤：改读数闯关</a>
+  <a href="#build-check">步骤 1：编译链接核对</a>
+  <a href="#write-decide">步骤 2：写出滞回</a>
+  <a href="#steps">步骤 3：改读数闯关</a>
   <a href="#accept">验收表</a>
 </nav>
 
@@ -122,7 +122,7 @@
 </section>
 
 <section id="build-check">
-<h2>步骤 0：编译链接核对（project-template）</h2>
+<h2>步骤 1：编译链接核对（project-template）</h2>
 <p>目的：把讲义 2.2 里的机制落到可复查输出。若讲义跟做时已做过且产物仍在，可快速复核后进入闯关。</p>
 <pre><span class="p">$</span> cd chapters/ch02/code/project-template
 <span class="p">$</span> make
@@ -137,7 +137,7 @@
 </section>
 
 <section id="write-decide">
-<h2>步骤：写出 thermo_decide</h2>
+<h2>步骤 2：写出 thermo_decide</h2>
 <p>进入闯关目录，先编译运行。半成品<strong>能编过</strong>，但 <code>thermo_decide</code> 是空的：风扇会一直 OFF。这和第三章先 <code>make</code> 因函数未声明而失败是同一类起点——<code>main</code> 已经在等你补上决策。</p>
 <pre><span class="p">$</span> cd chapters/ch02/code/fake-thermostat
 <span class="p">$</span> make
@@ -157,7 +157,7 @@
 </section>
 
 <section id="steps">
-<h2>步骤：改 thermo_read</h2>
+<h2>步骤 3：改 thermo_read</h2>
 
 <h3>1. 看坏现象</h3>
 <p><code>thermo_read</code> 里仍有两处故意错误。先跑通半成品，对照关卡表，一次只改一类。</p>

@@ -161,13 +161,16 @@
   <tr><td>AMS1117-1.8V 小板</td><td>给 TXS 低压侧（VA）供电</td></tr>
   <tr><td>继电器 + 风扇 + 杜邦线</td><td>沿用第三章</td></tr>
 </table>
+<div class="info">
+  <strong>参考资料：</strong>见 <code>chapters/ch04/manuals/</code>——<code>DHT22_规格书.pdf</code>、<code>AHT20 产品手册 a2 2020-8-11.pdf</code>、<code>AMS1117-1.8V降压小板.md</code>。
+</div>
 </section>
 
 <section id="wire">
 <h2>接线与焊接</h2>
 <figure>
-  <img src="assets/Figure_3.jpg" alt="第四章整板：DHT22、电平转换、继电器与风扇">
-  <figcaption>图 3　整板联调：DHT22 经电平转换接到 IO1_6；风扇仍走第三章继电器</figcaption>
+  <img src="assets/Figure_1.jpg" alt="第四章整板：DHT22、电平转换、继电器与风扇">
+  <figcaption>图 1　整板联调：DHT22 经电平转换接到 IO1_6；风扇仍走第三章继电器</figcaption>
 </figure>
 <p>先焊 TXS 排针：烙铁预热 → 排针插孔 → 背面逐脚上锡 → 检查连锡。</p>
 <table>
@@ -244,23 +247,26 @@
 
 <section id="step-run">
 <h2>编译运行</h2>
-<p>主路径与第三章相同：在 <strong>x86 Linux</strong> 激活 <code>venv-gnu-ruyisdk</code> 后交叉编译，再拷到<strong>荔枝派</strong>运行；或在荔枝派上直接 <code>make</code>（Makefile 按机器自动选择编译器）。访问 GPIO 需要 <code>sudo</code>。</p>
+<p>主路径与第三章相同：在 <strong>x86 Linux</strong> 激活 <code>venv-gnu-ruyisdk</code> 后交叉编译，再拷到<strong>荔枝派</strong>运行；或在荔枝派上直接 <code>make</code>（Makefile 按机器自动选择编译器）。访问 GPIO 需要 <code>sudo</code>。编译的是你自己写的 <code>cmd_thermo.c</code>。</p>
 <pre><span class="c"># —— 在 x86 Linux 上 ——</span>
 <span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
 <span class="p">$</span> cd chapters/ch04/code
-<span class="p">$</span> make clean &amp;&amp; make sol fan-off
-<span class="p">$</span> file cmd_thermo-sol
+<span class="p">$</span> make clean &amp;&amp; make
+<span class="p">$</span> file cmd_thermo
 
 <span class="c"># —— 在荔枝派上 ——</span>
 <span class="p">$</span> cd ~/ruyi-riscv-embedded/ch04-lab
-<span class="p">$</span> make clean &amp;&amp; make sol fan-off CFLAGS='-Wall -Wextra -O2 -DSIMULATE_SENSOR=0'
-<span class="p">$</span> sudo ./cmd_thermo-sol</pre>
-<p>助教自检用 <code>make sol</code>。接真 DHT 时务必带上 <code>-DSIMULATE_SENSOR=0</code>。</p>
+<span class="p">$</span> make clean &amp;&amp; make
+<span class="p">$</span> sudo ./cmd_thermo
+<span class="c"># 模拟模式验证通过、接好真 DHT 后，改用：</span>
+<span class="p">$</span> make clean &amp;&amp; make CFLAGS='-Wall -Wextra -O2 -DSIMULATE_SENSOR=0'
+<span class="p">$</span> sudo ./cmd_thermo</pre>
+<p>先用默认模拟模式跑通软件流程；接真 DHT 时务必带上 <code>-DSIMULATE_SENSOR=0</code>。对照参考实现（助教自检）：<code>make sol fan-off</code>。</p>
 <section id="step-accept">
 <h2>联调验收</h2>
 <figure>
-  <img src="assets/Figure_1.png" alt="荔枝派上真 DHT 编译运行 cmd_thermo-sol：file 为 RISC-V，status 读出温湿度并 set temp 开风扇">
-  <figcaption>图 1　荔枝派上 <code>make sol</code>（真 DHT）：产物为 RISC-V；<code>status</code> 读出温湿度；<code>set temp 20</code> 后选择开风扇</figcaption>
+  <img src="assets/Figure_2.png" alt="荔枝派上真 DHT 编译运行 cmd_thermo-sol：file 为 RISC-V，status 读出温湿度并 set temp 开风扇">
+  <figcaption>图 2　荔枝派上 <code>make sol</code>（真 DHT）：产物为 RISC-V；<code>status</code> 读出温湿度；<code>set temp 20</code> 后选择开风扇</figcaption>
 </figure>
 <ol>
   <li>启动后等几秒（让 DHT 先采到样），敲 <code>status</code>：应出现 <code>[STATUS] temp=… hum=…</code>；平时终端不应刷温湿度。</li>
@@ -271,8 +277,8 @@
   <li>（可选，真 DHT）哈气提高湿度，观察是否按湿度 bar 开风扇。</li>
 </ol>
 <figure>
-  <img src="assets/Figure_2.png" alt="荔枝派模拟模式：status 风扇关，set temp 20 后选择开风扇，再 status 风扇开">
-  <figcaption>图 2　模拟传感器：<code>status</code> 时风扇=关；<code>set temp 20</code> 后本次采样选择开风扇；再 <code>status</code> 显示风扇=开</figcaption>
+  <img src="assets/Figure_3.png" alt="荔枝派模拟模式：status 风扇关，set temp 20 后选择开风扇，再 status 风扇开">
+  <figcaption>图 3　模拟传感器：<code>status</code> 时风扇=关；<code>set temp 20</code> 后本次采样选择开风扇；再 <code>status</code> 显示风扇=开</figcaption>
 </figure>
 <div class="info">
   <strong>Ctrl+C：</strong>主程序会先拉低再释放。若被 <code>kill -9</code> / 崩溃后风扇一直转：<code>make fan-off && sudo ./fan_off</code>（默认保持拉低直到 Ctrl+C；<code>--once</code> 只脉冲一次）。

@@ -25,6 +25,9 @@ Thumbs.db
 .obsidian/
 .vscode/
 .idea/
+
+# Local agent skills (personal tooling, not course material)
+.agents/
 *.swp
 *.swo
 *~
@@ -50,12 +53,8 @@ venv/
 # Dependencies
 node_modules/
 
-# Local bulky dumps in reference/ (PDFs, extra material packs). Tracked: archive + boards.
-reference/*
-!reference/archive/
-!reference/archive/**
-!reference/boards/
-!reference/boards/**
+# Local reference dumps (books, installers, course zips, old drafts — not course source)
+reference/
 
 # Taobao product-page PDF dumps / phone photos (keep real datasheets only)
 chapters/**/manuals/**/*淘宝网.pdf
