@@ -7,7 +7,7 @@
  * 板：荔枝派 4A + RevyOS。libgpiod v2 API。全程 C 语言。
  * 脚位：继电器 IO1_5（gpiochip5 line 5）、DHT22 IO1_6（line 6，经 TXS）。
  *
- * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-unknown-linux-gnu-
+ * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-
  */
 #include <errno.h>
 #include <gpiod.h>

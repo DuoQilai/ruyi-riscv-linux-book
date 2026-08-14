@@ -7,7 +7,7 @@
  * 板：荔枝派 4A + RevyOS。libgpiod v2 API。依赖：libmosquitto、libgpiod。
  * 脚位：外接 LED 接 IO1_5（gpiochip5 line 5）。
  *
- * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-unknown-linux-gnu-
+ * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-
  */
 #include <gpiod.h>
 #include <mosquitto.h>

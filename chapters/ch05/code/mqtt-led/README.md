@@ -2,7 +2,7 @@
 
 荔枝派 4A：订阅命令主题驱动外接 LED，并向状态主题 publish。
 
-依赖：libmosquitto、libgpiod。交叉前缀默认 `riscv64-unknown-linux-gnu-`（RuyiSDK）。
+依赖：libmosquitto、libgpiod。交叉：先激活 `venv-gnu-ruyisdk`，再 `make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-`。
 
 ## 你要补全
 

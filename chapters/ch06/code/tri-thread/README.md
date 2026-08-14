@@ -6,7 +6,7 @@
 - `USE_LOCK 1`：加锁后行为应正确  
 - Ctrl+C：`running=0`，关风扇后退出  
 
-交叉前缀默认 `riscv64-unknown-linux-gnu-`（RuyiSDK）。依赖 libpthread、libmosquitto、libgpiod。
+交叉：先激活 `venv-gnu-ruyisdk`，再 `make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-`。依赖 libpthread、libmosquitto、libgpiod。
 
 ## 构建
 
