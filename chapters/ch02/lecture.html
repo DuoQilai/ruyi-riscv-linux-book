@@ -118,6 +118,13 @@
   .page-nav a:hover { text-decoration: underline; }
   .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
   .page-nav .next { text-align: right; margin-left: auto; }
+
+  figure { margin: 16px 0 20px; }
+  figure img {
+    display: block; max-width: min(100%, 720px); width: auto; height: auto;
+    border: 1px solid var(--line-light, #e8e3d8);
+  }
+  figcaption { font-size: 14px; color: var(--faint, #8c8276); margin-top: 8px; line-height: 1.45; }
 </style>
 </head>
 <body>
@@ -493,6 +500,14 @@ t_bar=20.0
 unknown command: foo</pre>
 <p>打开 <code>main.c</code>，指认三处：<code>strchr</code> 切出命令名与参数；<code>g_cmds[]</code> 把名字绑到函数指针；<code>dispatch</code> 对上名字就 <code>e-&gt;handler(args)</code>。加一条命令只多一行表项，不必改查找循环——第四章的 TODO 就是在干这件事。</p>
 <p><strong>本步成功判据：</strong>输出与上面五条一致；能说出「加 <code>help</code> 为什么不用改 <code>dispatch</code>」。</p>
+<figure>
+  <img src="assets/Figure_3.png" alt="x86 上编译运行 cmd-table：help、status、set temp 20、未知命令">
+  <figcaption>图 3　在 x86 Linux 上 <code>make</code> 后跑通命令表：<code>t_bar</code> 从 28.0 改到 20.0，<code>foo</code> 报 unknown command</figcaption>
+</figure>
+<figure>
+  <img src="assets/Figure_4.png" alt="荔枝派上同样跑通 cmd-table">
+  <figcaption>图 4　荔枝派上用板载 <code>gcc</code> 复跑同一条命令，输出一致</figcaption>
+</figure>
 
 <h3 id="s2.4-macro">宏与条件编译：实验开关靠它</h3>
 <p><strong>宏</strong>（<code>#define</code>）是编译期的文字替换；<strong>条件编译</strong>（<code>#if</code> / <code>#ifndef</code>）让一段代码在满足条件时才被编译进去。</p>
