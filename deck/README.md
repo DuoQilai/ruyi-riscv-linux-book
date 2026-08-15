@@ -12,7 +12,7 @@
 服务要起在**仓库根**，举例页才能加载 `chapters/`：
 
 ```bash
-python3 -m http.server 8765 --directory /home/fengde/Projects/full-stack/ruyi/ruyi-riscv-linux-book &
+fuser -k 8765/tcp 2>/dev/null; python3 -m http.server 8765 --directory /home/fengde/Projects/full-stack/ruyi/ruyi-riscv-linux-book &
 ```
 
 打开 http://127.0.0.1:8765/deck/
