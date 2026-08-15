@@ -4,7 +4,7 @@ Ruyi RISC-V Linux 嵌入式实践课公开材料（**C + RuyiSDK + 真开发板*
 
 - **大纲（规划源）：** [`docs/CourseOutline.html`](docs/CourseOutline.html)
 - **课程说明（定位 / 调研 / 取舍）：** [`docs/intro.md`](docs/intro.md)
-- **课程评价标准（课题组自评）：** [`docs/course-evaluation-standard.md`](docs/course-evaluation-standard.md)
+- **课程评价标准：** [`docs/course-evaluation-standard.md`](docs/course-evaluation-standard.md)
 - **在线预览：** https://enzoding-rgb.github.io/ruyi-riscv-book/
 
 ## 课程一句话
@@ -21,14 +21,14 @@ Ruyi RISC-V Linux 嵌入式实践课公开材料（**C + RuyiSDK + 真开发板*
 | ch06 | 线程与协同 | 三线程协同 |
 | 综合 | 智能环境终端 | 异常联动总验收 |
 
-调研结论摘要见 **`docs/intro.md`**。评价口径见 **`docs/course-evaluation-standard.md`**（CIPP 四层结构 + OBE 成效写法，课题组 10 分制自评）。
+调研结论摘要见 **`docs/intro.md`**。评价口径见 **`docs/course-evaluation-standard.md`**（CIPP 四层 + OBE 成效写法，用第 1–4 章的板上证据说明）。
 
 ## 研发工作流
 
 ```
 docs/CourseOutline.html              ← 唯一规划源（先改这里）
 docs/intro.md                        ← 课程说明与调研取舍
-docs/course-evaluation-standard.md   ← 课程质量自评标准
+docs/course-evaluation-standard.md   ← 课程评价标准（CIPP 四层）
          │
          ├── chapters/chXX/lecture.html   ← 讲义：1.1 / 1.2 / 1.3 + 深入理解
          └── chapters/chXX/lab.html       ← 实验：一整块；C 脚手架 + 硬件验收
@@ -38,7 +38,7 @@ docs/course-evaluation-standard.md   ← 课程质量自评标准
 |------|------|
 | **CourseOutline** | 改结构、改实验、改术语 → 先改这里 |
 | **intro.md** | 为什么这样设计、调研了什么 |
-| **course-evaluation-standard.md** | 四部分 × 12 条、10 分制自评 |
+| **course-evaluation-standard.md** | CIPP 四层 × 12 条，对应第 1–4 章落点 |
 | **lecture.html** | 原理 + 单项跟做 + 深入理解 |
 | **lab.html** | 半成品往后补；板上现象验收 |
 

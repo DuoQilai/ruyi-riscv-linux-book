@@ -97,7 +97,7 @@
 
 ## 五、评价与进度
 
-**自检：** 可运行、可验收、可衔接综合、可演示、符合课规（C / RuyiSDK / 交叉编译 / 老师权重）。
+评价口径见 [`course-evaluation-standard.md`](./course-evaluation-standard.md)：CIPP 四层 + 第 1–4 章板上证据。
 
 | 范围 | 状态 |
 |------|------|
