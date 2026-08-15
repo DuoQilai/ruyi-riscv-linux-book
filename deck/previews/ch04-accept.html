@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>第四章实验 · 联调验收</title>
+<style>
+  :root {
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--text); font-family: var(--sans); }
+  body { padding: 28px 36px 36px; }
+  .docbar {
+    font-size: 13px; letter-spacing: 0.12em; color: var(--accent);
+    font-weight: 700; text-transform: uppercase; margin-bottom: 14px;
+  }
+  h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; }
+  figure { margin: 0 0 16px; }
+  figure img {
+    display: block; width: 100%; height: auto;
+    border: 1px solid var(--line-light); background: #1a1a18;
+  }
+  figcaption { font-size: 14px; color: var(--faint); margin-top: 8px; line-height: 1.45; }
+  ol { padding-left: 22px; }
+  li { font-size: 16px; color: var(--muted); line-height: 1.55; margin-bottom: 8px; }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 1px 6px; }
+</style>
+</head>
+<body>
+  <div class="docbar">第四章实验 · 联调验收</div>
+  <h2>联调验收</h2>
+  <figure>
+    <img src="/chapters/ch04/assets/Figure_2.png" alt="荔枝派上真 DHT：status 读出温湿度，set temp 开风扇">
+    <figcaption>图 2　荔枝派上 <code>make sol</code>（真 DHT）：<code>status</code> 读出温湿度；<code>set temp 20</code> 后选择开风扇</figcaption>
+  </figure>
+  <ol>
+    <li>敲 <code>status</code>：出现 <code>[STATUS] temp=… hum=…</code>；平时终端不刷温湿度。</li>
+    <li>敲 <code>set temp 30</code>，再 <code>status</code>：温度 bar 已变。</li>
+    <li>敲 <code>set humidity 80</code>，再 <code>status</code>：湿度 bar 已变。</li>
+    <li>风扇开/关瞬间打印上一采样与本次采样，以及「选择开/关风扇」。</li>
+  </ol>
+</body>
+</html>

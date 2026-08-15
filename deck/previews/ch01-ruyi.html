@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>第一章讲义 · 安装 RuyiSDK</title>
+<style>
+  :root {
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--text); font-family: var(--sans); }
+  body { padding: 28px 36px 36px; }
+  .docbar {
+    font-size: 13px; letter-spacing: 0.12em; color: var(--accent);
+    font-weight: 700; text-transform: uppercase; margin-bottom: 14px;
+  }
+  h3 { font-size: 28px; font-weight: 700; margin-bottom: 14px; }
+  p { font-size: 17px; color: var(--muted); line-height: 1.65; margin-bottom: 12px; }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 1px 6px; }
+  .steps { list-style: none; padding: 0; margin: 8px 0 12px; }
+  .steps li {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 10px 0; border-bottom: 1px solid var(--line-light);
+    font-size: 16px; color: var(--muted); line-height: 1.5;
+  }
+  .steps li:last-child { border-bottom: 0; }
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 16px 20px; font-family: var(--mono); font-size: 14px;
+    line-height: 1.7; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); }
+</style>
+</head>
+<body>
+  <div class="docbar">第一章讲义 · §1.1 荔枝派 4A 与 RuyiSDK</div>
+  <h3>安装 RuyiSDK</h3>
+  <p><strong>RuyiSDK</strong> 是面向 RISC-V 开发的工具包集合；命令入口叫 <code>ruyi</code>。ruyi 管「装什么」，GCC 管「怎么编」。</p>
+  <p>本课三元组钉死为 <code>riscv64-ruyisdk-linux-gnu</code>：为 64 位 RISC-V、跑 Linux 的用户态交叉编译。</p>
+  <ol class="steps">
+    <li><span class="step-num">1</span><div>在 <strong>x86 Linux</strong> 上 <code>uname -m</code>，确认是 x86_64。</div></li>
+    <li><span class="step-num">2</span><div><code>ruyi update</code>，再 <code>ruyi install gnu-ruyisdk</code>。</div></li>
+    <li><span class="step-num">3</span><div><code>ruyi venv -t gnu-ruyisdk manual venv-gnu-ruyisdk</code></div></li>
+    <li><span class="step-num">4</span><div><code>. ~/venv-gnu-ruyisdk/bin/ruyi-activate</code> — 每次新开终端都要重新激活。</div></li>
+    <li><span class="step-num">5</span><div><code>riscv64-ruyisdk-linux-gnu-gcc -dumpmachine</code> 应打印同一三元组。</div></li>
+  </ol>
+  <pre><span class="c"># 以下均在 x86 Linux 上执行</span>
+<span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
+<span class="p">$</span> riscv64-ruyisdk-linux-gnu-gcc -dumpmachine
+riscv64-ruyisdk-linux-gnu</pre>
+</body>
+</html>

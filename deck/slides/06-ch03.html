@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>第三章</title>
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+<div class="slide">
+  <p class="kicker">第三章 · GPIO 与执行器</p>
+  <h1>假温度驱动真风扇</h1>
+  <p class="lead">软件里的滞回第一次碰到硬件：gpiod 拉继电器，风扇真的转。</p>
+  <div class="ch-body">
+    <div class="ch-copy">
+      <ul>
+        <li>用户态 <code>gpiod</code> 写 IO1_5，继电器切风扇电源。</li>
+        <li>温度仍是程序里走的模拟曲线，默认 29 / 25。</li>
+        <li>超阈值转、降到低阈值停；Ctrl+C 先关风扇。</li>
+      </ul>
+      <div class="card">
+        <h2>本章实验</h2>
+        <p>接好继电器与风扇。终端看到 <code>fan ON</code> / <code>fan OFF</code>，耳朵听到风扇跟日志走。</p>
+      </div>
+    </div>
+    <div class="shots triple">
+      <figure class="shot photo">
+        <img src="../assets/ch03-board.jpg" alt="荔枝派与面包板接线">
+        <figcaption>板与排针</figcaption>
+      </figure>
+      <figure class="shot photo">
+        <img src="../assets/ch03-relay.jpg" alt="继电器模块">
+        <figcaption>继电器</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="../assets/ch03-term.png" alt="板上模拟温度控制风扇终端">
+        <figcaption>板上：T_HIGH=29 T_LOW=25，风扇跟模拟温度开闭</figcaption>
+      </figure>
+    </div>
+  </div>
+</div>
+</body>
+</html>

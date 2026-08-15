@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>第四章</title>
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+<div class="slide">
+  <p class="kicker">第四章 · 命令对话与温控</p>
+  <h1>接上真 DHT，SSH 里能查、能改</h1>
+  <p class="lead">风扇还是那台。传感器换成 DHT22；人在终端敲 <code>status</code> / <code>set temp</code>。</p>
+  <div class="ch-body">
+    <div class="ch-copy">
+      <ul>
+        <li>DHT22 经 TXS 进 IO1_6；风扇仍走第三章继电器。</li>
+        <li><code>select</code> 同一条主循环：一边等采样周期，一边等你打字。</li>
+        <li><code>status</code> 立刻回温湿度；<code>set</code> 改的是内存里的阈值。</li>
+      </ul>
+      <div class="card">
+        <h2>本章实验</h2>
+        <p>先模拟传感器跑通命令；接真 DHT 后带 <code>-DSIMULATE_SENSOR=0</code>。验收看敲一行有回复、风扇跟阈值走。</p>
+      </div>
+    </div>
+    <div class="shots">
+      <figure class="shot photo">
+        <img src="../assets/ch04-board.jpg" alt="DHT22、继电器与风扇接线">
+        <figcaption>真 DHT22 + 电平转换 + 风扇</figcaption>
+      </figure>
+      <figure class="shot">
+        <img src="../assets/ch04-term.png" alt="status 与 set temp 终端">
+        <figcaption><code>status</code> 读出温湿度；<code>set temp</code> 后选择开风扇</figcaption>
+      </figure>
+    </div>
+  </div>
+</div>
+</body>
+</html>

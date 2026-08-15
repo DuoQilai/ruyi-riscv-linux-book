@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>演示录像</title>
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+<div class="slide">
+  <p class="kicker">第三章 → 第四章</p>
+  <h1>整段演示：假温度转风扇，再换成真传感器和命令</h1>
+  <p class="lead">一条录像看完。先看模拟温度驱动继电器，再看 DHT22 加上 <code>status</code> / <code>set</code>。</p>
+  <div class="video-slot" data-src="../videos/thermo-demo.mp4">
+    <video controls playsinline preload="metadata"></video>
+    <div class="ph">
+      <strong>第三、四章整段演示</strong>
+      <span>把录像放到 deck/videos/thermo-demo.mp4</span>
+    </div>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.video-slot').forEach(function (slot) {
+  var v = slot.querySelector('video');
+  v.src = slot.dataset.src;
+  v.addEventListener('loadeddata', function () { slot.classList.add('ready'); });
+  v.addEventListener('error', function () { slot.classList.remove('ready'); });
+});
+</script>
+</body>
+</html>

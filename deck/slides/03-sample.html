@@ -33,16 +33,13 @@
     background: #fff;
     border: 1px solid var(--line);
   }
-  .frame iframe {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 1280px;
-    height: 2200px;
-    border: 0;
-    transform: scale(0.68);
-    transform-origin: top left;
-    pointer-events: none;
+  .frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: top center;
+    background: #fbfaf5;
   }
 </style>
 </head>
@@ -50,18 +47,18 @@
 <div class="slide">
   <p class="kicker">学生每周打开的东西</p>
   <h1>讲义能跟做，实验能勾验收</h1>
-  <p class="lead">左边第一章讲义：装 RuyiSDK、交叉编译，打开就能往下跟。右边第四章实验：接线、脚手架、验收表。这一页只为让你看见材料长什么样。</p>
+  <p class="lead">左边是第一章讲义 §1.1：装 RuyiSDK、激活工具链，打开就能往下敲。右边是第四章实验的联调验收。这一页只为让你看见材料长什么样。</p>
   <div class="body">
     <div class="pane">
-      <div class="label">ch01 讲义 <span>跟做 · 工具链进门</span></div>
+      <div class="label">ch01 讲义 <span>§1.1 安装 RuyiSDK</span></div>
       <div class="frame">
-        <iframe src="/chapters/ch01/lecture.html" title="第一章讲义"></iframe>
+        <img src="../assets/sample-ch01-lecture.png" alt="第一章讲义：安装 RuyiSDK 跟做步骤">
       </div>
     </div>
     <div class="pane">
-      <div class="label">ch04 实验 <span>验收 · 命令温控</span></div>
+      <div class="label">ch04 实验 <span>联调验收 · status / set</span></div>
       <div class="frame">
-        <iframe src="/chapters/ch04/lab.html" title="第四章实验"></iframe>
+        <img src="../assets/sample-ch04-lab.png" alt="第四章实验：联调验收与终端截图">
       </div>
     </div>
   </div>

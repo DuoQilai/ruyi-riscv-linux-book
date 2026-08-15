@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>第六章</title>
+<link rel="stylesheet" href="../theme.css">
+<style>
+  .grid-2 { margin-top: 20px; }
+  .card { justify-content: flex-start; }
+  .card h2 { font-size: 28px; }
+  .card p, .card li { font-size: 22px; }
+  .soon { margin-top: auto; padding-top: 16px; font-size: 16px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="slide">
+  <p class="kicker">第六章 · 线程与协同</p>
+  <h1>采集、风扇、网络，三条线一起跑</h1>
+  <p class="lead">单线程大循环会堵。拆成三线程之后，共享状态必须进锁；Ctrl+C 要先停风扇再退出。</p>
+  <div class="grid-2">
+    <div class="card">
+      <span class="tag linux">讲义三节</span>
+      <h2>拆线、加锁、看见竞态</h2>
+      <ul>
+        <li>采集 / 控制 / 通信各一条线，共享温湿度与风扇状态。</li>
+        <li>先看无锁怎么乱，再加互斥锁修好。</li>
+        <li>x86 上用 TSan 指出抢同一变量的两行；产品路径以加锁版验收。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag lab">本章实验</span>
+      <h2>三线程协同</h2>
+      <p>板上跑 tri-thread：传感器还在采、风扇还在判、MQTT 还能收发。Ctrl+C 后风扇停转，进程再结束。</p>
+      <p class="soon">讲义已写完。板上截图随实机验证补上。综合项目接在这章骨架上：规则与小模型一起判风扇。</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>
