@@ -10,7 +10,7 @@
 ## 怎么放
 
 ```bash
-fuser -k 8765/tcp 2>/dev/null; python3 -m http.server 8765 --directory /home/fengde/Projects/full-stack/ruyi/ruyi-riscv-linux-book/deck &
+fuser -k 8765/tcp 2>/dev/null; cd /home/fengde/Projects/full-stack/ruyi/ruyi-riscv-linux-book/deck && python3 -m http.server 8765 &
 ```
 
 打开 http://127.0.0.1:8765/#1 （硬刷新一次，清掉旧的 8 页缓存）

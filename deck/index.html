@@ -309,6 +309,15 @@
     stage.style.transform = 'translate(' + ((innerWidth - W * s) / 2) + 'px, ' + ((innerHeight - H * s) / 2) + 'px) scale(' + s + ')';
     stage.style.top = '0'; stage.style.left = '0';
   }
+  function grabFocus() {
+    try { window.focus(); } catch (_) {}
+    try {
+      if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+    } catch (_) {}
+  }
+
   function show(idx) {
     if (idx < 0 || idx >= deck.length) return;
     current = idx;
@@ -316,23 +325,64 @@
     counter.innerHTML = (idx + 1) + ' / ' + deck.length + ' <span class="label">' + (deck[idx].label || '') + '</span>';
     try { localStorage.setItem(storageKey, String(idx)); } catch (_) {}
     if (location.hash !== '#' + (idx + 1)) history.replaceState(null, '', '#' + (idx + 1));
+    grabFocus();
   }
   function next() { show(Math.min(current + 1, deck.length - 1)); }
   function prev() { show(Math.max(current - 1, 0)); }
 
-  document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if (e.key === 'Escape') { if (document.body.getAttribute('data-mode') === 'present') { e.preventDefault(); setMode('overview'); } return; }
+  function onKey(e) {
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+    if (e.key === 'Escape') {
+      if (document.body.getAttribute('data-mode') === 'present') {
+        e.preventDefault(); e.stopPropagation(); setMode('overview');
+      }
+      return;
+    }
     if (e.key === 'p' || e.key === 'P') { window.print(); return; }
     if (document.body.getAttribute('data-mode') !== 'present') return;
     switch (e.key) {
-      case 'ArrowRight': case 'ArrowDown': case 'PageDown': e.preventDefault(); next(); break;
-      case 'ArrowLeft': case 'ArrowUp': case 'PageUp': e.preventDefault(); prev(); break;
-      case 'Home': e.preventDefault(); show(0); break;
-      case 'End': e.preventDefault(); show(deck.length - 1); break;
-      default: if (e.key >= '1' && e.key <= '9') { const i = parseInt(e.key, 10) - 1; if (i < deck.length) { e.preventDefault(); show(i); } }
+      case 'ArrowRight': case 'ArrowDown': case 'PageDown':
+        e.preventDefault(); e.stopPropagation(); next(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+        e.preventDefault(); e.stopPropagation(); prev(); break;
+      case 'Home':
+        e.preventDefault(); e.stopPropagation(); show(0); break;
+      case 'End':
+        e.preventDefault(); e.stopPropagation(); show(deck.length - 1); break;
+      default:
+        if (e.key >= '1' && e.key <= '9') {
+          const i = parseInt(e.key, 10) - 1;
+          if (i < deck.length) { e.preventDefault(); e.stopPropagation(); show(i); }
+        }
     }
+  }
+
+  function wireKeys(win) {
+    if (!win || win.__deckNavBound) return;
+    win.__deckNavBound = true;
+    win.addEventListener('keydown', onKey, true);
+    const bindIframes = () => {
+      try {
+        win.document.querySelectorAll('iframe').forEach((ifr) => {
+          ifr.setAttribute('tabindex', '-1');
+          const hook = () => { try { wireKeys(ifr.contentWindow); } catch (_) {} };
+          ifr.addEventListener('load', hook);
+          hook();
+        });
+      } catch (_) {}
+    };
+    try {
+      bindIframes();
+      win.addEventListener('load', bindIframes);
+    } catch (_) {}
+  }
+
+  frame.setAttribute('tabindex', '-1');
+  frame.addEventListener('load', () => {
+    try { wireKeys(frame.contentWindow); } catch (_) {}
+    grabFocus();
   });
+  window.addEventListener('keydown', onKey, true);
   document.getElementById('navL').addEventListener('click', prev);
   document.getElementById('navR').addEventListener('click', next);
   document.getElementById('startBtn').addEventListener('click', () => setMode('present'));
