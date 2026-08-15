@@ -254,12 +254,14 @@
     <a href="../index.html">课程总览</a>
     ·
     <a href="../chapters/ch01/lecture.html">从第一章讲义开始</a>
+    ·
+    <a href="project.html">综合项目</a>
   </p>
   <h1>Course Outline</h1>
   <p class="note">
     <strong>Linux 嵌入式实践课</strong> · 荔枝派 4A + RuyiSDK + <strong>C 语言</strong> ·
     顺序学完六章 · 每章讲义 + 本章实验（讲义把概念在首次出现处讲透；实验接线/写代码验收）·
-    最后做综合项目（老师提供模型权重，学生在板上接推理）
+    最后做综合项目（量化本地模型 + 终端 DeepSeek Harness + 荔枝派三线程）
   </p>
 
   <div class="flow-wrap">
@@ -328,9 +330,11 @@
       </a>
     </div>
     <div class="ch-exp-cap mod-cap">
+      <a href="project.html" style="text-decoration:none;color:inherit;">
       <span class="flow-ch">综合项目</span>
-      <p class="flow-title">智能环境终端</p>
-      <p class="flow-desc">复用 ch06 三线程骨架；规则与模型一起判风扇；老师供权重 + 学生手写 tiny 前向</p>
+      <p class="flow-title">端侧 Agent 环境终端</p>
+      <p class="flow-desc">荔枝派三线程继续滞回；K3 跑量化模型；终端里用 DeepSeek Harness 打字调 MQTT 工具</p>
+      </a>
     </div>
   </div>
   <div class="legend">
@@ -420,7 +424,7 @@
         </tr>
         <tr>
           <td>DHT22</td>
-          <td>温湿度探头。数据线经电平转换接 GPIO；ch04 起用，综合项目继续用。</td>
+          <td>温湿度探头。数据线经电平转换接 GPIO；ch04 起用，综合项目由 Agent 工具读取。</td>
         </tr>
         <tr>
           <td>TXS / AMS1117</td>
@@ -463,8 +467,8 @@
           <td>远程控制用的灯。ch05：电脑终端发 MQTT 命令，板子驱动这盏灯。</td>
         </tr>
         <tr>
-          <td>告警红灯</td>
-          <td>本地异常指示灯（板载或外接）。综合项目里规则或模型判异常时点亮。</td>
+          <td>DeepSeek Harness</td>
+          <td>Agent 运行时（<code>dsh</code>）。会话、工具、模型、界面都是插件。本课在<strong>终端</strong>里打字对话，像 Claude Code；不把网页当主入口。</td>
         </tr>
         <tr>
           <td>pthread / 多线程</td>
@@ -479,20 +483,20 @@
           <td>编译时加上 <code>-fsanitize=thread</code> 的检查器。ch06：在<strong>电脑上</strong>编同一个抢数据小程序，终端打印哪两行在抢同一变量。</td>
         </tr>
         <tr>
-          <td>规则/模型仲裁</td>
-          <td>超阈值 <strong>或</strong> 模型判异常 → 风扇转；日志记下是谁触发的。综合项目的智力核心。</td>
+          <td>llama.cpp / GGUF</td>
+          <td>C++ 本地推理栈。量化得到 <code>.gguf</code>；K3 上用带 IME2 的 <code>llama-server</code> 提供 OpenAI 兼容 HTTP。</td>
         </tr>
         <tr>
-          <td>老师供权重 / 学生做推理</td>
-          <td>老师用电脑训好 tiny 模型，课里发 <code>weights.h</code>；学生在板上写手写 tiny 前向，接到风扇/灯/MQTT。</td>
+          <td>量化</td>
+          <td>把较高精度权重量成更少比特（本课至少 Q4）。学生自己压，记下体积，并确认工具调用仍在。</td>
         </tr>
         <tr>
-          <td><code>weights.h</code></td>
-          <td>模型权重写成 C 头文件，编译进板子程序；推理时读这些数字做乘法相加。</td>
+          <td>模型供应商</td>
+          <td>Harness 里的脑子来源。本地填 K3 的 <code>llama-server</code> 地址，云端填 DeepSeek API。同一套工具，只换 <code>baseURL</code>。</td>
         </tr>
         <tr>
-          <td>智能环境终端</td>
-          <td>本课综合大项目：复用 ch06 三线程；外接灯远程控、告警红灯本地异常；风扇用规则与模型一起判；老师供权重 + 手写 tiny 前向。</td>
+          <td>端侧 Agent 环境终端</td>
+          <td>本课综合大项目：荔枝派三线程滞回一直转；人在终端 Harness 里打字；工具经 MQTT 动手；本地量化模型与云端 DeepSeek 可替换。</td>
         </tr>
       </tbody>
     </table>
@@ -512,7 +516,7 @@
       <tbody>
         <tr>
           <td>个人电脑</td>
-          <td>联网；装 <code>ruyi</code> 与交叉工具链；SSH/串口连板；ch05 起装 Mosquitto，用电脑终端 <code>mosquitto_pub</code> / <code>mosquitto_sub</code> 远程控灯；ch06 用电脑跑 ThreadSanitizer 小程序</td>
+          <td>联网；装 <code>ruyi</code> 与交叉工具链；SSH 连板；ch05 起装 Mosquitto；ch06 跑 ThreadSanitizer；综合项目在主机上做 <code>llama-quantize</code></td>
           <td class="provider">学生自备</td>
         </tr>
         <tr>
@@ -532,12 +536,12 @@
         </tr>
         <tr>
           <td>风扇 + 继电器模块</td>
-          <td>GPIO 控继电器，继电器给风扇通断电；ch03 模拟温度控制；综合项目联动</td>
+          <td>GPIO 控继电器，继电器给风扇通断电；ch03 模拟温度控制；综合项目里滞回继续跑，也可由 Agent 工具改行为</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
           <td>DHT22 温湿度探头</td>
-          <td>经 TXS 接 GPIO 读温湿度；ch04 起用，综合项目继续用</td>
+          <td>经 TXS 接 GPIO 读温湿度；ch04 起用，综合项目由 <code>read_status</code> 读到</td>
           <td class="provider">课程提供</td>
         </tr>
         <tr>
@@ -551,8 +555,8 @@
           <td class="provider">课程提供</td>
         </tr>
         <tr>
-          <td>告警红灯（板载或外接）</td>
-          <td>综合项目本地异常指示</td>
+          <td>进迭 K3</td>
+          <td>综合项目的脑：跑加速版 llama.cpp 与终端 DeepSeek Harness。内存建议 16 GB 起。</td>
           <td class="provider">课程提供</td>
         </tr>
       </tbody>
@@ -632,10 +636,10 @@
         <tr class="mod-cap">
           <td>综合</td>
           <td>综合大项目</td>
-          <td>智能环境终端</td>
-          <td>复用 ch06 三线程骨架；规则与模型一起判风扇；载入老师权重 + 手写 tiny 前向</td>
-          <td>异常联动总验收</td>
-          <td>异常时告警红灯 + 风扇 + MQTT 上行告警几乎同时；日志能看出触发源</td>
+          <td>端侧 Agent 环境终端</td>
+          <td>复用 ch06 三线程；量化本地模型；终端 DeepSeek Harness 打字调 MQTT 工具；本地与云端同一接口</td>
+          <td>见 <a href="project.html">project.html</a></td>
+          <td>滞回无人值守仍转；终端打字能读状态、动风扇/灯；换 <code>baseURL</code> 后工具不变</td>
           <td>可答辩作品</td>
         </tr>
       </tbody>
@@ -776,39 +780,41 @@
         <tr class="mod-cap">
           <td rowspan="7" class="merge">综合</td>
           <td rowspan="7" class="merge">综合大项目</td>
-          <td class="section">P.1 需求与模块图：复用 ch06 三线程</td>
-          <td rowspan="7" class="merge section">复用 ch06 三线程骨架；规则与模型一起判风扇；载入老师权重 + 手写 tiny 前向</td>
-          <td rowspan="7" class="merge section"><strong>异常联动总验收</strong>：异常时告警红灯 + 风扇 + MQTT 上行告警几乎同时；日志能看出触发源</td>
+          <td class="section">P.1 双机通：荔枝派三线程 + K3 SSH + Broker</td>
+          <td rowspan="7" class="merge section">复用 ch06 三线程；量化出 GGUF；K3 上 <code>llama-server</code>；终端 DeepSeek Harness 打字；工具转发 MQTT；本地与云端只换地址</td>
+          <td rowspan="7" class="merge section"><strong>端侧 Agent 环境终端</strong>：滞回自己转；终端打字能 <code>read_status</code> / <code>set_fan</code> / <code>set_led</code>；同一套工具走本地量化模型与云端 DeepSeek。正文见 <a href="project.html">project.html</a></td>
           <td rowspan="7" class="merge section">可答辩作品</td>
           <td rowspan="7" class="merge glossary section"><dl>
-            <dt>老师供权重</dt><dd>课内提供 <code>weights.h</code>；学生专注板端部署与手写前向。</dd>
-            <dt>手写 tiny 前向</dt><dd>学生写 C 前向：读权重 → 乘加/激活 → 正常/异常。</dd>
-            <dt>滑动窗口</dt><dd>取最近 N 次采样再推理。</dd>
-            <dt>规则/模型仲裁</dt><dd>超阈值或模型异常 → 风扇转；日志记触发源。</dd>
+            <dt>DeepSeek Harness</dt><dd>Agent 运行时；本课在终端打字，不把网页当主入口。</dd>
+            <dt>llama.cpp</dt><dd>量化 + K3 上加速推理，提供 OpenAI 兼容 HTTP。</dd>
+            <dt>工具插件</dt><dd>登记后由模型调用；execute 只转发到已有 MQTT/C 程序。</dd>
+            <dt>滞回仍在</dt><dd>没人打字时控制线程仍按阈值拉风扇。</dd>
           </dl></td>
         </tr>
-        <tr class="mod-cap"><td class="section">P.2 接入配置日志 + 外接灯远程控 + 告警红灯本地</td></tr>
-        <tr class="mod-cap"><td class="section">P.3 在三线程骨架上挂规则与模型输出</td></tr>
-        <tr class="mod-cap"><td class="section">P.4 载入老师 <code>weights.h</code></td></tr>
-        <tr class="mod-cap"><td class="section">P.5 滑动窗口 + 手写 C 前向 · TinyML 方案待定</td></tr>
-        <tr class="mod-cap"><td class="section">P.6 风扇或逻辑仲裁 + 异常联动：红灯 + 风扇 + MQTT 上行；日志记触发源</td></tr>
-        <tr class="mod-cap"><td class="section">P.7 演示与验收</td></tr>
+        <tr class="mod-cap"><td class="section">P.2 主机量化：llama-quantize 得到 Q4 GGUF</td></tr>
+        <tr class="mod-cap"><td class="section">P.3 K3 启动 llama-server（IME2 加速包）</td></tr>
+        <tr class="mod-cap"><td class="section">P.4 终端启动 dsh --profile tui；登记本地与云端模型</td></tr>
+        <tr class="mod-cap"><td class="section">P.5 登记 read_status / set_fan / set_led / set_threshold</td></tr>
+        <tr class="mod-cap"><td class="section">P.6 关掉终端对照滞回；再打字改行为</td></tr>
+        <tr class="mod-cap"><td class="section">P.7 答辩：验收表走一遍，本地和云端各问一句</td></tr>
       </tbody>
     </table>
   </div>
 
-  <h2>训练与推理分工（TinyML）</h2>
+  <h2>综合项目怎么接到前六章</h2>
   <ul class="relations">
-    <li><strong>老师（课前准备）</strong>：在电脑/GPU 上训好 tiny 模型，发布 <code>weights.h</code>（可附说明与对照数据）</li>
-    <li><strong>学生（主线）</strong>：滑动窗口 → 手写 C 前向 → 正常/异常 → 风扇 + LED + MQTT</li>
-    <li>课堂重点：权重如何进工程、前向如何嵌进三线程骨架、与规则控制用「或」逻辑一起工作</li>
-    <li>TinyML 具体方案待定；综合项目 P.5 占位保留，方案定了再补实现细节</li>
+    <li>正文：<a href="project.html"><code>docs/project.html</code></a>。不再做 <code>weights.h</code> / 手写 tiny 前向。</li>
+    <li><strong>手</strong>仍是荔枝派上的 C 三线程（采集、滞回、MQTT），用 RuyiSDK 交叉编译。</li>
+    <li><strong>脑</strong>是 K3 上量化后的本地模型（llama.cpp）以及可替换的云端 DeepSeek，两者对 Harness 都是 OpenAI 兼容 HTTP。</li>
+    <li><strong>嘴</strong>是终端里的 DeepSeek Harness（<code>dsh --profile tui</code>），像 Claude Code 那样打字；工具转发到已有 MQTT。</li>
   </ul>
 
   <footer>
     在线预览：<a href="https://enzoding-rgb.github.io/ruyi-riscv-book/">课程主页</a>
     ·
     <a href="https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html">本大纲</a>
+    ·
+    <a href="https://enzoding-rgb.github.io/ruyi-riscv-book/docs/project.html">综合项目</a>
     · 仓库：<a href="https://github.com/DuoQilai/ruyi-riscv-linux-book">DuoQilai/ruyi-riscv-linux-book</a>
   </footer>
 </main>

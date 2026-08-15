@@ -3,13 +3,14 @@
 Ruyi RISC-V Linux 嵌入式实践课公开材料（**C + RuyiSDK + 真开发板**）。
 
 - **大纲（规划源）：** [`docs/CourseOutline.html`](docs/CourseOutline.html)
+- **综合项目：** [`docs/project.html`](docs/project.html)
 - **课程说明（定位 / 调研 / 取舍）：** [`docs/intro.md`](docs/intro.md)
 - **课程评价标准：** [`docs/course-evaluation-standard.md`](docs/course-evaluation-standard.md)
 - **在线预览：** https://enzoding-rgb.github.io/ruyi-riscv-book/
 
 ## 课程一句话
 
-六章讲义各三节 + 独立「深入理解」+ 每章一个完整实验（C 脚手架、板上可见验收），最后综合项目：老师提供 `weights.h`，学生手写 tiny 前向并接到外设 / MQTT。
+六章讲义各三节 + 独立「深入理解」+ 每章一个完整实验（C 脚手架、板上可见验收），最后综合项目：量化出本地模型，在终端里用 DeepSeek Harness 打字，经 MQTT 调用前六章已经写好的风扇 / 灯 / 状态接口。
 
 | 章 | 名称 | 本章实验 |
 |----|------|----------|
@@ -19,14 +20,15 @@ Ruyi RISC-V Linux 嵌入式实践课公开材料（**C + RuyiSDK + 真开发板*
 | ch04 | 串口对话与温控 | 串口命令温控 |
 | ch05 | 网络与 MQTT | MQTT 远程控灯 |
 | ch06 | 线程与协同 | 三线程协同 |
-| 综合 | 智能环境终端 | 异常联动总验收 |
+| 综合 | 端侧 Agent 环境终端 | 量化 + 终端 Harness + 荔枝派三线程 |
 
-调研结论摘要见 **`docs/intro.md`**。评价口径见 **`docs/course-evaluation-standard.md`**（CIPP 四层 + OBE 成效写法，用第 1–4 章的板上证据说明）。
+调研结论摘要见 **`docs/intro.md`**。评价口径见 **`docs/course-evaluation-standard.md`**（CIPP 四层 + OBE 成效写法，用第 1–4 章的板上证据说明）。综合项目正文见 **`docs/project.html`**。
 
 ## 研发工作流
 
 ```
 docs/CourseOutline.html              ← 唯一规划源（先改这里）
+docs/project.html                    ← 综合项目正文
 docs/intro.md                        ← 课程说明与调研取舍
 docs/course-evaluation-standard.md   ← 课程评价标准（CIPP 四层）
          │
@@ -37,6 +39,7 @@ docs/course-evaluation-standard.md   ← 课程评价标准（CIPP 四层）
 | 文档 | 角色 |
 |------|------|
 | **CourseOutline** | 改结构、改实验、改术语 → 先改这里 |
+| **project.html** | 综合项目：双机、量化、终端 Harness、验收 |
 | **intro.md** | 为什么这样设计、调研了什么 |
 | **course-evaluation-standard.md** | CIPP 四层 × 12 条，对应第 1–4 章落点 |
 | **lecture.html** | 原理 + 单项跟做 + 深入理解 |
@@ -50,6 +53,7 @@ docs/course-evaluation-standard.md   ← 课程评价标准（CIPP 四层）
 
 线上入口：https://enzoding-rgb.github.io/ruyi-riscv-book/  
 大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html  
+综合项目：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/project.html  
 评价标准：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/course-evaluation-standard.md  
 ch03 讲义：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch03/lecture.html  
 ch03 实验：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch03/lab.html  
@@ -63,14 +67,15 @@ ruyi-riscv-linux-book/
 ├── README.md
 ├── docs/
 │   ├── CourseOutline.html
+│   ├── project.html
 │   ├── course-evaluation-standard.md
-│   ├── intro.md
-│   └── index.html
+│   └── intro.md
 ├── chapters/
 │   └── ch01/ … ch06/
+├── deck/                     ← 课程介绍幻灯片（含综合项目页）
 ├── reference/
-│   ├── archive/          ← 旧稿（不作为当前讲义）
-│   └── boards/           ← 板卡备忘
+│   ├── archive/              ← 旧稿（不作为当前讲义）
+│   └── boards/               ← 板卡备忘
 └── misc/
     └── scripts/
 ```
@@ -78,6 +83,7 @@ ruyi-riscv-linux-book/
 ## 当前进度
 
 - **CourseOutline / ch01–ch06 讲义与实验：** 已按定稿上线 Pages  
+- **综合项目：** `docs/project.html` 已定稿（量化 + 终端 Harness；不再做 tiny 前向）  
 - **课程评价标准：** `docs/course-evaluation-standard.md` 已就绪  
 
 发布分支：`main`（GitHub Pages 自动发布）。

@@ -16,7 +16,7 @@
 | **讲义固定三节 + 一块实验** | 结构统一，避免讲义切碎、实验只剩尾巴 |
 | **讲义讲原理与单项跟做；实验给 C 脚手架** | 学生按讲义往后补，必须结合硬件验收（有别于纯刷题 / 纯 CSAPP 式 Shell 作业） |
 | **推 RuyiSDK** | 一键准备 / 一键编译进讲义；实验不强制一键写入，手工烧录可过；ch01 用 **CoreMark 上板跑分** 做通道硬验收 |
-| **综合项目：老师供 `weights.h`，学生手写 tiny 前向** | 边缘推理重在部署闭环，不在板上训练大模型 |
+| **综合项目：量化本地模型 + 终端 DeepSeek Harness** | 脑子可替换（本地 GGUF 或云端 DeepSeek）；手仍是前六章的 C 与 MQTT |
 
 当前六章 + 综合（摘要）：
 
@@ -28,9 +28,10 @@
 | ch04 | 串口对话与温控 | DHT22 + status/set 温控 |
 | ch05 | 网络与 MQTT | MQTT 远程控灯 |
 | ch06 | 线程与协同 | 三线程协同 |
-| 综合 | 智能环境终端 | 总装 + 老师权重 + 手写前向 |
+| 综合 | 端侧 Agent 环境终端 | 量化 + 终端 Harness + 荔枝派三线程 |
 
-在线大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html
+在线大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html  
+综合项目：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/project.html
 
 ---
 
@@ -79,7 +80,7 @@
 1. **一门课一条线**：RuyiSDK + 交叉编译 + C + 真机；无选修双轨。  
 2. **每章 = 讲义三节 + 一个完整实验**；实验不重贴讲义教程。  
 3. **实验 = C 脚手架 + 硬件可见验收**。  
-4. **综合项目可组装前面模块**，加老师权重与学生手写前向，不推倒重写。
+4. **综合项目可组装前面模块**：滞回与 MQTT 继续跑；人在终端 Harness 里打字；本地量化模型与云端 DeepSeek 只换地址。
 
 ---
 
@@ -91,7 +92,7 @@
 | GPIO / UART / 外设 | ch03（原理加厚 + 温控实验） |
 | 文件与网络 | ch04 + ch05（拆开；网络以 MQTT 为主） |
 | 进程 / 线程 | ch06（进程内多线程 + 真风扇；不写 Shell） |
-| 机器学习专章 | 综合项目内 **边缘推理部署**（老师权重 / 学生前向） |
+| 机器学习专章 | 综合项目内 **量化部署 + Agent 调工具**（llama.cpp / DeepSeek Harness；见 [`project.html`](./project.html)） |
 
 ---
 
@@ -101,7 +102,7 @@
 
 | 范围 | 状态 |
 |------|------|
-| CourseOutline（ch01–ch06 + 综合） | 已按定稿更新 |
+| CourseOutline（ch01–ch06 + 综合） | 已按定稿更新；综合见 [`project.html`](./project.html) |
 | ch01–ch04 讲义/实验 HTML | 已完成并实机验证 |
 | ch05–ch06 讲义/实验 HTML | 初稿完成，实机验证待补 |
 

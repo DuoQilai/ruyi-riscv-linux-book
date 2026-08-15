@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>综合项目</title>
+<link rel="stylesheet" href="../theme.css">
+<style>
+  .grid-3 { margin-top: 20px; }
+  .card { justify-content: flex-start; }
+  .card h2 { font-size: 26px; }
+  .card p, .card li { font-size: 20px; }
+  .flow {
+    margin-top: 20px;
+    font-family: var(--mono);
+    font-size: 20px;
+    line-height: 1.7;
+    color: var(--muted);
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 22px 28px;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <p class="kicker">综合项目 · 端侧 Agent 环境终端</p>
+  <h1>手在荔枝派，脑在 K3，嘴在终端</h1>
+  <p class="lead">滞回自己会转风扇。你在终端里像 Claude Code 那样跟 DeepSeek Harness 打字；本地量化模型和云端 DeepSeek 只换一个地址，工具仍是 MQTT。</p>
+  <div class="grid-3">
+    <div class="card">
+      <span class="tag lab">手</span>
+      <h2>荔枝派三线程</h2>
+      <p>采集、滞回、MQTT 继续跑。没人打字，风扇仍按温度开闭。RuyiSDK 编的还是这份 C。</p>
+    </div>
+    <div class="card">
+      <span class="tag linux">脑</span>
+      <h2>量化 + llama.cpp</h2>
+      <p>自己把指令模型压成 GGUF，在 K3 上用加速过的 <code>llama-server</code> 提供 HTTP。具体模型名不钉死。</p>
+    </div>
+    <div class="card">
+      <span class="tag cap">嘴</span>
+      <h2>终端 Harness</h2>
+      <p><code>dsh --profile tui</code> 打字。Harness 是运行时，DeepSeek 是一种模型。工具转发到已有主题。</p>
+    </div>
+  </div>
+  <div class="flow">终端打字 → Harness 调工具 → MQTT → 荔枝派 GPIO / 风扇 / 灯</div>
+</div>
+</body>
+</html>
