@@ -23,9 +23,10 @@
     { file: "slides/03-outline.html",    label: "主线" },
     { file: "slides/04-ruyisdk.html",    label: "如意 SDK" },
     { file: "slides/05-thermo.html",     label: "温控线" },
-    { file: "slides/06-next.html",       label: "下一站" },
-    { file: "slides/07-evaluation.html", label: "评价" },
-    { file: "slides/08-thanks.html",     label: "谢谢" },
+    { file: "slides/06-arch.html",       label: "架构" },
+    { file: "slides/07-next.html",       label: "下一站" },
+    { file: "slides/08-evaluation.html", label: "评价" },
+    { file: "slides/09-thanks.html",     label: "谢谢" },
   ];
   window.DECK_WIDTH = 1920;
   window.DECK_HEIGHT = 1080;
@@ -36,7 +37,7 @@
 
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; font-family: -apple-system, "PingFang SC", sans-serif; background: #0a0a0a; }
+  html, body { height: 100%; overflow: hidden; font-family: -apple-system, "PingFang SC", sans-serif; background: #fbfaf5; }
 
   .overview { position: fixed; inset: 0; }
   body[data-mode="present"] .overview { display: none; }
@@ -104,8 +105,8 @@
   .start-btn:hover { transform: translateY(-2px); }
 
   /* ════════ 演示模式 ════════ */
-  #stage { position: fixed; top: 50%; left: 50%; transform-origin: top left; will-change: transform; background: #fff; box-shadow: 0 10px 60px rgba(0,0,0,0.4); }
-  #stage iframe { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+  #stage { position: fixed; top: 50%; left: 50%; transform-origin: top left; will-change: transform; background: #fbfaf5; box-shadow: none; }
+  #stage iframe { width: 100%; height: 100%; border: 0; display: block; background: #fbfaf5; }
   .counter { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.65); color: #fff; padding: 6px 14px; border-radius: 999px; font-size: 13px; letter-spacing: 0.05em; font-variant-numeric: tabular-nums; z-index: 100; opacity: 0.7; }
   .counter .label { color: rgba(255,255,255,0.7); margin-left: 8px; }
   .overview-btn { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.55); color: rgba(255,255,255,0.85); border: 0; padding: 7px 14px; border-radius: 999px; font-size: 13px; font-family: inherit; cursor: pointer; z-index: 100; opacity: 0.6; }

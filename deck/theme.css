@@ -30,7 +30,7 @@ html, body {
 .slide {
   width: 1920px;
   height: 1080px;
-  padding: 72px 96px 80px;
+  padding: 56px 72px 48px;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -69,9 +69,9 @@ h1 em { font-style: normal; color: var(--accent); }
   max-width: 1400px;
 }
 
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; flex: 1; min-height: 0; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; flex: 1; min-height: 0; }
-.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 24px; flex: 1; min-height: 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; flex: 1; min-height: 0; align-items: stretch; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; flex: 1; min-height: 0; align-items: stretch; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 24px; flex: 1; min-height: 0; align-items: stretch; }
 
 .card {
   background: #fff;
@@ -80,7 +80,16 @@ h1 em { font-style: normal; color: var(--accent); }
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 100%;
 }
+
+.home-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent);
+  font-size: 20px;
+}
+.home-link:hover { opacity: 0.8; }
 
 .card h2 {
   font-size: 26px;

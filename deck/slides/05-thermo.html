@@ -5,35 +5,17 @@
 <title>温控线</title>
 <link rel="stylesheet" href="../theme.css">
 <style>
-  .steps { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 8px 0 24px; }
-  .videos { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; min-height: 0; }
-  .video-slot {
-    position: relative;
-    background: #1a1a18;
-    border: 1px dashed var(--line);
-    overflow: hidden;
-    min-height: 420px;
-  }
-  .video-slot video {
-    width: 100%; height: 100%; object-fit: contain; display: none; background: #111;
-  }
-  .video-slot.ready { border-style: solid; }
-  .video-slot.ready video { display: block; }
-  .video-slot.ready .ph { display: none; }
-  .ph {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    color: #d4cfc4; text-align: center; padding: 32px; gap: 10px;
-  }
-  .ph strong { font-size: 26px; color: #fbfaf5; }
-  .ph span { font-size: 18px; color: #8c8276; font-family: var(--mono); }
+  .grid-3 { margin-top: 28px; }
+  .card h2 { font-size: 30px; }
+  .card p { font-size: 22px; }
 </style>
 </head>
 <body>
 <div class="slide">
   <p class="kicker">已验证的核心递进</p>
   <h1>假温度 → 真风扇 → 真传感器</h1>
-  <div class="steps">
+  <p class="lead">前四章已经能在板上演示。下一页用一张架构图看第三、四章怎么接在一起。</p>
+  <div class="grid-3">
     <div class="card">
       <span class="tag env">ch02</span>
       <h2>软件里先会判</h2>
@@ -50,30 +32,6 @@
       <p>敲 <code>status</code> 有回复；<code>set temp</code> 立刻改阈值。</p>
     </div>
   </div>
-  <div class="videos">
-    <div class="video-slot" data-src="../videos/ch03-thermo.mp4">
-      <video controls playsinline preload="metadata"></video>
-      <div class="ph">
-        <strong>第三章 · 温控实验录像</strong>
-        <span>deck/videos/ch03-thermo.mp4</span>
-      </div>
-    </div>
-    <div class="video-slot" data-src="../videos/ch04-thermo.mp4">
-      <video controls playsinline preload="metadata"></video>
-      <div class="ph">
-        <strong>第四章 · 命令温控录像</strong>
-        <span>deck/videos/ch04-thermo.mp4</span>
-      </div>
-    </div>
-  </div>
 </div>
-<script>
-document.querySelectorAll('.video-slot').forEach(function (slot) {
-  var v = slot.querySelector('video');
-  v.src = slot.dataset.src;
-  v.addEventListener('loadeddata', function () { slot.classList.add('ready'); });
-  v.addEventListener('error', function () { slot.classList.remove('ready'); });
-});
-</script>
 </body>
 </html>
