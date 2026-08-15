@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>怎么教</title>
+<link rel="stylesheet" href="../theme.css">
+<style>
+  .grid-2 { margin-top: 12px; }
+  .card { justify-content: flex-start; }
+  .card h2 { font-size: 32px; margin-bottom: 18px; }
+  .card p { font-size: 24px; margin-bottom: 16px; }
+  .card li { font-size: 24px; }
+</style>
+</head>
+<body>
+<div class="slide">
+  <p class="kicker">课程怎么组织</p>
+  <h1>讲义学会，实验交得出</h1>
+  <p class="lead">同一条故事线往前走。讲义把概念在第一次出现时讲透；实验换一份要演示的证据。</p>
+  <div class="grid-2" style="margin-top:36px;">
+    <div class="card">
+      <span class="tag env">讲义 lecture</span>
+      <h2>零件是什么、接口怎么用</h2>
+      <p>带跟做小例子。例如会 <code>gpioset</code> 控继电器，能讲清 <code>select</code> 在等什么。</p>
+      <ul>
+        <li>每章固定三节</li>
+        <li>概念只在首次出现处讲透</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag lab">本章实验 lab</span>
+      <h2>C 脚手架 + 板上可见验收</h2>
+      <p>学生按契约补全。风扇开闭、敲 <code>status</code> 有回复，并填记录表。</p>
+      <ul>
+        <li>教师用 <code>make sol</code> 对照</li>
+        <li>步骤写差量，安装与 <code>make</code> 以讲义为准</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

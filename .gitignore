@@ -74,3 +74,6 @@ chapters/*/lecture.pdf
 chapters/*/code/**/build/
 chapters/ch02/code/hello/hello
 chapters/ch02/code/cmd-table/cmd-table
+
+# Internal deck recordings (keep placeholders only)
+deck/videos/*.mp4

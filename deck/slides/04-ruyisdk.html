@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>如意 SDK</title>
+<link rel="stylesheet" href="../theme.css">
+<style>
+  .body {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 40px;
+    flex: 1;
+    min-height: 0;
+    margin-top: 8px;
+  }
+  .shot {
+    border: 1px solid var(--line);
+    background: #1f2830;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .shot img { width: 100%; height: 100%; object-fit: contain; background: #1f2830; }
+  .points { display: flex; flex-direction: column; gap: 20px; }
+  .points .card h2 { font-size: 24px; }
+  .points .card p { font-size: 20px; }
+  .brand-row { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="brand-row">
+    <img class="logo" src="../assets/ruyi-logo.svg" alt="RuyiSDK">
+    <p class="kicker" style="margin:0;">品牌落点 · 第一章 1.1</p>
+  </div>
+  <h1>如意 SDK 从装上工具链开始</h1>
+  <p class="lead">硬露出在 <strong>ch01 §1.1 荔枝派 4A 与 RuyiSDK</strong>。后面每章页眉只署工具链名。</p>
+  <div class="body">
+    <div class="points">
+      <div class="card">
+        <h2>入口</h2>
+        <p><code>. ~/venv-gnu-ruyisdk/bin/ruyi-activate</code></p>
+      </div>
+      <div class="card">
+        <h2>三元组钉死</h2>
+        <p><code>riscv64-ruyisdk-linux-gnu</code> —— 为板上 Linux 用户态交叉编译。</p>
+      </div>
+      <div class="card">
+        <h2>验收</h2>
+        <p><code>file</code> 认 RISC-V，CoreMark 上板跑分。同一份源码也可在板上用本机 <code>gcc</code> 复跑。</p>
+      </div>
+    </div>
+    <div class="shot">
+      <img src="../../chapters/ch01/assets/Figure_1.png" alt="x86 上 RuyiSDK 交叉编译 CoreMark">
+    </div>
+  </div>
+</div>
+</body>
+</html>

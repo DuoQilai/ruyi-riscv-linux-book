@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>下一站</title>
+<link rel="stylesheet" href="../theme.css">
+<style>
+  .grid-3 { margin-top: 28px; }
+  .card { min-height: 520px; }
+  .card h2 { font-size: 30px; }
+  .card p { font-size: 22px; }
+  .soon {
+    margin-top: auto;
+    font-size: 16px;
+    color: var(--faint);
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <p class="kicker">同一条线往下接</p>
+  <h1>人离开键盘，三件事还得同时干</h1>
+  <p class="lead">前四章人还在 SSH 里打字。后面两章把灯交给手机，把采集、风扇、网络拆成三条线。</p>
+  <div class="grid-3">
+    <div class="card">
+      <span class="tag linux">ch05</span>
+      <h2>网络与 MQTT</h2>
+      <p>大家连一个中转站。手机往频道发 <code>on</code> / <code>off</code>，板上的灯跟着亮灭；板子再把状态发回来。</p>
+      <p class="soon">实机验证后补图</p>
+    </div>
+    <div class="card">
+      <span class="tag linux">ch06</span>
+      <h2>线程与协同</h2>
+      <p>采集、控制、通信各跑一条线。先看它们抢同一份数据怎么乱，再加锁修好。</p>
+      <p class="soon">实机验证后补图</p>
+    </div>
+    <div class="card">
+      <span class="tag cap">综合</span>
+      <h2>智能环境终端</h2>
+      <p>复用第六章骨架。规则和小模型一起判风扇；老师给 <code>weights.h</code>，学生手写 tiny 前向。</p>
+      <p class="soon">接到三线程之后</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

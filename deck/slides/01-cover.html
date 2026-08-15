@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>封面</title>
+<link rel="stylesheet" href="../theme.css">
+<style>
+  .hero {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 56px;
+    flex: 1;
+    min-height: 0;
+    align-items: center;
+  }
+  .meta { display: flex; gap: 28px; margin-top: 36px; font-size: 20px; color: var(--faint); }
+  .photo-wrap {
+    height: 720px;
+    border: 1px solid var(--line);
+    overflow: hidden;
+    background: #fff;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .brand span { font-size: 20px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="hero">
+    <div>
+      <div class="brand">
+        <img class="logo" src="../assets/ruyi-logo.svg" alt="RuyiSDK">
+        <span>RuyiSDK · 荔枝派 4A · C</span>
+      </div>
+      <p class="kicker">RISC-V Linux 嵌入式实践课</p>
+      <h1>在真板上，用 C<br>把温控一路做完</h1>
+      <p class="lead">从交叉编译通道，到风扇听温度、命令能改阈值。一门课一条线。</p>
+      <div class="meta">
+        <span>六章讲义 + 本章实验</span>
+        <span>综合：智能环境终端</span>
+      </div>
+    </div>
+    <div class="photo-wrap">
+      <img class="photo" src="../../chapters/ch03/assets/Figure_1.jpg" alt="荔枝派 4A 接线">
+    </div>
+  </div>
+</div>
+</body>
+</html>
