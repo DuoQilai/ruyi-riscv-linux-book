@@ -1,4 +1,4 @@
-# 假温控 · 写滞回 · 改读数
+# 模拟温度 · 写滞回 · 改读数
 
 半成品在 `src/thermo.c`（学生动手区）：`thermo_decide` 是空函数，要你按契约写；`thermo_read` 里还埋了 L3/L4。  
 参考实现：`src/thermo-sol.c`，`make sol` → `./build/fake-thermo-sol`。

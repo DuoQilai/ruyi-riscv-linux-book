@@ -16,7 +16,7 @@
 <div class="slide">
   <p class="kicker">第六章 · 线程与协同</p>
   <h1>采集、风扇、网络，三条线一起跑</h1>
-  <p class="lead">单线程大循环会堵。拆成三线程之后，共享状态必须进锁；Ctrl+C 要先停风扇再退出。</p>
+  <p class="lead">单线程可以按顺序做完采集、风扇和 MQTT。三条线程让三件事按各自周期进行；同一个 <code>last_temp</code> 的写和读加锁。Ctrl+C 先停风扇再退出。</p>
   <div class="grid-2">
     <div class="card">
       <span class="tag linux">讲义三节</span>

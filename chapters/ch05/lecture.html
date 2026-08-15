@@ -132,6 +132,7 @@
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
   <a href="#s5.1">5.1 Broker、主题、发布订阅</a>
+  <a class="sub" href="#s5.1-tcp">listen 与 connect</a>
   <a class="sub" href="#s5.1-model">发布订阅模型</a>
   <a class="sub" href="#s5.1-mosquitto">启动 Mosquitto</a>
   <div class="divider"></div>
@@ -175,20 +176,20 @@
 
 <div class="card-grid card-grid-3">
   <div class="card"><h4>主机</h4><p>RuyiSDK 交叉工具链；可安装 <strong>Mosquitto</strong>（MQTT 中转软件）或使用课程指定 Broker 地址。</p></div>
-  <div class="card"><h4>板卡 + LED</h4><p>荔枝派 4A；外接 LED（GPIO 输出，IO1_5）。电脑装 MQTTX 桌面版，或直接用 <code>mosquitto_pub</code> / 一段 Python 客户端。</p></div>
+  <div class="card"><h4>板卡 + LED</h4><p>荔枝派 4A；外接 LED（GPIO 输出，IO1_5）。电脑终端用 <code>mosquitto_pub</code> / <code>mosquitto_sub</code> 发命令、看状态。</p></div>
   <div class="card"><h4>代码</h4><p><code>chapters/ch05/code/mqtt-led/</code>：订阅控灯与发布状态的桩函数待你补全。</p></div>
 </div>
 
 <h3>本章你会学到什么</h3>
 
 <div class="card-grid card-grid-3" style="margin-bottom:0;">
-  <div class="card"><h4>5.1 Broker、主题、发布订阅</h4><p><strong>Broker</strong> 是中转站；<strong>主题</strong> 是频道名。理解谁发、谁收、谁转发。</p></div>
+  <div class="card"><h4>5.1 Broker、主题、发布订阅</h4><p>先对照 listen / connect；再画发布—Broker—订阅。Broker 是中转站，主题是频道名。</p></div>
   <div class="card"><h4>5.2 下行：订阅命令控 LED</h4><p>板子订阅命令主题；收到 <code>on</code>/<code>off</code> 点灯或灭灯。</p></div>
   <div class="card"><h4>5.3 上行：发布状态</h4><p>板子把 LED 状态 publish 出去，订阅端能看见。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>讲义 vs 实验：</strong>讲义建立模型并跟做 Broker 与抓包步骤；「深入理解」把一次 publish 从应用到以太网拆开看。本章实验完成「电脑客户端控灯 + 状态可见 + 抓一条 publish」。
+  <strong>讲义 vs 实验：</strong>讲义建立模型并跟做 Broker 与抓包步骤；「深入理解」把一次 publish 从应用到以太网拆开看。本章实验完成「电脑终端控灯 + 状态可见 + 抓一条 publish」。
 </div>
 </section>
 
@@ -197,10 +198,24 @@
 <div class="section-num">5.1</div>
 <h2>Broker、主题、发布订阅</h2>
 
-<h3 id="s5.1-model">发布订阅模型</h3>
-<p><strong>MQTT</strong> 不强调「你直接连我」，而强调「大家都连中转站」。<strong>Broker</strong> 是消息中转站（本课常用软件 <strong>Mosquitto</strong>）：客户端连上它，按<strong>主题</strong>（频道名，如 <code>course/led/cmd</code>）转发消息。<strong>publish</strong>（发布）是往某个主题发一条消息；订阅是盯着某个主题收消息。</p>
+<h3 id="s5.1-tcp">listen 与 connect</h3>
+<p>TCP 连接里有两个角色：一方在本地某个端口上 <strong>listen</strong>（等别人连进来），另一方 <strong>connect</strong> 到对方的 IP 和端口。本课用得到下面两种摆法，课堂验收用第二种。</p>
+<div class="diagram">摆法一：板上 listen，电脑终端 connect 到板的 IP
+  荔枝派：listen(某端口)
+  电脑终端：connect(板的局域网 IP, 某端口)
+  电脑终端要记下板的地址；连入发生在同一局域网里。
 
-<div class="diagram">电脑客户端（发布者）
+摆法二（本课）：Broker listen，板和电脑终端都 connect 过去
+  主机 Mosquitto：listen(1883)
+  荔枝派 mqtt-led：connect(BROKER_HOST, 1883)
+  电脑终端 mosquitto_pub / mosquitto_sub：connect(同一个 BROKER_HOST, 1883)
+  BROKER_HOST 填主机的局域网 IP。双方用主题名收发，电脑终端按主题发命令。</div>
+<p>板子地址是 <code>192.168.x.x</code> 这一类局域网地址时，只在同一网段里能被 connect。本课让 Mosquitto 在主机上 listen，板和电脑终端都向外 connect，板保持作为客户去连 Broker。</p>
+
+<h3 id="s5.1-model">发布订阅模型</h3>
+<p><strong>MQTT</strong> 用发布订阅：大家都 <code>connect</code> 到中转站。<strong>Broker</strong> 是消息中转站（本课常用软件 <strong>Mosquitto</strong>）：连上它的程序按<strong>主题</strong>（频道名，如 <code>course/led/cmd</code>）收发。<strong>publish</strong>（发布）是往某个主题发一条消息；订阅是盯着某个主题收消息。</p>
+
+<div class="diagram">电脑终端（发布者）
     │  publish  course/led/cmd  payload="on"
     ▼
 Broker（Mosquitto）
@@ -210,13 +225,13 @@ Broker（Mosquitto）
 
 反方向：
 板子 publish  course/led/status  payload="on"
-    → Broker → 电脑客户端看见状态</div>
+    → Broker → 电脑终端看见状态</div>
 
 <table>
   <tr><th>术语</th><th>一句话</th><th>本课例子</th></tr>
   <tr><td>Broker</td><td>消息中转站</td><td>主机或板上的 Mosquitto，默认端口 1883</td></tr>
   <tr><td>主题</td><td>频道名</td><td><code>course/led/cmd</code>、<code>course/led/status</code></td></tr>
-  <tr><td>publish（发布）</td><td>往某主题发一条</td><td>电脑客户端发 <code>on</code>；板子报状态</td></tr>
+  <tr><td>publish（发布）</td><td>往某主题发一条</td><td>电脑终端发 <code>on</code>；板子报状态</td></tr>
   <tr><td>订阅</td><td>盯着某主题收</td><td>板子订 <code>course/led/cmd</code></td></tr>
   <tr><td>payload</td><td>消息正文</td><td><code>on</code> / <code>off</code></td></tr>
 </table>
@@ -232,11 +247,11 @@ Broker（Mosquitto）
 <span class="p">$</span> mosquitto_pub -h 127.0.0.1 -t 'course/led/cmd' -m 'on'</pre>
 
 <div class="warn">
-  <strong>网络：</strong>板子连接 Broker 时用<strong>主机局域网 IP</strong>，不要写 <code>127.0.0.1</code>（那是板子自己）。防火墙需放行 1883。课堂若提供统一 Broker 地址，以当堂板书为准。
+  <strong>网络：</strong>板子上的 <code>BROKER_HOST</code> 填<strong>主机的局域网 IP</strong>。板上的 <code>127.0.0.1</code> 指向板自己，连到的是板上的端口。防火墙放行 1883。课堂若提供统一 Broker 地址，以当堂板书为准。
 </div>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能画发布—Broker—订阅三角 · Mosquitto 能收发一条测试消息 · 记下 Broker IP 与主题名。
+  <strong>本节成果：</strong>能对照「板上 listen」和「双方都 connect 到 Broker」· 能画发布—Broker—订阅三角 · Mosquitto 能收发一条测试消息 · 记下 Broker IP 与主题名。
 </div>
 </section>
 
@@ -253,7 +268,7 @@ Broker（Mosquitto）
   <li>未知 payload → 打 <code>[ERR]</code>，不改变当前电平</li>
 </ul>
 
-<div class="diagram">mosquitto_pub / MQTTX 桌面版
+<div class="diagram">电脑终端 mosquitto_pub
         │  topic=course/led/cmd  msg=on
         ▼
    Broker
@@ -297,7 +312,7 @@ gpiod_line_set_value(LED, 1 或 0)</div>
 <h2>上行：发布状态</h2>
 
 <h3 id="s5.3-up">灯态变化后 publish</h3>
-<p>灯亮灭改变后，板子向 <code>course/led/status</code> <strong>publish</strong>（发布）当前状态（如 <code>on</code>/<code>off</code>）。订阅该主题的客户端即可确认「命令是否落地」。脚手架中 <code>publish_status()</code> 为桩，实验里接到点灯成功之后调用。</p>
+<p>灯亮灭改变后，板子向 <code>course/led/status</code> <strong>publish</strong>（发布）当前状态（如 <code>on</code>/<code>off</code>）。订阅该主题的电脑终端即可确认「命令是否落地」。脚手架中 <code>publish_status()</code> 为桩，实验里接到点灯成功之后调用。</p>
 
 <pre><span class="c">/* 伪代码 */</span>
 led_set(1);

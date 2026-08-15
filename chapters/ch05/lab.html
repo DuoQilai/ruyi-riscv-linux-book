@@ -128,7 +128,7 @@
 <p><strong>本步成功判据：</strong>宏已按课堂环境改好；你能说出 Broker IP 与两个主题名。</p>
 
 <h3>2. 补全下行控灯与上行状态发布</h3>
-<p>术语提醒：<strong>下行</strong>指从电脑客户端/主机发命令到板子控硬件；<strong>上行</strong>指板子把当前状态发回 Broker，供别人订阅。</p>
+<p>术语提醒：<strong>下行</strong>指从电脑终端发命令到板子控硬件；<strong>上行</strong>指板子把当前状态发回 Broker，供别人订阅。</p>
 <ol>
   <li>
     <strong>在 <code>on_message</code> 中处理命令载荷</strong><br>
@@ -164,7 +164,7 @@
     期望：外接 LED 亮；订阅窗口出现状态 payload（如 <code>on</code>）。
   </li>
   <li>再发 <code>-m off</code>：灯灭，状态同步为 off。</li>
-  <li>用电脑 MQTT 客户端（MQTTX 桌面版或 <code>mosquitto_pub</code>）连<strong>同一 Broker</strong>，对同一命令主题再发一次 on/off，确认与主机 pub 等价（灯有动作）。</li>
+  <li>另开一个电脑终端，用 <code>mosquitto_pub</code> 连<strong>同一 Broker</strong>，对同一命令主题再发一次 on/off，确认灯有动作。</li>
   <li>
     <strong>抓包（必做）：</strong>在主机或板端（以讲义 5.3 与课堂约定为准，通常在能看到板↔Broker 流量的那一侧）执行：
 <pre><span class="p">$</span> sudo tcpdump -i any -nn -A port 1883 -c 20</pre>
@@ -189,7 +189,7 @@
   <tr><td>编译</td><td>交叉编译成功，<code>file</code> 为 RISC-V</td><td></td></tr>
   <tr><td>下行</td><td>pub <code>on</code>/<code>off</code> 外接 LED 亮灭正确</td><td></td></tr>
   <tr><td>上行</td><td>状态主题订阅端能看到对应 payload</td><td></td></tr>
-  <tr><td>电脑客户端联调</td><td>客户端发命令灯有动作（与主机 pub 等价）</td><td></td></tr>
+  <tr><td>电脑终端联调</td><td>电脑终端发命令，灯有动作</td><td></td></tr>
   <tr><td>抓包</td><td>保存含 1883 的 tcpdump 片段；能口述 MQTT→TCP→IP 分层</td><td></td></tr>
 </table>
 

@@ -155,10 +155,10 @@
   <li><strong>学生文件：</strong><code>temperature_fan.c</code>（默认 <code>make</code>）</li>
   <li><strong>参考实现：</strong><code>temperature_fan-sol.c</code>（<code>make sol</code>；先自己写，过关后再对照）</li>
   <li><strong>脚：</strong><code>gpiochip5</code> line 5 / 丝印 IO1_5</li>
-  <li><strong>输入：</strong>程序内部假温度（本章不接 DHT22）</li>
+  <li><strong>输入：</strong>程序内部模拟温度（本章不接 DHT22）</li>
 </ul>
 <div class="ok">
-  <strong>成功时你能演示：</strong>你写的代码能 <code>make</code> 通过；终端假温度来回；超上限风扇转、低下限风扇停；改阈值后开/关点跟着变。
+  <strong>成功时你能演示：</strong>你写的代码能 <code>make</code> 通过；终端模拟温度来回；超上限风扇转、低下限风扇停；改阈值后开/关点跟着变。
 </div>
 <div class="warn">
   <strong>安全：</strong>风扇大电流经继电器触点；GPIO 只接信号端。板子上标着 Fan Power 的白色插座是板载散热风扇用的，与本实验风扇无关。接线时尽量断电。
@@ -313,7 +313,7 @@
 <h2>步骤 4：模拟温度控制验收</h2>
 <ul>
   <li>启动打印 <code>[INFO] 模拟温度控制: T_HIGH=29.0 T_LOW=25.0</code>，并说明继电器在 IO1_5。</li>
-  <li>周期性打印 <code>[INFO] temp=…C fan=OFF|ON</code>，假温度在 24~30 之间来回。</li>
+  <li>周期性打印 <code>[INFO] temp=…C fan=OFF|ON</code>，模拟温度在 24~30 之间来回。</li>
   <li>升过 29°C → <code>[INFO] fan ON</code>，继电器吸合，<strong>风扇转</strong>。</li>
   <li>降到 25°C 以下 → <code>[INFO] fan OFF</code>，风扇停。</li>
   <li>中间区间（25~29）保持上一状态。</li>
@@ -354,7 +354,7 @@
   <tr><th>验收项</th><th>通过条件</th><th>□</th></tr>
   <tr><td>接线</td><td>IO1_5 直连继电器 IN；继电器 5V/GND；风扇走 NO–COM；跳帽 H；共地</td><td></td></tr>
   <tr><td>自己写的函数</td><td><code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code> 在学生文件中实现；<code>make</code> 通过</td><td></td></tr>
-  <tr><td>运行</td><td><code>sudo ./temperature_fan</code> 打印假温度</td><td></td></tr>
+  <tr><td>运行</td><td><code>sudo ./temperature_fan</code> 打印模拟温度</td><td></td></tr>
   <tr><td>控制</td><td>超 29°C 开、低于 25°C 关，风扇启动或停止（与图 3 / 学生版默认常量一致）</td><td></td></tr>
   <tr><td>改阈值</td><td>改过 T_HIGH/T_LOW（或 STEP_DELTA）并观察到开/关点变化。课程不另附第三章改阈值终端图；截图证据见第四章 <code>set temp</code></td><td></td></tr>
 </table>

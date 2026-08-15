@@ -397,7 +397,7 @@ apply_fan_policy(t, &amp;fan_on);</pre>
     *fan_on = value;   <span class="c">/* 改的是调用方那份变量 */</span>
 }</pre>
 
-<p><strong>数组</strong>是连续同类型元素。假温度序列常用数组驱动：</p>
+<p><strong>数组</strong>是连续同类型元素。模拟温度序列常用数组驱动：</p>
 
 <pre><span class="k">static const float</span> seq[] = { 25.0f, 27.0f, 29.0f, 27.0f, 24.0f };
 <span class="k">for</span> (<span class="k">size_t</span> i = 0; i &lt; <span class="k">sizeof</span>(seq)/<span class="k">sizeof</span>(seq[0]); i++) {
@@ -511,10 +511,10 @@ unknown command: foo</pre>
 
 <h3 id="s2.4-macro">宏与条件编译：实验开关靠它</h3>
 <p><strong>宏</strong>（<code>#define</code>）是编译期的文字替换；<strong>条件编译</strong>（<code>#if</code> / <code>#ifndef</code>）让一段代码在满足条件时才被编译进去。</p>
-<pre><span class="k">#define</span> SIMULATE_SENSOR  1   <span class="c">/* 1=假温度，0=真 DHT22 */</span>
+<pre><span class="k">#define</span> SIMULATE_SENSOR  1   <span class="c">/* 1=模拟温度，0=真 DHT22 */</span>
 
 <span class="k">#if</span> SIMULATE_SENSOR
-<span class="c">/* 假温度：程序自己变 */</span>
+<span class="c">/* 模拟温度：程序自己变 */</span>
 <span class="k">#else</span>
 <span class="c">/* 真 DHT22：读传感器 */</span>
 <span class="k">#endif</span></pre>

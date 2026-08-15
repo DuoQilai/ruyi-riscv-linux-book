@@ -1,5 +1,5 @@
 /*
- * main.c — 假温控驱动：内置温度序列或 stdin
+ * main.c — 模拟温度驱动：内置温度序列或 stdin
  * 软件输入，无真 DHT。半成品逻辑在 thermo.c，请按关卡修复。
  */
 #include "thermo.h"

@@ -287,7 +287,7 @@
       <a class="ch-exp-ch mod-linux" href="../chapters/ch05/lecture.html" style="text-decoration:none;color:inherit;">
         <span class="flow-ch">ch05</span>
         <p class="flow-title">网络与 MQTT</p>
-        <p class="flow-desc">手机远程控灯；板子上报状态</p>
+        <p class="flow-desc">电脑终端远程控灯；板子上报状态</p>
       </a>
       <a class="ch-exp-ch mod-linux" href="../chapters/ch06/lecture.html" style="text-decoration:none;color:inherit;">
         <span class="flow-ch">ch06</span>
@@ -309,7 +309,7 @@
       <a class="ch-exp-lab mod-lab" href="../chapters/ch03/lab.html" style="text-decoration:none;color:inherit;">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">继电器控制风扇</p>
-        <p class="flow-desc">自己写三函数；假温度驱动真风扇</p>
+        <p class="flow-desc">自己写三函数；模拟温度驱动真风扇</p>
       </a>
       <a class="ch-exp-lab mod-lab" href="../chapters/ch04/lab.html" style="text-decoration:none;color:inherit;">
         <span class="exp-tag todo">本章实验</span>
@@ -319,7 +319,7 @@
       <a class="ch-exp-lab mod-lab" href="../chapters/ch05/lab.html" style="text-decoration:none;color:inherit;">
         <span class="exp-tag todo">本章实验</span>
         <p class="flow-title">MQTT 远程控灯</p>
-        <p class="flow-desc">手机控外接 LED；板子上报状态；抓包看一层层包装</p>
+        <p class="flow-desc">电脑终端控外接 LED；板子上报状态；抓包看一层层包装</p>
       </a>
       <a class="ch-exp-lab mod-lab" href="../chapters/ch06/lab.html" style="text-decoration:none;color:inherit;">
         <span class="exp-tag todo">本章实验</span>
@@ -368,7 +368,7 @@
   <ul class="relations">
     <li>讲义 → 同章实验 → 下一章讲义；底栏有「上一篇 / 下一篇」。</li>
     <li>实验写差量步骤与验收；安装 / <code>make</code> / <code>scp</code> 等基础操作以讲义为准。</li>
-    <li>同一故事线递进：ch02 软件假温控 → ch03 假温度+真风扇 → ch04 真传感+命令对话。</li>
+    <li>同一故事线递进：ch02 软件模拟温度 → ch03 模拟温度+真风扇 → ch04 真传感+命令对话。</li>
   </ul>
 
   <h2>术语表</h2>
@@ -444,7 +444,7 @@
         </tr>
         <tr>
           <td>MQTT</td>
-          <td>物联网发消息的方式。手机和板子都连一个「中转站」，按<strong>主题名</strong>收发文字（如主题 <code>home/led</code> 发 <code>on</code>）。</td>
+          <td>物联网发消息的方式。电脑终端和板子都连一个「中转站」，按<strong>主题名</strong>收发文字（如主题 <code>home/led</code> 发 <code>on</code>）。</td>
         </tr>
         <tr>
           <td>Broker</td>
@@ -452,7 +452,7 @@
         </tr>
         <tr>
           <td>发布 / 订阅</td>
-          <td><strong>发布</strong>＝往某主题发一条消息；<strong>订阅</strong>＝盯着某主题收消息。ch05：手机下行控外接 LED；板子上行发布状态。</td>
+          <td><strong>发布</strong>＝往某主题发一条消息；<strong>订阅</strong>＝盯着某主题收消息。ch05：电脑终端下行控外接 LED；板子上行发布状态。</td>
         </tr>
         <tr>
           <td>tcpdump</td>
@@ -460,7 +460,7 @@
         </tr>
         <tr>
           <td>外接 LED</td>
-          <td>远程控制用的灯。ch05：手机发 MQTT 命令，板子驱动这盏灯。</td>
+          <td>远程控制用的灯。ch05：电脑终端发 MQTT 命令，板子驱动这盏灯。</td>
         </tr>
         <tr>
           <td>告警红灯</td>
@@ -512,12 +512,7 @@
       <tbody>
         <tr>
           <td>个人电脑</td>
-          <td>联网；装 <code>ruyi</code> 与交叉工具链；SSH/串口连板；ch05 起装 Mosquitto 或 MQTT 客户端；ch06 用电脑跑 ThreadSanitizer 小程序</td>
-          <td class="provider">学生自备</td>
-        </tr>
-        <tr>
-          <td>智能手机</td>
-          <td>装 MQTT 调试 App（如 MQTTX），ch05 远程控灯</td>
+          <td>联网；装 <code>ruyi</code> 与交叉工具链；SSH/串口连板；ch05 起装 Mosquitto，用电脑终端 <code>mosquitto_pub</code> / <code>mosquitto_sub</code> 远程控灯；ch06 用电脑跑 ThreadSanitizer 小程序</td>
           <td class="provider">学生自备</td>
         </tr>
         <tr>
@@ -602,7 +597,7 @@
           <td>ch03</td>
           <td>外设篇</td>
           <td>GPIO 与执行器</td>
-          <td>会用 <code>gpiod</code> 控针脚；理解寄存器与 API；假温度驱动真继电器/风扇</td>
+          <td>会用 <code>gpiod</code> 控针脚；理解寄存器与 API；模拟温度驱动真继电器/风扇</td>
           <td>继电器控制风扇</td>
           <td>自己写三函数后：超阈值风扇转、降温停；可选 <code>devmem</code> 只读核对位翻转</td>
           <td>外设能力 + 模拟温度控制</td>
@@ -620,9 +615,9 @@
           <td>ch05</td>
           <td>Linux 应用篇</td>
           <td>网络通信与 MQTT</td>
-          <td>发布/订阅；手机远程控外接 LED；板子发布状态；用 tcpdump 看一层层包装</td>
+          <td>发布/订阅；电脑终端远程控外接 LED；板子发布状态；用 tcpdump 看一层层包装</td>
           <td>MQTT 远程控灯</td>
-          <td>手机控外接 LED；板子状态在订阅端可见；抓包能指出 MQTT 落在哪一层</td>
+          <td>电脑终端控外接 LED；板子状态在订阅端可见；抓包能指出 MQTT 落在哪一层</td>
           <td>可复用 MQTT 模块（下行控灯 + 上行状态）</td>
         </tr>
         <tr class="mod-linux">
@@ -712,7 +707,7 @@
           <td rowspan="3" class="merge">ch03</td>
           <td rowspan="3" class="merge">外设篇</td>
           <td class="section">3.1 外设与 I/O</td>
-          <td rowspan="3" class="merge section">会用 gpiod 控继电器；假温度驱动真风扇；可选只读核对寄存器位</td>
+          <td rowspan="3" class="merge section">会用 gpiod 控继电器；模拟温度驱动真风扇；可选只读核对寄存器位</td>
           <td rowspan="3" class="merge section"><strong>继电器控制风扇</strong>：接线；学生实现 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>；模拟温度控制；改阈值验收</td>
           <td rowspan="3" class="merge section">外设能力 + 模拟温度控制</td>
           <td rowspan="3" class="merge glossary section"><dl>
@@ -723,7 +718,7 @@
           </dl></td>
         </tr>
         <tr class="mod-board"><td class="section">3.2 GPIO：用 gpiod 控继电器与风扇</td></tr>
-        <tr class="mod-board"><td class="section">3.3 决策 → 执行（假温度）</td></tr>
+        <tr class="mod-board"><td class="section">3.3 决策 → 执行（模拟温度）</td></tr>
 
         <tr class="mod-linux">
           <td rowspan="3" class="merge">ch04</td>
@@ -746,8 +741,8 @@
           <td rowspan="4" class="merge">ch05</td>
           <td rowspan="4" class="merge">Linux 应用篇</td>
           <td class="section">5.1 联网发消息：Broker、主题、发布订阅</td>
-          <td rowspan="4" class="merge section">手机远程控外接 LED；板子发布状态；tcpdump 看分层包装</td>
-          <td rowspan="4" class="merge section"><strong>MQTT 远程控灯</strong>：订阅主题驱动外接 LED；板子 publish 状态；手机 App 联调；按讲义步骤抓一条 publish</td>
+          <td rowspan="4" class="merge section">电脑终端远程控外接 LED；板子发布状态；tcpdump 看分层包装</td>
+          <td rowspan="4" class="merge section"><strong>MQTT 远程控灯</strong>：订阅主题驱动外接 LED；板子 publish 状态；电脑终端联调；按讲义步骤抓一条 publish</td>
           <td rowspan="4" class="merge section">可复用 MQTT：下行控灯 + 上行状态</td>
           <td rowspan="4" class="merge glossary section"><dl>
             <dt>Broker</dt><dd>消息中转站（Mosquitto）。</dd>
@@ -763,7 +758,7 @@
         <tr class="mod-linux">
           <td rowspan="4" class="merge">ch06</td>
           <td rowspan="4" class="merge">Linux 应用篇</td>
-          <td class="section">6.1 一条线会互相堵：已有 MQTT 监听</td>
+          <td class="section">6.1 从单线程过渡到多线程</td>
           <td rowspan="4" class="merge section">三线程骨架；共享状态加锁；竞态必现并修好；干净停</td>
           <td rowspan="4" class="merge section"><strong>三线程协同</strong>：采集、控制、通信三条线脚手架；阈值控风扇；MQTT 通信线工作；板上先不加锁看数据错乱，再加锁修好；电脑上用 ThreadSanitizer 跑同一抢数据小程序并保存报告；Ctrl+C 关风扇后退出</td>
           <td rowspan="4" class="merge section">三线程骨架（供综合复用）</td>

@@ -147,7 +147,7 @@
   <a class="sub" href="#s3.2-diagnose">故障排查（本章）</a>
   <div class="divider"></div>
   <a href="#s3.3">3.3 决策 → 执行</a>
-  <a class="sub" href="#s3.3-loop">假温度 → 继电器 → 风扇</a>
+  <a class="sub" href="#s3.3-loop">模拟温度 → 继电器 → 风扇</a>
 </nav>
 
 <div class="hero">
@@ -188,7 +188,7 @@
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>3.1 外设与 I/O</h4><p>物理量如何变成程序里的数；寄存器 / MMIO；用户态经内核接口访问硬件。</p></div>
   <div class="card"><h4>3.2 GPIO：用 gpiod 控继电器</h4><p>chip/line、本板 1.8 V、信号端接线、<code>gpioset</code> 跟做；只读 <code>devmem</code> 核对位翻转。</p></div>
-  <div class="card"><h4>3.3 决策 → 执行</h4><p>假温度与滞回如何驱动执行链。真传感器在第四章。</p></div>
+  <div class="card"><h4>3.3 决策 → 执行</h4><p>模拟温度与滞回如何驱动执行链。真传感器在第四章。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
@@ -444,13 +444,13 @@ gpiod_line_request_release(req);</pre>
 <!-- ═══ 3.3 ═══ -->
 <section id="s3.3">
 <div class="section-num">3.3</div>
-<h2>决策 → 执行：假温度怎么驱动风扇</h2>
+<h2>决策 → 执行：模拟温度怎么驱动风扇</h2>
 
 <h3 id="s3.3-loop">数据流：决策 → 执行</h3>
-<p>第三章的程序用程序内部自变的<strong>假温度</strong>（约 24°C → 31°C 再降回）演示「决策 → 执行」：假温度 → 阈值判断 → 继电器 → 风扇。真传感器（DHT22）到第四章再接。</p>
+<p>第三章的程序用程序内部自变的<strong>模拟温度</strong>（约 24°C → 31°C 再降回）演示「决策 → 执行」：模拟温度 → 阈值判断 → 继电器 → 风扇。真传感器（DHT22）到第四章再接。</p>
 <p><strong>执行侧</strong>是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成<strong>滞回</strong>（第二章已定义：中间区间保持上一状态），温度在临界附近时风扇保持上一状态。</p>
 
-<div class="diagram">假温度 T（程序内部自变）
+<div class="diagram">模拟温度 T（程序内部自变）
         │
         ▼
    阈值判断
@@ -462,8 +462,8 @@ gpiod_line_request_release(req);</pre>
    gpiod 写 FAN_LINE(IO1_5) ──► 继电器信号端 ──► 风扇</div>
 
 <pre><span class="c">/* 伪代码：实验里由你实现 fan_decide，再经 fan_set 落地 */</span>
-<span class="k">if</span> (假温度 &gt; T_HIGH) 风扇应开;
-<span class="k">else if</span> (假温度 &lt; T_LOW)  风扇应关;
+<span class="k">if</span> (模拟温度 &gt; T_HIGH) 风扇应开;
+<span class="k">else if</span> (模拟温度 &lt; T_LOW)  风扇应关;
 <span class="c">/* 中间区间：保持上一状态 */</span></pre>
 
 <p>两个阈值的作用：高开、低关，中间区间保持——真实温控普遍如此。默认 <code>T_HIGH=29</code> / <code>T_LOW=25</code>（与实验学生版、图 3 一致）。</p>

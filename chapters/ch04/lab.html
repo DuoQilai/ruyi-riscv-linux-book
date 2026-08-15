@@ -185,7 +185,7 @@
   <tr><td>TXS <strong>OE</strong></td><td>接高</td><td>使能</td></tr>
 </table>
 <p>继电器 / 风扇保持第三章：IO1_5 直连信号端，风扇走 NO–COM。</p>
-<p>打开 <code>cmd_thermo.c</code>，确认 <code>GPIO_CHIP_PATH</code>、<code>DHT_LINE=6</code>、<code>FAN_LINE=5</code>。首次联调建议保持默认 <code>SIMULATE_SENSOR=1</code>（假温度升降）；接好真 DHT 并稳定后再用 <code>-DSIMULATE_SENSOR=0</code> 重编。</p>
+<p>打开 <code>cmd_thermo.c</code>，确认 <code>GPIO_CHIP_PATH</code>、<code>DHT_LINE=6</code>、<code>FAN_LINE=5</code>。首次联调建议保持默认 <code>SIMULATE_SENSOR=1</code>（模拟温度升降）；接好真 DHT 并稳定后再用 <code>-DSIMULATE_SENSOR=0</code> 重编。</p>
 <p><strong>本步成功判据：</strong>能指着线说出「地 / TXS A·B / VA·VB / IO1_6」；知道当前是模拟还是真传感器。</p>
 </section>
 

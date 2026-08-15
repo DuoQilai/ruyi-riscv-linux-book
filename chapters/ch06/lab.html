@@ -99,7 +99,7 @@
 
 <section id="intro">
 <h2>说明</h2>
-<p>讲义 6.1–6.3 已说明：单线程里采样、控风扇、跑 MQTT 会互相堵住；拆成三条线程后，共享的温度/风扇状态若不加锁会出现<strong>竞态</strong>（多线程同时读写同一变量，结果不可预期）。本实验交付两份工程，顺序固定：先在电脑上看清「丢更新」与 ThreadSanitizer 报告，再在荔枝派 4A 上跑产品骨架并完成无锁→加锁对照。</p>
+<p>讲义 6.1 已说明：采样、控风扇和 MQTT 可以放在一条线程里按顺序做完；<code>mosquitto_loop_forever</code> 等待返回之后，才轮到采样和风扇判定。本章用三条线程让三件事按各自周期进行。采集线程写 <code>last_temp</code>，控制线程读同一个 <code>last_temp</code>，实验用 <code>USE_LOCK</code> 对照无锁交错与加锁后读到完整写入。本实验交付两份工程，顺序固定：先在电脑上看清「丢更新」与 ThreadSanitizer 报告，再在荔枝派 4A 上跑产品骨架并完成无锁→加锁对照。</p>
 <ul>
   <li><code>chapters/ch06/code/race-demo/</code> — 在电脑上跑的强制竞态小程序；配合主机 <code>gcc -fsanitize=thread</code>（ThreadSanitizer，简称 TSan）指出谁在抢同一变量</li>
   <li><code>chapters/ch06/code/tri-thread/</code> — 板上产品骨架：采集线程写温度、控制线程按阈值开/关风扇、通信线程跑 MQTT</li>

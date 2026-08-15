@@ -1,5 +1,5 @@
 /*
- * thermo.h — 假温控配置与传感器 API
+ * thermo.h — 模拟温度配置与传感器 API
  * 讲义 2.2 / 2.3；实验：写出 thermo_decide，并修好 thermo_read
  */
 #ifndef THERMO_H
