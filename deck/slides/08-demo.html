@@ -4,27 +4,51 @@
 <meta charset="UTF-8">
 <title>演示录像</title>
 <link rel="stylesheet" href="../theme.css">
+<style>
+  h1 { font-size: 42px; margin-bottom: 8px; }
+  .lead { font-size: 22px; margin-bottom: 18px; }
+  .pair {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  .pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .pane .label {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text);
+  }
+  .pane .label span { font-weight: 500; color: var(--muted); font-size: 16px; }
+  .video-slot { margin-top: 0; }
+  .video-slot video { display: block; }
+</style>
 </head>
 <body>
 <div class="slide">
-  <p class="kicker">第三章 → 第四章</p>
-  <h1>整段演示：模拟温度转风扇，再换成真传感器和命令</h1>
-  <p class="lead">一条录像看完。先看模拟温度驱动继电器，再看 DHT22 加上 <code>status</code> / <code>set</code>。</p>
-  <div class="video-slot" data-src="../videos/thermo-demo.mp4">
-    <video controls playsinline preload="metadata"></video>
-    <div class="ph">
-      <strong>第三、四章整段演示</strong>
-      <span>把录像放到 deck/videos/thermo-demo.mp4</span>
+  <p class="kicker">实机演示</p>
+  <h1>左边模拟温度转风扇，右边真传感器加命令</h1>
+  <p class="lead">点选一条再按空格播。Chrome 倍速插件对这两条 HTML5 视频生效。左：滞回推继电器。右：DHT22 经 TXS，SSH 里 <code>status</code> / <code>set</code>。</p>
+  <div class="pair">
+    <div class="pane">
+      <div class="label">左 · 4309 <span>模拟温度 · 风扇跟着转</span></div>
+      <div class="video-slot ready">
+        <video controls playsinline preload="metadata" src="../videos/ch03-thermo.mp4"></video>
+      </div>
+    </div>
+    <div class="pane">
+      <div class="label">右 · 4310 <span>真 DHT22 · 终端命令</span></div>
+      <div class="video-slot ready">
+        <video controls playsinline preload="metadata" src="../videos/ch04-thermo.mp4"></video>
+      </div>
     </div>
   </div>
 </div>
-<script>
-document.querySelectorAll('.video-slot').forEach(function (slot) {
-  var v = slot.querySelector('video');
-  v.src = slot.dataset.src;
-  v.addEventListener('loadeddata', function () { slot.classList.add('ready'); });
-  v.addEventListener('error', function () { slot.classList.remove('ready'); });
-});
-</script>
 </body>
 </html>

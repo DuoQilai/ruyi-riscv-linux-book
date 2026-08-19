@@ -5,45 +5,320 @@
 <title>综合项目</title>
 <link rel="stylesheet" href="../theme.css">
 <style>
-  .grid-3 { margin-top: 20px; }
-  .card { justify-content: flex-start; }
-  .card h2 { font-size: 26px; }
-  .card p, .card li { font-size: 20px; }
-  .flow {
-    margin-top: 20px;
-    font-family: var(--mono);
-    font-size: 20px;
-    line-height: 1.7;
-    color: var(--muted);
+  .slide { padding-bottom: 40px; }
+  h1 { font-size: 48px; margin-bottom: 8px; }
+  .lead { font-size: 22px; margin-bottom: 22px; max-width: 1600px; }
+
+  .arch {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 280px 56px 1fr 56px 520px;
+    grid-template-rows: 1fr 40px 200px;
+    align-items: stretch;
+  }
+
+  .col {
     background: #fff;
     border: 1px solid var(--line);
-    padding: 22px 28px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .col-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px 12px;
+    border-bottom: 1px solid var(--line-light);
+  }
+  .col-head .who {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+  }
+  .col-head h2 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .col-body { padding: 16px 20px 18px; display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
+
+  .mouth { border-top: 5px solid var(--accent); }
+  .brain { border-top: 5px solid #6b5b95; }
+  .hand { border-top: 5px solid var(--warm); }
+  .who.mouth { background: var(--mod-cap); color: #2a5a32; }
+  .who.brain { background: var(--mod-linux); color: #4a3a6e; }
+  .who.hand { background: var(--mod-board); color: #8a4b1a; }
+
+  .term {
+    flex: 1;
+    background: #1e1c18;
+    color: #e8e2d4;
+    font-family: var(--mono);
+    font-size: 16px;
+    line-height: 1.7;
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: 0;
+  }
+  .term .prompt { color: #7eb8b4; }
+  .term .out { color: #c4bba8; }
+  .term .cursor {
+    display: inline-block; width: 9px; height: 16px;
+    background: #7eb8b4; margin-left: 2px; vertical-align: -2px;
+  }
+  .hint { font-size: 16px; color: var(--faint); line-height: 1.45; }
+
+  .plugins {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 14px;
+    flex: 1;
+    min-height: 0;
+  }
+  .mod {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .mod .k { font-size: 13px; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+  .mod h3 { font-size: 22px; margin: 0 0 10px; }
+  .mod p { font-size: 17px; color: var(--muted); margin: 0; line-height: 1.45; }
+  .swap {
+    display: grid;
+    grid-template-columns: 1fr 28px 1fr;
+    gap: 0;
+    align-items: stretch;
+    margin-top: 12px;
+    flex: 1;
+  }
+  .swap .opt {
+    border: 1px dashed var(--line);
+    background: #fff;
+    padding: 12px 14px;
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .swap .opt strong { display: block; color: var(--text); font-size: 18px; margin-bottom: 4px; }
+  .swap .or {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--warm); letter-spacing: 0.06em;
+  }
+  .tools { list-style: none; padding: 0; margin: 8px 0 0; }
+  .tools li {
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text);
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line-light);
+  }
+  .tools li:last-child { border-bottom: 0; }
+  .tools li span { color: var(--faint); font-family: var(--sans); font-size: 15px; margin-left: 8px; }
+
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    gap: 6px;
+  }
+  .arrow svg { display: block; }
+  .arrow.down { grid-row: 2; flex-direction: row; gap: 10px; }
+  .arrow.down.model { grid-column: 3; }
+  .arrow.down.bus { grid-column: 5; color: var(--warm); }
+
+  .k3, .board {
+    grid-row: 3;
+    background: #fff;
+    border: 1px solid var(--line);
+    display: flex;
+    min-height: 0;
+  }
+  .k3 { grid-column: 1 / 4; border-left: 6px solid #6b5b95; }
+  .board { grid-column: 5; border-left: 6px solid var(--warm); }
+  .machine {
+    padding: 16px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .machine .meta {
+    font-size: 13px; letter-spacing: 0.12em; font-weight: 700; color: var(--faint);
+  }
+  .machine h3 { font-size: 24px; margin: 0; }
+  .threads {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 8px;
+    flex: 1;
+  }
+  .th {
+    background: var(--mod-board);
+    padding: 10px 12px;
+    font-size: 16px;
+    line-height: 1.35;
+    color: var(--text);
+  }
+  .th small { display: block; color: #8a4b1a; font-size: 13px; margin-top: 2px; }
+  .k3-body {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 16px;
+    flex: 1;
+    align-items: center;
+  }
+  .chip {
+    font-family: var(--mono);
+    font-size: 16px;
+    background: #f2f0e8;
+    padding: 10px 14px;
+    color: var(--muted);
+  }
+  .note {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.45;
   }
 </style>
 </head>
 <body>
 <div class="slide">
   <p class="kicker">综合项目 · 端侧 Agent 环境终端</p>
-  <h1>手在荔枝派，脑在 K3，嘴在终端</h1>
-  <p class="lead">滞回自己会转风扇。你在终端里像 Claude Code 那样跟 DeepSeek Harness 打字；本地量化模型和云端 DeepSeek 只换一个地址，工具仍是 MQTT。</p>
-  <div class="grid-3">
-    <div class="card">
-      <span class="tag lab">手</span>
-      <h2>荔枝派三线程</h2>
-      <p>采集、滞回、MQTT 继续跑。没人打字，风扇仍按温度开闭。RuyiSDK 编的还是这份 C。</p>
+  <h1>人打字，Harness 选工具，板上的手去动</h1>
+  <p class="lead">DeepSeek Harness 是运行时，DeepSeek 只是一种可替换的模型。本地 <code>llama-server</code> 和云端 API 同一张口；荔枝派滞回一直在转。</p>
+
+  <div class="arch">
+    <div class="col mouth">
+      <div class="col-head">
+        <h2>终端</h2>
+        <span class="who mouth">嘴</span>
+      </div>
+      <div class="col-body" style="padding:12px;">
+        <div class="term">
+          <div><span class="prompt">$</span> dsh --profile tui</div>
+          <div class="out">&gt; 现在热不热？太吵就关风扇</div>
+          <div class="out">→ set_fan("off")<span class="cursor"></span></div>
+        </div>
+        <p class="hint">像 Claude Code 一样打字。<code>dsh web</code> 不是本课入口。</p>
+      </div>
     </div>
-    <div class="card">
-      <span class="tag linux">脑</span>
-      <h2>量化 + llama.cpp</h2>
-      <p>自己把指令模型压成 GGUF，在 K3 上用加速过的 <code>llama-server</code> 提供 HTTP。具体模型名不钉死。</p>
+
+    <div class="arrow">
+      <span>会话</span>
+      <svg width="40" height="18" viewBox="0 0 40 18" fill="none">
+        <path d="M0 9h32M26 2l12 7-12 7" stroke="#2e6b6e" stroke-width="2.4"/>
+      </svg>
     </div>
-    <div class="card">
-      <span class="tag cap">嘴</span>
-      <h2>终端 Harness</h2>
-      <p><code>dsh --profile tui</code> 打字。Harness 是运行时，DeepSeek 是一种模型。工具转发到已有主题。</p>
+
+    <div class="col brain">
+      <div class="col-head">
+        <h2>DeepSeek Harness</h2>
+        <span class="who brain">循环 · 插件</span>
+      </div>
+      <div class="col-body">
+        <div class="plugins">
+          <div class="mod">
+            <div class="k">MODEL PLUGIN</div>
+            <h3>脑子可换</h3>
+            <p>同一 OpenAI 兼容 HTTP，只改 <code>baseURL</code>。</p>
+            <div class="swap">
+              <div class="opt">
+                <strong>本地</strong>
+                K3 :8080<br>量化后的 GGUF
+              </div>
+              <div class="or">或</div>
+              <div class="opt">
+                <strong>云端</strong>
+                api.deepseek.com<br>DeepSeek 模型
+              </div>
+            </div>
+          </div>
+          <div class="mod">
+            <div class="k">TOOL PLUGIN</div>
+            <h3>不重写 GPIO</h3>
+            <p>execute 只转发到已有 MQTT。</p>
+            <ul class="tools">
+              <li>read_status <span>读温湿度 / 风扇</span></li>
+              <li>set_fan <span>开 · 关</span></li>
+              <li>set_led <span>第五章的灯</span></li>
+              <li>set_threshold <span>改滞回上下限</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow">
+      <span>工具</span>
+      <svg width="40" height="18" viewBox="0 0 40 18" fill="none">
+        <path d="M0 9h32M26 2l12 7-12 7" stroke="#2e6b6e" stroke-width="2.4"/>
+      </svg>
+    </div>
+
+    <div class="col hand">
+      <div class="col-head">
+        <h2>MQTT 总线</h2>
+        <span class="who hand">手</span>
+      </div>
+      <div class="col-body">
+        <p class="note" style="font-size:18px;">主题仍是第五章约定。Broker 在电脑或板上。Harness 不碰针脚。</p>
+        <div class="chip">course/…/status · cmd · led</div>
+        <p class="hint">没人打字时，这条总线仍在报状态；控制线程自己拉风扇。</p>
+      </div>
+    </div>
+
+    <div class="arrow down model">
+      <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
+        <path d="M9 0v20M2 16l7 10 7-10" stroke="#2e6b6e" stroke-width="2.4"/>
+      </svg>
+      <span>baseURL · IME2</span>
+    </div>
+    <div class="arrow down bus">
+      <svg width="18" height="28" viewBox="0 0 18 28" fill="none">
+        <path d="M9 0v20M2 16l7 10 7-10" stroke="#c46b4a" stroke-width="2.4"/>
+      </svg>
+      <span>主题收发</span>
+    </div>
+
+    <div class="k3">
+      <div class="machine">
+        <div class="meta">BRAIN · 进迭 K3</div>
+        <h3>llama.cpp → llama-server</h3>
+        <div class="k3-body">
+          <p class="note">主机 <code>llama-quantize</code> 出 Q4 GGUF，拷到板上。推理走 <code>llama.cpp-tools-spacemit</code>，不要用普通 gcc 自编一份当加速。</p>
+          <div class="chip">http://k3:8080/v1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="board">
+      <div class="machine">
+        <div class="meta">HANDS · 荔枝派 4A</div>
+        <h3>ch06 三线程 · RuyiSDK 编 C</h3>
+        <div class="threads">
+          <div class="th">采集<small>DHT22</small></div>
+          <div class="th">滞回<small>风扇一直转</small></div>
+          <div class="th">通信<small>MQTT 收发</small></div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="flow">终端打字 → Harness 调工具 → MQTT → 荔枝派 GPIO / 风扇 / 灯</div>
 </div>
 </body>
 </html>

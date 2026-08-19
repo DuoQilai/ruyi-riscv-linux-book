@@ -77,3 +77,7 @@ chapters/ch02/code/cmd-table/cmd-table
 
 # Internal deck recordings (keep placeholders only)
 deck/videos/*.mp4
+deck/videos/*.MOV
+deck/videos/*.mov
+deck/assets/*.MOV
+deck/assets/*.mov

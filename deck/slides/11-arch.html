@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>六章架构</title>
+<link rel="stylesheet" href="../theme.css">
+<style>
+  .slide { padding: 44px 64px 36px; }
+  h1 { font-size: 42px; margin-bottom: 6px; }
+  .lead { font-size: 20px; margin-bottom: 18px; max-width: 1680px; }
+
+  .pyramid {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+  }
+
+  .brick {
+    width: var(--w);
+    height: 78px;
+    display: grid;
+    grid-template-columns: 86px 1fr auto;
+    align-items: center;
+    padding: 0 36px 0 22px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 100%, 0 100%);
+    box-shadow: 0 1px 0 rgba(45, 42, 38, 0.04);
+  }
+  .brick .n {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--ink, var(--accent));
+  }
+  .brick h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.15;
+  }
+  .brick .sub {
+    font-size: 16px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .lands {
+    font-size: 16px;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.3;
+    max-width: 420px;
+  }
+  .lands strong {
+    display: block;
+    color: var(--text);
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 1px;
+  }
+
+  .plinth {
+    width: 1776px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-top: 6px solid var(--accent);
+    padding: 16px 22px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .plinth-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .plinth-head h2 {
+    font-size: 26px;
+    margin: 0;
+  }
+  .plinth-head .meta {
+    font-size: 15px;
+    color: var(--faint);
+    letter-spacing: 0.04em;
+  }
+  .plinth-body {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 12px;
+  }
+  .cell {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 12px 16px 14px;
+    min-height: 0;
+  }
+  .cell.mouth { border-top: 4px solid var(--accent); }
+  .cell.brain { border-top: 4px solid #6b5b95; }
+  .cell.hand { border-top: 4px solid var(--warm); }
+  .cell .who {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    margin-bottom: 4px;
+  }
+  .cell.mouth .who { color: #2a5a32; }
+  .cell.brain .who { color: #4a3a6e; }
+  .cell.hand .who { color: #8a4b1a; }
+  .cell h3 { font-size: 20px; margin: 0 0 6px; }
+  .cell p { font-size: 16px; color: var(--muted); line-height: 1.4; margin: 0; }
+  .swap {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 8px;
+    align-items: start;
+    margin-top: 8px;
+  }
+  .opt {
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .opt strong { display: block; color: var(--text); font-size: 16px; }
+  .or {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--warm);
+    padding-top: 4px;
+  }
+  .boards {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 12px;
+  }
+  .machine {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 16px;
+    border: 1px solid var(--line);
+    background: #fff;
+  }
+  .machine.k3 { border-left: 5px solid #6b5b95; }
+  .machine.lp { border-left: 5px solid var(--warm); }
+  .machine .label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--faint);
+  }
+  .machine h3 { font-size: 18px; margin: 2px 0 0; }
+  .machine .chip {
+    font-family: var(--mono);
+    font-size: 15px;
+    background: #f2f0e8;
+    padding: 6px 10px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div class="slide">
+  <p class="kicker">课程脊柱 · 第一到六章</p>
+  <h1>六章一层层叠上去，最底下才是 Harness</h1>
+  <p class="lead">从上往下按上课顺序读。每一层都会变成终局里的一块：工具链编出板上的 C，滞回一直转，MQTT 当总线，终端 Harness 只负责选工具。</p>
+
+  <div class="pyramid">
+    <article class="brick" style="--w: 980px; --bg: var(--mod-env); --ink: #2a4a6e;">
+      <span class="n">CH 01</span>
+      <div>
+        <h2>环境与工具链</h2>
+        <p class="sub">RuyiSDK · 交叉编译 · CoreMark 上板</p>
+      </div>
+      <p class="lands"><strong>落地 · 怎么编</strong>荔枝派上的 C，仍用这一章的工具链</p>
+    </article>
+
+    <article class="brick" style="--w: 1120px; --bg: var(--mod-lab); --ink: #8a6d14;">
+      <span class="n">CH 02</span>
+      <div>
+        <h2>够用的 C · 模拟温度</h2>
+        <p class="sub">先在软件里学会滞回，这一章不上板</p>
+      </div>
+      <p class="lands"><strong>落地 · 判据</strong>风扇一直按上下限转，人不打字也在转</p>
+    </article>
+
+    <article class="brick" style="--w: 1260px; --bg: var(--mod-board); --ink: #8a4b1a;">
+      <span class="n">CH 03</span>
+      <div>
+        <h2>GPIO 与真风扇</h2>
+        <p class="sub">模拟温度驱动继电器，风扇是执行器</p>
+      </div>
+      <p class="lands"><strong>落地 · set_fan</strong>工具只转发；针脚仍是这一章的手</p>
+    </article>
+
+    <article class="brick" style="--w: 1400px; --bg: #f6e6d4; --ink: #8a4b1a;">
+      <span class="n">CH 04</span>
+      <div>
+        <h2>DHT22 与命令对话</h2>
+        <p class="sub">status / set · select 等采样也等人打字</p>
+      </div>
+      <p class="lands"><strong>落地 · read_status</strong>温湿度从这里来；set_threshold 改的是内存阈值</p>
+    </article>
+
+    <article class="brick" style="--w: 1540px; --bg: #e4f0f0; --ink: var(--accent);">
+      <span class="n">CH 05</span>
+      <div>
+        <h2>MQTT 总线 · 电脑终端控灯</h2>
+        <p class="sub">主题约定好；Broker 在电脑或板上</p>
+      </div>
+      <p class="lands"><strong>落地 · 总线</strong>Harness 不碰针脚；set_led 走这一章的主题</p>
+    </article>
+
+    <article class="brick" style="--w: 1680px; --bg: var(--mod-linux); --ink: #4a3a6e;">
+      <span class="n">CH 06</span>
+      <div>
+        <h2>三线程协同</h2>
+        <p class="sub">采集 ∥ 滞回控制 ∥ MQTT，共享状态加锁</p>
+      </div>
+      <p class="lands"><strong>落地 · 荔枝派的手</strong>三条线继续跑；Ctrl+C 先停风扇</p>
+    </article>
+
+    <div class="plinth">
+      <div class="plinth-head">
+        <h2>DeepSeek Harness · 综合项目底座</h2>
+        <p class="meta">运行时在下，六章能力叠在它上面 · 模型可换，GPIO 不重写</p>
+      </div>
+      <div class="plinth-body">
+        <div class="cell mouth">
+          <div class="who">嘴 · 终端</div>
+          <h3>dsh --profile tui</h3>
+          <p>人打字，像 Claude Code。 <code>dsh web</code> 不是本课入口。</p>
+        </div>
+        <div class="cell brain">
+          <div class="who">循环 · 插件</div>
+          <h3>脑子可换，工具只转发</h3>
+          <div class="swap">
+            <div class="opt"><strong>本地</strong>K3 · llama-server · Q4 GGUF</div>
+            <div class="or">或</div>
+            <div class="opt"><strong>云端</strong>api.deepseek.com · 同一 HTTP 口</div>
+          </div>
+        </div>
+        <div class="cell hand">
+          <div class="who">手 · MQTT</div>
+          <h3>read_status · set_fan · set_led</h3>
+          <p>execute 转到已有主题。没人打字时，滞回自己拉风扇。</p>
+        </div>
+      </div>
+      <div class="boards">
+        <div class="machine k3">
+          <div>
+            <div class="label">BRAIN · 进迭 K3</div>
+            <h3>llama.cpp → llama-server</h3>
+          </div>
+          <span class="chip">http://k3:8080/v1</span>
+        </div>
+        <div class="machine lp">
+          <div>
+            <div class="label">HANDS · 荔枝派 4A</div>
+            <h3>ch06 三线程 · RuyiSDK 编 C</h3>
+          </div>
+          <span class="chip">采集 · 滞回 · 通信</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
