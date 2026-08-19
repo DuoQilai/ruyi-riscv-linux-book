@@ -7,8 +7,8 @@
 <style>
   .hero {
     display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
-    gap: 48px;
+    grid-template-columns: 1.02fr 0.98fr;
+    gap: 40px;
     flex: 1;
     min-height: 0;
     align-items: stretch;
@@ -17,29 +17,42 @@
   .meta { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; font-size: 20px; color: var(--faint); }
   .photos {
     min-height: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1.15fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 12px;
   }
-  .photos .board {
-    grid-column: 1 / -1;
+  .photos .main {
+    flex: 1;
+    min-height: 0;
     border: 1px solid var(--line);
     overflow: hidden;
-    background: #f4f1ea;
+    background: #1a1a18;
   }
-  .photos .part {
+  .photos .main img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+  }
+  .photos .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    height: 168px;
+    flex-shrink: 0;
+  }
+  .photos .thumb {
     border: 1px solid var(--line);
     overflow: hidden;
     background: #fff;
   }
-  .photos img {
+  .photos .thumb img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     display: block;
   }
-  .photos .board img { object-fit: cover; object-position: center; }
   .brand {
     display: flex;
     align-items: center;
@@ -66,14 +79,19 @@
       </div>
     </div>
     <div class="photos">
-      <div class="board">
-        <img src="../assets/cover-lichee.jpeg" alt="荔枝派 4A">
+      <div class="main">
+        <img src="../assets/ch03-board.jpg" alt="荔枝派 4A 整板接线">
       </div>
-      <div class="part">
-        <img src="../assets/ams1117.png" alt="1.8V 降压模块">
-      </div>
-      <div class="part">
-        <img src="../assets/cover-fan.png" alt="5V 风扇">
+      <div class="row">
+        <div class="thumb">
+          <img src="../assets/cover-lichee.jpeg" alt="荔枝派 4A 产品图">
+        </div>
+        <div class="thumb">
+          <img src="../assets/ams1117.png" alt="AMS1117 降压">
+        </div>
+        <div class="thumb">
+          <img src="../assets/cover-fan.png" alt="5V 风扇">
+        </div>
       </div>
     </div>
   </div>
