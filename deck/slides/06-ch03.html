@@ -7,19 +7,19 @@
 </head>
 <body>
 <div class="slide">
-  <p class="kicker">第三章 · GPIO 与执行器</p>
+  <p class="kicker">⚡ 第三章 · GPIO 与执行器</p>
   <h1>模拟温度驱动真风扇</h1>
-  <p class="lead">软件里的滞回第一次碰到硬件：gpiod 拉继电器，风扇真的转。</p>
+  <p class="lead">第二章的滞回逻辑第一次碰到硬件：程序通过 GPIO 引脚控制继电器，风扇真的跟着转。</p>
   <div class="ch-body">
     <div class="ch-copy">
       <ul>
-        <li>用户态 <code>gpiod</code> 写 IO1_5，继电器切风扇电源。</li>
-        <li>温度仍是程序里走的模拟曲线，默认 29 / 25。</li>
-        <li>超阈值转、降到低阈值停；Ctrl+C 先关风扇。</li>
+        <li>程序写 GPIO 引脚 IO1_5，控制继电器通断风扇电源。</li>
+        <li>温度还是程序里模拟的，默认上限 29、下限 25。</li>
+        <li>超过上限就转、降到下限就停；Ctrl+C 先关风扇再退出。</li>
       </ul>
       <div class="card">
         <h2>本章实验</h2>
-        <p>接好继电器与风扇。终端看到 <code>fan ON</code> / <code>fan OFF</code>，耳朵听到风扇跟日志走。</p>
+        <p>接好继电器与风扇。终端看到 <code>fan ON</code> / <code>fan OFF</code>，耳朵能听到风扇跟着日志开停。</p>
       </div>
     </div>
     <div class="shots triple">

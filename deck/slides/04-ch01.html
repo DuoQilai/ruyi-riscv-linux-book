@@ -7,23 +7,23 @@
 </head>
 <body>
 <div class="slide">
-  <p class="kicker">第一章 · 环境与工具链</p>
+  <p class="kicker">🔧 第一章 · 环境与工具链</p>
   <h1>装上如意 SDK，交叉编译上板跑分</h1>
-  <p class="lead">RuyiSDK 从这一章立起招牌：§1.1 把它装进工具链，后面每章的代码都靠它交叉编译。</p>
+  <p class="lead">电脑和板子的 CPU 指令不同，电脑编出的程序板子跑不了。这一章用 RuyiSDK 装好一套交叉编译器——专门产出板子能跑的程序，后面每章都靠它。</p>
   <div class="ch-body">
     <div class="ch-copy">
       <div class="brand-row">
         <img class="logo" src="../assets/ruyi-logo.svg" alt="RuyiSDK" style="height:56px">
       </div>
       <ul>
-        <li>认识荔枝派 4A，烧录 RevyOS，打通 SSH 与文件传输。</li>
-        <li>入口 <code>. ~/venv-gnu-ruyisdk/bin/ruyi-activate</code></li>
-        <li>三元组钉死 <code>riscv64-ruyisdk-linux-gnu</code></li>
-        <li>编 CoreMark：<code>file</code> 认 RISC-V，上板跑出分数。</li>
+        <li>认识荔枝派 4A，给它烧录系统（RevyOS），再从电脑连上它、传文件。</li>
+        <li>入口：<code>. ~/venv-gnu-ruyisdk/bin/ruyi-activate</code></li>
+        <li>交叉编译器有固定前缀 <code>riscv64-ruyisdk-linux-gnu</code>，保证产物是 RISC-V。</li>
+        <li>跑 CoreMark 验证：<code>file</code> 检查产物是 RISC-V，上板跑出分数。</li>
       </ul>
       <div class="card">
         <h2>本章实验</h2>
-        <p>同一份源码：x86 上交叉编译验收，板上用本机 <code>gcc</code> 再跑一遍。</p>
+        <p>同一份源码：电脑上交叉编译验收，板上用板子的编译器再跑一遍。</p>
       </div>
     </div>
     <div class="shots">

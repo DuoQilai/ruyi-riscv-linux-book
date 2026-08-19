@@ -7,20 +7,20 @@
 </head>
 <body>
 <div class="slide">
-  <p class="kicker">第二章 · 够用的 C</p>
+  <p class="kicker">🌡 第二章 · 够用的 C 语言</p>
   <h1>先在软件里学会判温控，这一章不上板</h1>
-  <p class="lead">类型、函数、多文件、指针够用即可。实验从空写出滞回，再处理读数失败的坑。</p>
+  <p class="lead">先用软件学会温控的判据：类型、函数、多文件、指针够用即可。实验从空写出滞回逻辑，再处理读数失败的情况。</p>
   <div class="ch-body">
     <div class="ch-copy">
       <ul>
-        <li>按契约写 <code>thermo_update</code>：高于 bar 开、低于 bar 关。</li>
+        <li>按约定写 <code>thermo_update</code>：温度高于上限就开，低于下限就关。</li>
         <li>中间那段温度保持上一状态——这就是滞回。</li>
-        <li>读数失败时风扇保持，不瞎切。</li>
-        <li>stdin 喂一串温度，终端能对上开/关序列。</li>
+        <li>读数失败时风扇保持原来的状态，不胡乱切换。</li>
+        <li>从键盘喂一串温度，终端能看到风扇开/关和温度对得上。</li>
       </ul>
       <div class="card">
         <h2>本章实验</h2>
-        <p>模拟温度在 x86 上跑通；同一份也可交叉到板上复跑。还没有继电器。</p>
+        <p>模拟温度先在电脑上跑通；同一份程序也能交叉编译到板子上再跑。这一章还没有继电器。</p>
       </div>
     </div>
     <div class="shots">

@@ -168,9 +168,9 @@
 </head>
 <body>
 <div class="slide">
-  <p class="kicker">课程脊柱 · 第一到六章</p>
+  <p class="kicker">🧱 课程脊柱 · 第一到六章</p>
   <h1>六章一层层叠上去，最底下才是 Harness</h1>
-  <p class="lead">从上往下按上课顺序读。每一层都会变成终局里的一块：工具链编出板上的 C，滞回一直转，MQTT 当总线，终端 Harness 只负责选工具。</p>
+  <p class="lead">从上往下按上课顺序读。每一层都会变成终局里的一块：工具链编出板上的 C，滞回判断一直转，MQTT 当总线，终端 Harness 只负责选工具。</p>
 
   <div class="pyramid">
     <article class="brick" style="--w: 980px; --bg: var(--mod-env); --ink: #2a4a6e;">
@@ -185,7 +185,7 @@
     <article class="brick" style="--w: 1120px; --bg: var(--mod-lab); --ink: #8a6d14;">
       <span class="n">CH 02</span>
       <div>
-        <h2>够用的 C · 模拟温度</h2>
+        <h2>够用的 C 语言 · 模拟温度</h2>
         <p class="sub">先在软件里学会滞回，这一章不上板</p>
       </div>
       <p class="lands"><strong>落地 · 判据</strong>风扇一直按上下限转，人不打字也在转</p>
@@ -204,7 +204,7 @@
       <span class="n">CH 04</span>
       <div>
         <h2>DHT22 与命令对话</h2>
-        <p class="sub">status / set · select 等采样也等人打字</p>
+        <p class="sub">status / set 命令；select 一边等采样，一边等人打字</p>
       </div>
       <p class="lands"><strong>落地 · read_status</strong>温湿度从这里来；set_threshold 改的是内存阈值</p>
     </article>
@@ -230,13 +230,13 @@
     <div class="plinth">
       <div class="plinth-head">
         <h2>DeepSeek Harness · 综合项目底座</h2>
-        <p class="meta">运行时在下，六章能力叠在它上面 · 模型可换，GPIO 不重写</p>
+        <p class="meta">Harness 是底座，六章能力叠在它上面；模型可换，GPIO 不用重写</p>
       </div>
       <div class="plinth-body">
         <div class="cell mouth">
           <div class="who">嘴 · 终端</div>
           <h3>dsh --profile tui</h3>
-          <p>人打字，像 Claude Code。 <code>dsh web</code> 不是本课入口。</p>
+          <p>人打字，像 Claude Code。入口只有 <code>dsh --profile tui</code>。</p>
         </div>
         <div class="cell brain">
           <div class="who">循环 · 插件</div>

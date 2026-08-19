@@ -7,19 +7,19 @@
 </head>
 <body>
 <div class="slide">
-  <p class="kicker">第四章 · 命令对话与温控</p>
-  <h1>接上真 DHT，SSH 里能查、能改</h1>
-  <p class="lead">风扇还是那台。传感器换成 DHT22；人在终端敲 <code>status</code> / <code>set temp</code>。</p>
+  <p class="kicker">⌨ 第四章 · 命令对话与温控</p>
+  <h1>接上真传感器，终端里能查、能改</h1>
+  <p class="lead">风扇还是那台，传感器换成真的 DHT22。人在终端敲命令：<code>status</code> 看当前状态，<code>set temp</code> 改控温阈值。</p>
   <div class="ch-body">
     <div class="ch-copy">
       <ul>
-        <li>DHT22 经 TXS 进 IO1_6；风扇仍走第三章继电器。</li>
-        <li><code>select</code> 同一条主循环：一边等采样周期，一边等你打字。</li>
-        <li><code>status</code> 立刻回温湿度；<code>set</code> 改的是内存里的阈值。</li>
+        <li>DHT22 经电平转换进引脚 IO1_6；风扇仍由第三章的继电器控制。</li>
+        <li>程序用 <code>select</code> 在同一条循环里：一边等采样周期到，一边等你敲命令。</li>
+        <li><code>status</code> 立刻回报温湿度；<code>set</code> 改的是内存里的阈值。</li>
       </ul>
       <div class="card">
         <h2>本章实验</h2>
-        <p>先模拟传感器跑通命令；接真 DHT 后带 <code>-DSIMULATE_SENSOR=0</code>。验收看敲一行有回复、风扇跟阈值走。</p>
+        <p>先用模拟传感器把命令跑通，再接真 DHT（编时带 <code>-DSIMULATE_SENSOR=0</code>）。验收：敲一行有回复，风扇跟着阈值走。</p>
       </div>
     </div>
     <div class="shots">
