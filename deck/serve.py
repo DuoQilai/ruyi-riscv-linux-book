@@ -52,4 +52,10 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     print("Deck: http://127.0.0.1:8765/  (no-store; /__version 见 git + 时间)")
+    try:
+        ip = subprocess.check_output(["tailscale", "ip", "-4"], stderr=subprocess.DEVNULL).decode().split()
+        if ip:
+            print(f"Tailscale: http://{ip[0]}:{PORT}/  <- 在 Mac 上直接开这个")
+    except Exception:
+        pass
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()
