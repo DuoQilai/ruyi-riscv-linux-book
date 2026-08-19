@@ -53,6 +53,8 @@ html, body {
   font-weight: 600;
 }
 
+.kicker .ke, .sub .ke { font-size: 1.4em; line-height: 1; }
+
 h1 {
   font-size: 56px;
   font-weight: 700;
