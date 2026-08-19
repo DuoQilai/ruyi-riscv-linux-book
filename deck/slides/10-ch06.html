@@ -5,7 +5,21 @@
 <title>第六章</title>
 <link rel="stylesheet" href="../theme.css">
 <style>
-  .grid-2 { margin-top: 20px; }
+  .tri {
+    margin: 26px 0 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+  }
+  .th {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-top: 6px solid var(--warm);
+    padding: 20px 26px;
+  }
+  .th strong { display: block; font-size: 26px; color: var(--text); margin-bottom: 8px; }
+  .th span { font-size: 19px; color: var(--muted); line-height: 1.5; }
+  .grid-2 { margin-top: 30px; }
   .card { justify-content: flex-start; }
   .card h2 { font-size: 28px; }
   .card p, .card li { font-size: 22px; }
@@ -15,23 +29,30 @@
 <body>
 <div class="slide">
   <p class="kicker">第六章 · 线程与协同</p>
-  <h1>采集、风扇、网络，三条线一起跑</h1>
-  <p class="lead">单线程可以按顺序做完采集、风扇和 MQTT。三条线程让三件事按各自周期进行；同一个 <code>last_temp</code> 的写和读加锁。Ctrl+C 先停风扇再退出。</p>
+  <h1>风扇不能等网络</h1>
+  <p class="lead">第五章的命令循环一跑，就停在等网络。等的时候温度已经越过阈值，风扇却开不了——灯能晚，风扇不能。本章拆成三条线程，各按各的周期跑，互不阻塞；共用的温度数据加锁保护。</p>
+
+  <div class="tri">
+    <div class="th"><strong>采集线程</strong><span>每 2 秒读 DHT22，写温度</span></div>
+    <div class="th"><strong>控制线程</strong><span>按阈值开风扇，不等网络</span></div>
+    <div class="th"><strong>通信线程</strong><span>跑 MQTT，收命令、报状态</span></div>
+  </div>
+
   <div class="grid-2">
     <div class="card">
-      <span class="tag linux">讲义三节</span>
-      <h2>拆线、加锁、看见竞态</h2>
+      <span class="tag linux">这章讲什么</span>
+      <h2>共享数据加锁，竞态看得见</h2>
       <ul>
-        <li>采集 / 控制 / 通信各一条线，共享温湿度与风扇状态。</li>
-        <li>先看无锁怎么乱，再加互斥锁修好。</li>
-        <li>x86 上用 TSan 指出抢同一变量的两行；产品路径以加锁版验收。</li>
+        <li>三条线程共用一份 <code>last_temp</code>：一条写、两条读，不加锁会读到写了一半的值。</li>
+        <li>加同一把互斥锁，保证读到完整数据，温度不会突然跳成离谱值。</li>
+        <li>证据链三步：板上无锁记下错乱，加锁恢复正确，电脑上用 TSan 指出抢同一变量的两行。</li>
       </ul>
     </div>
     <div class="card">
-      <span class="tag lab">本章实验</span>
-      <h2>三线程协同</h2>
-      <p>板上跑 tri-thread：传感器还在采、风扇还在判、MQTT 还能收发。Ctrl+C 后风扇停转，进程再结束。</p>
-      <p class="soon">讲义已写完。板上截图随实机验证补上。综合项目接在这章骨架上：滞回继续跑，终端 Harness 经 MQTT 指挥。</p>
+      <span class="tag lab">做完你能看见</span>
+      <h2>三线程协同 + 干净停</h2>
+      <p>板上跑 tri-thread：传感器在采、风扇在判、MQTT 在收发，同时进行。Ctrl+C 后先停风扇，再退出进程。</p>
+      <p class="soon">讲义已写完。板上截图随实机验证补上。综合项目就接在这套骨架上：滞回继续跑，AI 终端经 MQTT 指挥。</p>
     </div>
   </div>
 </div>

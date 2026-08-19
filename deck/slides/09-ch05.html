@@ -5,7 +5,21 @@
 <title>第五章</title>
 <link rel="stylesheet" href="../theme.css">
 <style>
-  .grid-2 { margin-top: 20px; }
+  .flow {
+    margin: 26px 0 4px;
+    padding: 20px 28px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-left: 6px solid var(--accent);
+    font-size: 22px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+  }
+  .flow code { font-size: 20px; }
+  .grid-2 { margin-top: 28px; }
   .card { justify-content: flex-start; }
   .card h2 { font-size: 28px; }
   .card p, .card li { font-size: 22px; }
@@ -15,22 +29,29 @@
 <body>
 <div class="slide">
   <p class="kicker">第五章 · 网络与 MQTT</p>
-  <h1>用电脑终端远程控灯</h1>
-  <p class="lead">大家连一个中转站。电脑终端往频道发 <code>on</code> / <code>off</code>，板上的灯跟着亮灭；板子再把状态发回来。</p>
+  <h1>让电脑隔着网络指挥板子</h1>
+  <p class="lead">前四章的命令只能在板子边上敲。本章改成：任意一台电脑在局域网里发 <code>on</code> / <code>off</code>，板上的灯跟着亮灭，板子再把状态发回给电脑。双方都连到同一个 MQTT 中转站，不直接互连。</p>
+
+  <div class="flow">
+    电脑发 <code>course/led/cmd: on</code>
+    <span>→</span> MQTT 中转站
+    <span>→</span> 板子收到，灯亮
+  </div>
+
   <div class="grid-2">
     <div class="card">
-      <span class="tag linux">讲义三节</span>
-      <h2>Broker、下行、上行</h2>
+      <span class="tag linux">这章讲什么</span>
+      <h2>命令下得去，状态上得来</h2>
       <ul>
-        <li>画清发布—Broker—订阅，Mosquitto 先收发一条。</li>
-        <li>板子订阅主题，payload 为 <code>on</code> / <code>off</code> 时外接灯动作。</li>
-        <li>另一条主题上报状态；tcpdump 看见 1883 上的分层。</li>
+        <li><strong>命令</strong>：电脑往主题 <code>course/led/cmd</code> 发 <code>on</code>，中转站转给板子，板子点灯。</li>
+        <li><strong>状态</strong>：板子把当前状态发到 <code>course/led/status</code>，电脑能确认命令真的落地了。</li>
+        <li><strong>抓包</strong>：tcpdump 看一条消息从应用层到网线，一共包了几层。</li>
       </ul>
     </div>
     <div class="card">
-      <span class="tag lab">本章实验</span>
+      <span class="tag lab">做完你能看见</span>
       <h2>MQTT 远程控灯</h2>
-      <p>电脑终端发命令，板上灯可见；另一边电脑终端能看到板上回报的状态。抓一段含 1883 的包，能指认哪一层是 MQTT。</p>
+      <p>电脑终端发 <code>on</code> / <code>off</code>，板上 LED 亮灭；另一台终端收到板子回报的状态。抓一段含 <code>1883</code> 的包，能指出哪一层是 MQTT。</p>
       <p class="soon">讲义已写完。板上截图随实机验证补上。</p>
     </div>
   </div>
