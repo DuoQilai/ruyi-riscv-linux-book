@@ -66,6 +66,26 @@
     padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
     white-space: pre; overflow-x: auto;
   }
+  .arch-fig {
+    margin: 24px 0 28px; border: 1px solid var(--line-light);
+    background: #fff; padding: 20px 24px; overflow-x: auto;
+  }
+  .arch-fig svg, .arch-fig img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  .arch-fig figcaption { font-size: 15px; color: var(--faint); margin-top: 14px; text-align: center; line-height: 1.5; }
+  .arch-fig {
+    margin: 24px 0 28px;
+    border: 1px solid var(--line-light);
+    background: #fff;
+    padding: 20px 24px 16px;
+    overflow-x: auto;
+  }
+  .arch-fig svg, .arch-fig img {
+    display: block; max-width: 100%; height: auto; margin: 0 auto;
+  }
+  .arch-fig figcaption {
+    font-size: 15px; color: var(--faint); margin-top: 14px;
+    text-align: center; line-height: 1.5;
+  }
   .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
   .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
   .card { border: 1px solid var(--line); padding: 28px 30px; }
@@ -227,6 +247,35 @@ Broker（Mosquitto）
 板子 publish  course/led/status  payload="on"
     → Broker → 电脑终端看见状态</div>
 
+<figure class="arch-fig">
+<svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" aria-label="本课 MQTT 发布订阅">
+  <defs>
+    <marker id="ch5a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2e6b6e"/></marker>
+    <marker id="ch5b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#c46b4a"/></marker>
+  </defs>
+  <rect x="10" y="68" width="120" height="52" rx="8" fill="#e3eef9" stroke="#2e6b6e" stroke-width="2"/>
+  <text x="70" y="90" text-anchor="middle" font-size="14" font-weight="700">电脑终端</text>
+  <text x="70" y="108" text-anchor="middle" font-size="11" fill="#5c5448">pub / sub</text>
+  <rect x="190" y="48" width="140" height="92" rx="8" fill="#ede8f5" stroke="#2e6b6e" stroke-width="2"/>
+  <text x="260" y="84" text-anchor="middle" font-size="14" font-weight="700">Broker</text>
+  <text x="260" y="102" text-anchor="middle" font-size="11" fill="#5c5448">Mosquitto :1883</text>
+  <rect x="390" y="68" width="130" height="52" rx="8" fill="#fbeee0" stroke="#c46b4a" stroke-width="2"/>
+  <text x="455" y="90" text-anchor="middle" font-size="14" font-weight="700">荔枝派 4A</text>
+  <text x="455" y="108" text-anchor="middle" font-size="11" fill="#5c5448">mqtt-led</text>
+  <rect x="580" y="68" width="110" height="52" rx="8" fill="#fff8e6" stroke="#c46b4a" stroke-width="2"/>
+  <text x="635" y="98" text-anchor="middle" font-size="14" font-weight="700">外接 LED</text>
+  <line x1="130" y1="88" x2="186" y2="88" stroke="#2e6b6e" stroke-width="2" marker-end="url(#ch5a)"/>
+  <text x="158" y="78" text-anchor="middle" font-size="10" fill="#2e6b6e">cmd/on</text>
+  <line x1="330" y1="88" x2="386" y2="88" stroke="#2e6b6e" stroke-width="2" marker-end="url(#ch5a)"/>
+  <line x1="520" y1="94" x2="576" y2="94" stroke="#c46b4a" stroke-width="2" marker-end="url(#ch5b)"/>
+  <path d="M455,124 C455,156 260,156 260,140" fill="none" stroke="#c46b4a" stroke-width="2" marker-end="url(#ch5b)"/>
+  <text x="360" y="172" text-anchor="middle" font-size="10" fill="#c46b4a">status 上行</text>
+  <path d="M260,140 C70,140 70,124 70,124" fill="none" stroke="#c46b4a" stroke-width="2" marker-end="url(#ch5b)"/>
+  <text x="360" y="28" text-anchor="middle" font-size="12" font-weight="700" fill="#2e6b6e">course/led/cmd ↓ · course/led/status ↑</text>
+</svg>
+<figcaption>架构图：双方都 connect 到 Broker，用主题名收发，不必知道对方 IP</figcaption>
+</figure>
+
 <table>
   <tr><th>术语</th><th>一句话</th><th>本课例子</th></tr>
   <tr><td>Broker</td><td>消息中转站</td><td>主机或板上的 Mosquitto，默认端口 1883</td></tr>
@@ -277,6 +326,25 @@ mqtt-led 收到消息
         │  比较 payload 是否为 on / off
         ▼
 gpiod_line_set_value(LED, 1 或 0)</div>
+
+<figure class="arch-fig">
+<svg viewBox="0 0 520 120" xmlns="http://www.w3.org/2000/svg" aria-label="下行控灯数据流">
+  <defs><marker id="c5d" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2e6b6e"/></marker></defs>
+  <rect x="8" y="36" width="110" height="48" rx="6" fill="#e3eef9" stroke="#2e6b6e" stroke-width="1.5"/>
+  <text x="63" y="66" text-anchor="middle" font-size="13" font-weight="700">mosquitto_pub</text>
+  <rect x="148" y="36" width="100" height="48" rx="6" fill="#ede8f5" stroke="#2e6b6e" stroke-width="1.5"/>
+  <text x="198" y="66" text-anchor="middle" font-size="13" font-weight="700">Broker</text>
+  <rect x="278" y="36" width="100" height="48" rx="6" fill="#fbeee0" stroke="#c46b4a" stroke-width="1.5"/>
+  <text x="328" y="66" text-anchor="middle" font-size="13" font-weight="700">on_message</text>
+  <rect x="408" y="36" width="100" height="48" rx="6" fill="#fff8e6" stroke="#c46b4a" stroke-width="1.5"/>
+  <text x="458" y="66" text-anchor="middle" font-size="13" font-weight="700">led_set()</text>
+  <line x1="118" y1="60" x2="144" y2="60" stroke="#2e6b6e" stroke-width="2" marker-end="url(#c5d)"/>
+  <line x1="248" y1="60" x2="274" y2="60" stroke="#2e6b6e" stroke-width="2" marker-end="url(#c5d)"/>
+  <line x1="378" y1="60" x2="404" y2="60" stroke="#2e6b6e" stroke-width="2" marker-end="url(#c5d)"/>
+  <text x="260" y="22" text-anchor="middle" font-size="11" fill="#5c5448">topic=course/led/cmd · payload=on/off</text>
+</svg>
+<figcaption>下行路径：一条 publish 经 Broker 触发回调，最后落到 GPIO</figcaption>
+</figure>
 
 <p>脚手架 <code>chapters/ch05/code/mqtt-led/</code> 用 <strong>libmosquitto</strong>（Mosquitto 的 C 客户端库）提供连接与消息处理骨架；点灯逻辑标为 TODO。交叉编译需链接 <code>-lmosquitto -lgpiod</code>；板端安装对应运行库。</p>
 

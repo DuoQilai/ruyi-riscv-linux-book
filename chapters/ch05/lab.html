@@ -43,6 +43,12 @@
   td { color: var(--muted); }
   .warn { background: var(--warn-bg); border-left: 3px solid var(--warm); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440; }
   .info { background: var(--info-bg); border-left: 3px solid var(--accent); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted); }
+  .arch-fig {
+    margin: 20px 0 24px; border: 1px solid var(--line-light);
+    background: #fff; padding: 16px 20px; overflow-x: auto;
+  }
+  .arch-fig svg, .arch-fig img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  .arch-fig figcaption { font-size: 14px; color: var(--faint); margin-top: 12px; text-align: center; line-height: 1.5; }
   .toc {
     position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
     overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line); padding: 40px 20px;
@@ -106,6 +112,32 @@
   <li>灯态变化后，向状态主题 <code>course/led/status</code> 发布当前状态；</li>
   <li>按固定步骤抓一条 publish，能指出 MQTT 运行在 TCP 端口 1883 之上。</li>
 </ul>
+<figure class="arch-fig">
+<svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" aria-label="本章实验 MQTT 闭环">
+  <defs>
+    <marker id="l5a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2e6b6e"/></marker>
+    <marker id="l5b" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#c46b4a"/></marker>
+  </defs>
+  <rect x="8" y="64" width="118" height="52" rx="8" fill="#e3eef9" stroke="#2e6b6e" stroke-width="2"/>
+  <text x="67" y="86" text-anchor="middle" font-size="14" font-weight="700">电脑终端</text>
+  <text x="67" y="104" text-anchor="middle" font-size="11" fill="#5c5448">pub / sub</text>
+  <rect x="186" y="48" width="138" height="84" rx="8" fill="#ede8f5" stroke="#2e6b6e" stroke-width="2"/>
+  <text x="255" y="82" text-anchor="middle" font-size="14" font-weight="700">Broker</text>
+  <text x="255" y="100" text-anchor="middle" font-size="11" fill="#5c5448">:1883</text>
+  <rect x="384" y="64" width="128" height="52" rx="8" fill="#fbeee0" stroke="#c46b4a" stroke-width="2"/>
+  <text x="448" y="86" text-anchor="middle" font-size="14" font-weight="700">mqtt-led</text>
+  <text x="448" y="104" text-anchor="middle" font-size="11" fill="#5c5448">荔枝派 4A</text>
+  <rect x="562" y="64" width="110" height="52" rx="8" fill="#fff8e6" stroke="#c46b4a" stroke-width="2"/>
+  <text x="617" y="86" text-anchor="middle" font-size="14" font-weight="700">外接 LED</text>
+  <line x1="126" y1="84" x2="182" y2="84" stroke="#2e6b6e" stroke-width="2" marker-end="url(#l5a)"/>
+  <line x1="324" y1="84" x2="380" y2="84" stroke="#2e6b6e" stroke-width="2" marker-end="url(#l5a)"/>
+  <line x1="512" y1="90" x2="558" y2="90" stroke="#c46b4a" stroke-width="2" marker-end="url(#l5b)"/>
+  <path d="M448,120 C448,156 255,156 255,132" fill="none" stroke="#c46b4a" stroke-width="2" marker-end="url(#l5b)"/>
+  <path d="M255,132 C67,132 67,116 67,116" fill="none" stroke="#c46b4a" stroke-width="2" marker-end="url(#l5b)"/>
+  <text x="360" y="22" text-anchor="middle" font-size="12" font-weight="700" fill="#2e6b6e">你要验收的闭环：cmd 下行 · status 上行 · tcpdump 看 1883</text>
+</svg>
+<figcaption>实验目标：电脑发 on/off → 板端点灯 → 状态回传 → 抓包指认 MQTT 分层</figcaption>
+</figure>
 <div class="info">
   <strong>前置：</strong>已读讲义 5.1–5.3；Mosquitto（或课堂统一 Broker）在局域网可达；外接 LED 接线与源码宏 <code>LED_LINE</code> 一致。<strong>工程目录：</strong><code>chapters/ch05/code/mqtt-led/</code>（源码 <code>main.c</code>，说明见 <code>README.md</code>）。板端需已安装/可用 libmosquitto 与 libgpiod（按课堂环境配置）。
 </div>
