@@ -46,8 +46,8 @@ struct thermo_state {
 };
 
 static struct thermo_state g_st = {
-	.t_bar = 28.0f,
-	.h_bar = 85.0f,
+	.t_bar = 30.0f,
+	.h_bar = 95.0f,
 	.fan_on = 0,
 	.has_sample = 0,
 };
