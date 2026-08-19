@@ -24,6 +24,8 @@
     { file: "slides/02-teach.html",       label: "怎么教" },
     { file: "slides/04-ch01.html",        label: "第一章" },
     { file: "slides/05-ch02.html",        label: "第二章" },
+    { file: "slides/06-ch03.html",        label: "第三章" },
+    { file: "slides/07-ch04.html",        label: "第四章" },
     { file: "slides/09-ch05.html",        label: "第五章" },
     { file: "slides/10-ch06.html",        label: "第六章" },
     { file: "slides/11-project.html",     label: "综合项目" },
@@ -128,6 +130,16 @@
     .print-stack { display: block; }
     .print-stack iframe { width: 1920px; height: 1080px; page-break-after: always; display: block; }
   }
+
+  /* 版本证明：右下角徽标，本地服务应答后显示 git + 时间 */
+  .deck-version {
+    position: fixed; right: 14px; bottom: 10px; z-index: 99999;
+    font: 12px/1.6 "SF Mono", Menlo, monospace;
+    color: #8c8276; background: rgba(251,250,245,0.9);
+    border: 1px solid #d4cfc4; padding: 4px 10px; border-radius: 4px;
+    letter-spacing: 0.02em; pointer-events: none;
+  }
+  .deck-version.bad { color: #a33; border-color: #c66; }
 </style>
 </head>
 <body data-mode="overview">
@@ -154,6 +166,8 @@
 </div>
 
 <div class="print-stack" id="printStack" style="display:none;"></div>
+
+<div id="deck-version" class="deck-version">检查中…</div>
 
 <script>
 (function () {
@@ -328,8 +342,8 @@
     if (location.hash !== '#' + (idx + 1)) history.replaceState(null, '', '#' + (idx + 1));
     grabFocus();
   }
-  function next() { show(Math.min(current + 1, deck.length - 1)); }
-  function prev() { show(Math.max(current - 1, 0)); }
+  function next() { show((current + 1) % deck.length); }
+  function prev() { show((current - 1 + deck.length) % deck.length); }
 
   function onKey(e) {
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
@@ -402,6 +416,26 @@
 
   window.addEventListener('beforeprint', () => { printStack.innerHTML = ''; deck.forEach(item => { const f = document.createElement('iframe'); f.src = item.file; printStack.appendChild(f); }); printStack.style.display = 'block'; stage.style.display = 'none'; });
   window.addEventListener('afterprint', () => { printStack.innerHTML = ''; printStack.style.display = 'none'; stage.style.display = ''; });
+})();
+</script>
+
+<script>
+(function () {
+  var el = document.getElementById('deck-version');
+  function refresh() {
+    fetch('__version', { cache: 'no-store' })
+      .then(function (r) { return r.json(); })
+      .then(function (v) {
+        el.className = 'deck-version';
+        el.textContent = '已刷新 ' + v.time + ' · git ' + v.git + (v.last_commit ? ' · ' + v.last_commit : '');
+      })
+      .catch(function () {
+        el.className = 'deck-version bad';
+        el.textContent = '⚠ 未连到本地服务或命中旧缓存';
+      });
+  }
+  refresh();
+  setInterval(refresh, 30000);
 })();
 </script>
 </body>
