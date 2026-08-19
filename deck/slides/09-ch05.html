@@ -5,55 +5,71 @@
 <title>第五章</title>
 <link rel="stylesheet" href="../theme.css">
 <style>
-  .flow {
-    margin: 26px 0 4px;
-    padding: 20px 28px;
+  h1 { font-size: 44px; margin-bottom: 10px; }
+  .lead { font-size: 22px; max-width: 1680px; margin-bottom: 18px; }
+  .body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 0.88fr 1.12fr;
+    gap: 32px;
+    align-items: stretch;
+  }
+  .copy .card { padding: 24px 28px; margin-top: 16px; }
+  .copy .card h2 { font-size: 24px; }
+  .copy .card p, .copy li { font-size: 20px; }
+  .copy ul { padding-left: 22px; margin-top: 8px; }
+  .copy li { margin-bottom: 8px; color: var(--muted); font-size: 20px; }
+  .fig {
     background: #fff;
     border: 1px solid var(--line);
-    border-left: 6px solid var(--accent);
-    font-size: 22px;
-    color: var(--muted);
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
+    flex-direction: column;
+    min-height: 0;
   }
-  .flow code { font-size: 20px; }
-  .grid-2 { margin-top: 28px; }
-  .card { justify-content: flex-start; }
-  .card h2 { font-size: 28px; }
-  .card p, .card li { font-size: 22px; }
-  .soon { margin-top: auto; padding-top: 16px; font-size: 16px; color: var(--faint); }
+  .fig img {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    object-fit: contain;
+    background: #fff;
+    padding: 16px;
+  }
+  .fig figcaption {
+    font-size: 16px;
+    color: var(--faint);
+    padding: 10px 16px 14px;
+    border-top: 1px solid var(--line-light);
+    line-height: 1.45;
+  }
 </style>
 </head>
 <body>
 <div class="slide">
   <p class="kicker">第五章 · 网络与 MQTT</p>
-  <h1>让电脑隔着网络指挥板子</h1>
-  <p class="lead">前四章的命令只能在板子边上敲。本章改成：任意一台电脑在局域网里发 <code>on</code> / <code>off</code>，板上的灯跟着亮灭，板子再把状态发回给电脑。双方都连到同一个 MQTT 中转站，不直接互连。</p>
-
-  <div class="flow">
-    电脑发 <code>course/led/cmd: on</code>
-    <span>→</span> MQTT 中转站
-    <span>→</span> 板子收到，灯亮
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <span class="tag linux">这章讲什么</span>
-      <h2>命令下得去，状态上得来</h2>
-      <ul>
-        <li><strong>命令</strong>：电脑往主题 <code>course/led/cmd</code> 发 <code>on</code>，中转站转给板子，板子点灯。</li>
-        <li><strong>状态</strong>：板子把当前状态发到 <code>course/led/status</code>，电脑能确认命令真的落地了。</li>
-        <li><strong>抓包</strong>：tcpdump 看一条消息从应用层到网线，一共包了几层。</li>
-      </ul>
+  <h1>发布 / 订阅：电脑和板子只认主题</h1>
+  <p class="lead">板子不必知道是谁发的命令。电脑往 <code>course/led/cmd</code> 发 <code>on</code>，中转站转给订阅这一主题的板子；板子再把状态发回 <code>course/led/status</code>。</p>
+  <div class="body">
+    <div class="copy">
+      <div class="card">
+        <span class="tag linux">一图看懂</span>
+        <h2>Broker 只做转发</h2>
+        <ul>
+          <li>发布者带 <strong>topic + payload</strong>，不关心谁在听。</li>
+          <li>订阅者只订 topic，收到同一类的所有消息。</li>
+          <li>本课换成电脑终端 + 荔枝派，道理一样。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="tag lab">本章实验</span>
+        <h2>MQTT 远程控灯</h2>
+        <p>电脑发 <code>on</code> / <code>off</code>，板上 LED 亮灭；tcpdump 看见 1883 端口上的 MQTT 帧。</p>
+      </div>
     </div>
-    <div class="card">
-      <span class="tag lab">做完你能看见</span>
-      <h2>MQTT 远程控灯</h2>
-      <p>电脑终端发 <code>on</code> / <code>off</code>，板上 LED 亮灭；另一台终端收到板子回报的状态。抓一段含 <code>1883</code> 的包，能指出哪一层是 MQTT。</p>
-      <p class="soon">讲义已写完。板上截图随实机验证补上。</p>
-    </div>
+    <figure class="fig">
+      <img src="../assets/ch05-mqtt-pubsub.png" alt="MQTT 发布订阅：temp topic 从传感器到多个订阅者">
+      <figcaption>发布 / 订阅模型：同一 topic，多个订阅者都能收到</figcaption>
+    </figure>
   </div>
 </div>
 </body>

@@ -5,54 +5,78 @@
 <title>第六章</title>
 <link rel="stylesheet" href="../theme.css">
 <style>
-  .tri {
-    margin: 26px 0 6px;
+  h1 { font-size: 44px; margin-bottom: 10px; }
+  .lead { font-size: 22px; max-width: 1680px; margin-bottom: 18px; }
+  .body {
+    flex: 1;
+    min-height: 0;
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 18px;
+    grid-template-columns: 1.12fr 0.88fr;
+    gap: 32px;
+    align-items: stretch;
+  }
+  .fig {
+    background: #fff;
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .fig img {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    object-fit: contain;
+    background: #fff;
+    padding: 14px 18px;
+  }
+  .fig figcaption {
+    font-size: 16px;
+    color: var(--faint);
+    padding: 10px 16px 14px;
+    border-top: 1px solid var(--line-light);
+    line-height: 1.45;
+  }
+  .tri {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
   }
   .th {
     background: #fff;
     border: 1px solid var(--line);
-    border-top: 6px solid var(--warm);
-    padding: 20px 26px;
+    border-left: 5px solid var(--warm);
+    padding: 14px 18px;
   }
-  .th strong { display: block; font-size: 26px; color: var(--text); margin-bottom: 8px; }
-  .th span { font-size: 19px; color: var(--muted); line-height: 1.5; }
-  .grid-2 { margin-top: 30px; }
-  .card { justify-content: flex-start; }
-  .card h2 { font-size: 28px; }
-  .card p, .card li { font-size: 22px; }
-  .soon { margin-top: auto; padding-top: 16px; font-size: 16px; color: var(--faint); }
+  .th strong { display: block; font-size: 22px; margin-bottom: 4px; }
+  .th span { font-size: 18px; color: var(--muted); line-height: 1.45; }
+  .copy .card { padding: 20px 24px; }
+  .copy .card h2 { font-size: 22px; }
+  .copy .card p { font-size: 19px; }
 </style>
 </head>
 <body>
 <div class="slide">
   <p class="kicker">第六章 · 线程与协同</p>
   <h1>风扇不能等网络</h1>
-  <p class="lead">第五章的命令循环一跑，就停在等网络。等的时候温度已经越过阈值，风扇却开不了——灯能晚，风扇不能。本章拆成三条线程，各按各的周期跑，互不阻塞；共用的温度数据加锁保护。</p>
-
-  <div class="tri">
-    <div class="th"><strong>采集线程</strong><span>每 2 秒读 DHT22，写温度</span></div>
-    <div class="th"><strong>控制线程</strong><span>按阈值开风扇，不等网络</span></div>
-    <div class="th"><strong>通信线程</strong><span>跑 MQTT，收命令、报状态</span></div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <span class="tag linux">这章讲什么</span>
-      <h2>共享数据加锁，竞态看得见</h2>
-      <ul>
-        <li>三条线程共用一份 <code>last_temp</code>：一条写、两条读，不加锁会读到写了一半的值。</li>
-        <li>加同一把互斥锁，保证读到完整数据，温度不会突然跳成离谱值。</li>
-        <li>证据链三步：板上无锁记下错乱，加锁恢复正确，电脑上用 TSan 指出抢同一变量的两行。</li>
-      </ul>
-    </div>
-    <div class="card">
-      <span class="tag lab">做完你能看见</span>
-      <h2>三线程协同 + 干净停</h2>
-      <p>板上跑 tri-thread：传感器在采、风扇在判、MQTT 在收发，同时进行。Ctrl+C 后先停风扇，再退出进程。</p>
-      <p class="soon">讲义已写完。板上截图随实机验证补上。综合项目就接在这套骨架上：滞回继续跑，AI 终端经 MQTT 指挥。</p>
+  <p class="lead">MQTT 通信占一条线程慢慢等套接字；采集和控制各跑各的周期。共用 <code>last_temp</code> 加锁，Ctrl+C 先停风扇。</p>
+  <div class="body">
+    <figure class="fig">
+      <img src="../assets/ch05-mqtt-remote.png" alt="手机经 CloudMQTT 远程控 NodeMCU LED">
+      <figcaption>远程指挥：一端发命令，经 Broker 到板端执行——通信线程干的就是这件事</figcaption>
+    </figure>
+    <div class="copy">
+      <div class="tri">
+        <div class="th"><strong>采集</strong><span>每 2 秒读 DHT22，写温度</span></div>
+        <div class="th"><strong>控制</strong><span>按阈值开风扇，不等网络</span></div>
+        <div class="th"><strong>通信</strong><span>MQTT 收发，不阻塞上面两条线</span></div>
+      </div>
+      <div class="card">
+        <span class="tag lab">本章实验</span>
+        <h2>三线程 + 干净停</h2>
+        <p>板上 tri-thread 同时跑；TSan 在 x86 上指出无锁竞态。综合项目把 MQTT 总线留给 Harness 工具。</p>
+      </div>
     </div>
   </div>
 </div>
