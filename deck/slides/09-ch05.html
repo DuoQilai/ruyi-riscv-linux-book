@@ -42,6 +42,9 @@
     border-top: 1px solid var(--line-light);
     line-height: 1.45;
   }
+  .fig-stack { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .fig-stack .fig { flex: 1; min-height: 0; }
+  .fig svg { flex: 1; min-height: 0; width: 100%; padding: 12px 16px 6px; }
 </style>
 </head>
 <body>
@@ -66,10 +69,45 @@
         <p>电脑发 <code>on</code> / <code>off</code>，板上 LED 亮灭；tcpdump 看见 1883 端口上的 MQTT 帧。</p>
       </div>
     </div>
-    <figure class="fig">
-      <img src="../assets/ch05-mqtt-pubsub.png" alt="MQTT 发布订阅：temp topic 从传感器到多个订阅者">
-      <figcaption>发布 / 订阅模型：同一 topic，多个订阅者都能收到</figcaption>
-    </figure>
+    <div class="fig-stack">
+      <figure class="fig">
+        <svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg" aria-label="本课 MQTT 远程控灯">
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2e6b6e"/></marker>
+            <marker id="arr-w" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#c46b4a"/></marker>
+          </defs>
+          <rect x="16" y="72" width="130" height="56" rx="8" fill="#e3eef9" stroke="#2e6b6e" stroke-width="2"/>
+          <text x="81" y="96" text-anchor="middle" font-size="15" font-weight="700" fill="#2d2a26">电脑终端</text>
+          <text x="81" y="116" text-anchor="middle" font-size="12" fill="#5c5448">mosquitto_pub</text>
+          <rect x="210" y="52" width="150" height="96" rx="8" fill="#ede8f5" stroke="#2e6b6e" stroke-width="2"/>
+          <text x="285" y="88" text-anchor="middle" font-size="15" font-weight="700" fill="#2d2a26">Broker</text>
+          <text x="285" y="108" text-anchor="middle" font-size="12" fill="#5c5448">Mosquitto</text>
+          <text x="285" y="126" text-anchor="middle" font-size="12" fill="#8c8276">TCP :1883</text>
+          <rect x="424" y="72" width="140" height="56" rx="8" fill="#fbeee0" stroke="#c46b4a" stroke-width="2"/>
+          <text x="494" y="96" text-anchor="middle" font-size="15" font-weight="700" fill="#2d2a26">荔枝派 4A</text>
+          <text x="494" y="116" text-anchor="middle" font-size="12" fill="#5c5448">mqtt-led</text>
+          <rect x="610" y="72" width="120" height="56" rx="8" fill="#fff8e6" stroke="#c46b4a" stroke-width="2"/>
+          <text x="670" y="96" text-anchor="middle" font-size="15" font-weight="700" fill="#2d2a26">外接 LED</text>
+          <text x="670" y="116" text-anchor="middle" font-size="12" fill="#5c5448">GPIO</text>
+          <line x1="146" y1="92" x2="206" y2="92" stroke="#2e6b6e" stroke-width="2.5" marker-end="url(#arr)"/>
+          <text x="176" y="82" text-anchor="middle" font-size="11" fill="#2e6b6e">cmd/on</text>
+          <line x1="360" y1="92" x2="420" y2="92" stroke="#2e6b6e" stroke-width="2.5" marker-end="url(#arr)"/>
+          <text x="390" y="82" text-anchor="middle" font-size="11" fill="#2e6b6e">订阅</text>
+          <line x1="564" y1="100" x2="606" y2="100" stroke="#c46b4a" stroke-width="2.5" marker-end="url(#arr-w)"/>
+          <text x="585" y="90" text-anchor="middle" font-size="11" fill="#c46b4a">点灯</text>
+          <path d="M494,132 C494,168 285,168 285,148" fill="none" stroke="#c46b4a" stroke-width="2" marker-end="url(#arr-w)"/>
+          <text x="390" y="182" text-anchor="middle" font-size="11" fill="#c46b4a">status/on 上行</text>
+          <path d="M285,148 C81,148 81,132 81,132" fill="none" stroke="#c46b4a" stroke-width="2" marker-end="url(#arr-w)"/>
+          <text x="176" y="162" text-anchor="middle" font-size="11" fill="#c46b4a">mosquitto_sub</text>
+          <text x="380" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#2e6b6e">course/led/cmd ↓ 控灯 · course/led/status ↑ 回传</text>
+        </svg>
+        <figcaption>本课闭环：电脑发命令 → Broker 转发 → 板端 GPIO 亮灯 → 状态再经 Broker 回到电脑</figcaption>
+      </figure>
+      <figure class="fig">
+        <img src="../assets/ch05-mqtt-pubsub.png" alt="MQTT 发布订阅：temp topic 从传感器到多个订阅者">
+        <figcaption>通用模型：发布者只认 topic，订阅者只认 topic，Broker 只做转发</figcaption>
+      </figure>
+    </div>
   </div>
 </div>
 </body>
