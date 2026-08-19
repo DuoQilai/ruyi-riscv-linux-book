@@ -262,6 +262,8 @@
 <span class="p">$</span> make clean &amp;&amp; make CFLAGS='-Wall -Wextra -O2 -DSIMULATE_SENSOR=0'
 <span class="p">$</span> sudo ./cmd_thermo</pre>
 <p>先用默认模拟模式跑通软件流程；接真 DHT 时务必带上 <code>-DSIMULATE_SENSOR=0</code>。对照参考实现（助教自检）：<code>make sol fan-off</code>。</p>
+</section>
+
 <section id="step-accept">
 <h2>联调验收</h2>
 <figure>
