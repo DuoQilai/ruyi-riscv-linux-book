@@ -13,7 +13,7 @@
     border: 1px solid var(--line);
     border-radius: 8px;
     box-shadow: 0 12px 34px rgba(45,42,38,0.10);
-    padding: 38px 56px 32px;
+    padding: 34px 52px 30px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -27,21 +27,21 @@
     align-items: baseline;
     gap: 14px;
   }
-  .md-h1 { font-size: 38px; }
-  .md-h2 { font-size: 24px; margin-top: 4px; }
+  .md-h1 { font-size: 36px; }
+  .md-h2 { font-size: 23px; margin-top: 2px; }
   .md .hash { color: var(--accent); }
-  .md-p { font-size: 21px; color: var(--muted); line-height: 1.6; }
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: 19px;
-    margin: 4px 0;
+    margin: 2px 0;
   }
   th, td {
     text-align: left;
     padding: 10px 16px;
     border: 1px solid var(--line);
     color: var(--muted);
+    vertical-align: top;
   }
   th {
     background: var(--paper);
@@ -50,13 +50,14 @@
     color: var(--accent);
     letter-spacing: 0.06em;
   }
-  td .en { display: block; font-family: var(--mono); font-size: 14px; color: var(--faint); margin-top: 2px; }
+  td .en { display: block; font-family: var(--mono); font-size: 13px; color: var(--faint); margin-top: 2px; }
+  td .locus { color: var(--text); }
   .md-bullets { list-style: none; padding: 0; margin: 0; }
   .md-bullets li {
     font-family: var(--mono);
-    font-size: 20px;
+    font-size: 19px;
     color: var(--muted);
-    padding: 5px 0;
+    padding: 4px 0;
     display: flex;
     gap: 12px;
   }
@@ -64,7 +65,7 @@
   .md-bullets code { font-family: var(--mono); }
   .md-note {
     margin-top: auto;
-    font-size: 17px;
+    font-size: 16px;
     color: var(--faint);
     font-family: var(--mono);
     line-height: 1.6;
@@ -76,30 +77,42 @@
 <body>
 <div class="slide">
   <p class="kicker">📊 课程评价</p>
-  <h1>用 CIPP 四层看一门实践课</h1>
-  <p class="lead">标准全文在 <code>docs/course-evaluation-standard.md</code>，这里浓缩成一张表。判断看板上现象，不看口号。</p>
+  <h1>用 CIPP 四层看这门课</h1>
+  <p class="lead">标准问四件事，这门课每一件都落在板上。成效按 OBE 写：目标可观察，用证据判断。</p>
 
   <div class="md">
-    <div class="md-h1"><span class="hash">#</span>课程评价标准</div>
+    <div class="md-h1"><span class="hash">#</span>四层标准 × 这门课的落点</div>
 
     <table>
-      <tr><th>层</th><th>CIPP</th><th>这一层看什么</th></tr>
-      <tr><td>1</td><td>Context<span class="en">背景</span></td><td>为什么开课、对谁有价值</td></tr>
-      <tr><td>2</td><td>Input<span class="en">输入</span></td><td>板、工具链、讲义与实验齐不齐</td></tr>
-      <tr><td>3</td><td>Process<span class="en">过程</span></td><td>讲义与实验是否按主线落地</td></tr>
-      <tr><td>4</td><td>Product<span class="en">成效</span></td><td>学生在板上能演示什么</td></tr>
+      <tr><th>层</th><th>标准问什么</th><th>这门课落在哪</th></tr>
+      <tr>
+        <td>1</td><td>为什么开、对谁有价值<span class="en">Context</span></td>
+        <td class="locus">初学者用 C 在荔枝派 4A 上，从交叉编译一路做到真板上温控闭环（ch01–04）</td>
+      </tr>
+      <tr>
+        <td>2</td><td>条件与资源齐不齐<span class="en">Input</span></td>
+        <td class="locus">荔枝派、继电器、风扇、DHT22、TXS；讲义、实验、脚手架、<code>make sol</code> 逐章齐备</td>
+      </tr>
+      <tr>
+        <td>3</td><td>讲义实验按主线落地<span class="en">Process</span></td>
+        <td class="locus">每章讲义三节 + 一份实验；一章补一块能力，工具链 → C → GPIO → 真传感器 → 命令</td>
+      </tr>
+      <tr>
+        <td>4</td><td>学生在板上能演示什么<span class="en">Product</span></td>
+        <td class="locus">CoreMark 跑分过校验；风扇按阈值转；<code>status</code> / <code>set temp</code> 立刻生效；Ctrl+C 先关风扇</td>
+      </tr>
     </table>
 
-    <div class="md-h2"><span class="hash">##</span>成效这一层 · 目标可观察，用证据判断</div>
+    <div class="md-h2"><span class="hash">##</span>成效看板上现象，不看口号</div>
 
     <ul class="md-bullets">
-      <li><span class="dash">-</span>CoreMark 跑分过校验</li>
-      <li><span class="dash">-</span>风扇按阈值转，Ctrl+C 先关</li>
-      <li><span class="dash">-</span>敲 <code>status</code> / <code>set temp</code> 立刻改阈值</li>
-      <li><span class="dash">-</span>工程实践再吸收 CDIO：项目驱动、验收式演示</li>
+      <li><span class="dash">-</span>风扇跟着模拟温度开停，改阈值后开/关点跟着变</li>
+      <li><span class="dash">-</span>敲 <code>status</code> 立刻出温湿度，<code>set temp</code> 改阈值立刻生效</li>
+      <li><span class="dash">-</span>打字时自动控温不停（select 一边等采样，一边等你敲命令）</li>
+      <li><span class="dash">-</span>前序能力串成闭环：模拟温度 → 真采样 + 运行中改阈值</li>
     </ul>
 
-    <p class="md-note">&gt; 框架：CIPP（Stufflebeam &amp; Zhang, 2017）· OBE（Spady, 1994）· 工程教育认证标准 2024 · 判断用板上现象</p>
+    <p class="md-note">&gt; 框架：CIPP（Stufflebeam &amp; Zhang, 2017）· OBE（Spady, 1994）· CDIO ｜ 口径见 docs/course-evaluation-standard.md</p>
   </div>
 </div>
 </body>
