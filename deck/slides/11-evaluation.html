@@ -2,44 +2,105 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>评价</title>
+<title>课程评价</title>
 <link rel="stylesheet" href="../theme.css">
 <style>
-  .grid-4 { margin-top: 28px; }
-  .card { min-height: 480px; }
-  .card .layer { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); font-weight: 700; margin-bottom: 10px; }
-  .card h2 { font-size: 28px; }
-  .foot { margin-top: 28px; font-size: 22px; color: var(--muted); }
+  .md {
+    flex: 1;
+    min-height: 0;
+    margin-top: 10px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 12px 34px rgba(45,42,38,0.10);
+    padding: 38px 56px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+  }
+  .md-h1, .md-h2 {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  .md-h1 { font-size: 38px; }
+  .md-h2 { font-size: 24px; margin-top: 4px; }
+  .md .hash { color: var(--accent); }
+  .md-p { font-size: 21px; color: var(--muted); line-height: 1.6; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 19px;
+    margin: 4px 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 16px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  th {
+    background: var(--paper);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+  td .en { display: block; font-family: var(--mono); font-size: 14px; color: var(--faint); margin-top: 2px; }
+  .md-bullets { list-style: none; padding: 0; margin: 0; }
+  .md-bullets li {
+    font-family: var(--mono);
+    font-size: 20px;
+    color: var(--muted);
+    padding: 5px 0;
+    display: flex;
+    gap: 12px;
+  }
+  .md-bullets li .dash { color: var(--accent); }
+  .md-bullets code { font-family: var(--mono); }
+  .md-note {
+    margin-top: auto;
+    font-size: 17px;
+    color: var(--faint);
+    font-family: var(--mono);
+    line-height: 1.6;
+    border-top: 1px solid var(--line-light);
+    padding-top: 12px;
+  }
 </style>
 </head>
 <body>
 <div class="slide">
-  <p class="kicker">怎么看这门课好不好</p>
-  <h1>四层看完：从为什么开，到板上能演示什么</h1>
-  <p class="lead">用 CIPP 的顺序评价一门实践课。成效看板上能观察到的行为，用实际证据判断。</p>
-  <div class="grid-4">
-    <div class="card">
-      <div class="layer">CONTEXT</div>
-      <h2>开课意义</h2>
-      <p>谁学、学完在荔枝派上能做什么。RuyiSDK 从第一章就进工具链。</p>
-    </div>
-    <div class="card">
-      <div class="layer">INPUT</div>
-      <h2>条件与资源</h2>
-      <p>板、继电器、风扇、DHT22。讲义、实验、脚手架和 <code>make sol</code> 齐备。</p>
-    </div>
-    <div class="card">
-      <div class="layer">PROCESS</div>
-      <h2>教学实施</h2>
-      <p>每章讲义三节 + 一份实验。环境 → C → 风扇 → 命令 → MQTT → 三线程 → 综合项目（量化 + 终端 Agent）。</p>
-    </div>
-    <div class="card">
-      <div class="layer">PRODUCT</div>
-      <h2>学习成效</h2>
-      <p>CoreMark 跑分、风扇按阈值转、敲一行命令改控温。</p>
-    </div>
+  <p class="kicker">📊 课程评价</p>
+  <h1>用 CIPP 四层看一门实践课</h1>
+  <p class="lead">标准全文在 <code>docs/course-evaluation-standard.md</code>，这里浓缩成一张表。判断看板上现象，不看口号。</p>
+
+  <div class="md">
+    <div class="md-h1"><span class="hash">#</span>课程评价标准</div>
+
+    <table>
+      <tr><th>层</th><th>CIPP</th><th>这一层看什么</th></tr>
+      <tr><td>1</td><td>Context<span class="en">背景</span></td><td>为什么开课、对谁有价值</td></tr>
+      <tr><td>2</td><td>Input<span class="en">输入</span></td><td>板、工具链、讲义与实验齐不齐</td></tr>
+      <tr><td>3</td><td>Process<span class="en">过程</span></td><td>讲义与实验是否按主线落地</td></tr>
+      <tr><td>4</td><td>Product<span class="en">成效</span></td><td>学生在板上能演示什么</td></tr>
+    </table>
+
+    <div class="md-h2"><span class="hash">##</span>成效这一层 · 目标可观察，用证据判断</div>
+
+    <ul class="md-bullets">
+      <li><span class="dash">-</span>CoreMark 跑分过校验</li>
+      <li><span class="dash">-</span>风扇按阈值转，Ctrl+C 先关</li>
+      <li><span class="dash">-</span>敲 <code>status</code> / <code>set temp</code> 立刻改阈值</li>
+      <li><span class="dash">-</span>工程实践再吸收 CDIO：项目驱动、验收式演示</li>
+    </ul>
+
+    <p class="md-note">&gt; 框架：CIPP（Stufflebeam &amp; Zhang, 2017）· OBE（Spady, 1994）· 工程教育认证标准 2024 · 判断用板上现象</p>
   </div>
-  <p class="foot">口径写在 <code>docs/course-evaluation-standard.md</code>。判断用板上现象。</p>
 </div>
 </body>
 </html>
