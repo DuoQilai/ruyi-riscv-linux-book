@@ -395,7 +395,7 @@ gpiod_line_request_release(req);</pre>
 
 <div class="ex mem">
   <div class="k">完整示例：fan-toggle（libgpiod v2，本板编译运行通过）</div>
-  <p>把上面的调用轮廓合成一个完整可运行的程序。头文件 + <code>main</code>，关键步骤都有注释：</p>
+  <p>把上面的调用轮廓合成一个完整可运行的程序。头文件 + <code>main</code>，关键步骤都有注释。注意：这是演示 <strong>API 生命周期</strong>的平铺程序；实验里你要写的 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code> 是把同样的调用组织成三个函数、并补上滞回决策——结构和这里是两回事。</p>
 <pre><span class="c">/* fan-toggle.c — 完整演示 gpiod 生命周期
  * 打开 chip → 申请 line 5 为输出(初值 0) → 拉高 → 拉低 → 释放 */</span>
 <span class="k">#include</span> &lt;gpiod.h&gt;
