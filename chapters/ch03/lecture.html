@@ -394,9 +394,9 @@ gpiod_line_request_release(req);</pre>
 </div>
 
 <div class="ex mem">
-  <div class="k">完整示例：fan-toggle（libgpiod v2，本板编译运行通过）</div>
+  <div class="k">完整示例：relay-toggle（libgpiod v2，本板编译运行通过）</div>
   <p>把上面的调用轮廓合成一个完整可运行的程序。头文件 + <code>main</code>，关键步骤都有注释。注意：这是演示 <strong>API 生命周期</strong>的平铺程序；实验里你要写的 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code> 是把同样的调用组织成三个函数、并补上滞回决策——结构和这里是两回事。</p>
-<pre><span class="c">/* fan-toggle.c — 完整演示 gpiod 生命周期
+<pre><span class="c">/* relay-toggle.c — 完整演示 gpiod 生命周期
  * 打开 chip → 申请 line 5 为输出(初值 0) → 拉高 → 拉低 → 释放 */</span>
 <span class="k">#include</span> &lt;gpiod.h&gt;
 <span class="k">#include</span> &lt;stdio.h&gt;
@@ -414,9 +414,9 @@ gpiod_line_request_release(req);</pre>
     <span class="k">struct</span> gpiod_line_config *cfg = gpiod_line_config_new();
     gpiod_line_config_add_line_settings(cfg, (<span class="k">unsigned int</span>[]){5}, 1, st);
 
-    <span class="c">/* 3. 申请（consumer="fan-toggle"，gpioinfo 里认得出） */</span>
+    <span class="c">/* 3. 申请（consumer="relay-toggle"，gpioinfo 里认得出） */</span>
     <span class="k">struct</span> gpiod_request_config *rcfg = gpiod_request_config_new();
-    gpiod_request_config_set_consumer(rcfg, <span class="p">"fan-toggle"</span>);
+    gpiod_request_config_set_consumer(rcfg, <span class="p">"relay-toggle"</span>);
     <span class="k">struct</span> gpiod_line_request *req = gpiod_chip_request_lines(chip, rcfg, cfg);
 
     printf(<span class="p">"已申请 line 5，初值低 → 风扇确定关\n"</span>);
@@ -443,7 +443,7 @@ gpiod_line_request_release(req);</pre>
 
 <div class="ex mem">
   <div class="k">本板实测输出</div>
-<pre><span class="p">$</span> echo debian | sudo -S /tmp/fan-toggle
+<pre><span class="p">$</span> echo debian | sudo -S /tmp/relay-toggle
 已申请 line 5，初值低 → 风扇确定关
 line 5 = 高 → 继电器吸合，风扇开
 line 5 = 低 → 继电器释放，风扇关

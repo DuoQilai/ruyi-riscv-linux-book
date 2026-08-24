@@ -1,4 +1,4 @@
-/* fan-toggle.c — 完整演示 gpiod 生命周期（libgpiod v2）
+/* relay-toggle.c — 完整演示 gpiod 生命周期（libgpiod v2）
  * 打开 chip → 申请 line 5 为输出(初值 0) → 拉高 → 拉低 → 释放
  */
 #include <gpiod.h>
@@ -17,9 +17,9 @@ int main(void) {
     struct gpiod_line_config *cfg = gpiod_line_config_new();
     gpiod_line_config_add_line_settings(cfg, (unsigned int[]){5}, 1, st);
 
-    /* 3. 申请（consumer 名字 "fan-toggle"，gpioinfo 里能认出谁占着） */
+    /* 3. 申请（consumer 名字 "relay-toggle"，gpioinfo 里能认出谁占着） */
     struct gpiod_request_config *rcfg = gpiod_request_config_new();
-    gpiod_request_config_set_consumer(rcfg, "fan-toggle");
+    gpiod_request_config_set_consumer(rcfg, "relay-toggle");
     struct gpiod_line_request *req = gpiod_chip_request_lines(chip, rcfg, cfg);
 
     printf("已申请 line 5，初值低 → 风扇确定关\n");
