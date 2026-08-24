@@ -141,29 +141,33 @@
   <div class="divider"></div>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
+  <a href="#glossary">本章术语</a>
+  <div class="divider"></div>
   <a href="#s3.1">3.1 外设与 I/O</a>
   <a class="sub" href="#s3.1-model">I/O 模型</a>
   <a class="sub" href="#s3.1-mmio">寄存器与用户态</a>
   <div class="divider"></div>
-  <a href="#s3.2">3.2 GPIO：用 gpiod 控继电器与风扇</a>
+  <a href="#s3.2">3.2 GPIO：认识与控制</a>
   <a class="sub" href="#s3.2-what">一根脚能做什么</a>
   <a class="sub" href="#s3.2-chip">chip 与 line</a>
   <a class="sub" href="#s3.2-level">高、低与本板电压</a>
-  <a class="sub" href="#s3.2-gpiod">经内核改电平</a>
+  <a class="sub" href="#s3.2-gpiod">经内核改电平：gpiod</a>
   <a class="sub" href="#s3.2-devmem">set_value 之后：只读核对</a>
   <a class="sub" href="#s3.2-busy">独占与「被占用」</a>
-  <a class="sub" href="#s3.2-relay">继电器：信号端</a>
-  <a class="sub" href="#s3.2-follow">跟做：gpioset 控继电器</a>
-  <a class="sub" href="#s3.2-diagnose">故障排查（本章）</a>
   <div class="divider"></div>
-  <a href="#s3.3">3.3 决策 → 执行</a>
-  <a class="sub" href="#s3.3-loop">模拟温度 → 继电器 → 风扇</a>
+  <a href="#s3.3">3.3 继电器、接线与跟做</a>
+  <a class="sub" href="#s3.3-relay">继电器：信号端</a>
+  <a class="sub" href="#s3.3-follow">跟做：gpioset 控继电器</a>
+  <a class="sub" href="#s3.3-diagnose">故障排查（信号链）</a>
+  <div class="divider"></div>
+  <a href="#s3.4">3.4 决策 → 执行</a>
+  <a class="sub" href="#s3.4-loop">模拟温度 → 继电器 → 风扇</a>
 </nav>
 
 <div class="hero">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
   <h1>GPIO 与执行器</h1>
-  <p class="subtitle">外设与 I/O · gpiod 控继电器 · 决策—执行<br>用户态边界 · 寄存器位怎么翻<br>— 3.1 / 3.2 / 3.3 —</p>
+  <p class="subtitle">外设与 I/O · gpiod 控继电器 · 决策—执行<br>用户态边界 · 寄存器位怎么翻<br>— 3.1 / 3.2 / 3.3 / 3.4 —</p>
   <div class="meta">
     <span>跟做：gpioset + 只读核对</span>
     <span>本章实验：接线 + temperature_fan</span>
@@ -193,17 +197,46 @@
   <div class="card"><h4>代码</h4><p>讲义跟做命令行 <code>gpioset</code>。实验里你在 <code>chapters/ch03/code/</code> 自己实现三个 C 函数；参考实现为 <code>temperature_fan-sol.c</code>。</p></div>
 </div>
 
-<h3>三节各自打透什么</h3>
+<h3>四节各自打透什么</h3>
 
 <div class="card-grid" style="margin-bottom:0;">
   <div class="card"><h4>3.1 外设与 I/O</h4><p>物理量如何变成程序里的数；寄存器 / MMIO；用户态经内核接口访问硬件。</p></div>
-  <div class="card"><h4>3.2 GPIO：用 gpiod 控继电器</h4><p>chip/line、本板 1.8 V、信号端接线、<code>gpioset</code> 跟做；只读 <code>devmem</code> 核对位翻转。</p></div>
-  <div class="card"><h4>3.3 决策 → 执行</h4><p>模拟温度与滞回如何驱动执行链。真传感器在第四章。</p></div>
+  <div class="card"><h4>3.2 GPIO：认识与控制</h4><p>chip/line、本板 1.8 V、<code>gpiod</code> 申请与写电平、只读核对、独占。</p></div>
+  <div class="card"><h4>3.3 继电器、接线与跟做</h4><p>信号端接线、<code>gpioset</code> 跟做、故障排查。</p></div>
+  <div class="card"><h4>3.4 决策 → 执行</h4><p>模拟温度与滞回如何驱动执行链。真传感器在第四章。</p></div>
 </div>
 
 <div class="info" style="margin-top:28px;">
   <strong>讲义与实验怎么衔接：</strong>讲义打透边界与信号链，并用 <code>gpioset</code> 控一次继电器。实验接上风扇负载，由你写出 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code>，跑通模拟温度控制并改阈值。
 </div>
+</section>
+
+<!-- ═══ 术语表 ═══ -->
+<section id="glossary">
+<div class="section-num">术语表</div>
+<h2>本章术语：先说清，再往下</h2>
+<p>下面这些词会在本章反复出现。先扫一遍，知道「它是什么、为什么需要它」；读到再见到就不慌，也可以随时翻回这一页。它们不是堆砌——每引入一个词，都是因为我们到了必须说清那一步的关口。</p>
+
+<table>
+  <tr><th>术语</th><th>是什么</th><th>为什么需要它</th></tr>
+  <tr><td><strong>外设</strong></td><td>CPU 之外的硬件模块（传感器、风扇、继电器）</td><td>程序要控制的「外部世界」就是它</td></tr>
+  <tr><td><strong>I/O</strong></td><td>程序与硬件的输入/输出</td><td>把外界变成数、把数变成动作</td></tr>
+  <tr><td><strong>GPIO</strong></td><td>可配置方向的引脚（输出高/低或读输入）</td><td>用一根线的高低控制外部</td></tr>
+  <tr><td><strong>寄存器</strong></td><td>芯片内部可读写的控制位</td><td>芯片控制外设的唯一途径，一位一个开关</td></tr>
+  <tr><td><strong>MMIO</strong></td><td>把寄存器映射到内存地址空间</td><td>软件用「读写内存」的方式控制硬件</td></tr>
+  <tr><td><strong>位（bit）</strong></td><td>二进制的一位 0/1</td><td>寄存器里每个开关就是一 位</td></tr>
+  <tr><td><strong>gpiochip</strong></td><td>一组 GPIO 控制器的设备节点（<code>/dev/gpiochipN</code>）</td><td>Linux 给一组脚统一编号、仲裁占用</td></tr>
+  <tr><td><strong>line</strong></td><td>某个 chip 里的脚号（偏移）</td><td>精确定位「哪一组、第几根脚」</td></tr>
+  <tr><td><strong>电平</strong></td><td>引脚电压的高低（本板信号脚 1.8 V）</td><td>「写 1/0」最终变成引脚上的电压</td></tr>
+  <tr><td><strong>继电器</strong></td><td>小信号控制大电流通断的器件</td><td>让 1.8 V 的 GPIO 能控制 5V 风扇</td></tr>
+  <tr><td><strong>信号端 / 触点</strong></td><td>继电器输入侧 / 输出侧</td><td>GPIO 只碰信号端，大电流走触点</td></tr>
+  <tr><td><strong>NO / NC</strong></td><td>常开 / 常闭触点</td><td>决定「无驱动时」风扇默认是关还是开</td></tr>
+  <tr><td><strong>gpiod</strong></td><td>用户态 GPIO 库与命令行工具（libgpiod）</td><td>走内核接口控制脚，不直接碰寄存器</td></tr>
+  <tr><td><strong>consumer</strong></td><td>占用者的名字</td><td><code>gpioinfo</code> 里认出「谁占着我的脚」</td></tr>
+  <tr><td><strong>独占</strong></td><td>一根 line 同一时刻只能一个申请者</td><td>防止两个程序各写各的、互相踩</td></tr>
+  <tr><td><strong>悬空</strong></td><td>引脚没有被任何程序驱动</td><td>电平不定（常读到高），继电器可能乱吸合</td></tr>
+  <tr><td><strong>滞回</strong></td><td>开/关用两个不同阈值，中间保持</td><td>温度在临界附近时风扇不狂开狂关</td></tr>
+</table>
 </section>
 
 <!-- ═══ 3.1 ═══ -->
@@ -260,7 +293,7 @@
 <!-- ═══ 3.2 ═══ -->
 <section id="s3.2">
 <div class="section-num">3.2</div>
-<h2>GPIO：用 gpiod 控继电器与风扇</h2>
+<h2>GPIO：认识与控制</h2>
 
 <p>这一节把「外设」落到一根具体的脚上。读完应能回答：GPIO 是什么、Linux 怎么给脚编号、高低电平在本板上意味着什么、为什么要先申请再改电平，以及 <code>set_value</code> 之后如何用只读手段看见寄存器位翻转。</p>
 
@@ -360,6 +393,63 @@ gpiod_line_request_release(req);</pre>
   <strong>消费者名字（consumer）</strong>会出现在 <code>gpioinfo</code> / <code>debug/gpio</code> 里。调试「谁占着我的脚」时，能看出是 <code>gpioset</code>、<code>temperature_fan</code> 还是别的程序——起名要诚实。
 </div>
 
+<div class="ex mem">
+  <div class="k">完整示例：fan-toggle（libgpiod v2，本板编译运行通过）</div>
+  <p>把上面的调用轮廓合成一个完整可运行的程序。头文件 + <code>main</code>，关键步骤都有注释：</p>
+<pre><span class="c">/* fan-toggle.c — 完整演示 gpiod 生命周期
+ * 打开 chip → 申请 line 5 为输出(初值 0) → 拉高 → 拉低 → 释放 */</span>
+<span class="k">#include</span> &lt;gpiod.h&gt;
+<span class="k">#include</span> &lt;stdio.h&gt;
+<span class="k">#include</span> &lt;unistd.h&gt;
+
+<span class="k">int</span> main(<span class="k">void</span>) {
+    <span class="c">/* 1. 打开 chip：IO1_5 所在控制器 */</span>
+    <span class="k">struct</span> gpiod_chip *chip = gpiod_chip_open(<span class="p">"/dev/gpiochip5"</span>);
+
+    <span class="c">/* 2. 配置 line 5：输出，初值低。
+     *    初值=低 很关键：不驱动 = 悬空 = 电平不定，继电器可能乱吸合 */</span>
+    <span class="k">struct</span> gpiod_line_settings *st = gpiod_line_settings_new();
+    gpiod_line_settings_set_direction(st, GPIOD_LINE_DIRECTION_OUTPUT);
+    gpiod_line_settings_set_output_value(st, GPIOD_LINE_VALUE_INACTIVE);
+    <span class="k">struct</span> gpiod_line_config *cfg = gpiod_line_config_new();
+    gpiod_line_config_add_line_settings(cfg, (<span class="k">unsigned int</span>[]){5}, 1, st);
+
+    <span class="c">/* 3. 申请（consumer="fan-toggle"，gpioinfo 里认得出） */</span>
+    <span class="k">struct</span> gpiod_request_config *rcfg = gpiod_request_config_new();
+    gpiod_request_config_set_consumer(rcfg, <span class="p">"fan-toggle"</span>);
+    <span class="k">struct</span> gpiod_line_request *req = gpiod_chip_request_lines(chip, rcfg, cfg);
+
+    printf(<span class="p">"已申请 line 5，初值低 → 风扇确定关\n"</span>);
+    sleep(1);
+
+    <span class="c">/* 4. 拉高：继电器吸合，风扇开 */</span>
+    gpiod_line_request_set_value(req, 5, GPIOD_LINE_VALUE_ACTIVE);
+    printf(<span class="p">"line 5 = 高 → 继电器吸合，风扇开\n"</span>);
+    sleep(2);
+
+    <span class="c">/* 5. 拉低 → 6. 释放（把 line 还给内核） */</span>
+    gpiod_line_request_set_value(req, 5, GPIOD_LINE_VALUE_INACTIVE);
+    printf(<span class="p">"line 5 = 低 → 继电器释放，风扇关\n"</span>);
+    gpiod_line_request_release(req);
+    printf(<span class="p">"已释放 line 5\n"</span>);
+    <span class="k">return</span> 0;
+}</pre>
+</div>
+
+<div class="ex temp">
+  <div class="k">悬空：不驱动 = 电平不定</div>
+  <p>程序没运行时，没人申请 line 5——它<strong>悬空</strong>，电平由周围电路决定（常读到高）。如果继电器按 NO 接线，悬空高电平就把继电器吸合，风扇自己转起来。这正是「申请时给初值 0」要解决的问题：<strong>程序一启动就先把脚拉成确定的低，风扇才确定关着</strong>。</p>
+</div>
+
+<div class="ex mem">
+  <div class="k">本板实测输出</div>
+<pre><span class="p">$</span> echo debian | sudo -S /tmp/fan-toggle
+已申请 line 5，初值低 → 风扇确定关
+line 5 = 高 → 继电器吸合，风扇开
+line 5 = 低 → 继电器释放，风扇关
+已释放 line 5</pre>
+</div>
+
 <h3 id="s3.2-devmem">set_value 之后：只读核对寄存器位</h3>
 <p>调用 <code>gpiod_line_request_set_value(..., 1)</code> 之后，真正改硬件的是<strong>内核 GPIO 驱动</strong>：经系统调用接到请求，往某个 MMIO 地址写一笔，把对应引脚那一位从 0 翻成 1（或反过来）。引脚电平变了，继电器才吸合。</p>
 
@@ -417,7 +507,15 @@ gpioget: unable to request lines: Device or resource busy</pre>
 <span class="p">$</span> sudo pkill -x gpioset   <span class="c"># -x：按进程名精确匹配</span>
 <span class="p">$</span> sudo cat /sys/kernel/debug/gpio</pre>
 
-<h3 id="s3.2-relay">继电器：信号端与负载端</h3>
+</section>
+
+<!-- ═══ 3.3 ═══ -->
+<section id="s3.3">
+<div class="section-num">3.3</div>
+<h2>继电器、接线与跟做</h2>
+<p>这一节把 GPIO 接到真实的继电器与风扇上：信号端怎么接、用 <code>gpioset</code> 跟做一次、以及继电器不动时怎么排查。</p>
+
+<h3 id="s3.3-relay">继电器：信号端与负载端</h3>
 <p><strong>继电器</strong>把小信号变成大电流通路的通断：GPIO 驱动<strong>信号端</strong>（丝印 IN / X1，高电平吸合）；风扇等大电流走触点（NO / COM）。程序只写高/低，电机电流不进 SoC 脚。</p>
 
 <table>
@@ -435,7 +533,7 @@ gpioget: unable to request lines: Device or resource busy</pre>
 </table>
 <p>跳线帽拨到 <strong>H</strong>。此时即可听吸合或看工作灯；风扇电源回路放到实验再接。</p>
 
-<h3 id="s3.2-follow">跟做：用 gpioset 控一次继电器</h3>
+<h3 id="s3.3-follow">跟做：用 gpioset 控一次继电器</h3>
 <p>目的：证明「chip + line → 引脚电平 → 继电器信号端」。</p>
 
 <ol class="steps">
@@ -458,7 +556,7 @@ gpioget: unable to request lines: Device or resource busy</pre>
   <strong>为什么要 sudo？</strong><code>/dev/gpiochip*</code> 默认归 root，普通用户打不开（<code>Permission denied</code>）。
 </div>
 
-<h3 id="s3.2-diagnose">故障排查（信号链）</h3>
+<h3 id="s3.3-diagnose">故障排查（信号链）</h3>
 <p>继电器未动时，按<strong>软件状态 → 编号是否对应排针 → 信号端接线</strong>取证。</p>
 
 <table>
@@ -478,11 +576,11 @@ gpioget: unable to request lines: Device or resource busy</pre>
 </section>
 
 <!-- ═══ 3.3 ═══ -->
-<section id="s3.3">
-<div class="section-num">3.3</div>
+<section id="s3.4">
+<div class="section-num">3.4</div>
 <h2>决策 → 执行：模拟温度怎么驱动风扇</h2>
 
-<h3 id="s3.3-loop">数据流：决策 → 执行</h3>
+<h3 id="s3.4-loop">数据流：决策 → 执行</h3>
 <p>第三章的程序用程序内部自变的<strong>模拟温度</strong>（约 24°C → 31°C 再降回）演示「决策 → 执行」：模拟温度 → 阈值判断 → 继电器 → 风扇。真传感器（DHT22）到第四章再接。</p>
 <p><strong>执行侧</strong>是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成<strong>滞回</strong>（第二章已定义：中间区间保持上一状态），温度在临界附近时风扇保持上一状态。</p>
 
