@@ -190,7 +190,7 @@
 <h2>开始之前</h2>
 
 <div class="warn" style="margin-bottom:32px;">
-  <strong>前置：</strong>已完成第一章——能编译（板端原生或主机交叉）、荔枝派 4A 能跑程序。本章目标是<strong>读懂、改得动，并能按契约写出函数</strong>。讲义跟做 <code>hello</code>、<code>project-template</code> 与 <code>cmd-table</code>；本章实验先从空写出滞回决策，再修好读数路径上的坑。第三、四章的空白 TODO 用的就是同一种手感。
+  <strong>前置：</strong>已完成第一章——能编译（板端原生或主机交叉）、荔枝派 4A 能运行程序。本章目标是<strong>读懂、改得动，并能按契约写出函数</strong>。讲义跟做 <code>hello</code>、<code>project-template</code> 与 <code>cmd-table</code>。
 </div>
 
 <h3>你需要准备什么</h3>
@@ -226,7 +226,7 @@
   <tr><td><strong>类型</strong></td><td>规定一块内存按什么规则解释</td><td>决定运算方式和能存什么</td></tr>
   <tr><td><strong>变量 / 常量</strong></td><td>可变的量 / 不可变的量</td><td>存数据 / 配参数（<code>const</code>）</td></tr>
   <tr><td><strong>控制流</strong></td><td>分支与循环</td><td>决定程序「先做什么、再做什么」</td></tr>
-  <tr><td><strong>滞回</strong></td><td>开/关用两个阈值，中间保持</td><td>温度在临界附近时风扇不狂开狂关</td></tr>
+  <tr><td><strong>滞回</strong></td><td>开/关用两个阈值，中间保持</td><td>温度在临界附近时风扇不频繁开合</td></tr>
   <tr><td><strong>函数</strong></td><td>有名字的代码块（参数 + 返回值）</td><td>把「一件事」包起来，复用、可测</td></tr>
   <tr><td><strong>声明 / 定义</strong></td><td>告诉存在 / 给出实现</td><td><code>.h</code> 声明、<code>.c</code> 定义，分工</td></tr>
   <tr><td><strong>头文件</strong></td><td>放声明与类型的文件（<code>.h</code>）</td><td>多文件工程共享接口</td></tr>
@@ -283,7 +283,7 @@
 
 <h3 id="s2.1-control">控制流：判断与循环</h3>
 <p><strong>控制流</strong>决定程序「先做什么、再做什么」——分支、循环都算。</p>
-<p>温控里会用到<strong>滞回</strong>：开和关用两个不同的阈值，中间一段「保持上一状态」，避免温度在临界附近来回抖动时风扇狂开狂关。例如：温度<strong>严格大于</strong> 28 °C 才开风扇，<strong>严格小于</strong> 26 °C 才关；落在 26–28 之间则不改当前开关状态。</p>
+<p>温控里会用到<strong>滞回</strong>：开和关用两个不同的阈值，中间一段「保持上一状态」，避免温度在临界附近来回抖动时风扇频繁开合。例如：温度<strong>严格大于</strong> 28 °C 才开风扇，<strong>严格小于</strong> 26 °C 才关；落在 26–28 之间则不改当前开关状态。</p>
 
 <pre><span class="k">if</span> (temp_c &gt; T_HIGH) {
     fan_on = 1;
@@ -438,7 +438,7 @@ apply_fan_policy(t, &amp;fan_on);</pre>
         ▼
   返回后运行库收尾并退出进程</div>
 
-<p>因此：应用层说「从 <code>main</code> 开始」；完整链条是 <strong>加载 → <code>_start</code> → 初始化 → <code>main</code></strong>。本章实验会在同一套多文件工程上核对 <code>.o</code> / ELF，再按契约写出决策函数——讲义到此把机制打透即可。</p>
+<p>因此：应用层说「从 <code>main</code> 开始」；完整链条是 <strong>加载 → <code>_start</code> → 初始化 → <code>main</code></strong>。</p>
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能说明声明/定义分工；能编译 <code>project-template</code>；能口述 <code>.c</code> → <code>.o</code> → 链接 → ELF，以及 <code>_start</code> → <code>main</code>。
@@ -469,7 +469,7 @@ apply_fan_policy(t, &amp;fan_on);</pre>
 <span class="k">float</span> now = 26.5f;
 bump(now);     <span class="c">/* now 仍是 26.5 */</span>
 bump2(&amp;now);   <span class="c">/* now 变成 27.5 */</span></pre>
-  <p>实验里 <code>read_temp(&amp;t)</code> 传指针，就是为了把读到的温度写回调用方的 <code>t</code>。</p>
+  <p><code>read_temp(&amp;t)</code> 传指针，就是为了把读到的温度写回调用方的 <code>t</code>。</p>
 </div>
 
 <p><strong>数组</strong>是连续同类型元素。模拟温度序列常用数组驱动：</p>
@@ -608,7 +608,7 @@ decide(&amp;cfg, temp, &amp;fan_on);   <span class="c">/* 打包后：一个 cfg
 <p>查表调用：遍历表，名字对上就用 <code>e-&gt;handler(args)</code> 调用对应函数。</p>
 
 <h3 id="s2.4-cmdtable">跟做：把切词和命令表编出来</h3>
-<p>纸上认函数指针不够。把上面两段合进一份能跑的小程序：<code>chapters/ch02/code/cmd-table/</code>。它就是第四章命令表的缩小版——无 GPIO、无 <code>select</code>，只练「拆词 → 查表 → 调用」。</p>
+<p>纸上认函数指针不够。把上面两段合进一份能运行的小程序：<code>chapters/ch02/code/cmd-table/</code>。它就是第四章命令表的缩小版——无 GPIO、无 <code>select</code>，只练「拆词 → 查表 → 调用」。</p>
 <pre><span class="p">$</span> cd chapters/ch02/code/cmd-table
 <span class="p">$</span> make
 <span class="p">$</span> printf 'help\nstatus\nset temp 20\nstatus\nfoo\n' | ./cmd-table
@@ -655,7 +655,7 @@ unknown command: foo</pre>
 </div>
 
 <div class="info">
-  <strong>下一步：</strong>打开 <code>lab.html</code>。先核对 <code>project-template</code> 的编译链接产物，再进入 <code>fake-thermostat/</code>：从空写出 <code>thermo_decide</code>，并修好 <code>thermo_read</code>（软件输入、无真 DHT）。
+  <strong>下一步：</strong>打开 <code>lab.html</code> 开始实验。
 </div>
 </section>
 

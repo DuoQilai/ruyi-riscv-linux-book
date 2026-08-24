@@ -169,7 +169,7 @@
 <h2>开始之前</h2>
 
 <p>本章目标是把开发环境与上板通道真正打通：你能在电脑上安装并使用 RuyiSDK 交叉工具链，把 RevyOS 烧到荔枝派 4A，用串口或 SSH 登录板子，并理解为什么必须用交叉编译才能生成板子可执行的程序。学完本章，你应当能在主机上交叉编出一份 RISC-V 架构的 CoreMark，并用 <code>file</code> 确认产物架构正确。</p>
-<p>整章可以看成一条链：先认清板子与工具（1.1），再把系统烧进去并打通登录与传文件的通道（1.2），最后弄清交叉编译并用 Makefile 编出 CoreMark（1.3）。把这份 RISC-V 可执行文件传到板子上跑出分数、并留下可复查的证据，在本章实验里完成；讲义 1.3 负责把程序编对、用 <code>file</code> 验过架构。</p>
+<p>整章可以看成一条链：先认清板子与工具（1.1），再把系统烧进去并打通登录与传文件的通道（1.2），最后弄清交叉编译并用 Makefile 编出 CoreMark（1.3）。</p>
 
 <div class="info" style="margin-bottom:32px;">
   <strong>阅读与跟做顺序：</strong>按 1.1 → 1.2 → 1.3 进行。每一节都含跟做命令；建议边做边保存关键终端输出。每节约 90–120 分钟。
@@ -201,7 +201,7 @@
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>学习建议：</strong>每一步都对照「你应该看到…」核对输出；对不上就先停在当前命令查路径与工具链。讲义侧重把工具链与交叉编译学透；上板跑分与完整证据归档在本章实验中完成。
+  <strong>学习建议：</strong>每一步都对照「你应该看到…」核对输出；对不上就先停在当前命令查路径与工具链。
 </div>
 </section>
 
@@ -217,7 +217,7 @@
   <tr><td><strong>x86_64 / riscv64</strong></td><td>两种不同指令集</td><td>电脑和板子各用一套，程序不能互换</td></tr>
   <tr><td><strong>RISC-V</strong></td><td>开放的指令集架构</td><td>本课板子的 CPU 用它</td></tr>
   <tr><td><strong>RevyOS</strong></td><td>面向 RISC-V 的 Linux 发行版</td><td>烧进板子、跑在板子上的系统</td></tr>
-  <tr><td><strong>交叉编译</strong></td><td>在一台机器上编出另一架构的程序</td><td>电脑编出板子能跑的 RISC-V 程序</td></tr>
+  <tr><td><strong>交叉编译</strong></td><td>在一台机器上编出另一架构的程序</td><td>电脑编出板子可运行的 RISC-V 程序</td></tr>
   <tr><td><strong>工具链</strong></td><td>编译器 + 链接器 + 库的集合</td><td>把源码一步步变成可执行文件</td></tr>
   <tr><td><strong>三元组（target triple）</strong></td><td>「CPU-厂商-系统」的简写</td><td>告诉编译器「给谁编」</td></tr>
   <tr><td><strong>ELF</strong></td><td>可执行文件的一种容器格式</td><td><code>file</code> 靠它读出「这是什么架构」</td></tr>
@@ -423,7 +423,7 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <span class="p">$</span> ruyi device provision --help</pre>
 
 <div class="info">
-  <strong>本课定位：</strong>讲义要求掌握一键准备与一键编译的查询与用法。本章实验的通道验收用<strong>手工烧录 + 手工 SCP/SSH</strong> 走通全流程；两条路径都要会。
+  <strong>本课定位：</strong>一键准备与一键编译按本机帮助查询使用；手工烧录与手工 SCP/SSH 也要掌握。两条路径都要会。
 </div>
 
 <div class="info" style="margin-top:32px;">
@@ -465,10 +465,10 @@ bash: line 1: ./mini-host: cannot execute binary file: Exec format error
         ▼               ▼                  ▼
   app-host           app-riscv          app-board
   只能在电脑跑       架构正确，须传到板端   可在板端就地跑
-  上板 → Exec format   （本章实验走这条）   （对照路径，非本章实验硬门槛）
+  上板 → Exec format   编给板子           （对照路径）
   error</div>
 
-<p>抓住三点：① 编译器选错，架构就错；② 用 <code>file</code> 读 ELF 架构字段验收；③ <strong>交叉编译只解决「编对架构」</strong>——把文件传到板端并运行，是传输与加载的另一步，由本章实验完成。</p>
+<p>抓住三点：① 编译器选错，架构就错；② 用 <code>file</code> 读 ELF 架构字段验收；③ <strong>交叉编译只解决「编对架构」</strong>——把文件传到板端并运行，是传输与加载的另一步。</p>
 <p>交叉工具链内部仍是编译 → 汇编 → 链接，目标一律是 RISC-V：产出 RISC-V 汇编与 <code>.o</code>，再链上 RISC-V 版 C 运行库（sysroot）。</p>
 
 <div class="diagram">交叉编译内部（都在电脑上执行）
@@ -480,7 +480,7 @@ bash: line 1: ./mini-host: cannot execute binary file: Exec format error
     ↓  链接器：.o + RISC-V C 库 → 可执行文件
   app-riscv（ELF，riscv64）</div>
 
-<p>板端若已安装 <code>gcc</code>，可在板子上直接编译就地运行（上图第三条路）。本课后续章节会用到；<strong>本章实验硬验收只认主机交叉编译产物</strong>，板端原生不能代替该门槛。</p>
+<p>板端若已安装 <code>gcc</code>，可在板子上直接编译就地运行（上图第三条路）。本课后续章节会用到；板端原生编译可作对照，但不能代替主机交叉产物。</p>
 
 <h3 id="s1.3-objdump">亲眼看到指令差异：反汇编</h3>
 <p>「指令集不同」光听概念记不牢。把同一份 <code>main.c</code> 用两种编译器各编一份，再用 <code>objdump -d</code> 把机器码反回汇编，两边从助记符到编码完全不同：</p>
@@ -542,7 +542,7 @@ bash: line 1: ./mini-host: cannot execute binary file: Exec format error
 </div>
 
 <h3 id="s1.3-coremark">构建 CoreMark（讲义收口：编出 + file）</h3>
-<p><strong>CoreMark</strong> 是测处理器算力的小基准程序，输出可比较的分数。本章用它走通工具链：先在主机交叉编出 RISC-V 可执行文件；<strong>传到板端并跑出分数</strong>是本章实验的硬目标。</p>
+<p><strong>CoreMark</strong> 是测处理器算力的小基准程序，输出可比较的分数。本章用它走通工具链：先在主机交叉编出 RISC-V 可执行文件，再传到板端并跑出分数。</p>
 
 <pre><span class="c"># 在 x86 Linux 上：先激活虚拟环境，再进入课程仓库</span>
 <span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
@@ -553,7 +553,7 @@ coremark/coremark.exe: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <p>源码已放在 <code>chapters/ch01/code/coremark/</code>（官方 CoreMark）。Makefile 在 <strong>x86 Linux</strong> 上自动选用交叉编译器；在<strong>荔枝派</strong>上则自动使用板载 <code>gcc</code>。</p>
 
 <div class="info">
-  <strong>本节收口：</strong>产物文件名因版本而异（常见 <code>coremark.exe</code>）。请确认 <code>file</code> 输出中含 RISC-V 或 UCB RISC-V 字样，并保存该可执行文件与对应终端日志。接下来把文件传到荔枝派 4A、核对完整性、在板端跑出分数并整理证据，请打开 <a href="lab.html">本章实验</a> 继续。
+  <strong>本节收口：</strong>产物文件名因版本而异（常见 <code>coremark.exe</code>）。请确认 <code>file</code> 输出中含 RISC-V 或 UCB RISC-V 字样，并保存该可执行文件与对应终端日志。请打开 <a href="lab.html">本章实验</a> 继续。
 </div>
 
 <div class="info" style="margin-top:32px;">

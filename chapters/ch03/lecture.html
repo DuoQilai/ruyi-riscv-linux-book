@@ -182,7 +182,7 @@
 
 <div class="info" style="margin-bottom:28px;">
   <strong>本章要干什么：</strong>在荔枝派 4A 上，用 C 经 Linux 的 GPIO 接口改排针电平，经继电器驱动 5V 风扇。<br>
-  <strong>你能学到什么：</strong>分层因果（程序 → libgpiod → 内核 → 引脚 → 继电器）、chip/line 寻址、申请与写入、用观察手段核对位翻转、滞回如何驱动执行链。风扇整板与自己写 C，在实验完成。
+  <strong>你能学到什么：</strong>分层因果（程序 → libgpiod → 内核 → 引脚 → 继电器）、chip/line 寻址、申请与写入、用观察手段核对位翻转、滞回如何驱动执行链。
 </div>
 
 <div class="warn" style="margin-bottom:32px;">
@@ -194,7 +194,7 @@
 <div class="card-grid card-grid-3">
   <div class="card"><h4>编译</h4><p>板端原生 <code>gcc</code>（最简单），或主机交叉工具链。见第一章。</p></div>
   <div class="card"><h4>荔枝派 4A + 套件</h4><p>继电器模块（1 路 5V）、5V 风扇、面包板、杜邦线。继电器和风扇由课程提供。</p></div>
-  <div class="card"><h4>代码</h4><p>讲义跟做命令行 <code>gpioset</code>。实验里你在 <code>chapters/ch03/code/</code> 自己实现三个 C 函数；参考实现为 <code>temperature_fan-sol.c</code>。</p></div>
+  <div class="card"><h4>代码</h4><p>讲义跟做命令行 <code>gpioset</code>。代码在 <code>chapters/ch03/code/</code>。</p></div>
 </div>
 
 <h3>四节各自打透什么</h3>
@@ -235,7 +235,7 @@
   <tr><td><strong>consumer</strong></td><td>占用者的名字</td><td><code>gpioinfo</code> 里认出「谁占着我的脚」</td></tr>
   <tr><td><strong>独占</strong></td><td>一根 line 同一时刻只能一个申请者</td><td>防止两个程序各写各的、互相踩</td></tr>
   <tr><td><strong>悬空</strong></td><td>引脚没有被任何程序驱动</td><td>电平不定（常读到高），继电器可能乱吸合</td></tr>
-  <tr><td><strong>滞回</strong></td><td>开/关用两个不同阈值，中间保持</td><td>温度在临界附近时风扇不狂开狂关</td></tr>
+  <tr><td><strong>滞回</strong></td><td>开/关用两个不同阈值，中间保持</td><td>温度在临界附近时风扇不频繁开合</td></tr>
 </table>
 </section>
 
@@ -382,7 +382,7 @@ libgpiod
 </ul>
 <p>许多板上没有名叫 <code>gpio</code> 的万能命令。需要权限时用 <code>sudo</code>，或把用户加入 gpio 组（以课程环境为准）。</p>
 
-<pre><span class="c">/* libgpiod v2 调用轮廓（实验里你将亲手实现申请与 set_value 封装） */</span>
+<pre><span class="c">/* libgpiod v2 调用轮廓 */</span>
 chip = gpiod_chip_open(<span class="p">"/dev/gpiochip5"</span>);
 <span class="c">/* 申请 line 为输出并给出初值 → 得到 line_request */</span>
 gpiod_line_request_set_value(req, line, 1);   <span class="c">/* 高：继电器吸合 */</span>
@@ -395,7 +395,7 @@ gpiod_line_request_release(req);</pre>
 
 <div class="ex mem">
   <div class="k">完整示例：relay-toggle（libgpiod v2，本板编译运行通过）</div>
-  <p>把上面的调用轮廓合成一个完整可运行的程序。头文件 + <code>main</code>，关键步骤都有注释。注意：这是演示 <strong>API 生命周期</strong>的平铺程序；实验里你要写的 <code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code> 是把同样的调用组织成三个函数、并补上滞回决策——结构和这里是两回事。</p>
+  <p>把上面的调用轮廓合成一个完整可运行的程序。头文件 + <code>main</code>，关键步骤都有注释。这是演示 <strong>API 生命周期</strong>的平铺程序。</p>
 <pre><span class="c">/* relay-toggle.c — 完整演示 gpiod 生命周期
  * 打开 chip → 申请 line 5 为输出(初值 0) → 拉高 → 拉低 → 释放 */</span>
 <span class="k">#include</span> &lt;gpiod.h&gt;
@@ -595,7 +595,7 @@ gpioget: unable to request lines: Device or resource busy</pre>
         ▼
    gpiod 写 FAN_LINE(IO1_5) ──► 继电器信号端 ──► 风扇</div>
 
-<pre><span class="c">/* 伪代码：实验里由你实现 fan_decide，再经 fan_set 落地 */</span>
+<pre><span class="c">/* 伪代码：方向示意 */</span>
 <span class="k">if</span> (模拟温度 &gt; T_HIGH) 风扇应开;
 <span class="k">else if</span> (模拟温度 &lt; T_LOW)  风扇应关;
 <span class="c">/* 中间区间：保持上一状态 */</span></pre>
@@ -603,7 +603,7 @@ gpioget: unable to request lines: Device or resource busy</pre>
 <p>两个阈值的作用：高开、低关，中间区间保持——真实温控普遍如此。默认 <code>T_HIGH=29</code> / <code>T_LOW=25</code>（与实验学生版、图 3 一致）。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>下一步：</strong>打开 <a href="lab.html">lab.html</a>——接上风扇负载，在 <code>temperature_fan.c</code> 实现三个函数，跑通模拟温度控制并改阈值。
+  <strong>下一步：</strong>打开 <a href="lab.html">lab.html</a> 开始实验。
 </div>
 </section>
 
