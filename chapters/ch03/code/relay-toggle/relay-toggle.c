@@ -17,7 +17,9 @@ int main(void) {
     struct gpiod_line_config *cfg = gpiod_line_config_new();
     gpiod_line_config_add_line_settings(cfg, (unsigned int[]){5}, 1, st);
 
-    /* 3. 申请（consumer 名字 "relay-toggle"，gpioinfo 里能认出谁占着） */
+    /* 3. 申请（consumer 名字 "relay-toggle"，gpioinfo 里能认出谁占着）
+     *    实验里，这一步会被包进你写的 line_request() 函数；
+     *    这里平铺演示 API，实验里组织成函数 + 滞回决策。 */
     struct gpiod_request_config *rcfg = gpiod_request_config_new();
     gpiod_request_config_set_consumer(rcfg, "relay-toggle");
     struct gpiod_line_request *req = gpiod_chip_request_lines(chip, rcfg, cfg);

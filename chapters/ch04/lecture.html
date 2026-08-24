@@ -60,6 +60,16 @@
     background: var(--info-bg); border-left: 3px solid var(--accent);
     padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
   }
+  .ex {
+    border: 1px solid var(--line-light); border-left: 5px solid var(--accent);
+    background: #eef4f5; padding: 18px 26px; margin: 22px 0;
+  }
+  .ex .k { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 10px; }
+  .ex p { font-size: 18px; color: var(--muted); line-height: 1.7; }
+  .ex pre { margin: 12px 0 4px; }
+  .ex.temp { background: #fdeee0; border-left-color: #c46b4a; }
+  .ex.mem  { background: #e3eef9; border-left-color: #2e6b6e; }
+  .ex.pale { background: #f7f3e8; border-left-color: #8a6d14; }
   .diagram {
     font-family: var(--mono); font-size: 15px; color: var(--muted);
     background: var(--code-bg); border: 1px solid var(--line-light);
@@ -131,6 +141,8 @@
   <div class="divider"></div>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
+  <a href="#glossary">本章术语</a>
+  <div class="divider"></div>
   <a href="#s4.1">4.1 串口是聊天线</a>
   <a class="sub" href="#s4.1-bytes">字节怎么进出</a>
   <a class="sub" href="#s4.1-stdio">用 SSH 终端练读写</a>
@@ -189,6 +201,32 @@
 <div class="info" style="margin-top:28px;">
   <strong>讲义与实验怎么衔接：</strong>讲义一次打透机制（含 <code>select</code>）。实验独占焊接与完整接线表，并由你实现 <code>cmd_*</code>、<code>dispatch_command</code>、<code>main_loop</code>。
 </div>
+</section>
+
+<!-- ═══ 术语表 ═══ -->
+<section id="glossary">
+<div class="section-num">术语表</div>
+<h2>本章术语：先说清，再往下</h2>
+<p>下面这些词会在本章反复出现。先扫一遍，知道「它是什么、为什么需要它」；读到再见到就不慌，也可以随时翻回这一页。它们不是堆砌——每引入一个词，都是因为我们到了必须说清那一步的关口。</p>
+
+<table>
+  <tr><th>术语</th><th>是什么</th><th>为什么需要它</th></tr>
+  <tr><td><strong>串口 / UART</strong></td><td>逐字节收发的双向通道</td><td>登录系统、应用层对话都走它</td></tr>
+  <tr><td><strong>标准输入 stdin</strong></td><td>程序读输入的流</td><td>你敲的字从这里进程序</td></tr>
+  <tr><td><strong>标准输出 stdout</strong></td><td>程序打印的流</td><td>回复回到终端窗口</td></tr>
+  <tr><td><strong>fgets</strong></td><td>读一行到缓冲区</td><td>把「一行命令」拿进程序</td></tr>
+  <tr><td><strong>传感器</strong></td><td>感知物理量的器件</td><td>DHT22 读温度/湿度</td></tr>
+  <tr><td><strong>单总线</strong></td><td>一根线收发数据的协议</td><td>DHT22 靠一根数据线传 40 位</td></tr>
+  <tr><td><strong>电平转换 / TXS</strong></td><td>1.8 V ↔ 3.3 V 双向转换</td><td>板子信号与传感器电平对齐</td></tr>
+  <tr><td><strong>命令表</strong></td><td>「名字 → 处理函数」的表</td><td>一行字按名字派到对应函数</td></tr>
+  <tr><td><strong>切词</strong></td><td>把一行拆成命令名 + 参数</td><td><code>"set temp 30"</code> → <code>set</code> + <code>temp 30</code></td></tr>
+  <tr><td><strong>派发 dispatch</strong></td><td>查表、名字对上就调用</td><td>加命令只多一行表项</td></tr>
+  <tr><td><strong>select</strong></td><td>让内核同时盯多个来源</td><td>同时等「该采样了」和「你打字了」</td></tr>
+  <tr><td><strong>超时</strong></td><td>select 最多等多久</td><td>超时 = 该采样了</td></tr>
+  <tr><td><strong>阈值 bar</strong></td><td>开/关的界限</td><td>温度、湿度各一条，可 <code>set</code> 改</td></tr>
+  <tr><td><strong>滞回</strong></td><td>开/关用两个阈值，中间保持</td><td>临界附近风扇不狂开狂关</td></tr>
+  <tr><td><strong>模拟模式</strong></td><td>程序自己变温度（<code>SIMULATE_SENSOR=1</code>）</td><td>没有真传感器也能先跑通软件流程</td></tr>
+</table>
 </section>
 
 <section id="s4.1">
@@ -270,6 +308,58 @@ printf("[INFO] got: %s", line);</pre>
     <span class="k">int</span> (*handler)(<span class="k">char</span> *args);
 };</pre>
 
+<div class="ex mem">
+  <div class="k">先分再合：一个完整的命令读取器（cmd-demo）</div>
+  <p>把「读一行 → 切词 → 查表 → 派发」拆成几块各自讲清，再合成一个完整程序。这里用 <code>help</code> / <code>echo</code> / <code>quit</code> 三个无关命令做骨架——实验里的 <code>status</code> / <code>set</code> 由你自己写，结构与这里一样。</p>
+</div>
+
+<pre><span class="c">/* 分①：处理函数——每个命令做一件事 */</span>
+<span class="k">static int</span> cmd_help(<span class="k">char</span> *args) { printf(<span class="p">"commands: help echo quit\n"</span>); <span class="k">return</span> 0; }
+<span class="k">static int</span> cmd_echo(<span class="k">char</span> *args) { printf(<span class="p">"%s\n"</span>, args); <span class="k">return</span> 0; }
+<span class="k">static int</span> cmd_quit(<span class="k">char</span> *args) { <span class="k">return</span> 1; }   <span class="c">/* 返回 1 = 让主循环退出 */</span>
+
+<span class="c">/* 分②：命令表——名字 → 函数指针（加命令只多一行） */</span>
+<span class="k">struct</span> cmd_entry { <span class="k">const char</span> *name; <span class="k">int</span> (*handler)(<span class="k">char</span> *); };
+<span class="k">static const struct</span> cmd_entry cmds[] = {
+    { <span class="p">"help"</span>, cmd_help },
+    { <span class="p">"echo"</span>, cmd_echo },
+    { <span class="p">"quit"</span>, cmd_quit },
+    { NULL, NULL },
+};
+
+<span class="c">/* 分③：切词 + 查表派发——名字对上就调用 */</span>
+<span class="k">static int</span> dispatch(<span class="k">char</span> *line)
+{
+    <span class="k">char</span> *args = strchr(line, ' ');   <span class="c">/* 第一个空格后是参数 */</span>
+    <span class="k">if</span> (args) { *args = '\0'; args++; }
+    <span class="k">for</span> (<span class="k">const struct</span> cmd_entry *e = cmds; e-&gt;name; e++)
+        <span class="k">if</span> (strcmp(line, e-&gt;name) == 0)
+            <span class="k">return</span> e-&gt;handler(args);
+    printf(<span class="p">"unknown command: %s\n"</span>, line);
+    <span class="k">return</span> 0;
+}
+
+<span class="c">/* 合：读一行 → 派发 → 直到 quit */</span>
+<span class="k">int</span> main(<span class="k">void</span>)
+{
+    <span class="k">char</span> line[128];
+    <span class="k">while</span> (fgets(line, <span class="k">sizeof</span>(line), stdin)) {
+        line[strcspn(line, <span class="p">"\n"</span>)] = '\0';   <span class="c">/* 去掉换行 */</span>
+        <span class="k">if</span> (dispatch(line)) <span class="k">break</span>;
+    }
+    printf(<span class="p">"bye\n"</span>);
+    <span class="k">return</span> 0;
+}</pre>
+
+<div class="ex mem">
+  <div class="k">板上实测输出</div>
+<pre><span class="p">$</span> printf 'help\necho hello\nfoo\nquit\n' | ./cmd-demo
+commands: help echo quit
+hello
+unknown command: foo
+bye</pre>
+</div>
+
 <p>实验里你要自己写：<code>cmd_status</code> / <code>cmd_set</code>、表 <code>g_cmds[]</code>、以及负责拆词查表的 <code>dispatch_command</code>。</p>
 
 <h3 id="s4.2-status">status 与 set</h3>
@@ -281,6 +371,38 @@ printf("[INFO] got: %s", line);</pre>
 </table>
 
 <p>命令只改<strong>内存里的阈值</strong>，下一轮采样决策立刻用上，不必重启进程。</p>
+
+<div class="diagram">一行命令怎么走：set temp 30
+  fgets 读一行      "set temp 30\n"
+        │ 去掉换行
+        ▼
+  切词             cmd="set", args="temp 30"
+        │
+        ▼
+  查表             name "set" → cmd_set
+        │
+        ▼
+  cmd_set 解析     sscanf(args, ...) → 改温度 bar
+        │
+        ▼
+  下一轮采样决策    按新 bar 判断 → 风扇跟着变</div>
+
+<div class="ex temp">
+  <div class="k">板上实测：模拟模式下的 status / set 对话</div>
+  <p>荔枝派上跑 <code>cmd_thermo-sol</code>（模拟模式 <code>SIMULATE_SENSOR=1</code>）。注意先出现「尚无采样」——DHT22 要等第一个采样周期才有读数；随后 <code>set</code> 改的 bar 会立刻体现在「规则」行里。</p>
+<pre><span class="p">$</span> printf 'status\nset temp 30\nset humidity 80\n' | sudo ./cmd_thermo-sol
+[规则] 温度高于 30.0°C，或湿度高于 95.0% → 开风扇
+[规则] 温度低于 30.0°C，且湿度低于 95.0% → 关风扇
+[STATUS] 尚无采样，正在等待 DHT22
+[INFO] 温度 bar 已设为 30.0°C（高于则开，低于则关）
+[规则] 温度高于 30.0°C，或湿度高于 95.0% → 开风扇
+[规则] 温度低于 30.0°C，且湿度低于 95.0% → 关风扇
+[STATUS] 尚无采样，正在等待 DHT22
+[INFO] 湿度 bar 已设为 80.0%（高于则开，低于则关）
+[规则] 温度高于 30.0°C，或湿度高于 80.0% → 开风扇
+[规则] 温度低于 30.0°C，且湿度低于 80.0% → 关风扇
+[STATUS] 尚无采样，正在等待 DHT22</pre>
+</div>
 
 <div class="info" style="margin-top:32px;">
   <strong>本节成果：</strong>能说明为何要 TXS；能说出命令表与 status/set 语义；知道实现落在实验。
@@ -298,6 +420,23 @@ printf("[INFO] got: %s", line);</pre>
 
 <p><strong>错误一：阻塞在读命令上。</strong>没人打字时进程卡在 <code>fgets</code>，采样永不执行，风扇停在上次状态。</p>
 <p><strong>错误二：固定 <code>sleep(2)</code> 再瞥一眼命令。</strong>风扇节奏对了，但敲完字最多要等满整个 sleep 才有回复。</p>
+
+<div class="ex temp">
+  <div class="k">对照：阻塞 vs select，差别只在「等什么」</div>
+<pre><span class="c">/* 阻塞版：卡在 fgets，没人打字就永远轮不到采样（错误一） */</span>
+<span class="k">while</span> (1) {
+    fgets(line, <span class="k">sizeof</span>(line), stdin);  <span class="c">/* 无字时一直卡在这 */</span>
+    sample_and_control();               <span class="c">/* 采样饿死，风扇停在上次状态 */</span>
+}
+
+<span class="c">/* select 版：内核同时盯「stdin 有字」和「超时」，谁先到谁叫醒（正确） */</span>
+<span class="k">for</span> (;;) {
+    <span class="c">/* cmd_fd 放进读集合；超时 = 距下次采样还剩多久 */</span>
+    n = select(cmd_fd + 1, &amp;rfds, NULL, NULL, &amp;timeout);
+    <span class="k">if</span> (n == 0)       sample_and_control();            <span class="c">/* 超时：该采样 */</span>
+    <span class="k">else if</span> (FD_ISSET(cmd_fd, &amp;rfds)) read_command_line();  <span class="c">/* 有字：读命令 */</span>
+}</pre>
+</div>
 
 <div class="diagram">目标：
 
