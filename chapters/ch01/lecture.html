@@ -132,6 +132,8 @@
   <div class="divider"></div>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
+  <a href="#glossary">本章术语</a>
+  <div class="divider"></div>
   <a href="#s1.1">1.1 荔枝派 4A 与 RuyiSDK</a>
   <a class="sub" href="#s1.1-board">认识板子</a>
   <a class="sub" href="#s1.1-ruyi">安装 RuyiSDK</a>
@@ -201,6 +203,34 @@
 <div class="info" style="margin-top:28px;">
   <strong>学习建议：</strong>每一步都对照「你应该看到…」核对输出；对不上就先停在当前命令查路径与工具链。讲义侧重把工具链与交叉编译学透；上板跑分与完整证据归档在本章实验中完成。
 </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="glossary">
+<div class="section-num">术语表</div>
+<h2>本章术语：先说清，再往下</h2>
+<p>下面这些词会在本章反复出现。先扫一遍，知道「它是什么、为什么需要它」；读到再见到就不慌，也可以随时翻回这一页。它们不是堆砌——每引入一个词，都是因为我们到了必须说清那一步的关口。</p>
+
+<table>
+  <tr><th>术语</th><th>是什么</th><th>为什么需要它</th></tr>
+  <tr><td><strong>指令集</strong></td><td>CPU 认识的机器指令清单</td><td>决定一种 CPU 能执行哪些操作</td></tr>
+  <tr><td><strong>x86_64 / riscv64</strong></td><td>两种不同指令集</td><td>电脑和板子各用一套，程序不能互换</td></tr>
+  <tr><td><strong>RISC-V</strong></td><td>开放的指令集架构</td><td>本课板子的 CPU 用它</td></tr>
+  <tr><td><strong>RevyOS</strong></td><td>面向 RISC-V 的 Linux 发行版</td><td>烧进板子、跑在板子上的系统</td></tr>
+  <tr><td><strong>交叉编译</strong></td><td>在一台机器上编出另一架构的程序</td><td>电脑编出板子能跑的 RISC-V 程序</td></tr>
+  <tr><td><strong>工具链</strong></td><td>编译器 + 链接器 + 库的集合</td><td>把源码一步步变成可执行文件</td></tr>
+  <tr><td><strong>三元组（target triple）</strong></td><td>「CPU-厂商-系统」的简写</td><td>告诉编译器「给谁编」</td></tr>
+  <tr><td><strong>ELF</strong></td><td>可执行文件的一种容器格式</td><td><code>file</code> 靠它读出「这是什么架构」</td></tr>
+  <tr><td><strong>镜像</strong></td><td>整套系统的打包</td><td>烧录的对象</td></tr>
+  <tr><td><strong>烧录</strong></td><td>把镜像按分区写入板子存储</td><td>给板子装系统</td></tr>
+  <tr><td><strong>UART / 串口</strong></td><td>逐字节收发的物理接口</td><td>本地调试、看开机日志</td></tr>
+  <tr><td><strong>SSH</strong></td><td>加密的远程登录通道</td><td>日常登录板子敲命令</td></tr>
+  <tr><td><strong>SCP</strong></td><td>复用 SSH 传文件</td><td>电脑与板子之间拷程序</td></tr>
+  <tr><td><strong>虚拟环境</strong></td><td><code>ruyi venv</code> 建的开发环境</td><td>自动配好工具链路径与 sysroot</td></tr>
+  <tr><td><strong>sysroot</strong></td><td>目标系统的运行库目录</td><td>链接时找 RISC-V 版 C 库</td></tr>
+  <tr><td><strong>CoreMark</strong></td><td>测处理器算力的基准程序</td><td>用一份真程序验证整条工具链通没通</td></tr>
+  <tr><td><strong>Makefile</strong></td><td>描述编译规则的文本</td><td>敲一个 <code>make</code> 就按规则编译</td></tr>
+</table>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->

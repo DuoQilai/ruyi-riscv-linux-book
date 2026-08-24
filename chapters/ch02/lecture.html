@@ -148,6 +148,8 @@
   <div class="divider"></div>
   <a href="#overview">本章概览</a>
   <div class="divider"></div>
+  <a href="#glossary">本章术语</a>
+  <div class="divider"></div>
   <a href="#s2.1">2.1 类型、变量、控制流</a>
   <a class="sub" href="#s2.1-types">类型与变量</a>
   <a class="sub" href="#s2.1-control">控制流</a>
@@ -211,6 +213,37 @@
 <div class="info" style="margin-top:28px;">
   <strong>讲义与实验怎么衔接：</strong>讲义把概念与跟做一次打透（含能编译的命令表）。实验先按契约从空写出 <code>thermo_decide</code>，再改 <code>thermo_read</code> 的指针与错误分支。同一操作链不写两遍。
 </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="glossary">
+<div class="section-num">术语表</div>
+<h2>本章术语：先说清，再往下</h2>
+<p>下面这些词会在本章反复出现。先扫一遍，知道「它是什么、为什么需要它」；读到再见到就不慌，也可以随时翻回这一页。它们不是堆砌——每引入一个词，都是因为我们到了必须说清那一步的关口。</p>
+
+<table>
+  <tr><th>术语</th><th>是什么</th><th>为什么需要它</th></tr>
+  <tr><td><strong>类型</strong></td><td>规定一块内存按什么规则解释</td><td>决定运算方式和能存什么</td></tr>
+  <tr><td><strong>变量 / 常量</strong></td><td>可变的量 / 不可变的量</td><td>存数据 / 配参数（<code>const</code>）</td></tr>
+  <tr><td><strong>控制流</strong></td><td>分支与循环</td><td>决定程序「先做什么、再做什么」</td></tr>
+  <tr><td><strong>滞回</strong></td><td>开/关用两个阈值，中间保持</td><td>温度在临界附近时风扇不狂开狂关</td></tr>
+  <tr><td><strong>函数</strong></td><td>有名字的代码块（参数 + 返回值）</td><td>把「一件事」包起来，复用、可测</td></tr>
+  <tr><td><strong>声明 / 定义</strong></td><td>告诉存在 / 给出实现</td><td><code>.h</code> 声明、<code>.c</code> 定义，分工</td></tr>
+  <tr><td><strong>头文件</strong></td><td>放声明与类型的文件（<code>.h</code>）</td><td>多文件工程共享接口</td></tr>
+  <tr><td><strong>编译</strong></td><td>每个 <code>.c</code> → 对应 <code>.o</code></td><td>逐文件把 C 翻成机器码</td></tr>
+  <tr><td><strong>链接</strong></td><td><code>.o</code> + 库 → 可执行文件</td><td>把各文件的符号拼到一起</td></tr>
+  <tr><td><strong>_start / main</strong></td><td>进程的入口</td><td>Linux 加载后先跑 <code>_start</code> 再进 <code>main</code></td></tr>
+  <tr><td><strong>指针</strong></td><td>存着某个对象地址的变量</td><td>函数要改调用方的变量、访问数据</td></tr>
+  <tr><td><strong>数组</strong></td><td>连续的同类型元素</td><td>存一串温度/读数</td></tr>
+  <tr><td><strong>结构体</strong></td><td>把相关字段捆成一种类型</td><td>一个对象传到底，不散落一堆变量</td></tr>
+  <tr><td><strong>生命周期 / 存储期</strong></td><td>变量活多久、放哪</td><td>全局/static/局部各不同，写前先想清</td></tr>
+  <tr><td><strong>栈 / 数据段</strong></td><td>局部变量放栈、全局放数据段</td><td>内存布局的心智模型</td></tr>
+  <tr><td><strong>字符串</strong></td><td><code>char</code> 数组 + 结尾 <code>'\0'</code></td><td>C 没有字符串类型，命令解析全靠它</td></tr>
+  <tr><td><strong>位运算</strong></td><td><code>&amp;</code> <code>|</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code></td><td>操作寄存器里的位（DHT22 读位）</td></tr>
+  <tr><td><strong>函数指针</strong></td><td>指向函数的指针</td><td>命令表：名字 → 处理函数</td></tr>
+  <tr><td><strong>宏 / 条件编译</strong></td><td>编译期替换 / 按条件编译</td><td>模拟/真传感器一宏切换</td></tr>
+  <tr><td><strong>设计化初始化</strong></td><td><code>.field = 值</code> 初始化结构体</td><td>按字段名填，不易填错顺序</td></tr>
+</table>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
