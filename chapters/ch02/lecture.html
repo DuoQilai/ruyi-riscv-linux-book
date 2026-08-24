@@ -60,6 +60,16 @@
     background: var(--info-bg); border-left: 3px solid var(--accent);
     padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
   }
+  .ex {
+    border: 1px solid var(--line-light); border-left: 5px solid var(--accent);
+    background: #eef4f5; padding: 18px 26px; margin: 22px 0;
+  }
+  .ex .k { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 10px; }
+  .ex p { font-size: 18px; color: var(--muted); line-height: 1.7; }
+  .ex pre { margin: 12px 0 4px; }
+  .ex.temp { background: #fdeee0; border-left-color: #c46b4a; }
+  .ex.mem  { background: #e3eef9; border-left-color: #2e6b6e; }
+  .ex.pale { background: #f7f3e8; border-left-color: #8a6d14; }
   .diagram {
     font-family: var(--mono); font-size: 15px; color: var(--muted);
     background: var(--code-bg); border: 1px solid var(--line-light);
@@ -151,6 +161,7 @@
   <a href="#s2.3">2.3 指针、数组、结构体</a>
   <a class="sub" href="#s2.3-ptr">指针与数组</a>
   <a class="sub" href="#s2.3-struct">结构体</a>
+  <a class="sub" href="#s2.3-life">生命周期：变量活在哪、活多久</a>
   <div class="divider"></div>
   <a href="#s2.4">2.4 实验直接要用到的 C</a>
   <a class="sub" href="#s2.4-string">字符串</a>
@@ -222,6 +233,16 @@
 <span class="k">float</span> temp_c = 27.5f;    <span class="c">/* 当前温度 */</span>
 <span class="k">const float</span> T_HIGH = 28.0f;
 <span class="k">const float</span> T_LOW  = 26.0f;</pre>
+
+<div class="ex temp">
+  <div class="k">常见陷阱 · 类型转换</div>
+  <p>整数除法直接丢掉小数。算"温度占比"时，两边都是 <code>int</code>，结果会截断：</p>
+<pre><span class="k">int</span> temp_i = 27;
+<span class="k">int</span> max_i  = 30;
+<span class="k">int</span> pct    = temp_i * 100 / max_i;      <span class="c">/* 90，不是 90.0 */</span>
+<span class="k">float</span> ratio = (temp_i * 100.0f) / max_i; <span class="c">/* 90.0f：先变成浮点再除 */</span></pre>
+  <p>想让结果保留小数，运算里至少一个操作数要是浮点（写 <code>100.0f</code> 或显式 <code>(float)</code>）。</p>
+</div>
 
 <div class="info">
   <strong>习惯：</strong>配置常量用 <code>const</code> 写清含义；开关语义用 <code>0/1</code>，并在注释里标明「开/关」。
@@ -338,6 +359,15 @@ apply_fan_policy(t, &amp;fan_on);</pre>
   <li>为什么调用方 <code>#include "greet.h"</code>，而不是把函数体复制进 <code>main.c</code>？</li>
 </ol>
 
+<div class="ex">
+  <div class="k">static · 只在本文件可见</div>
+  <p>多文件工程里，函数和全局变量默认对外可见；加 <code>static</code> 后只在本 <code>.c</code> 里能用，别的文件同名也不冲突：</p>
+<pre><span class="c">/* sensor.c */</span>
+<span class="k">static float</span> last_temp = 0.0f;   <span class="c">/* 别的文件看不到、改不到 */</span>
+<span class="k">static int</span>  calibrate(<span class="k">float</span> t);  <span class="c">/* 内部辅助函数，不外露 */</span></pre>
+  <p>对外要用的才写进头文件；内部细节用 <code>static</code> 藏起来。</p>
+</div>
+
 <h3 id="s2.2-build">编译、链接与进程入口</h3>
 <p>多个 <code>.c</code> 最终变成<strong>一个</strong>可执行文件，分两步：</p>
 <ul>
@@ -397,6 +427,18 @@ apply_fan_policy(t, &amp;fan_on);</pre>
     *fan_on = value;   <span class="c">/* 改的是调用方那份变量 */</span>
 }</pre>
 
+<div class="ex temp">
+  <div class="k">传值 vs 传指针 · 哪个改到外面</div>
+  <p>函数参数默认是<strong>拷贝</strong>。想改调用方的变量，就得传它的地址：</p>
+<pre><span class="k">void</span> bump(<span class="k">float</span> t)   { t += 1.0f; }  <span class="c">/* 改的是拷贝，外面不变 */</span>
+<span class="k">void</span> bump2(<span class="k">float</span> *t) { *t += 1.0f; }  <span class="c">/* 改的是外面那份 */</span>
+
+<span class="k">float</span> now = 26.5f;
+bump(now);     <span class="c">/* now 仍是 26.5 */</span>
+bump2(&amp;now);   <span class="c">/* now 变成 27.5 */</span></pre>
+  <p>实验里 <code>read_temp(&amp;t)</code> 传指针，就是为了把读到的温度写回调用方的 <code>t</code>。</p>
+</div>
+
 <p><strong>数组</strong>是连续同类型元素。模拟温度序列常用数组驱动：</p>
 
 <pre><span class="k">static const float</span> seq[] = { 25.0f, 27.0f, 29.0f, 27.0f, 24.0f };
@@ -404,12 +446,32 @@ apply_fan_policy(t, &amp;fan_on);</pre>
     <span class="c">/* 用 seq[i] 当本轮温度 */</span>
 }</pre>
 
+<div class="ex">
+  <div class="k">数组名 · 首元素地址</div>
+  <p>数组名在表达式中就是首元素地址（<code>sizeof</code> 除外）。所以下面两种写法等价：</p>
+<pre><span class="k">float</span> seq[] = { 25.0f, 27.0f, 29.0f };
+<span class="k">float</span> *p   = seq;      <span class="c">/* 指向 seq[0] */</span>
+<span class="k">float</span> first = *p;      <span class="c">/* 25.0f */</span></pre>
+  <p>给函数传数组，实际上传的是指针——所以函数里 <code>sizeof(arr)</code> 拿不到数组长度，要另传一个长度。</p>
+</div>
+
 <div class="warn">
   解引用前先确认指针非 <code>NULL</code>；数组下标不要越界。闯关脚手架里故意埋了相关坑。
 </div>
 
 <h3 id="s2.3-struct">结构体：把相关字段捆在一起</h3>
 <p><strong>结构体</strong>把一组相关字段捆成一种类型，配置不必散落成一堆全局变量：</p>
+
+<div class="ex pale">
+  <div class="k">打包动机 · 不散落</div>
+  <p>不打包就得三个全局变量、三个参数位置；打包成一个 <code>cfg</code>，一个对象传到底，改动跟着走：</p>
+<pre><span class="k">float</span> g_high = 28.0f;   <span class="c">/* 不打包：三个散变量 */</span>
+<span class="k">float</span> g_low  = 26.0f;
+<span class="k">int</span>   g_ms   = 2000;
+
+decide(&amp;cfg, temp, &amp;fan_on);   <span class="c">/* 打包后：一个 cfg 传进函数，字段跟着走 */</span></pre>
+  <p>要加一个字段，只在结构体里加一处；调用处基本不用动。</p>
+</div>
 
 <pre><span class="k">typedef struct</span> {
     <span class="k">float</span> t_high;      <span class="c">/* 高于此开风扇 */</span>
@@ -434,8 +496,32 @@ apply_fan_policy(t, &amp;fan_on);</pre>
   <li><span class="step-num">4</span><div><strong>对照行为表</strong> — 改一处、跑一次，输出是否逐步贴近验收表。</div></li>
 </ol>
 
+<h3 id="s2.3-life">生命周期：变量活在哪、活多久</h3>
+<p>C 的变量按<strong>存储期</strong>分成几类。写代码前先想清楚一个问题：这个变量放在哪、活多久、谁看得见。</p>
+
+<table>
+  <tr><th>种类</th><th>放哪</th><th>活多久</th><th>谁看得见</th></tr>
+  <tr><td><strong>全局变量</strong></td><td>数据段（<code>.data</code> / <code>.bss</code>）</td><td>整个程序运行期</td><td>所有文件（没加 <code>static</code> 时）</td></tr>
+  <tr><td><strong>static</strong>（文件内或函数内）</td><td>数据段</td><td>整个程序运行期</td><td>限定在声明它的文件 / 函数里</td></tr>
+  <tr><td><strong>局部变量</strong></td><td>栈</td><td>所在函数调用期间</td><td>只在本函数里</td></tr>
+</table>
+
+<div class="diagram">内存里大致分三块
+  代码段  指令本身（只读）
+  数据段  全局 / static 变量（程序一开始就存在）
+  栈      每次调用函数临时分配，返回即回收</div>
+
+<pre><span class="k">int</span> g_samples;             <span class="c">/* 全局：放数据段，程序结束才消失 */</span>
+<span class="k">static int</span> g_seed = 42;    <span class="c">/* static：放数据段，但只在本文文件可见 */</span>
+
+<span class="k">void</span> loop(<span class="k">int</span> n) {
+    <span class="k">int</span> local = 0;         <span class="c">/* 局部：放栈，loop 返回就没了 */</span>
+}</pre>
+
+<p>这解释了两个常见现象：函数返回后还想用里面的局部变量不行——栈已经回收；全局计数在多次调用之间能记住值——数据段不随函数消失。<code>static</code> 局部变量同理：函数返回后它还在，只是只在函数内看得见。</p>
+
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体。
+  <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体；能说清全局 / static / 局部各活多久、放哪。
 </div>
 </section>
 
