@@ -60,6 +60,16 @@
     background: var(--info-bg); border-left: 3px solid var(--accent);
     padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
   }
+  .ex {
+    border: 1px solid var(--line-light); border-left: 5px solid var(--accent);
+    background: #eef4f5; padding: 18px 26px; margin: 22px 0;
+  }
+  .ex .k { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 10px; }
+  .ex p { font-size: 18px; color: var(--muted); line-height: 1.7; }
+  .ex pre { margin: 12px 0 4px; }
+  .ex.temp { background: #fdeee0; border-left-color: #c46b4a; }
+  .ex.mem  { background: #e3eef9; border-left-color: #2e6b6e; }
+  .ex.pale { background: #f7f3e8; border-left-color: #8a6d14; }
   .diagram {
     font-family: var(--mono); font-size: 15px; color: var(--muted);
     background: var(--code-bg); border: 1px solid var(--line-light);
@@ -204,6 +214,12 @@
 <h3 id="s3.1-model">I/O：物理世界怎么进程序</h3>
 <p><strong>外设</strong>是 CPU 之外、用来感知或驱动外部世界的硬件模块——传感器、LED、风扇驱动等都算。<strong>I/O</strong>（Input/Output）是程序与这些硬件打交道的总称：输入把外界变成程序里的数，输出把程序里的决定变成外界动作。</p>
 
+<div class="ex mem">
+  <div class="k">先把模型立住：外设 = 寄存器，控制 = 改位</div>
+  <p>芯片不直接理解「风扇开」。它只有<strong>地址和位</strong>：外设的每个功能都是一组寄存器，寄存器里的每一位是一个开关。要控制外部世界，程序最终做的是——<strong>往某个地址写一个位</strong>。</p>
+  <p>第二章的位运算（<code>&amp;</code> <code>|</code> <code>&lt;&lt;</code>）在这里落到硬件上：改寄存器的一位，就是控制物理世界的一根线。后面出现的 <code>gpioset</code>、gpiod、devmem 全在做同一件事——只是入口不同、离硬件远近不同。</p>
+</div>
+
 <div class="diagram">物理世界          电气层              软件层
   温度 / 按键  →  电压 / 电平  →  驱动读寄存器或缓冲
   继电器 / 风扇 ←  高/低、开关  ←  程序写「开/关」</div>
@@ -271,6 +287,11 @@
 
 <div class="info">
   <strong>本课默认与核对：</strong>排针 IO1_5 ↔ <code>/dev/gpiochip5</code> line 5。日常编程用 <strong>chip + line</strong>。<code>/sys/kernel/debug/gpio</code> 用来看占用与方向。<code>gpiochipN</code> 的 N 随内核探测顺序变化：本课 RevyOS 上排针在 <code>gpiochip5</code>；旧材料里的 <code>gpiochip1</code> 在本板上是另一组内部控制器。换镜像后，用运行时核对再写宏。
+</div>
+
+<div class="ex mem">
+  <div class="k">本板实测的编号</div>
+  <p>在本课 RevyOS 板上用 <code>sudo cat /sys/kernel/debug/gpio</code> 现查：<code>gpiochip5</code> 覆盖全局号 646–677（基址 646），所以 <strong>line 5 = gpio-651</strong>；它的父寄存器物理地址正是 <code>0xffec006000</code>——和讲义下面的寄存器地址对上了。编程只用 <code>gpiochip5</code> + <code>line 5</code>，全局号 <code>gpio-651</code> 留给排查时对号。</p>
 </div>
 
 <div class="diagram">排针丝印 IO1_5
@@ -353,16 +374,23 @@ gpiod_line_request_release(req);</pre>
   改电平前：devmem 读该寄存器 → 记下那一位
   改电平后：devmem 再读同一地址 → 那一位翻转</div>
 
-<p>本课板子（RevyOS）排针 GPIO 在 <code>gpiochip5</code>（GPIO1），数据寄存器物理地址 <code>0xffec006000</code>；IO1_5 对应第 <strong>5</strong> 位（值 <code>0x20</code>）。板端若无 <code>devmem</code>：<code>sudo apt install devmem2</code>，或按 wiki 从源码编译（https://github.com/VCTLabs/devmem2）。</p>
+<p>本课板子（RevyOS）排针 GPIO 在 <code>gpiochip5</code>，数据寄存器物理地址 <code>0xffec006000</code>；IO1_5 是 <code>gpiochip5</code> 的 <strong>line 5</strong>（内核全局号 <code>gpio-651</code>，基址 646 + 5）。<strong>寄存器地址和位是心智模型</strong>：改 <code>0xffec006000</code> 的第 5 位（值 <code>0x20</code>），就是改 IO1_5 引脚。</p>
 
-<pre><span class="c"># 固定地址与位：0xffec006000，IO1_5 = 第 5 位</span>
-<span class="p">$</span> sudo devmem 0xffec006000 32
-<span class="c"># 例如 0x00000000 → 第 5 位为 0</span>
+<div class="warn">
+  <strong>为什么不用 devmem 直接翻寄存器：</strong>现代内核默认开 <code>CONFIG_STRICT_DEVMEM</code>，用户态 <code>devmem</code> 对这个地址 <code>mmap</code> 会被拒（实测报 <code>Operation not permitted</code>）。这是内核<strong>刻意隔离硬件</strong>——正好印证 3.1 的边界：用户态不该绕过内核碰寄存器。核对电平，用内核自己的视图 <code>debug/gpio</code>。
+</div>
 
-<span class="c"># 用 gpioset（或程序）把继电器吸合后再读</span>
-<span class="p">$</span> sudo gpioset -c gpiochip5 5=1
-<span class="p">$</span> sudo devmem 0xffec006000 32
-<span class="c"># 例如 0x00000020 → 第 5 位变 1</span></pre>
+<p>在荔枝派上实测（<code>gpioset</code> 控 IO1_5，看内核视角）：</p>
+<pre><span class="p">$</span> echo debian | sudo -S gpioset -c gpiochip5 5=1
+<span class="p">$</span> echo debian | sudo -S cat /sys/kernel/debug/gpio | grep gpio-651
+ gpio-651 (GPIO13              |gpioset             ) out hi
+<span class="c">#         ↑ 名字             ↑ 占用者           ↑ out hi = 引脚高</span>
+
+<span class="p">$</span> echo debian | sudo -S pkill -x gpioset
+<span class="p">$</span> echo debian | sudo -S cat /sys/kernel/debug/gpio | grep gpio-651
+ gpio-651 (GPIO13              )</pre>
+
+<p>改电平前后，<code>out hi</code> 出现 / 消失——「程序 → 内核 → 引脚」这条链就验证过了。对照上表：占用者列出现 <code>gpioset</code>，就是它申请并占住了这根 line。</p>
 
 <div class="warn">
   <strong>纪律：</strong>本课对 MMIO 只用 <code>devmem</code> <strong>读</strong>。业务控外设走 gpiod；读用来证明「程序 → 内核 → 寄存器位」这条链发生过。
@@ -380,6 +408,10 @@ gpiod_line_request_release(req);</pre>
        │
        ▼
   temperature_fan / gpioget → busy（内核按规则拒绝）</div>
+
+<p>在荔枝派上实测——占着 line 5 时，<code>gpioget</code> 读它直接失败：</p>
+<pre><span class="p">$</span> echo debian | sudo -S gpioget -c gpiochip5 5
+gpioget: unable to request lines: Device or resource busy</pre>
 
 <pre><span class="p">$</span> ps aux | grep gpioset
 <span class="p">$</span> sudo pkill -x gpioset   <span class="c"># -x：按进程名精确匹配</span>
@@ -416,7 +448,11 @@ gpiod_line_request_release(req);</pre>
 <pre><span class="p">$</span> sudo gpioset -c gpiochip5 5=1
 <span class="p">$</span> sudo cat /sys/kernel/debug/gpio | head -n 80
 <span class="c"># 找到 gpiochip5 / line 5：应为 out hi</span>
-<span class="p">$</span> sudo gpioset -c gpiochip5 5=0</pre>
+<span class="p">$</span> sudo pkill -x gpioset
+<span class="c"># 释放（gpioset 是持线命令，进程活着就一直占着；用 Ctrl+C 或 pkill 释放）</span></pre>
+<div class="warn">
+  <strong>gpioset 是持线命令：</strong>一条 <code>gpioset ... 5=1</code> 会一直占住 line 5 直到进程结束（Ctrl+C / pkill）。要"改状态 + 看状态"，开两个终端：一个发 <code>gpioset</code>，另一个 <code>cat /sys/kernel/debug/gpio</code> 看变化。
+</div>
 
 <div class="info">
   <strong>为什么要 sudo？</strong><code>/dev/gpiochip*</code> 默认归 root，普通用户打不开（<code>Permission denied</code>）。
