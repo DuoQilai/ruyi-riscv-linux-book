@@ -389,10 +389,6 @@ gpiod_line_request_set_value(req, line, 1);   <span class="c">/* 高：继电器
 gpiod_line_request_set_value(req, line, 0);   <span class="c">/* 低：继电器释放 */</span>
 gpiod_line_request_release(req);</pre>
 
-<div class="info">
-  <strong>消费者名字（consumer）</strong>会出现在 <code>gpioinfo</code> / <code>debug/gpio</code> 里。调试「谁占着我的脚」时，能看出是 <code>gpioset</code>、<code>temperature_fan</code> 还是别的程序——起名要诚实。
-</div>
-
 <div class="ex mem">
   <div class="k">完整示例：relay-toggle（libgpiod v2，本板编译运行通过）</div>
   <p>把上面的调用轮廓合成一个完整可运行的程序。头文件 + <code>main</code>，关键步骤都有注释。这是演示 <strong>API 生命周期</strong>的平铺程序。</p>
