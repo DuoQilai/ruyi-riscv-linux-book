@@ -146,6 +146,7 @@
   <a class="sub" href="#s1.3-why">为何必须交叉编译</a>
   <a class="sub" href="#s1.3-paths">同一源码三条路径</a>
   <a class="sub" href="#s1.3-cross">Makefile 跟做</a>
+  <a class="sub" href="#s1.3-objdump">亲眼看到指令差异：反汇编</a>
   <a class="sub" href="#s1.3-coremark">编出 CoreMark（到 file）</a>
 </nav>
 
@@ -243,6 +244,16 @@ RuyiSDK / ruyi（电脑上装工具链与镜像的入口）</div>
 <p><strong>RuyiSDK</strong> 是面向 RISC-V 开发的工具包集合；命令入口叫 <code>ruyi</code>，用来查包、装工具链、查设备支持。真正把 C 代码编成机器码的是里面的 <strong>GCC</strong>（GNU 编译器）。关系可以记成：ruyi 管「装什么」，GCC 管「怎么编」。</p>
 <p><strong>三元组</strong>（target triple）是编译器目标平台的简写，格式大致是「CPU-厂商-系统」。本课统一用 <code>riscv64-ruyisdk-linux-gnu</code>（经 RuyiSDK 的 gnu-ruyisdk 提供）：意思是「为 64 位 RISC-V CPU、跑 Linux、用 GNU 用户态约定」生成程序。</p>
 
+<p>把三元组从左到右拆开看，每一段都在说一件事：</p>
+<table>
+  <tr><th>字段</th><th>含义</th><th>本课取值</th></tr>
+  <tr><td><strong>CPU</strong></td><td>给哪种指令集生成代码</td><td><code>riscv64</code>（64 位 RISC-V）</td></tr>
+  <tr><td><strong>厂商/来源</strong></td><td>谁提供的这套约定</td><td><code>ruyisdk</code></td></tr>
+  <tr><td><strong>系统</strong></td><td>跑在什么系统上</td><td><code>linux</code></td></tr>
+  <tr><td><strong>用户态</strong></td><td>用哪套库与 ABI</td><td><code>gnu</code>（GNU / glibc）</td></tr>
+</table>
+<p>把用户态一段换成 <code>elf</code>（如 <code>riscv64-unknown-elf</code>），就变成裸机工具链——没有 Linux 的加载与运行库，编出的程序跑不了本课这样的 Linux 用户程序。</p>
+
 <ol class="steps">
   <li><span class="step-num">1</span><div><strong>记录电脑环境</strong><br>在 <strong>x86 Linux</strong> 上执行 <code>uname -a</code> / <code>uname -m</code> — 确认是 x86_64。</div></li>
   <li><span class="step-num">2</span><div><strong>安装 ruyi</strong><br><code>command -v ruyi</code> 应给出路径；<code>ruyi --version</code> 记录版本号。</div></li>
@@ -329,6 +340,17 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
   </div>
 </div>
 
+<div class="info">
+  <strong>为什么需要三条：</strong>三条通道解决三类不同的问题，按场景挑：串口不依赖网络，板子起不来、SSH 还连不上时用它看开机日志；SSH 是日常的加密登录；SCP 专门在电脑与板子之间传文件。
+</div>
+
+<table>
+  <tr><th>通道</th><th>怎么连</th><th>要网络吗</th><th>加密吗</th><th>典型场景</th></tr>
+  <tr><td><strong>串口 UART</strong></td><td>物理线直连板子排针</td><td>否</td><td>否</td><td>开机引导日志、SSH 连不上时救急</td></tr>
+  <tr><td><strong>SSH</strong></td><td>走网络连板子 IP</td><td>是</td><td>是</td><td>日常登录敲命令</td></tr>
+  <tr><td><strong>SCP</strong></td><td>复用 SSH 连接</td><td>是</td><td>是</td><td>电脑与板子之间传文件</td></tr>
+</table>
+
 <pre><span class="c"># 板端启用 SSH</span>
 <span class="p">$</span> sudo systemctl enable --now ssh
 
@@ -387,6 +409,15 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <h3 id="s1.3-why">为何必须交叉编译</h3>
 <p>开发电脑的 CPU 执行 <strong>x86_64</strong>（少数机器是 ARM）机器码；荔枝派 4A 执行 <strong>riscv64</strong> 机器码。两边指令编码不同。</p>
 <p>在电脑上用本机 <code>gcc main.c -o app</code>，得到的是本机架构的 ELF，只能在本机跑。拷到板端，Linux 内核会拒绝加载，常见报错是 <code>Exec format error</code>。板端编好的 RISC-V 程序拷回电脑，同样跑不了。</p>
+<p><strong>为什么内核会拒绝？</strong>可执行文件开头有一段 <strong>ELF 头</strong>，其中的 <code>e_machine</code> 字段写明这份文件属于哪种架构。内核加载程序时检查这个字段：和当前 CPU 架构不一致就拒绝加载，报 <code>Exec format error</code>。<code>file</code> 读的正是同一个字段——所以 <code>file</code> 说它是 RISC-V，就预判了它在 x86 电脑上跑不了；说它是 x86-64，就预判了它在板子上跑不了。</p>
+<p>在荔枝派上实测（本课真板）：</p>
+<pre><span class="c"># 把两种产物都拷到板子 /tmp 再运行</span>
+<span class="p">$</span> scp mini-riscv mini-host debian@板子IP:/tmp/
+<span class="p">$</span> ssh debian@板子IP 'cd /tmp &amp;&amp; ./mini-riscv; echo "exit=$?"'
+<span class="c"># exit=0 —— RISC-V 产物在板端正常跑</span>
+<span class="p">$</span> ssh debian@板子IP 'cd /tmp &amp;&amp; ./mini-host; echo "exit=$?"'
+bash: line 1: ./mini-host: cannot execute binary file: Exec format error
+<span class="c"># exit=126 —— x86 产物被内核拒绝，报 Exec format error</span></pre>
 <p><strong>交叉工具链</strong>仍在电脑上运行，但专门生成 RISC-V 机器码，并链接面向 RISC-V Linux 的 C 库。本课经 RuyiSDK 安装，前缀是 <code>riscv64-ruyisdk-linux-gnu-</code>。<strong>三元组</strong> <code>riscv64-ruyisdk-linux-gnu</code> 标明：CPU 为 riscv64、系统为 Linux、用户态约定为 GNU。选成 <code>unknown-elf</code> 会得到裸机工具链，不适合本课跑 Linux 用户程序。</p>
 
 <h3 id="s1.3-paths">同一份源码，三条编译路径</h3>
@@ -420,6 +451,27 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
   app-riscv（ELF，riscv64）</div>
 
 <p>板端若已安装 <code>gcc</code>，可在板子上直接编译就地运行（上图第三条路）。本课后续章节会用到；<strong>本章实验硬验收只认主机交叉编译产物</strong>，板端原生不能代替该门槛。</p>
+
+<h3 id="s1.3-objdump">亲眼看到指令差异：反汇编</h3>
+<p>「指令集不同」光听概念记不牢。把同一份 <code>main.c</code> 用两种编译器各编一份，再用 <code>objdump -d</code> 把机器码反回汇编，两边从助记符到编码完全不同：</p>
+
+<pre><span class="c"># 交叉编译 → RISC-V 反汇编</span>
+<span class="p">$</span> riscv64-ruyisdk-linux-gnu-objdump -d mini-riscv | sed -n '/&lt;main&gt;:/,/^$/p'
+0000000000000614 &lt;main&gt;:
+ 614:  1141                addi  sp,sp,-16
+ 616:  e406                sd    ra,8(sp)
+ 61c:  4781                li    a5,0
+ 61e:  853e                mv    a0,a5
+
+<span class="c"># 本机编译 → x86-64 反汇编</span>
+<span class="p">$</span> objdump -d mini-host | sed -n '/&lt;main&gt;:/,/^$/p'
+0000000000001129 &lt;main&gt;:
+ 1129: f3 0f 1e fa           endbr64
+ 112d: 55                    push   %rbp
+ 1131: b8 00 00 00 00        mov    $0x0,%eax
+ 1137: c3                    ret</pre>
+
+<p>同样是「把 0 放进返回值」这一个动作，RISC-V 用 <code>li a5, 0</code> 加 <code>mv a0, a5</code> 两条指令，x86 用 <code>mov $0x0, %eax</code> 一条——助记符、寄存器、机器码编码全不一样。这就是为什么两边产物不能互换：内核检查 ELF 头时直接拒收。</p>
 
 <h3 id="s1.3-cross">Makefile 跟做：本机 vs 交叉</h3>
 <p><strong>Makefile</strong> 描述如何编译工程；敲 <code>make</code> 按规则调用编译器。把交叉前缀写进 Makefile，避免每次手敲冗长命令。</p>
