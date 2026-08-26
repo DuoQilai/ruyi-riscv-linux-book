@@ -440,7 +440,7 @@ gpiod_line_request_release(req);</pre>
 
 <div class="ex mem">
   <div class="k">本板实测输出</div>
-<pre><span class="p">$</span> echo debian | sudo -S /tmp/relay-toggle
+<pre><span class="p">$</span> sudo /tmp/relay-toggle
 已申请 line 5，初值低 → 风扇确定关
 line 5 = 高 → 继电器吸合，风扇开
 line 5 = 低 → 继电器释放，风扇关
@@ -468,13 +468,13 @@ line 5 = 低 → 继电器释放，风扇关
 </div>
 
 <p>在荔枝派上实测（<code>gpioset</code> 控 IO1_5，看内核视角）：</p>
-<pre><span class="p">$</span> echo debian | sudo -S gpioset -c gpiochip5 5=1
-<span class="p">$</span> echo debian | sudo -S cat /sys/kernel/debug/gpio | grep gpio-651
+<pre><span class="p">$</span> sudo gpioset -c gpiochip5 5=1
+<span class="p">$</span> sudo cat /sys/kernel/debug/gpio | grep gpio-651
  gpio-651 (GPIO13              |gpioset             ) out hi
 <span class="c">#         ↑ 名字             ↑ 占用者           ↑ out hi = 引脚高</span>
 
-<span class="p">$</span> echo debian | sudo -S pkill -x gpioset
-<span class="p">$</span> echo debian | sudo -S cat /sys/kernel/debug/gpio | grep gpio-651
+<span class="p">$</span> sudo pkill -x gpioset
+<span class="p">$</span> sudo cat /sys/kernel/debug/gpio | grep gpio-651
  gpio-651 (GPIO13              )</pre>
 
 <p>改电平前后，<code>out hi</code> 出现 / 消失——「程序 → 内核 → 引脚」这条链就验证过了。对照上表：占用者列出现 <code>gpioset</code>，就是它申请并占住了这根 line。</p>
@@ -497,7 +497,7 @@ line 5 = 低 → 继电器释放，风扇关
   temperature_fan / gpioget → busy（内核按规则拒绝）</div>
 
 <p>在荔枝派上实测——占着 line 5 时，<code>gpioget</code> 读它直接失败：</p>
-<pre><span class="p">$</span> echo debian | sudo -S gpioget -c gpiochip5 5
+<pre><span class="p">$</span> sudo gpioget -c gpiochip5 5
 gpioget: unable to request lines: Device or resource busy</pre>
 
 <pre><span class="p">$</span> ps aux | grep gpioset

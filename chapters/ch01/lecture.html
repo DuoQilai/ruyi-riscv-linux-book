@@ -284,11 +284,11 @@ RuyiSDK / ruyi（电脑上装工具链与镜像的入口）</div>
 </table>
 <p>把用户态一段换成 <code>elf</code>（如 <code>riscv64-unknown-elf</code>），就变成裸机工具链——没有 Linux 的加载与运行库，编出的程序跑不了本课这样的 Linux 用户程序。</p>
 
-<p>安装包管理器本身请以 <a href="https://ruyisdk.org/docs/Package-Manager/installation/" target="_blank" rel="noopener">RuyiSDK 官方安装文档</a> 为准。官方推荐用 PyPI；也可以使用文档中的单文件发行版。下面按推荐路径写出本课步骤。</p>
+<p>安装包管理器本身请以 <a href="https://ruyisdk.org/docs/Package-Manager/installation/" target="_blank" rel="noopener">RuyiSDK 官方安装文档</a> 为准。官方推荐使用预编译二进制；对于已配置 Python 环境的 x86 Linux 主机，也可以通过 PyPI 安装。下面按 PyPI 路径写出本课步骤。</p>
 
 <ol class="steps">
   <li><span class="step-num">1</span><div><strong>记录电脑环境</strong><br>在 <strong>x86 Linux</strong> 上执行 <code>uname -m</code>，确认输出为 <code>x86_64</code>。</div></li>
-  <li><span class="step-num">2</span><div><strong>安装 Ruyi 包管理器</strong><br>推荐：
+  <li><span class="step-num">2</span><div><strong>安装 Ruyi 包管理器</strong><br>预编译二进制的下载与放置见官方文档。本课在已配置 Python 的 x86 Linux 上走 PyPI：
 <pre style="margin:8px 0;">python3 -m pip install --user ruyi</pre>
 若 <code>pip</code> 把可执行文件装到 <code>~/.local/bin</code>，请确认该目录已在 <code>PATH</code> 中（可把 <code>export PATH="$HOME/.local/bin:$PATH"</code> 写入 <code>~/.bashrc</code> 后 <code>source ~/.bashrc</code>）。其它发行版安装方式见官方文档。</div></li>
   <li><span class="step-num">3</span><div><strong>PATH 检查与版本验证</strong><br><code>command -v ruyi</code> 应给出绝对路径（例如 <code>/home/你的用户名/.local/bin/ruyi</code>）；<code>ruyi --version</code> 应打印版本号（本课验收样例主机为 <code>Ruyi 0.46.0</code>，你机器上的次版本可以更新，但必须能运行）。</div></li>
