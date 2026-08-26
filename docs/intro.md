@@ -30,8 +30,8 @@
 | ch06 | 线程与协同 | 三线程协同 |
 | 综合 | 端侧 Agent 环境终端 | 量化 + 终端 Harness + 荔枝派三线程 |
 
-在线大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html  
-综合项目：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/project.html
+在线大纲：[`docs/CourseOutline.html`](./CourseOutline.html)（正式预览站：https://duoqilai.github.io/ruyi-riscv-linux-book/docs/CourseOutline.html）  
+综合项目：[`docs/project.html`](./project.html)
 
 ---
 
@@ -106,4 +106,4 @@
 | ch01–ch04 讲义/实验 HTML | 已完成并实机验证 |
 | ch05–ch06 讲义/实验 HTML | 初稿完成，实机验证待补 |
 
-发布分支：`main`（GitHub Pages 自动发布）。预览：https://enzoding-rgb.github.io/ruyi-riscv-book/
+发布分支：`main`（GitHub Pages 自动发布）。正式预览：https://duoqilai.github.io/ruyi-riscv-linux-book/

@@ -284,24 +284,36 @@ RuyiSDK / ruyi（电脑上装工具链与镜像的入口）</div>
 </table>
 <p>把用户态一段换成 <code>elf</code>（如 <code>riscv64-unknown-elf</code>），就变成裸机工具链——没有 Linux 的加载与运行库，编出的程序跑不了本课这样的 Linux 用户程序。</p>
 
+<p>安装包管理器本身请以 <a href="https://ruyisdk.org/docs/Package-Manager/installation/" target="_blank" rel="noopener">RuyiSDK 官方安装文档</a> 为准。官方推荐用 PyPI；也可以使用文档中的单文件发行版。下面按推荐路径写出本课步骤。</p>
+
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>记录电脑环境</strong><br>在 <strong>x86 Linux</strong> 上执行 <code>uname -a</code> / <code>uname -m</code> — 确认是 x86_64。</div></li>
-  <li><span class="step-num">2</span><div><strong>安装 ruyi</strong><br><code>command -v ruyi</code> 应给出路径；<code>ruyi --version</code> 记录版本号。</div></li>
-  <li><span class="step-num">3</span><div><strong>更新并安装 gnu-ruyisdk 工具链</strong><br>在 <strong>x86 Linux</strong> 上：<code>ruyi update</code>，再 <code>ruyi install gnu-ruyisdk</code>。</div></li>
-  <li><span class="step-num">4</span><div><strong>创建并激活虚拟环境</strong><br>在 <strong>x86 Linux</strong> 上（目录自定，下文以家目录为例）：
+  <li><span class="step-num">1</span><div><strong>记录电脑环境</strong><br>在 <strong>x86 Linux</strong> 上执行 <code>uname -m</code>，确认输出为 <code>x86_64</code>。</div></li>
+  <li><span class="step-num">2</span><div><strong>安装 Ruyi 包管理器</strong><br>推荐：
+<pre style="margin:8px 0;">python3 -m pip install --user ruyi</pre>
+若 <code>pip</code> 把可执行文件装到 <code>~/.local/bin</code>，请确认该目录已在 <code>PATH</code> 中（可把 <code>export PATH="$HOME/.local/bin:$PATH"</code> 写入 <code>~/.bashrc</code> 后 <code>source ~/.bashrc</code>）。其它发行版安装方式见官方文档。</div></li>
+  <li><span class="step-num">3</span><div><strong>PATH 检查与版本验证</strong><br><code>command -v ruyi</code> 应给出绝对路径（例如 <code>/home/你的用户名/.local/bin/ruyi</code>）；<code>ruyi --version</code> 应打印版本号（本课验收样例主机为 <code>Ruyi 0.46.0</code>，你机器上的次版本可以更新，但必须能运行）。</div></li>
+  <li><span class="step-num">4</span><div><strong>更新并安装 gnu-ruyisdk 工具链</strong><br><code>ruyi update</code>，再 <code>ruyi install gnu-ruyisdk</code>。</div></li>
+  <li><span class="step-num">5</span><div><strong>创建并激活虚拟环境</strong><br>（目录自定，下文以家目录为例）：
 <pre style="margin:8px 0;">ruyi venv -t gnu-ruyisdk manual venv-gnu-ruyisdk
 . ~/venv-gnu-ruyisdk/bin/ruyi-activate</pre>
 每次新开终端都要重新激活。磁盘紧张时可加 <code>--without-sysroot</code>（仍能交叉编译本课 CoreMark）。</div></li>
-  <li><span class="step-num">5</span><div><strong>确认交叉编译器</strong><br><code>riscv64-ruyisdk-linux-gnu-gcc -v</code>；<code>riscv64-ruyisdk-linux-gnu-gcc -dumpmachine</code> 应打印 <code>riscv64-ruyisdk-linux-gnu</code>。</div></li>
+  <li><span class="step-num">6</span><div><strong>确认交叉编译器</strong><br><code>riscv64-ruyisdk-linux-gnu-gcc -v</code>；<code>riscv64-ruyisdk-linux-gnu-gcc -dumpmachine</code> 应打印 <code>riscv64-ruyisdk-linux-gnu</code>。</div></li>
 </ol>
 
 <pre><span class="c"># 以下均在 x86 Linux 上执行</span>
 <span class="p">$</span> uname -m
+x86_64
+<span class="p">$</span> python3 -m pip install --user ruyi
+<span class="p">$</span> export PATH="$HOME/.local/bin:$PATH"   <span class="c"># 若尚未写入 shell 配置</span>
+<span class="p">$</span> command -v ruyi
+/home/你的用户名/.local/bin/ruyi
+<span class="p">$</span> ruyi --version
+Ruyi 0.46.0
+<span class="c"># …版权与许可信息略…</span>
 <span class="p">$</span> ruyi update
 <span class="p">$</span> ruyi install gnu-ruyisdk
 <span class="p">$</span> ruyi venv -t gnu-ruyisdk manual venv-gnu-ruyisdk
 <span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
-<span class="p">$</span> riscv64-ruyisdk-linux-gnu-gcc -v
 <span class="p">$</span> riscv64-ruyisdk-linux-gnu-gcc -dumpmachine
 riscv64-ruyisdk-linux-gnu</pre>
 
@@ -316,7 +328,7 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <p>在电脑上直接 <code>./mini-riscv</code> 会失败——指令集不同。验收看 <code>file</code> 输出里有 RISC-V 字样即可。</p>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>荔枝派 4A 接口标注 · 个人环境清单 · ruyi 路径与版本 · 三元组 <code>riscv64-ruyisdk-linux-gnu</code> · 最小 RISC-V 可执行文件与 <code>file</code> 日志。
+  <strong>本节成果：</strong>荔枝派 4A 接口标注 · 个人环境清单 · <code>ruyi</code> 已安装且 PATH 可用 · 版本记录 · 三元组 <code>riscv64-ruyisdk-linux-gnu</code> · 最小 RISC-V 可执行文件与 <code>file</code> 日志。
 </div>
 </section>
 
@@ -326,29 +338,103 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <h2>烧录、开发通道与一键准备/一键编译</h2>
 
 <h3 id="s1.2-flash">烧录系统</h3>
-<p><strong>烧录</strong>是把系统镜像按分区写入板子存储介质（eMMC / SD）。镜像里通常有：引导程序（上电后最先跑）、Linux 内核与设备树（描述硬件）、根文件系统（用户空间程序与配置）。</p>
+<p><strong>烧录</strong>是把系统镜像按分区写入板子存储（本课用板载 eMMC）。镜像里通常有：引导程序（U-Boot）、启动分区（内核与设备树等）、根文件系统（RevyOS 用户空间）。</p>
 
-<div class="diagram">镜像发布包
-  ├─ 引导程序
-  ├─ Linux 内核与设备树
-  └─ RevyOS 根文件系统
-          ↓ 烧录（按分区写入）
-   eMMC / SD
-          ↓ 上电
-      串口出现启动日志 → 登录界面</div>
+<p><strong>本课指定组合（与验收样机一致）：</strong></p>
+<ul>
+  <li>硬件：Sipeed <strong>LicheePi 4A 16G</strong>（设备树 model 为 <code>Sipeed Lichee Pi 4A 16G</code>）</li>
+  <li>系统：<strong>RevyOS 20251226</strong>（板端 <code>/etc/revyos-release</code> 中 <code>RELEASE_ID=20251226</code>、<code>BOARD_NAME=lpi4a</code>）</li>
+  <li>主路径：用 RuyiSDK 的 <code>ruyi device provision</code> 交互式下载并写入（底层走 fastboot；包索引中对应 <code>revyos-sipeed-lpi4a</code> + <code>uboot-revyos-sipeed-lpi4a-16g</code>）</li>
+</ul>
+<p>对照资料（排障与手工备用时查阅）：</p>
+<ul>
+  <li><a href="https://github.com/ruyisdk/support-matrix/blob/main/LicheePi4A/RevyOS/README.md" target="_blank" rel="noopener">RuyiSDK Support Matrix · LicheePi 4A / RevyOS</a>（当前 good 记录即 20251226；含镜像目录与手工 fastboot 命令）</li>
+  <li><a href="https://wiki.sipeed.com/hardware/zh/lichee/th1520/lpi4a/4_burn_image.html" target="_blank" rel="noopener">Sipeed 官方烧录文档</a>（BOOT 键进烧录模式、接线说明）</li>
+</ul>
 
-<p>固定流程：校验镜像哈希 → 认准目标设备号 → 严格按发布说明写入 → 工具报告成功后再上电。</p>
+<div class="diagram">主机：ruyi device provision
+  ├─ 选设备：Sipeed LicheePi 4A
+  ├─ 选规格：16G RAM
+  └─ 选系统：RevyOS 20251226
+          ↓ 下载镜像（含校验）
+按住 BOOT → 插入 USB-C → fastboot 写入 eMMC
+          ↓ 松开 BOOT，重新上电
+串口 / SSH 出现登录提示（用户 debian）</div>
+
+<h4>环境准备</h4>
+<ul>
+  <li>主机已按 1.1 装好 <code>ruyi</code>，并能 <code>ruyi --version</code>。</li>
+  <li>主机安装 <code>fastboot</code>（Debian/Ubuntu 示例：<code>sudo apt install -y fastboot</code> 或包名 <code>android-tools-fastboot</code>，以发行版为准）。</li>
+  <li>USB-C 数据线能传数据（仅充电线无法进烧录模式）；另备 USB-UART 串口线（3.3V）便于看首次启动日志。</li>
+  <li>板子供电充足；烧录会覆盖 eMMC 上的系统，先备份需要保留的文件。</li>
+</ul>
+
+<h4>用 ruyi device provision 烧录（主路径）</h4>
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>更新索引并启动向导</strong><br>在主机执行 <code>ruyi update</code>，再 <code>ruyi device provision</code>。按提示确认后继续。</div></li>
+  <li><span class="step-num">2</span><div><strong>选择设备与规格</strong><br>设备选 <strong>Sipeed LicheePi 4A</strong>；内存规格选 <strong>16G</strong>（8G 板不要选 16G 的 U-Boot 包）。</div></li>
+  <li><span class="step-num">3</span><div><strong>选择系统镜像版本</strong><br>选 <strong>RevyOS</strong>，版本选 <strong>20251226</strong>（与 Support Matrix 当前 good 记录、本课验收样机一致）。向导会下载并校验对应镜像；下载目录以终端提示为准。</div></li>
+  <li><span class="step-num">4</span><div><strong>进入烧录模式</strong><br>板子断电。按住板上 <strong>BOOT</strong> 键不放，再插入连向主机的 USB-C；主机应能枚举到 fastboot 设备。保持按住直至 <code>fastboot devices</code> 能看到设备（向导也会提示时机）。</div></li>
+  <li><span class="step-num">5</span><div><strong>写入并观察预期输出</strong><br>按向导确认后开始写入。成功时终端会出现各分区 flash 完成、无 error 的提示；失败则根据报错检查线材、BOOT 时机与 <code>fastboot devices</code>。写入完成后按提示松开 BOOT、重新上电。</div></li>
+</ol>
+
+<pre><span class="c"># 主机：启动一键准备（交互菜单以本机 ruyi 为准）</span>
+<span class="p">$</span> ruyi update
+<span class="p">$</span> ruyi device provision
+<span class="c"># 选择：Sipeed LicheePi 4A → 16G → RevyOS 20251226</span>
+
+<span class="c"># 进入烧录模式后，另开终端可自检（可选）</span>
+<span class="p">$</span> sudo fastboot devices
+<span class="c"># 期望：出现一列设备序列号 +  fastboot</span></pre>
+
+<div class="info">
+  <strong>手工 fastboot 备用：</strong>若课堂要求对照 Support Matrix 手工写入，镜像目录为
+  <a href="https://fast-mirror.isrc.ac.cn/revyos/extra/images/lpi4a/20251226/" target="_blank" rel="noopener">20251226 镜像目录</a>。
+  下载 <code>u-boot-with-spl-lpi4a-16g.bin</code>、<code>boot-lpi4a-20251225_175338.ext4.zst</code>、<code>root-lpi4a-20251225_175338.ext4.zst</code>，用 <code>zstd -d</code> 解压后，按 Support Matrix 中的 <code>fastboot flash</code> 顺序写入。细节以该 README 与 Sipeed 文档为准。
+</div>
+
+<h4>首次启动验证（验收样机实输出）</h4>
+<p>默认用户 / 密码多为 <code>debian</code> / <code>debian</code>（以镜像说明为准）。串口或 SSH 登录后执行：</p>
+
+<pre><span class="p">$</span> cat /sys/firmware/devicetree/base/model; echo
+Sipeed Lichee Pi 4A 16G
+
+<span class="p">$</span> cat /etc/revyos-release
+BUILD_ID=20251225_175338
+BUILD_DATE=20251225
+BOARD_NAME=lpi4a
+RELEASE_ID=20251226
+COMMIT_ID=65b79515309b7d77816def1e83f0d5a95178ab70
+RUNNER_ID=20508594622
+
+<span class="p">$</span> uname -m
+riscv64
+
+<span class="p">$</span> hostname
+revyos-lpi4a
+
+<span class="p">$</span> free -h | head -2
+               total        used        free      shared  buff/cache   available
+Mem:            15Gi       ...
+
+<span class="p">$</span> ip -br addr
+<span class="c"># 期望：除 lo 外，有网口（如 wlan0 / end0）拿到局域网 IP</span></pre>
 
 <table>
-  <tr><th>检查项</th><th>命令</th><th>期望</th></tr>
-  <tr><td>系统版本</td><td><code>cat /etc/os-release</code></td><td>RevyOS</td></tr>
+  <tr><th>检查项</th><th>命令</th><th>期望（本课样机）</th></tr>
+  <tr><td>板型</td><td><code>cat /sys/firmware/devicetree/base/model</code></td><td>含 <code>Lichee Pi 4A 16G</code></td></tr>
+  <tr><td>RevyOS 发行标识</td><td><code>cat /etc/revyos-release</code></td><td><code>RELEASE_ID=20251226</code>、<code>BOARD_NAME=lpi4a</code></td></tr>
   <tr><td>架构</td><td><code>uname -m</code></td><td><code>riscv64</code></td></tr>
-  <tr><td>账户</td><td><code>id</code></td><td>记录当前用户</td></tr>
-  <tr><td>IP 地址</td><td><code>ip -br addr</code></td><td>有有效 IP</td></tr>
+  <tr><td>内存规格</td><td><code>free -h</code></td><td>总量约 15–16 Gi（16G 板）</td></tr>
+  <tr><td>账户</td><td><code>id</code></td><td>常见为用户 <code>debian</code></td></tr>
+  <tr><td>IP 地址</td><td><code>ip -br addr</code></td><td>有有效局域网 IP</td></tr>
   <tr><td>路由</td><td><code>ip route</code></td><td>有默认网关</td></tr>
   <tr><td>时间</td><td><code>timedatectl</code></td><td>时间正确（错了会导致 TLS 失败）</td></tr>
   <tr><td>软件源</td><td><code>sudo apt update</code></td><td>更新成功</td></tr>
 </table>
+<div class="warn">
+  <strong>说明：</strong><code>/etc/os-release</code> 可能显示底层 Debian 代号（如 forky/sid），确认「是不是本课这套 RevyOS」请看 <code>/etc/revyos-release</code>，不要只看 <code>PRETTY_NAME</code>。
+</div>
 
 <h3 id="s1.2-channels">三条开发通道</h3>
 
@@ -423,11 +509,11 @@ mini-riscv: ELF 64-bit LSB executable, UCB RISC-V, ...</pre>
 <span class="p">$</span> ruyi device provision --help</pre>
 
 <div class="info">
-  <strong>本课定位：</strong>一键准备与一键编译按本机帮助查询使用；手工烧录与手工 SCP/SSH 也要掌握。两条路径都要会。
+  <strong>本课定位：</strong>烧录主路径是 <code>ruyi device provision</code>（选 LicheePi 4A / 16G / RevyOS 20251226）。一键编译与手工 SCP/SSH 也要掌握。Support Matrix 与 Sipeed 文档用于对照与排障。
 </div>
 
 <div class="info" style="margin-top:32px;">
-  <strong>本节成果：</strong>镜像校验与烧录日志 · 系统检查表 · 串口接线记录 · SSH 密钥登录 · SCP 双向哈希一致 · 一键准备/一键编译帮助输出记录。
+  <strong>本节成果：</strong>provision 选型记录 · 烧录成功日志或截图 · 首次启动检查表（含 <code>revyos-release</code>）· 串口接线记录 · SSH 密钥登录 · SCP 双向哈希一致。
 </div>
 </section>
 

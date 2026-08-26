@@ -5,7 +5,7 @@
 
 10 页。第 3 页嵌入第一章讲义、第四章实验。
 
-课程主页：https://enzoding-rgb.github.io/ruyi-riscv-book/
+课程主页：https://duoqilai.github.io/ruyi-riscv-linux-book/
 
 ## 怎么放
 

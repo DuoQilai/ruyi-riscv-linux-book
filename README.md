@@ -6,7 +6,7 @@ Ruyi RISC-V Linux 嵌入式实践课公开材料（**C + RuyiSDK + 真开发板*
 - **综合项目：** [`docs/project.html`](docs/project.html)
 - **课程说明（定位 / 调研 / 取舍）：** [`docs/intro.md`](docs/intro.md)
 - **课程评价标准：** [`docs/course-evaluation-standard.md`](docs/course-evaluation-standard.md)
-- **在线预览：** https://enzoding-rgb.github.io/ruyi-riscv-book/
+- **在线预览：** https://duoqilai.github.io/ruyi-riscv-linux-book/
 
 ## 课程一句话
 
@@ -49,16 +49,10 @@ docs/course-evaluation-standard.md   ← 课程评价标准（CIPP 四层）
 
 ## 构建与发布
 
-课程页面为静态 HTML。主仓库 `main` 分支已配置自动发布 GitHub Pages。制作时在开发分支改稿，合入 `main` 即发布；个人预览站（`enzoding-rgb.github.io/ruyi-riscv-book/`）仅作内部预览，不作为正式源。
+课程页面为静态 HTML。主仓库 `main` 分支已配置自动发布 GitHub Pages。制作时在开发分支改稿，合入 `main` 即发布。
 
-线上入口：https://enzoding-rgb.github.io/ruyi-riscv-book/  
-大纲：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/CourseOutline.html  
-综合项目：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/project.html  
-评价标准：https://enzoding-rgb.github.io/ruyi-riscv-book/docs/course-evaluation-standard.md  
-ch03 讲义：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch03/lecture.html  
-ch03 实验：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch03/lab.html  
-ch04 讲义：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch04/lecture.html  
-ch04 实验：https://enzoding-rgb.github.io/ruyi-riscv-book/chapters/ch04/lab.html
+线上入口：https://duoqilai.github.io/ruyi-riscv-linux-book/  
+站内链接请用仓库内相对路径（例如 [`docs/CourseOutline.html`](docs/CourseOutline.html)、[`docs/project.html`](docs/project.html)、[`docs/course-evaluation-standard.md`](docs/course-evaluation-standard.md)、[`chapters/ch03/lecture.html`](chapters/ch03/lecture.html)）。GitHub Pages 不会改写写死的绝对 URL。
 
 ## 仓库结构
 
