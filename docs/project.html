@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>综合项目 · 端侧 Agent 环境终端 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+  }
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 80px 40px; border-bottom: 1px solid var(--line);
+  }
+  .hero .chapter-tag {
+    font-size: 18px; letter-spacing: 0.12em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero h1 { font-size: 56px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+  .hero .subtitle { font-size: 22px; color: var(--muted); line-height: 1.6; max-width: 760px; }
+  .hero .meta { margin-top: 48px; display: flex; gap: 40px; font-size: 17px; color: var(--faint); flex-wrap: wrap; justify-content: center; }
+  .content { max-width: 1000px; margin: 0 auto; padding: 0 48px 120px; }
+  section { padding: 80px 0; border-bottom: 1px solid var(--line-light); }
+  section:last-of-type { border-bottom: none; }
+  .section-num { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+  section h2 { font-size: 40px; font-weight: 700; margin-bottom: 40px; line-height: 1.3; }
+  section h3 { font-size: 24px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
+  section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 24px 28px; margin: 20px 0 28px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.75; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 17px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-light); vertical-align: top; }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: #8c5440; line-height: 1.7;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
+  }
+  .diagram {
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
+    white-space: pre; overflow-x: auto;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 1px solid var(--line); padding: 28px 30px; }
+  .card h4 { font-size: 20px; font-weight: 700; margin: 0 0 10px; color: var(--text); }
+  .card p { font-size: 17px; margin: 0; color: var(--muted); }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+  .course-rail a { font-weight: 600; color: var(--accent); }
+  body { padding-left: 240px; }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line); font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent); text-decoration: none; max-width: 46%; line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
+  @media print {
+    body { padding-left: 0; }
+    .toc { display: none; }
+  }
+  @media (max-width: 900px) {
+    body { padding-left: 0; }
+    .toc { position: static; width: auto; height: auto; }
+    .hero h1 { font-size: 36px; }
+    .card-grid, .card-grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>综合项目</h4>
+  <a class="course-rail" href="../index.html">课程总览</a>
+  <a class="course-rail" href="CourseOutline.html">Course Outline</a>
+  <div class="divider"></div>
+  <a href="#story">这条线是什么</a>
+  <a href="#two-things">Harness 与模型</a>
+  <a href="#machines">两块板怎么分工</a>
+  <a href="#terminal">在终端里对话</a>
+  <a href="#quant">量化出本地模型</a>
+  <a href="#tools">工具接到前六章</a>
+  <a href="#loop">没人打字时风扇仍转</a>
+  <a href="#accept">验收</a>
+  <a href="#steps">里程碑</a>
+</nav>
+
+<div class="hero">
+  <div class="chapter-tag">RISC-V Linux 嵌入式实践课 · 综合项目</div>
+  <h1>端侧 Agent 环境终端</h1>
+  <p class="subtitle">荔枝派继续管风扇与 MQTT；K3 上跑量化后的本地模型；你在终端里像用 Claude Code 一样跟 DeepSeek Harness 打字。同一套工具，本地和云端只换一个地址。</p>
+  <div class="meta">
+    <span>手：荔枝派 4A · C · RuyiSDK</span>
+    <span>脑：K3 · llama.cpp</span>
+    <span>嘴：终端里的 DeepSeek Harness</span>
+  </div>
+</div>
+
+<div class="content">
+
+<section id="story">
+<div class="section-num">故事</div>
+<h2>这条线是什么</h2>
+<p>前六章已经把「手」做完：交叉编译、滞回、继电器风扇、DHT22、MQTT、三线程。综合项目不再另开第七章，也不再做 <code>weights.h</code> 手写 tiny 前向。现场还是这套温控，换的是<strong>谁做决定、人怎么下意图</strong>。</p>
+<p>人在终端里打字。DeepSeek Harness 跑 Agent 循环：当前模型根据你的话和工具列表，决定调用读状态、开/关风扇、控灯、改阈值。工具经 MQTT 打到荔枝派。板上三线程自己的滞回一直在转——没人打字，风扇仍按温度动作。</p>
+<div class="diagram">你（终端打字）
+    │
+    ▼
+DeepSeek Harness（Agent 循环 · 工具注册）
+    │  模型插件：本地 llama-server  或  云端 DeepSeek
+    │  同一 OpenAI 兼容 HTTP，只换 baseURL
+    ▼
+工具 execute → MQTT
+    │
+    ▼
+荔枝派 ch06 三线程：采集 ∥ 滞回控风扇 ∥ MQTT</div>
+<div class="info">
+  <strong>和旧综合项目的差别：</strong>旧方案是老师发权重、学生在板上手写 tiny 前向。现方案是学生自己量化出可加载的本地模型，用 Harness 当唯一的 Agent 循环，前六章的 C 程序当手。
+</div>
+</section>
+
+<section id="two-things">
+<div class="section-num">两件事</div>
+<h2>Harness 是运行时，DeepSeek 是一种模型</h2>
+<p><strong>DeepSeek Harness</strong>（<code>dsh</code>）是 Agent 运行时：会话、工具、循环、界面都是插件。它默认可以挂云端 DeepSeek，也可以挂任何 OpenAI 兼容接口。源码不用改。</p>
+<p><strong>DeepSeek 模型</strong>只是脑子的一种。本地量化模型是另一种脑子。对 Harness 来说，两者都是「模型供应商」：协议相同，<code>baseURL</code> 不同。</p>
+<div class="card-grid">
+  <div class="card">
+    <h4>云端</h4>
+    <p><code>https://api.deepseek.com</code>。能力强，要密钥和网络。</p>
+  </div>
+  <div class="card">
+    <h4>本地</h4>
+    <p>K3 上 <code>llama-server</code> 提供 <code>http://&lt;K3&gt;:8080/v1</code>。量化后的指令模型，离线也能验收。</p>
+  </div>
+</div>
+<p>切换发生在 Harness 的模型配置里。对话框、工具列表、板上程序都不改。</p>
+</section>
+
+<section id="machines">
+<div class="section-num">硬件</div>
+<h2>荔枝派当手，K3 当脑</h2>
+<p>K3 适合跑 llama.cpp（厂商 IME2 加速），针脚不像荔枝派那样接 DHT 和继电器。所以综合项目用两块板，用已经教过的 MQTT 当总线。</p>
+<table>
+  <tr><th>机器</th><th>跑什么</th><th>本课工具</th></tr>
+  <tr><td>荔枝派 4A</td><td>ch06 三线程：采温、滞回、风扇、灯、MQTT</td><td>C + RuyiSDK 交叉编译</td></tr>
+  <tr><td>进迭 K3</td><td><code>llama-server</code> + 终端里的 DeepSeek Harness</td><td>Bianbu 上的 <code>llama.cpp-tools-spacemit</code></td></tr>
+  <tr><td>个人电脑</td><td>量化（<code>llama-quantize</code>）、改工具插件、SSH</td><td>RuyiSDK / 本机 gcc</td></tr>
+</table>
+<div class="warn">
+  如意 SDK 编的是荔枝派上的 C 程序。K3 上的加速推理走进迭提供的 llama.cpp，目前不要写成 <code>ruyi install</code> 就能吃到 IME2。普通 gcc 自编的 llama.cpp 跑在 A100 核上会非常慢。
+</div>
+</section>
+
+<section id="terminal">
+<div class="section-num">界面</div>
+<h2>在终端里对话，像 Claude Code</h2>
+<p>本课<strong>不把网页当成对话入口</strong>。你在终端里启动 DeepSeek Harness，像 Claude Code 那样打字、看工具调用、看回复。官方 <code>dsh web</code> 会起浏览器，主路径不用它。</p>
+<p>交互式终端界面是 Harness 的一层 UI 插件。装好 <code>dsh</code> 之后，用终端 profile 进入当前目录的会话：</p>
+<pre><span class="c"># 安装 CLI（Node 22+）</span>
+npm i -g @deepseek-ai/dsh@next
+
+<span class="c"># 终端 UI（Claude Code 同款打字界面）</span>
+dsh plugin --profile tui add @dsh-tui/dsh-tui
+dsh --profile tui</pre>
+<p>模型配置里加两个供应商：一个 <code>baseURL</code> 指向本机或 K3 的 <code>llama-server</code>（<code>api: openai-completions</code>），一个指向云端 DeepSeek。之后在会话里切换模型，工具不变。</p>
+<div class="info">
+  官方还带 <code>dsh --profile headless "一句话任务"</code>，跑完一轮就退出，适合脚本。本课验收用交互式终端会话：你打字，模型调工具，板上有现象。
+</div>
+</section>
+
+<section id="quant">
+<div class="section-num">量化</div>
+<h2>本地模型从量化来</h2>
+<p>具体叫哪一个指令模型不钉死。课要的是：在电脑上用 llama.cpp 把一份较高精度权重压成 GGUF（至少做到 Q4），拷到 K3，用带 IME2 的 llama.cpp 起服务。</p>
+<pre><span class="c"># 主机：量化（示例文件名按你下载的模型改）</span>
+llama-quantize model-f16.gguf model-q4_0.gguf Q4_0
+
+<span class="c"># K3：加速推理 + OpenAI 兼容 HTTP</span>
+sudo apt install llama.cpp-tools-spacemit
+llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
+<p>量化前后记下体积，并在终端 Harness 里用同一句「现在热不热」各问一次：工具调用还在，才算压成功。极致压缩可以再出一份 Q2，对照质量与速度；主验收以能稳定调工具的那一档为准。</p>
+<p>K3 带 IME2 时，中小指令模型（大约 1.5B–4B、Q4）做「读状态、选工具、回一句人话」是够用的。把很大的稠密模型压进内存，常见结果是能启动、生成慢、工具调用不稳，本课不走那条路。</p>
+</section>
+
+<section id="tools">
+<div class="section-num">工具</div>
+<h2>Harness 调的是前六章已经有的手</h2>
+<p>工具在 Harness 里登记（TypeScript 的 <code>defineTool</code>）。<code>execute</code> 里不要重写 GPIO。它只做转发：发 MQTT，或调用你用 C 编好的小命令。荔枝派上的 tri-thread 继续采温、滞回、驱动继电器。</p>
+<table>
+  <tr><th>工具</th><th>模型看见的含义</th><th>落到板上</th></tr>
+  <tr><td><code>read_status</code></td><td>读当前温度、湿度、风扇、阈值</td><td>订阅读状态主题，或向板问一句 status</td></tr>
+  <tr><td><code>set_fan</code></td><td>开或关风扇</td><td>发布命令主题，通信线程执行</td></tr>
+  <tr><td><code>set_led</code></td><td>开或关灯</td><td>沿用第五章的灯主题</td></tr>
+  <tr><td><code>set_threshold</code></td><td>改温度上下限</td><td>与第四章 <code>set temp</code> 同一类下行</td></tr>
+</table>
+<p>人打的是自然语言：「太吵了把风扇关了」「现在多少度」。模型选工具、填参数。传感器数字由 <code>read_status</code> 提供，模型自己不去读针脚。</p>
+</section>
+
+<section id="loop">
+<div class="section-num">闭环</div>
+<h2>没人打字时，风扇仍按温度转</h2>
+<p>荔枝派上的控制线程一直按阈值拉继电器。Harness 是指挥官，不是唯一的心跳。这样前六章的验收在综合项目里仍然成立：把终端关掉，风扇还在跟温度走。</p>
+<p>打字用来查状态、改阈值、强制开/关、换一句人话意图。Agent 的决定落到同一套 MQTT 和 GPIO 上。</p>
+</section>
+
+<section id="accept">
+<div class="section-num">验收</div>
+<h2>现场要能看见什么</h2>
+<table>
+  <tr><th>项</th><th>通过条件</th></tr>
+  <tr><td>滞回仍在</td><td>不打开 Harness 时，超上限风扇转、低下限停</td></tr>
+  <tr><td>量化</td><td>有一份学生自己压出的 GGUF；记下体积；K3 上 <code>llama-server</code> 能起来</td></tr>
+  <tr><td>终端对话</td><td>在终端 Harness 里打字，能看到模型调用本课工具</td></tr>
+  <tr><td>读得动</td><td><code>read_status</code> 返回的温度与板上日志一致</td></tr>
+  <tr><td>动得了</td><td>打字让风扇或灯动作，板上现象可见</td></tr>
+  <tr><td>换模型</td><td>同一句话，本地 <code>llama-server</code> 与云端 DeepSeek 各走一遍，工具仍是同一套</td></tr>
+  <tr><td>干净停</td><td>板上 Ctrl+C 仍先停风扇再退出（ch06 契约保留）</td></tr>
+</table>
+</section>
+
+<section id="steps">
+<div class="section-num">里程碑</div>
+<h2>按这个顺序做完</h2>
+<ol>
+  <li><strong>P.1 双机通。</strong>荔枝派 tri-thread 在跑；电脑上 Mosquitto 可达；K3 能 SSH 上去。</li>
+  <li><strong>P.2 量化。</strong>主机 <code>llama-quantize</code> 得到 Q4 GGUF，记下体积。</li>
+  <li><strong>P.3 本地服务。</strong>K3 安装 <code>llama.cpp-tools-spacemit</code>，<code>llama-server</code> 监听 8080。</li>
+  <li><strong>P.4 终端 Harness。</strong><code>dsh --profile tui</code> 进会话；登记本地与云端两个模型供应商。</li>
+  <li><strong>P.5 工具。</strong>登记 <code>read_status</code> / <code>set_fan</code> / <code>set_led</code> / <code>set_threshold</code>，全部转发到已有 MQTT。</li>
+  <li><strong>P.6 对照。</strong>关掉终端，确认滞回自己转；再打开终端打字改行为。</li>
+  <li><strong>P.7 答辩演示。</strong>按上面验收表走一遍，本地和云端各问一句。</li>
+</ol>
+<div class="info">
+  规划条目也写在 <a href="CourseOutline.html">Course Outline</a>。本文是综合项目的正文。
+</div>
+</section>
+
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="../chapters/ch06/lab.html"><span class="dir">上一篇</span>第六章 · 实验<br>三线程协同</a>
+  <a class="next" href="CourseOutline.html"><span class="dir">下一篇</span>Course Outline</a>
+</nav>
+</div>
+</body>
+</html>
