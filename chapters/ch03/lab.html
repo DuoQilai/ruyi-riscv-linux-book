@@ -120,6 +120,8 @@
   <div class="divider"></div>
   <a href="#intro">说明</a>
   <a href="#parts">实验器材</a>
+  <a href="#breadboard">面包板怎么用</a>
+  <a href="#solder">电烙铁与安全</a>
   <div class="divider"></div>
   <a href="#pinmap">荔枝派排针怎么认</a>
   <a href="#wire">接线总表</a>
@@ -172,11 +174,57 @@
   <tr><td>荔枝派 4A</td><td>跑 Linux；排针接线</td></tr>
   <tr><td>继电器模块（1 路，5V）</td><td>信号端受 GPIO 控制，触点通断风扇电源</td></tr>
   <tr><td>5V 小风扇</td><td>负载；红线正极、黑线负极</td></tr>
-  <tr><td>面包板 + 杜邦线</td><td>连接模块</td></tr>
+  <tr><td>面包板 + 杜邦线</td><td>搭接电源轨与信号线；不必每次焊接</td></tr>
+  <tr><td>电烙铁（约 40W）与焊锡</td><td>需要固定端子、延长线或补焊时使用；本章首次用到</td></tr>
 </table>
 <p>本章就这几样。真传感器第四章再接。</p>
 <div class="info">
   <strong>参考资料：</strong>继电器模块说明见 <code>chapters/ch03/manuals/</code>（<code>0505单片机继电器模块说明.pdf</code>、<code>HW-221 产品说明书.pdf</code>）；排针插针方位见 <code>lpi4a-wiki-assets/io_map.png</code>。旧版 wiki 摘录已移入 <code>manuals/archive/</code>，不作为当前依据。
+</div>
+</section>
+
+<section id="breadboard">
+<h2>面包板怎么用</h2>
+<p>面包板用内部金属簧片把若干插孔连在一起，方便用杜邦线临时搭电路。本课用它把荔枝派排针上的电源、地和信号线接到继电器模块。</p>
+<figure>
+  <img src="assets/Figure_4.png" alt="面包板结构：电源轨、连接孔、隔离凹槽">
+  <figcaption>图 4　面包板内部连通关系：电源轨横向连通；中间区每列 5 孔纵向连通；中央隔离凹槽上下互不通</figcaption>
+</figure>
+<table>
+  <tr><th>部位</th><th>怎么通</th><th>本课怎么用</th></tr>
+  <tr><td><strong>电源轨</strong>（两侧红/蓝长条）</td><td>同一条「+」或「−」沿线横向连通</td><td>红线侧接排针 5V，蓝线侧接 GND；再从轨上分出多根线到模块</td></tr>
+  <tr><td><strong>连接孔</strong>（中间编号区）</td><td>同一列 a–e（或 f–j）五个孔纵向连通；相邻列不通</td><td>把模块某一脚与杜邦线插在<strong>同一列</strong>，即电气相连</td></tr>
+  <tr><td><strong>隔离凹槽</strong>（正中沟）</td><td>沟上下两区互不通</td><td>不要假设跨沟的孔已经连在一起；跨沟必须另用跳线</td></tr>
+</table>
+<ul>
+  <li>接线前断开开发板电源；插拔杜邦线时捏线帽，避免扯断芯线。</li>
+  <li>正极与负极不要在轨上短接；5V 与 GND 插反可能导致模块异常或损坏。</li>
+  <li>同一信号只占一列；乱插多列会造成意外并联。</li>
+</ul>
+<div class="warn">
+  <strong>连接要求：</strong>电源轨上的「+ / −」只是印刷标记，本身不带电；必须由排针 5V / GND 经杜邦线接入后，轨上才有电压。
+</div>
+</section>
+
+<section id="solder">
+<h2>电烙铁与安全（本章首次）</h2>
+<p>本章以面包板与杜邦线为主。若课程提供的线材需要补焊端子、延长线，或继电器螺丝端子需要焊环/焊片，会用到电烙铁。下图为常见的约 40W 直热式烙铁外形。</p>
+<figure>
+  <img src="assets/Figure_5.jpg" alt="电烙铁外形：手柄、发热芯、烙铁头与电源线">
+  <figcaption>图 5　电烙铁（示例约 40W）：使用前确认额定功率与电源规格符合实验室要求</figcaption>
+</figure>
+<table>
+  <tr><th>步骤</th><th>要求</th></tr>
+  <tr><td>通电前</td><td>烙铁头安装牢固；电源线无破损；工作台干燥、无易燃物；备好烙铁架与湿海绵/黄铜清洁丝</td></tr>
+  <tr><td>加热中</td><td>烙铁始终放在架子上，尖头朝外；勿触碰金属杆与烙铁头；手握隔热手柄</td></tr>
+  <tr><td>焊接时</td><td>先加热焊点再送锡，勿甩锡；通风或侧向排烟；避免长时间烫同一焊盘</td></tr>
+  <tr><td>结束后</td><td>断电，待完全冷却后再收纳；清洗烙铁头并镀一层薄锡防氧化</td></tr>
+</table>
+<div class="warn">
+  <strong>安全注意事项：</strong>烙铁头温度可达数百摄氏度，会造成烫伤并引燃桌面杂物。禁止用手试温；禁止把烙铁放在书本、塑料盒或杜邦线上；实验室内勿靠近易燃溶剂。皮肤接触焊锡烟气应尽量减少——保持通风。未成年人须在指导教师在场时使用。
+</div>
+<div class="info">
+  <strong>与本实验的关系：</strong>能用杜邦线插接完成的连接，不必焊接。只有课程明确要求补焊或端子固定时，才启用烙铁，并在焊接前再次确认开发板已断电。
 </div>
 </section>
 

@@ -156,6 +156,7 @@
   <a class="sub" href="#s3.2-busy">独占与「被占用」</a>
   <div class="divider"></div>
   <a href="#s3.3">3.3 继电器、接线与跟做</a>
+  <a class="sub" href="#s3.3-tools">面包板与电烙铁</a>
   <a class="sub" href="#s3.3-relay">继电器：信号端</a>
   <a class="sub" href="#s3.3-follow">跟做：gpioset 控继电器</a>
   <a class="sub" href="#s3.3-diagnose">故障排查（信号链）</a>
@@ -509,7 +510,19 @@ gpioget: unable to request lines: Device or resource busy</pre>
 <section id="s3.3">
 <div class="section-num">3.3</div>
 <h2>继电器、接线与跟做</h2>
-<p>这一节把 GPIO 接到真实的继电器与风扇上：信号端怎么接、用 <code>gpioset</code> 跟做一次、以及继电器不动时怎么排查。</p>
+<p>这一节把 GPIO 接到真实的继电器与风扇上：信号端怎么接、用 <code>gpioset</code> 跟做一次、以及继电器不动时怎么排查。动手前先弄清面包板怎么连通，以及本章首次可能用到的电烙铁安全要求；完整步骤与插图见本章实验。</p>
+
+<h3 id="s3.3-tools">面包板与电烙铁（首次）</h3>
+<p><strong>面包板</strong>：两侧电源轨沿红/蓝线横向连通；中间区同一列 5 个孔纵向连通；中央隔离凹槽上下互不通。把排针 5V / GND 接到电源轨后，再从轨上分线到继电器，可减少在排针上反复插拔。</p>
+<figure>
+  <img src="assets/Figure_4.png" alt="面包板结构示意：电源轨、连接孔、隔离凹槽" style="max-width:min(100%,720px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption style="font-size:15px;color:var(--faint);margin-bottom:20px">图：面包板连通关系（实验图 4）。接线前断开开发板电源；勿将 5V 与 GND 短接。</figcaption>
+</figure>
+<p><strong>电烙铁</strong>：本章以杜邦线插接为主；需要补焊端子或固定焊环时才使用。通电后烙铁放在架子上，勿用手试温，结束后断电冷却再收纳。安全细则与外形图见实验「电烙铁与安全」。</p>
+<figure>
+  <img src="assets/Figure_5.jpg" alt="电烙铁外形示例" style="max-width:min(100%,420px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption style="font-size:15px;color:var(--faint);margin-bottom:20px">图：电烙铁外形示例（实验图 5）。焊接前确认开发板已断电。</figcaption>
+</figure>
 
 <h3 id="s3.3-relay">继电器：信号端与负载端</h3>
 <p><strong>继电器</strong>把小信号变成大电流通路的通断：GPIO 驱动<strong>信号端</strong>（丝印 IN / X1，高电平吸合）；风扇等大电流走触点（NO / COM）。程序只写高/低，电机电流不进 SoC 脚。</p>
