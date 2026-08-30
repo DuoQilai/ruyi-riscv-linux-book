@@ -1,6 +1,15 @@
 # 课程内容更新汇报（第 1–4 章）
 
-本份汇报总结了近十天（2026 年 8 月 20 日至 8 月 26 日）对课程第 1 至第 4 章课件与实验所做的更新。课程页面已经部署在本仓库的 GitHub Pages 上，可以随时在线预览：[课程在线预览](https://duoqilai.github.io/ruyi-riscv-linux-book/)。ruyiSDK 的官方文档也在持续跟进：[ruyiSDK 官方文档](https://ruyisdk.org/)。
+本份汇报总结了近十天（2026 年 8 月 20 日至 8 月 26 日）对课程第 1 至第 4 章课件与实验所做的更新。课程页面已经部署在本仓库的 GitHub Pages 上，完整课程总览见：[课程大纲（CourseOutline.html）](https://duoqilai.github.io/ruyi-riscv-linux-book/docs/CourseOutline.html)，其中可以点击跳转到每一章的讲义（lecture）与实验（lab）。
+
+## 汇总表
+
+| 章节 | ruyiSDK 相关新增 | 其他新增 |
+|---|---|---|
+| 第 1 章 | ruyiSDK 安装、`ruyi venv` 虚拟环境、`ruyi device provision` 一键烧录、交叉编译器验证 | 三元组拆解、反汇编对比、ELF 架构识别、串口/SSH/SCP 三通道对比；mini 程序交叉编译实机运行 |
+| 第 2 章 | 无 | 类型转换、static、传值/传指针、数组与 sizeof 等引导实例 |
+| 第 3 章 | 交叉编译工作流（激活 venv → make → 拷板运行） | 寄存器/位心智模型、本板 GPIO 实测编号、gpioset 持线用法、面包板与电烙铁；relay-toggle 完整示例 |
+| 第 4 章 | 交叉编译工作流（同第 3 章） | select 模型、命令表/切词/派发；cmd-demo 完整命令读取器 |
 
 ## 总体说明
 
@@ -49,15 +58,6 @@
 - 讲解了 select 模型：让内核同时盯住多个来源，既能及时响应学员输入，又能在采样时间到达时触发采样，并通过超时机制实现「该采样了」的判定。
 - 新增了一个完整的命令读取器示例 cmd-demo，采用先分再合的思路：先分别讲解处理函数和命令表（结构体加函数指针），再合成一个完整程序。示例用 help、echo、quit 三个无关命令作为骨架，实验里的 status、set 由学员自己实现，结构与示例保持一致。
 - 补充了真实对话片段，帮助学员理解命令行的实际交互过程。
-
-## 汇总表
-
-| 章节 | ruyiSDK 相关新增 | 其他新增 |
-|---|---|---|
-| 第 1 章 | ruyiSDK 安装、`ruyi venv` 虚拟环境、`ruyi device provision` 一键烧录、交叉编译器验证 | 三元组拆解、反汇编对比、ELF 架构识别、串口/SSH/SCP 三通道对比；mini 程序交叉编译实机运行 |
-| 第 2 章 | 无 | 类型转换、static、传值/传指针、数组与 sizeof 等引导实例 |
-| 第 3 章 | 交叉编译工作流（激活 venv → make → 拷板运行） | 寄存器/位心智模型、本板 GPIO 实测编号、gpioset 持线用法、面包板与电烙铁；relay-toggle 完整示例 |
-| 第 4 章 | 交叉编译工作流（同第 3 章） | select 模型、命令表/切词/派发；cmd-demo 完整命令读取器 |
 
 ## 其他维护性改动（非知识点）
 
