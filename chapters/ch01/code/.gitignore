@@ -1,0 +1,3 @@
+coremark/coremark.exe
+coremark/*.o
+coremark/*.log

@@ -25,6 +25,9 @@ Thumbs.db
 .obsidian/
 .vscode/
 .idea/
+
+# Local agent skills (personal tooling, not course material)
+.agents/
 *.swp
 *.swo
 *~
@@ -47,5 +50,34 @@ venv/
 ~$*
 *.tmp
 
-# Generated course artifacts
-slides/**/*.pdf
+# Dependencies
+node_modules/
+
+# Local reference dumps (books, installers, course zips, old drafts — not course source)
+reference/
+
+# Taobao product-page PDF dumps / phone photos (keep real datasheets only)
+chapters/**/manuals/**/*淘宝网.pdf
+chapters/**/manuals/**/*.HEIC
+chapters/**/manuals/**/*.heic
+chapters/**/manuals/**/*.JPG
+chapters/**/manuals/**/*.jpg
+chapters/**/manuals/**/*.JPEG
+chapters/**/manuals/**/*.jpeg
+chapters/**/manuals/**/*.PNG
+chapters/**/manuals/**/*.png
+!chapters/**/manuals/**/lpi4a-wiki-assets/**
+
+# Regenerated chapter printouts (not source of truth)
+chapters/*/lab.pdf
+chapters/*/lecture.pdf
+chapters/*/code/**/build/
+chapters/ch02/code/hello/hello
+chapters/ch02/code/cmd-table/cmd-table
+
+# Internal deck recordings (keep placeholders only)
+deck/videos/*.mp4
+deck/videos/*.MOV
+deck/videos/*.mov
+deck/assets/*.MOV
+deck/assets/*.mov
