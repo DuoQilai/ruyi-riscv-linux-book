@@ -32,22 +32,22 @@ sol: dirs $(SOL_TARGET)
 dirs:
 	@mkdir -p $(BUILD_DIR)/src
 
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) | dirs
 	$(CC) $(LDFLAGS) -o $@ $^
 
-$(SOL_TARGET): $(BUILD_DIR)/src/main-sol.o $(BUILD_DIR)/src/thermo-sol.o
+$(SOL_TARGET): $(BUILD_DIR)/src/main-sol.o $(BUILD_DIR)/src/thermo-sol.o | dirs
 	$(CC) $(LDFLAGS) -o $@ $^
 
-$(BUILD_DIR)/src/main.o: src/main.c
+$(BUILD_DIR)/src/main.o: src/main.c | dirs
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/src/thermo.o: src/thermo.c
+$(BUILD_DIR)/src/thermo.o: src/thermo.c | dirs
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/src/main-sol.o: src/main.c
+$(BUILD_DIR)/src/main-sol.o: src/main.c | dirs
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/src/thermo-sol.o: src/thermo-sol.c
+$(BUILD_DIR)/src/thermo-sol.o: src/thermo-sol.c | dirs
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:

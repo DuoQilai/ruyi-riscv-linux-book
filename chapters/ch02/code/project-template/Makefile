@@ -18,11 +18,13 @@ all: dirs $(TARGET)
 dirs:
 	@mkdir -p $(BUILD_DIR)/src
 
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) | dirs
 	$(CC) $(LDFLAGS) -o $@ $^
 
-$(BUILD_DIR)/%.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+$(BUILD_DIR)/%.o: %.c | dirs
+	$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
+
+-include $(OBJS:.o=.d)
 
 clean:
 	rm -rf $(BUILD_DIR)
