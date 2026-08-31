@@ -590,7 +590,7 @@ gpioget: unable to request lines: Device or resource busy</pre>
 <h2>决策 → 执行：模拟温度怎么驱动风扇</h2>
 
 <h3 id="s3.4-loop">数据流：决策 → 执行</h3>
-<p>第三章的程序用程序内部自变的<strong>模拟温度</strong>（约 24°C → 31°C 再降回）演示「决策 → 执行」：模拟温度 → 阈值判断 → 继电器 → 风扇。真传感器（DHT22）到第四章再接。</p>
+<p>第三章的程序用程序内部自变的<strong>模拟温度</strong>（约 24°C → 30°C 再降回）演示「决策 → 执行」：模拟温度 → 阈值判断 → 继电器 → 风扇。真传感器（DHT22）到第四章再接。</p>
 <p><strong>执行侧</strong>是开/关：GPIO 高/低 → 继电器 → 风扇电源通断。两档阈值形成<strong>滞回</strong>（第二章已定义：中间区间保持上一状态），温度在临界附近时风扇保持上一状态。</p>
 
 <div class="diagram">模拟温度 T（程序内部自变）

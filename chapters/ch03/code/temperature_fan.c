@@ -73,11 +73,16 @@ int main(void)
 	printf("[INFO] relay/fan on IO1_5 (gpiochip5 line 5); Ctrl+C to stop\n");
 
 	while (g_running) {
-		t += dir * STEP_DELTA;
-		if (t > T_SWEEP_MAX)
+		/* 到边界就反向：模拟温度保持在 [T_SWEEP_MIN, T_SWEEP_MAX] 内 */
+		if (dir > 0 && t + STEP_DELTA > T_SWEEP_MAX) {
+			t = T_SWEEP_MAX;
 			dir = -1;
-		if (t < T_SWEEP_MIN)
+		} else if (dir < 0 && t - STEP_DELTA < T_SWEEP_MIN) {
+			t = T_SWEEP_MIN;
 			dir = 1;
+		} else {
+			t += dir * STEP_DELTA;
+		}
 
 		prev = fan;
 		fan_decide(t, &fan);

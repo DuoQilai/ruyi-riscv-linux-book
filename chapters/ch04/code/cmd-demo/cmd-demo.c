@@ -6,7 +6,7 @@
 
 /* 分①：处理函数——每个命令做一件事 */
 static int cmd_help(char *args) { (void)args; printf("commands: help echo quit\n"); return 0; }
-static int cmd_echo(char *args) { printf("%s\n", args); return 0; }
+static int cmd_echo(char *args) { printf("%s\n", args ? args : ""); return 0; }
 static int cmd_quit(char *args) { (void)args; return 1; }
 
 /* 分②：命令表——名字 → 函数指针 */

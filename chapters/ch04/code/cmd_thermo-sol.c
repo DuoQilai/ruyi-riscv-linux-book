@@ -193,20 +193,11 @@ static int dht22_read(float *temp_c, float *hum_pct)
 	for (j = 0; j < 5; j++)
 		data[j] = 0;
 	for (j = 0; j < 40; j++) {
-		int b = (j == 0) ? 0 : bits[j - 1];
 		data[j / 8] <<= 1;
-		data[j / 8] |= b;
+		data[j / 8] |= bits[j];
 	}
-	if (((data[0] + data[1] + data[2] + data[3]) & 0xFF) != data[4]) {
-		for (j = 0; j < 5; j++)
-			data[j] = 0;
-		for (j = 0; j < 40; j++) {
-			data[j / 8] <<= 1;
-			data[j / 8] |= bits[j];
-		}
-		if (((data[0] + data[1] + data[2] + data[3]) & 0xFF) != data[4])
-			return -1;
-	}
+	if (((data[0] + data[1] + data[2] + data[3]) & 0xFF) != data[4])
+		return -1;
 	*hum_pct = ((data[0] << 8) | data[1]) / 10.0f;
 	*temp_c = ((data[2] << 8) | data[3]) / 10.0f;
 	if (data[2] & 0x80)

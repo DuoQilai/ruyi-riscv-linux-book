@@ -45,6 +45,9 @@ struct gpiod_line_request *line_request(unsigned int offset,
 	if (!s || !lc || !rc)
 		return NULL;
 	gpiod_line_settings_set_direction(s, direction);
+	if (direction == GPIOD_LINE_DIRECTION_OUTPUT)
+		gpiod_line_settings_set_output_value(s, val ? GPIOD_LINE_VALUE_ACTIVE
+		                                              : GPIOD_LINE_VALUE_INACTIVE);
 	gpiod_line_config_add_line_settings(lc, offs, 1, s);
 	gpiod_request_config_set_consumer(rc, "temperature_fan");
 
@@ -52,9 +55,6 @@ struct gpiod_line_request *line_request(unsigned int offset,
 	gpiod_request_config_free(rc);
 	gpiod_line_config_free(lc);
 	gpiod_line_settings_free(s);
-
-	if (r && direction == GPIOD_LINE_DIRECTION_OUTPUT)
-		gpiod_line_request_set_value(r, offset, val);
 	return r;
 }
 
@@ -114,11 +114,16 @@ int main(void)
 	printf("[INFO] relay/fan on IO1_5 (gpiochip5 line 5); Ctrl+C to stop\n");
 
 	while (g_running) {
-		t += dir * STEP_DELTA;
-		if (t > T_SWEEP_MAX)
+		/* 到边界就反向：模拟温度保持在 [T_SWEEP_MIN, T_SWEEP_MAX] 内 */
+		if (dir > 0 && t + STEP_DELTA > T_SWEEP_MAX) {
+			t = T_SWEEP_MAX;
 			dir = -1;
-		if (t < T_SWEEP_MIN)
+		} else if (dir < 0 && t - STEP_DELTA < T_SWEEP_MIN) {
+			t = T_SWEEP_MIN;
 			dir = 1;
+		} else {
+			t += dir * STEP_DELTA;
+		}
 
 		prev = fan;
 		fan_decide(t, &fan);
