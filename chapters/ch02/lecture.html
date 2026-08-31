@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第二章 够用的 C 语言基础 · 讲义 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --paper: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono","Menlo","Cascadia Code",monospace;
+    --sans: "PingFang SC","Noto Sans SC",-apple-system,sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+  }
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    justify-content: center; align-items: center; text-align: center;
+    padding: 80px 40px; border-bottom: 1px solid var(--line);
+  }
+  .hero .chapter-tag {
+    font-size: 42px; letter-spacing: 0.12em; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 24px;
+  }
+  .hero h1 { font-size: 64px; font-weight: 700; line-height: 1.25; margin-bottom: 20px; }
+  .hero .subtitle { font-size: 22px; color: var(--muted); line-height: 1.6; max-width: 700px; }
+  .hero .meta { margin-top: 48px; display: flex; gap: 40px; font-size: 17px; color: var(--faint); }
+  .content { max-width: 1000px; margin: 0 auto; padding: 0 48px 120px; }
+  section { padding: 80px 0; border-bottom: 1px solid var(--line-light); }
+  section:last-of-type { border-bottom: none; }
+  .section-num { font-size: 15px; letter-spacing: 0.12em; color: var(--accent); margin-bottom: 12px; }
+  section h2 { font-size: 40px; font-weight: 700; margin-bottom: 40px; line-height: 1.3; }
+  section h3 { font-size: 24px; font-weight: 700; margin: 40px 0 16px; color: var(--text); }
+  section h4 { font-size: 19px; font-weight: 700; margin: 28px 0 10px; color: var(--muted); }
+  section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
+  section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
+  section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 24px 28px; margin: 20px 0 28px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.75; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  pre code { background: none; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 24px 0 32px; font-size: 17px; }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line-light); }
+  th { font-weight: 700; font-size: 15px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: #8c5440; line-height: 1.7;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 22px 26px; margin: 24px 0; font-size: 18px; color: var(--muted); line-height: 1.7;
+  }
+  .ex {
+    border: 1px solid var(--line-light); border-left: 5px solid var(--accent);
+    background: #eef4f5; padding: 18px 26px; margin: 22px 0;
+  }
+  .ex .k { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 10px; }
+  .ex p { font-size: 18px; color: var(--muted); line-height: 1.7; }
+  .ex pre { margin: 12px 0 4px; }
+  .ex.temp { background: #fdeee0; border-left-color: #c46b4a; }
+  .ex.mem  { background: #e3eef9; border-left-color: #2e6b6e; }
+  .ex.pale { background: #f7f3e8; border-left-color: #8a6d14; }
+  .diagram {
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
+    white-space: pre; overflow-x: auto;
+  }
+  .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0 32px; }
+  .card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card { border: 1px solid var(--line); padding: 28px 30px; }
+  .card h4 { font-size: 20px; font-weight: 700; margin: 0 0 10px; color: var(--text); }
+  .card p { font-size: 17px; margin: 0; }
+  .steps { list-style: none; padding: 0; }
+  .steps li {
+    display: flex; gap: 20px; align-items: flex-start;
+    padding: 16px 0; border-bottom: 1px solid var(--line-light);
+    font-size: 18px; color: var(--muted); line-height: 1.6;
+  }
+  .steps li .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 40px 24px; z-index: 10;
+  }
+  .toc h4 { font-size: 14px; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 20px; text-transform: uppercase; }
+  .toc a { display: block; padding: 6px 0; font-size: 15px; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .toc a:hover { color: var(--accent); }
+  .toc a.sub { padding-left: 16px; font-size: 14px; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+  body { padding-left: 240px; }
+  @media print {
+    body { padding-left: 0; background: #fff; }
+    .toc { display: none; }
+    .hero { min-height: auto; padding: 40px 40px 32px; page-break-after: always; }
+    .content { max-width: none; padding: 0 36px; }
+    section { padding: 36px 0; page-break-before: always; }
+    section:first-of-type { page-break-before: avoid; }
+    pre, .diagram { font-size: 11pt; }
+  }
+
+  figure { margin: 16px 0 20px; }
+  figure img {
+    display: block; max-width: min(100%, 720px); width: auto; height: auto;
+    border: 1px solid var(--line-light, #e8e3d8);
+  }
+  figcaption { font-size: 14px; color: var(--faint, #8c8276); margin-top: 8px; line-height: 1.45; }
+/* course-nav-css */
+
+  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line, #d4cfc4);
+    font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
+    line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>目录</h4>
+<!-- course-nav-toc -->
+  <a class="course-rail" href="../../index.html">课程总览</a>
+  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
+  <a class="course-rail" href="lab.html">本章实验</a>
+  <div class="divider"></div>
+  <a href="#overview">本章概览</a>
+  <div class="divider"></div>
+  <a href="#glossary">本章术语</a>
+  <div class="divider"></div>
+  <a href="#s2.1">2.1 类型、变量、控制流</a>
+  <a class="sub" href="#s2.1-types">类型与变量</a>
+  <a class="sub" href="#s2.1-control">控制流</a>
+  <div class="divider"></div>
+  <a href="#s2.2">2.2 函数、头文件与多文件工程</a>
+  <a class="sub" href="#s2.2-func">函数</a>
+  <a class="sub" href="#s2.2-header">头文件</a>
+  <a class="sub" href="#s2.2-project">多文件工程</a>
+  <a class="sub" href="#s2.2-build">编译、链接与进程入口</a>
+  <div class="divider"></div>
+  <a href="#s2.3">2.3 指针、数组、结构体</a>
+  <a class="sub" href="#s2.3-ptr">指针与数组</a>
+  <a class="sub" href="#s2.3-struct">结构体</a>
+  <a class="sub" href="#s2.3-life">生命周期：变量活在哪、活多久</a>
+  <div class="divider"></div>
+  <a href="#s2.4">2.4 实验直接要用到的 C</a>
+  <a class="sub" href="#s2.4-string">字符串</a>
+  <a class="sub" href="#s2.4-bits">位运算</a>
+  <a class="sub" href="#s2.4-funcptr">函数指针</a>
+  <a class="sub" href="#s2.4-cmdtable">跟做：命令表</a>
+  <a class="sub" href="#s2.4-macro">宏与条件编译</a>
+  <a class="sub" href="#s2.4-designated">设计化初始化</a>
+</nav>
+
+<div class="hero">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
+  <h1>够用的 C 语言基础</h1>
+  <p class="subtitle">类型 · 控制流 · 函数与多文件 · 编译链接与进程入口<br>指针 · 结构体 · 字符串 · 位运算 · 函数指针 · 宏<br>— 2.1 / 2.2 / 2.3 / 2.4 —</p>
+  <div class="meta">
+    <span>跟做：hello + project-template + cmd-table</span>
+    <span>本章实验：写出滞回 + 改读数闯关</span>
+  </div>
+</div>
+
+<div class="content">
+
+<section id="overview">
+<h2>开始之前</h2>
+
+<div class="warn" style="margin-bottom:32px;">
+  <strong>前置：</strong>已完成第一章——能编译（板端原生或主机交叉）、荔枝派 4A 能运行程序。本章目标是<strong>读懂、改得动，并能按契约写出函数</strong>。讲义跟做 <code>hello</code>、<code>project-template</code> 与 <code>cmd-table</code>。
+</div>
+
+<h3>你需要准备什么</h3>
+
+<div class="card-grid card-grid-3">
+  <div class="card"><h4>编译器</h4><p>本机 <code>gcc</code> 与 <code>make</code>；Makefile 里已有 <code>CROSS_COMPILE</code>，需要上板时再打开交叉前缀。</p></div>
+  <div class="card"><h4>代码目录</h4><p><code>chapters/ch02/code/</code>：讲义跟做 <code>hello/</code>、<code>project-template/</code>、<code>cmd-table/</code>；实验闯关 <code>fake-thermostat/</code>。</p></div>
+  <div class="card"><h4>编辑器</h4><p>任意能改 C 的编辑器；改完 <code>make</code>，看终端输出是否符合预期。</p></div>
+</div>
+
+<h3>本章你会学到什么</h3>
+
+<div class="card-grid" style="margin-bottom:0;">
+  <div class="card"><h4>2.1 类型、变量、控制流</h4><p>用 int / float / 比较与循环写出「温度高了就开风扇」这类判断。</p></div>
+  <div class="card"><h4>2.2 函数、多文件、编译链接</h4><p>声明与定义；Makefile 编多个 <code>.c</code>；<code>.c</code> → <code>.o</code> → 可执行文件；Linux 加载后先 <code>_start</code> 再 <code>main</code>。</p></div>
+  <div class="card"><h4>2.3 指针、数组、结构体</h4><p>看懂参数里的指针、配置结构体和数组序列。</p></div>
+  <div class="card"><h4>2.4 后续实验会出现的 C</h4><p>跟做切词与函数指针命令表；认位运算、宏与条件编译、设计化初始化。</p></div>
+</div>
+
+<div class="info" style="margin-top:28px;">
+  <strong>讲义与实验怎么衔接：</strong>讲义把概念与跟做一次打透（含能编译的命令表）。实验先按契约从空写出 <code>thermo_decide</code>，再改 <code>thermo_read</code> 的指针与错误分支。同一操作链不写两遍。
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="glossary">
+<div class="section-num">术语表</div>
+<h2>本章术语：先说清，再往下</h2>
+<p>下面这些词会在本章反复出现。先扫一遍，知道「它是什么、为什么需要它」；读到再见到就不慌，也可以随时翻回这一页。它们不是堆砌——每引入一个词，都是因为我们到了必须说清那一步的关口。</p>
+
+<table>
+  <tr><th>术语</th><th>是什么</th><th>为什么需要它</th></tr>
+  <tr><td><strong>类型</strong></td><td>规定一块内存按什么规则解释</td><td>决定运算方式和能存什么</td></tr>
+  <tr><td><strong>变量 / 常量</strong></td><td>可变的量 / 不可变的量</td><td>存数据 / 配参数（<code>const</code>）</td></tr>
+  <tr><td><strong>控制流</strong></td><td>分支与循环</td><td>决定程序「先做什么、再做什么」</td></tr>
+  <tr><td><strong>滞回</strong></td><td>开/关用两个阈值，中间保持</td><td>温度在临界附近时风扇不频繁开合</td></tr>
+  <tr><td><strong>函数</strong></td><td>有名字的代码块（参数 + 返回值）</td><td>把「一件事」包起来，复用、可测</td></tr>
+  <tr><td><strong>声明 / 定义</strong></td><td>告诉存在 / 给出实现</td><td><code>.h</code> 声明、<code>.c</code> 定义，分工</td></tr>
+  <tr><td><strong>头文件</strong></td><td>放声明与类型的文件（<code>.h</code>）</td><td>多文件工程共享接口</td></tr>
+  <tr><td><strong>编译</strong></td><td>每个 <code>.c</code> → 对应 <code>.o</code></td><td>逐文件把 C 翻成机器码</td></tr>
+  <tr><td><strong>链接</strong></td><td><code>.o</code> + 库 → 可执行文件</td><td>把各文件的符号拼到一起</td></tr>
+  <tr><td><strong>_start / main</strong></td><td>进程的入口</td><td>Linux 加载后先跑 <code>_start</code> 再进 <code>main</code></td></tr>
+  <tr><td><strong>指针</strong></td><td>存着某个对象地址的变量</td><td>函数要改调用方的变量、访问数据</td></tr>
+  <tr><td><strong>数组</strong></td><td>连续的同类型元素</td><td>存一串温度/读数</td></tr>
+  <tr><td><strong>结构体</strong></td><td>把相关字段捆成一种类型</td><td>一个对象传到底，不散落一堆变量</td></tr>
+  <tr><td><strong>生命周期 / 存储期</strong></td><td>变量活多久、放哪</td><td>全局/static/局部各不同，写前先想清</td></tr>
+  <tr><td><strong>栈 / 数据段</strong></td><td>局部变量放栈、全局放数据段</td><td>内存布局的心智模型</td></tr>
+  <tr><td><strong>字符串</strong></td><td><code>char</code> 数组 + 结尾 <code>'\0'</code></td><td>C 没有字符串类型，命令解析全靠它</td></tr>
+  <tr><td><strong>位运算</strong></td><td><code>&amp;</code> <code>|</code> <code>&lt;&lt;</code> <code>&gt;&gt;</code></td><td>操作寄存器里的位（DHT22 读位）</td></tr>
+  <tr><td><strong>函数指针</strong></td><td>指向函数的指针</td><td>命令表：名字 → 处理函数</td></tr>
+  <tr><td><strong>宏 / 条件编译</strong></td><td>编译期替换 / 按条件编译</td><td>模拟/真传感器一宏切换</td></tr>
+  <tr><td><strong>设计化初始化</strong></td><td><code>.field = 值</code> 初始化结构体</td><td>按字段名填，不易填错顺序</td></tr>
+</table>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="s2.1">
+<div class="section-num">2.1</div>
+<h2>类型、变量、控制流</h2>
+
+<h3 id="s2.1-types">类型与变量</h3>
+<p>程序处理的是<strong>有类型的数据</strong>。<strong>类型</strong>规定一块内存按什么规则解释（整数、小数、文字等）。本课最常见的几种：</p>
+
+<table>
+  <tr><th>类型</th><th>典型用途</th><th>例子</th></tr>
+  <tr><td><code>int</code></td><td>计数、状态、返回码</td><td>风扇开关 <code>0/1</code>、循环下标</td></tr>
+  <tr><td><code>float</code> / <code>double</code></td><td>温度、小数</td><td><code>28.5</code> °C</td></tr>
+  <tr><td><code>char</code> / 字符串</td><td>日志文字</td><td><code>"FAN ON"</code></td></tr>
+  <tr><td><code>int</code> 返回值</td><td>成功 / 失败</td><td><code>0</code> 成功，非 <code>0</code> 失败</td></tr>
+</table>
+
+<pre><span class="k">int</span> fan_on = 0;          <span class="c">/* 0 = 关，1 = 开 */</span>
+<span class="k">float</span> temp_c = 27.5f;    <span class="c">/* 当前温度 */</span>
+<span class="k">const float</span> T_HIGH = 28.0f;
+<span class="k">const float</span> T_LOW  = 26.0f;</pre>
+
+<div class="ex temp">
+  <div class="k">常见陷阱 · 类型转换</div>
+  <p>整数除法直接丢掉小数。算"温度占比"时，两边都是 <code>int</code>，结果会截断：</p>
+<pre><span class="k">int</span> temp_i = 27;
+<span class="k">int</span> max_i  = 30;
+<span class="k">int</span> pct    = temp_i * 100 / max_i;      <span class="c">/* 90，不是 90.0 */</span>
+<span class="k">float</span> ratio = (temp_i * 100.0f) / max_i; <span class="c">/* 90.0f：先变成浮点再除 */</span></pre>
+  <p>想让结果保留小数，运算里至少一个操作数要是浮点（写 <code>100.0f</code> 或显式 <code>(float)</code>）。</p>
+</div>
+
+<div class="info">
+  <strong>习惯：</strong>配置常量用 <code>const</code> 写清含义；开关语义用 <code>0/1</code>，并在注释里标明「开/关」。
+</div>
+
+<h3 id="s2.1-control">控制流：判断与循环</h3>
+<p><strong>控制流</strong>决定程序「先做什么、再做什么」——分支、循环都算。</p>
+<p>温控里会用到<strong>滞回</strong>：开和关用两个不同的阈值，中间一段「保持上一状态」，避免温度在临界附近来回抖动时风扇频繁开合。例如：温度<strong>严格大于</strong> 28 °C 才开风扇，<strong>严格小于</strong> 26 °C 才关；落在 26–28 之间则不改当前开关状态。</p>
+
+<pre><span class="k">if</span> (temp_c &gt; T_HIGH) {
+    fan_on = 1;
+} <span class="k">else if</span> (temp_c &lt; T_LOW) {
+    fan_on = 0;
+}
+<span class="c">/* 落在 [T_LOW, T_HIGH] 之间：保持现状（滞回） */</span></pre>
+
+<p>周期性采样用循环：</p>
+
+<pre><span class="k">for</span> (<span class="k">int</span> i = 0; i &lt; n; i++) {
+    <span class="c">/* 读一次温度，做一次决策，打印一行 */</span>
+}
+
+<span class="k">while</span> (running) {
+    <span class="c">/* 主循环：采样 → 决策 → 延时 */</span>
+}</pre>
+
+<div class="diagram">温度序列示例（滞回）
+  T_HIGH = 28    T_LOW = 26
+
+  25 → 关     27 → 保持     29 → 开
+  27 → 保持   25 → 关
+
+  陷阱：比较方向写反、用错阈值字段，都会让「该开不开 / 该关不关」。</div>
+
+<p>读图：从 25 升到 27 仍关着（还没越过 28）；到 29 才开；再降到 27 仍保持开（还没低于 26）；到 25 才关。中间「保持」就是滞回在起作用。</p>
+
+<h3>跟做与练习</h3>
+<ol>
+  <li>写出：温度严格大于 28 开风扇，严格小于 26 关风扇，中间保持原状态。</li>
+  <li><code>temp &gt;= T_HIGH</code> 与 <code>temp &gt; T_HIGH</code> 在边界 <code>28.0</code> 上行为差在哪里？</li>
+  <li>若把 <code>T_HIGH</code> 和 <code>T_LOW</code> 写反，会出现什么现象？</li>
+</ol>
+
+<pre><span class="p">$</span> cd chapters/ch02/code/hello
+<span class="p">$</span> make
+<span class="p">$</span> ./hello</pre>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能读懂阈值判断与简单循环；能说明滞回为什么需要「保持现状」。
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="s2.2">
+<div class="section-num">2.2</div>
+<h2>函数、头文件与多文件工程</h2>
+
+<h3 id="s2.2-func">函数：把「一件事」包起来</h3>
+<p><strong>函数</strong>是一段有名字的代码块，有参数、返回值和函数体。本课常见写法：</p>
+
+<pre><span class="c">/* 返回 0 成功，非 0 失败 */</span>
+<span class="k">int</span> read_temp(<span class="k">float</span> *out_c);
+
+<span class="k">void</span> apply_fan_policy(<span class="k">float</span> temp_c, <span class="k">int</span> *fan_on);</pre>
+
+<p>调用方根据返回值决定是否继续用读到的温度：</p>
+
+<pre><span class="k">float</span> t;
+<span class="k">if</span> (read_temp(&amp;t) != 0) {
+    <span class="c">/* 读失败：打日志，不要用未初始化的 t */</span>
+    <span class="k">return</span>;
+}
+apply_fan_policy(t, &amp;fan_on);</pre>
+
+<h3 id="s2.2-header">头文件：声明接口</h3>
+<p><strong>头文件</strong>（<code>.h</code>）告诉其他 <code>.c</code>：「这些函数/类型存在」。实现放在对应的 <code>.c</code> 里。用 include guard 防止重复包含：</p>
+
+<pre><span class="c">/* greet.h */</span>
+<span class="k">#ifndef</span> GREET_H
+<span class="k">#define</span> GREET_H
+
+<span class="k">void</span> greet(<span class="k">const char</span> *name);
+
+<span class="k">#endif</span></pre>
+
+<div class="card-grid">
+  <div class="card"><h4>声明在 .h</h4><p>函数原型、结构体类型、对外宏——给调用方看。</p></div>
+  <div class="card"><h4>定义在 .c</h4><p>函数体、静态内部变量——实现细节。</p></div>
+</div>
+
+<h3 id="s2.2-project">多文件工程：跟做模板</h3>
+<ul>
+  <li><code>chapters/ch02/code/hello/</code> — 单文件入门</li>
+  <li><code>chapters/ch02/code/project-template/</code> — <code>src/</code> + <code>include/</code> + <code>build/</code></li>
+</ul>
+
+<div class="diagram">project-template/
+├── Makefile
+├── include/greet.h     ← 接口声明
+├── src/main.c          ← 调用 greet()
+├── src/greet.c         ← 实现 greet()
+└── build/              ← make 生成，可删</div>
+
+<pre><span class="p">$</span> cd chapters/ch02/code/project-template
+<span class="p">$</span> make
+<span class="p">$</span> ./build/app</pre>
+
+<div class="warn">
+  <strong>Makefile 命令行必须用 Tab 缩进</strong>，用空格会报 <code>missing separator</code>。
+</div>
+
+<ol>
+  <li>若只改 <code>greet.c</code> 不改 <code>main.c</code>，再 <code>make</code>，哪些文件会重新编译？</li>
+  <li>为什么调用方 <code>#include "greet.h"</code>，而不是把函数体复制进 <code>main.c</code>？</li>
+</ol>
+
+<div class="ex">
+  <div class="k">static · 只在本文件可见</div>
+  <p>多文件工程里，函数和全局变量默认对外可见；加 <code>static</code> 后只在本 <code>.c</code> 里能用，别的文件同名也不冲突：</p>
+<pre><span class="c">/* sensor.c */</span>
+<span class="k">static float</span> last_temp = 0.0f;   <span class="c">/* 别的文件看不到、改不到 */</span>
+<span class="k">static int</span>  calibrate(<span class="k">float</span> t);  <span class="c">/* 内部辅助函数，不外露 */</span></pre>
+  <p>对外要用的才写进头文件；内部细节用 <code>static</code> 藏起来。</p>
+</div>
+
+<h3 id="s2.2-build">编译、链接与进程入口</h3>
+<p>多个 <code>.c</code> 最终变成<strong>一个</strong>可执行文件，分两步：</p>
+<ul>
+  <li><strong>编译</strong>：每个 <code>.c</code> → 对应 <code>.o</code>（机器码 + 符号表：本文件提供了什么、还引用了什么）。</li>
+  <li><strong>链接</strong>：多个 <code>.o</code> 与 C 运行库拼成 ELF；解析未定义符号（如 <code>main.o</code> 需要的 <code>greet</code> 必须在 <code>greet.o</code> 里找到，否则报 <code>undefined reference</code>）。</li>
+</ul>
+
+<div class="diagram">编译 + 链接
+
+  main.c  ──编译──►  main.o   （提供 main，需要 greet）
+  greet.c ──编译──►  greet.o  （提供 greet）
+                         │
+                         ▼ 链接
+              解析符号：main 需要的 greet ← greet.o
+              再链上 C 运行库（printf、启动代码等）
+                         │
+                         ▼
+                    build/app（可执行 ELF）</div>
+
+<p>改 <code>greet.c</code> 通常只需重编 <code>greet.o</code>，不必重编 <code>main.c</code>。<code>.h</code> 不参加链接：它只在编译期把声明抄进需要它的 <code>.c</code>。</p>
+
+<p>对你写的业务代码，入口是 <code>main</code>。对整个<strong>进程</strong>，Linux 加载 ELF 后先跑 C 运行库的启动代码（常记作 <code>_start</code>）：准备栈、<code>argc</code>/<code>argv</code>、全局与静态初始化，再调用 <code>main</code>；<code>main</code> 返回后再做收尾并退出进程。</p>
+
+<div class="diagram">进程启动
+
+  Linux 加载 ELF
+        │
+        ▼
+  _start（运行库，不是你写的）
+        ├─ 栈、argc/argv、环境
+        ├─ 全局 / 静态初始化
+        ▼
+  main(argc, argv)
+        │
+        ▼
+  返回后运行库收尾并退出进程</div>
+
+<p>因此：应用层说「从 <code>main</code> 开始」；完整链条是 <strong>加载 → <code>_start</code> → 初始化 → <code>main</code></strong>。</p>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能说明声明/定义分工；能编译 <code>project-template</code>；能口述 <code>.c</code> → <code>.o</code> → 链接 → ELF，以及 <code>_start</code> → <code>main</code>。
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="s2.3">
+<div class="section-num">2.3</div>
+<h2>指针、数组、结构体</h2>
+
+<h3 id="s2.3-ptr">指针与数组</h3>
+<p><strong>指针</strong>是「存着某个对象地址」的变量。函数要<strong>写回</strong>调用方的变量时，就传指针：</p>
+
+<pre><span class="k">void</span> set_fan(<span class="k">int</span> *fan_on, <span class="k">int</span> value)
+{
+    <span class="k">if</span> (fan_on == NULL)
+        <span class="k">return</span>;
+    *fan_on = value;   <span class="c">/* 改的是调用方那份变量 */</span>
+}</pre>
+
+<div class="ex temp">
+  <div class="k">传值 vs 传指针 · 哪个改到外面</div>
+  <p>函数参数默认是<strong>拷贝</strong>。想改调用方的变量，就得传它的地址：</p>
+<pre><span class="k">void</span> bump(<span class="k">float</span> t)   { t += 1.0f; }  <span class="c">/* 改的是拷贝，外面不变 */</span>
+<span class="k">void</span> bump2(<span class="k">float</span> *t) { *t += 1.0f; }  <span class="c">/* 改的是外面那份 */</span>
+
+<span class="k">float</span> now = 26.5f;
+bump(now);     <span class="c">/* now 仍是 26.5 */</span>
+bump2(&amp;now);   <span class="c">/* now 变成 27.5 */</span></pre>
+  <p><code>read_temp(&amp;t)</code> 传指针，就是为了把读到的温度写回调用方的 <code>t</code>。</p>
+</div>
+
+<p><strong>数组</strong>是连续同类型元素。模拟温度序列常用数组驱动：</p>
+
+<pre><span class="k">static const float</span> seq[] = { 25.0f, 27.0f, 29.0f, 27.0f, 24.0f };
+<span class="k">for</span> (<span class="k">size_t</span> i = 0; i &lt; <span class="k">sizeof</span>(seq)/<span class="k">sizeof</span>(seq[0]); i++) {
+    <span class="c">/* 用 seq[i] 当本轮温度 */</span>
+}</pre>
+
+<div class="ex">
+  <div class="k">数组名 · 首元素地址</div>
+  <p>数组名在表达式中就是首元素地址（<code>sizeof</code> 除外）。所以下面两种写法等价：</p>
+<pre><span class="k">float</span> seq[] = { 25.0f, 27.0f, 29.0f };
+<span class="k">float</span> *p   = seq;      <span class="c">/* 指向 seq[0] */</span>
+<span class="k">float</span> first = *p;      <span class="c">/* 25.0f */</span></pre>
+  <p>给函数传数组，实际上传的是指针——所以函数里 <code>sizeof(arr)</code> 拿不到数组长度，要另传一个长度。</p>
+</div>
+
+<div class="warn">
+  解引用前先确认指针非 <code>NULL</code>；数组下标不要越界。闯关脚手架里故意埋了相关坑。
+</div>
+
+<h3 id="s2.3-struct">结构体：把相关字段捆在一起</h3>
+<p><strong>结构体</strong>把一组相关字段捆成一种类型，配置不必散落成一堆全局变量：</p>
+
+<div class="ex pale">
+  <div class="k">打包动机 · 不散落</div>
+  <p>不打包就得三个全局变量、三个参数位置；打包成一个 <code>cfg</code>，一个对象传到底，改动跟着走：</p>
+<pre><span class="k">float</span> g_high = 28.0f;   <span class="c">/* 不打包：三个散变量 */</span>
+<span class="k">float</span> g_low  = 26.0f;
+<span class="k">int</span>   g_ms   = 2000;
+
+decide(&amp;cfg, temp, &amp;fan_on);   <span class="c">/* 打包后：一个 cfg 传进函数，字段跟着走 */</span></pre>
+  <p>要加一个字段，只在结构体里加一处；调用处基本不用动。</p>
+</div>
+
+<pre><span class="k">typedef struct</span> {
+    <span class="k">float</span> t_high;      <span class="c">/* 高于此开风扇 */</span>
+    <span class="k">float</span> t_low;       <span class="c">/* 低于此关风扇 */</span>
+    <span class="k">int</span>   period_ms;   <span class="c">/* 采样周期（毫秒） */</span>
+} ThermoConfig;
+
+<span class="k">void</span> decide(<span class="k">const</span> ThermoConfig *cfg, <span class="k">float</span> temp, <span class="k">int</span> *fan_on)
+{
+    <span class="k">if</span> (temp &gt; cfg-&gt;t_high)
+        *fan_on = 1;
+    <span class="k">else if</span> (temp &lt; cfg-&gt;t_low)
+        *fan_on = 0;
+}</pre>
+
+<p>读结构体字段用 <code>cfg-&gt;t_high</code>（指针）或 <code>cfg.t_high</code>（变量本身）。用错字段名是真实 bug 的常见来源。</p>
+
+<ol class="steps">
+  <li><span class="step-num">1</span><div><strong>看头文件</strong> — 有哪些结构体、API、返回值约定。</div></li>
+  <li><span class="step-num">2</span><div><strong>看 main</strong> — 输入从哪来、如何循环、打印什么。</div></li>
+  <li><span class="step-num">3</span><div><strong>看实现</strong> — 比较方向、字段名、空指针、错误分支是否完整。</div></li>
+  <li><span class="step-num">4</span><div><strong>对照行为表</strong> — 改一处、跑一次，输出是否逐步贴近验收表。</div></li>
+</ol>
+
+<h3 id="s2.3-life">生命周期：变量活在哪、活多久</h3>
+<p>C 的变量按<strong>存储期</strong>分成几类。写代码前先想清楚一个问题：这个变量放在哪、活多久、谁看得见。</p>
+
+<table>
+  <tr><th>种类</th><th>放哪</th><th>活多久</th><th>谁看得见</th></tr>
+  <tr><td><strong>全局变量</strong></td><td>数据段（<code>.data</code> / <code>.bss</code>）</td><td>整个程序运行期</td><td>所有文件（没加 <code>static</code> 时）</td></tr>
+  <tr><td><strong>static</strong>（文件内或函数内）</td><td>数据段</td><td>整个程序运行期</td><td>限定在声明它的文件 / 函数里</td></tr>
+  <tr><td><strong>局部变量</strong></td><td>栈</td><td>所在函数调用期间</td><td>只在本函数里</td></tr>
+</table>
+
+<div class="diagram">内存里大致分三块
+  代码段  指令本身（只读）
+  数据段  全局 / static 变量（程序一开始就存在）
+  栈      每次调用函数临时分配，返回即回收</div>
+
+<pre><span class="k">int</span> g_samples;             <span class="c">/* 全局：放数据段，程序结束才消失 */</span>
+<span class="k">static int</span> g_seed = 42;    <span class="c">/* static：放数据段，但只在本文文件可见 */</span>
+
+<span class="k">void</span> loop(<span class="k">int</span> n) {
+    <span class="k">int</span> local = 0;         <span class="c">/* 局部：放栈，loop 返回就没了 */</span>
+}</pre>
+
+<p>这解释了两个常见现象：函数返回后还想用里面的局部变量不行——栈已经回收；全局计数在多次调用之间能记住值——数据段不随函数消失。<code>static</code> 局部变量同理：函数返回后它还在，只是只在函数内看得见。</p>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能读指针写回、数组序列与配置结构体；能说清全局 / static / 局部各活多久、放哪。
+</div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<section id="s2.4">
+<div class="section-num">2.4</div>
+<h2>实验直接要用到的 C：字符串、位运算、函数指针、宏</h2>
+
+<p>前几节是地基。这一节专挑<strong>本课实验代码里真正出现的</strong>几样东西讲深——它们不是课外延伸，第三章之后你就会亲眼看到。切词和命令表有一份能编译的跟做；其余配口头练习。</p>
+
+<h3 id="s2.4-string">字符串：命令解析全靠它</h3>
+<p>C 没有「字符串类型」；字符串就是 <code>char</code> 数组，末尾一个 <code>'\0'</code> 表示结束。常用函数：</p>
+<ul>
+  <li><code>strlen(s)</code>：长度（不含结尾的 <code>\0</code>）。</li>
+  <li><code>strcmp(a, b)</code>：比较两串，相等返回 0。</li>
+  <li><code>snprintf(buf, size, fmt, …)</code>：安全格式化（会截断，不会写越界）。</li>
+  <li><code>sscanf(s, fmt, …)</code>：从字符串里按格式读数据。</li>
+  <li><code>fgets(buf, size, stdin)</code>：读一行，含换行。</li>
+</ul>
+<p>命令处理最常见的活是<strong>按空格切词</strong>：把 <code>"set high 30"</code> 拆成命令名 <code>set</code> 和参数 <code>high 30</code>。第四章的命令表就是这么干的：</p>
+<pre><span class="k">char</span> line[] = <span class="p">"set high 30"</span>;
+<span class="k">char</span> *sp = strchr(line, ' ');      <span class="c">/* 找第一个空格 */</span>
+<span class="k">if</span> (sp) { *sp = '\0'; args = sp + 1; }
+<span class="k">else</span>     args = line + <span class="k">strlen</span>(line);</pre>
+<p><strong>练习：</strong>对照 <code>cmd-table/main.c</code> 里的 <code>dispatch</code>，说明连续两个空格时 <code>while (*args == ' ')</code> 在干什么；若删掉这行，<code>set  temp 20</code> 还会不会被 <code>sscanf</code> 认出来。</p>
+
+<h3 id="s2.4-bits">位运算：DHT22 读位靠它</h3>
+<p>位运算是按二进制位操作：<code>&amp;</code>（与）、<code>|</code>（或）、<code>^</code>（异或）、<code>&lt;&lt;</code>（左移）、<code>&gt;&gt;</code>（右移）。</p>
+<ul>
+  <li>取某一位：<code>x &amp; 0x80</code> —— 只关心第 7 位是 0 还是 1。</li>
+  <li>置位：<code>data |= 1 &lt;&lt; 3</code> —— 把第 3 位置 1。</li>
+  <li>左移拼接：<code>v = (v &lt;&lt; 1) | bit</code> —— 一位一位把 0/1 拼成一个数。</li>
+</ul>
+<p>第四章 DHT22 读 40 位数据，就是每读到一位 0/1，把它拼进字节：</p>
+<pre>data[j / 8] <span class="k">&lt;&lt;=</span> 1;
+<span class="k">if</span> (high_c &gt; low_c) data[j / 8] <span class="k">|=</span> 1;   <span class="c">/* 高电平长=1，短=0 */</span></pre>
+<p><strong>练习：</strong>给一个字节 <code>b=0b10100110</code>，说出第 3 位是 0 还是 1；再用位运算把 <code>0x01</code> 和 <code>0x14</code> 拼成整数 <code>0x0114</code>。</p>
+
+<h3 id="s2.4-funcptr">函数指针：命令表靠它</h3>
+<p><strong>函数指针</strong>是「指向函数的指针」：把一个函数的地址存进变量，之后通过它调用。声明形如 <code>int (*handler)(char *args);</code>。</p>
+<p>第四章的命令表就是一张「名字 → 函数指针」的表：</p>
+<pre><span class="k">struct</span> cmd_entry {
+    <span class="k">const char</span> *name;
+    <span class="k">int</span> (*handler)(<span class="k">char</span> *args);
+};
+<span class="k">static const struct</span> cmd_entry cmds[] = {
+    { "status", cmd_status },
+    { "set",    cmd_set    },
+    { NULL,     NULL       },
+};</pre>
+<p>查表调用：遍历表，名字对上就用 <code>e-&gt;handler(args)</code> 调用对应函数。</p>
+
+<h3 id="s2.4-cmdtable">跟做：把切词和命令表编出来</h3>
+<p>纸上认函数指针不够。把上面两段合进一份能运行的小程序：<code>chapters/ch02/code/cmd-table/</code>。它就是第四章命令表的缩小版——无 GPIO、无 <code>select</code>，只练「拆词 → 查表 → 调用」。</p>
+<pre><span class="p">$</span> cd chapters/ch02/code/cmd-table
+<span class="p">$</span> make
+<span class="p">$</span> printf 'help\nstatus\nset temp 20\nstatus\nfoo\n' | ./cmd-table
+commands: help status set
+t_bar=28.0
+t_bar=20.0
+t_bar=20.0
+unknown command: foo</pre>
+<p>打开 <code>main.c</code>，指认三处：<code>strchr</code> 切出命令名与参数；<code>g_cmds[]</code> 把名字绑到函数指针；<code>dispatch</code> 对上名字就 <code>e-&gt;handler(args)</code>。加一条命令只多一行表项，不必改查找循环——第四章的 TODO 就是在干这件事。</p>
+<p><strong>本步成功判据：</strong>输出与上面五条一致；能说出「加 <code>help</code> 为什么不用改 <code>dispatch</code>」。</p>
+<figure>
+  <img src="assets/Figure_3.png" alt="x86 上编译运行 cmd-table：help、status、set temp 20、未知命令">
+  <figcaption>图 3　在 x86 Linux 上 <code>make</code> 后跑通命令表：<code>t_bar</code> 从 28.0 改到 20.0，<code>foo</code> 报 unknown command</figcaption>
+</figure>
+<figure>
+  <img src="assets/Figure_4.png" alt="荔枝派上同样跑通 cmd-table">
+  <figcaption>图 4　荔枝派上用板载 <code>gcc</code> 复跑同一条命令，输出一致</figcaption>
+</figure>
+
+<h3 id="s2.4-macro">宏与条件编译：实验开关靠它</h3>
+<p><strong>宏</strong>（<code>#define</code>）是编译期的文字替换；<strong>条件编译</strong>（<code>#if</code> / <code>#ifndef</code>）让一段代码在满足条件时才被编译进去。</p>
+<pre><span class="k">#define</span> SIMULATE_SENSOR  1   <span class="c">/* 1=模拟温度，0=真 DHT22 */</span>
+
+<span class="k">#if</span> SIMULATE_SENSOR
+<span class="c">/* 模拟温度：程序自己变 */</span>
+<span class="k">#else</span>
+<span class="c">/* 真 DHT22：读传感器 */</span>
+<span class="k">#endif</span></pre>
+<p>改一个宏、重新编译，程序就走另一套代码——第三章之后的实验开关全靠这个。</p>
+<p><strong>练习：</strong>解释「<code>#ifndef</code> + <code>#define</code> + <code>#endif</code> 的 include guard」为什么能防止一个头文件被重复包含。</p>
+
+<h3 id="s2.4-designated">设计化初始化：状态结构靠它</h3>
+<p>C99 允许按字段名初始化结构体，比按顺序填更不易错：</p>
+<pre><span class="k">struct</span> thermo_state g_st = {
+    .t_high = 28.0f,
+    .t_low  = 26.0f,
+    .fan_on = 0,
+};</pre>
+<p>第四章的状态结构就是这么初始化的。</p>
+<p><strong>练习：</strong>用 <code>.field=值</code> 补上 <code>last_temp</code> 和 <code>has_sample</code>；说明如果漏写一个字段，它会被初始成什么。</p>
+
+<div class="info" style="margin-top:32px;">
+  <strong>本节成果：</strong>能编译并跑通 <code>cmd-table</code>；能在后续章节代码里认出切词、函数指针命令表、位运算、条件编译与设计化初始化。
+</div>
+
+<div class="info">
+  <strong>下一步：</strong>打开 <code>lab.html</code> 开始实验。
+</div>
+</section>
+
+<!-- course-nav-foot -->
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="../ch01/lab.html"><span class="dir">上一篇</span>第一章 · 实验<br>上板通道验收</a>
+  <a class="next" href="lab.html"><span class="dir">下一篇</span>第二章 · 实验<br>写滞回 · 改读数</a>
+</nav>
+</div>
+</body>
+</html>
