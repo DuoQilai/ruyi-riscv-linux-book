@@ -204,7 +204,8 @@ def main() -> None:
     for idx, (ch, kind, _, _) in enumerate(ORDER):
         path = CH / ch / f"{kind}.html"
         if not path.exists():
-            raise SystemExit(f"missing {path}")
+            print(f"skip missing {path.relative_to(ROOT)}")
+            continue
         inject(path, idx, ch, kind)
 
 
