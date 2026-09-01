@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第三章 · 本章实验 · 继电器控制风扇（GPIO 输出）</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.65;
+    max-width: 1080px; margin: 0 auto; padding: 28px 20px 48px;
+  }
+  .chapter-header {
+    text-align: center; padding: 28px 0 20px;
+    border-bottom: 1px solid var(--line); margin-bottom: 28px;
+  }
+  .chapter-tag { font-size: 14px; letter-spacing: 0.12em; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+  .chapter-header h1 { font-size: 36px; font-weight: 700; line-height: 1.25; margin-bottom: 6px; }
+  .chapter-header .meta { font-size: 16px; color: var(--faint); }
+  section { margin-bottom: 32px; }
+  section h2 {
+    font-size: 24px; font-weight: 700; margin-bottom: 10px;
+    padding-bottom: 6px; border-bottom: 2px solid var(--line);
+  }
+  section h3 { font-size: 19px; font-weight: 700; margin: 18px 0 8px; }
+  section h4 { font-size: 17px; font-weight: 700; margin: 14px 0 8px; color: var(--text); }
+  section p { font-size: 17px; color: var(--muted); margin-bottom: 10px; }
+  section ul, section ol { padding-left: 22px; margin-bottom: 10px; }
+  section li { font-size: 17px; color: var(--muted); margin-bottom: 4px; }
+  section li strong { color: var(--text); }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 12px 16px; margin: 10px 0 14px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--muted);
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); } pre .k { color: #5a7a6a; }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-size: 15px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line-light); vertical-align: top; }
+  th { font-weight: 700; font-size: 13px; color: var(--accent); border-bottom: 2px solid var(--line); }
+  td { color: var(--muted); }
+  .warn {
+    background: var(--warn-bg); border-left: 3px solid var(--warm);
+    padding: 10px 14px; margin: 12px 0; font-size: 16px; color: #8c5440;
+  }
+  .info {
+    background: var(--info-bg); border-left: 3px solid var(--accent);
+    padding: 10px 14px; margin: 12px 0; font-size: 16px; color: var(--muted);
+  }
+  .ok {
+    background: #eef6ef; border-left: 3px solid #3d7a4a;
+    padding: 10px 14px; margin: 12px 0; font-size: 16px; color: #2f5a38;
+  }
+  .diagram {
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 12px 16px; margin: 10px 0 14px; line-height: 1.55;
+    white-space: pre; overflow-x: auto;
+  }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 200px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line);
+    padding: 24px 16px; z-index: 10;
+  }
+  .toc h4 { font-size: 13px; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 12px; text-transform: uppercase; }
+  .toc a { display: block; padding: 4px 0; font-size: 13px; color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 10px 0; }
+  body { padding-left: 200px; }
+  @media (max-width: 900px) {
+    body { padding-left: 0; }
+    .toc { display: none; }
+  }
+  @media print {
+    body { padding-left: 0; }
+    .toc { display: none; }
+  }
+/* course-nav-css */
+
+  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line, #d4cfc4);
+    font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
+    line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
+
+  figure { margin: 16px 0 20px; }
+  figure img {
+    display: block; max-width: min(100%, 720px); width: auto; height: auto;
+    border: 1px solid var(--line-light, #e8e3d8);
+  }
+  figcaption { font-size: 14px; color: var(--faint, #8c8276); margin-top: 8px; line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>本章实验</h4>
+<!-- course-nav-toc -->
+  <a class="course-rail" href="../../index.html">课程总览</a>
+  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
+  <a class="course-rail" href="lecture.html">本章讲义</a>
+  <a class="course-rail" href="../ch04/lecture.html">下一章 · 第四章</a>
+  <div class="divider"></div>
+  <a href="#intro">说明</a>
+  <a href="#parts">实验器材</a>
+  <a href="#breadboard">面包板怎么用</a>
+  <a href="#solder">电烙铁与安全</a>
+  <div class="divider"></div>
+  <a href="#pinmap">荔枝派排针怎么认</a>
+  <a href="#wire">接线总表</a>
+  <a href="#step-wire">步骤 1：接线</a>
+  <a href="#step-impl">步骤 2：实现三个函数</a>
+  <a href="#step-run">步骤 3：编译运行</a>
+  <a href="#step-accept">步骤 4：模拟温度控制验收</a>
+  <a href="#step-threshold">步骤 5：改阈值</a>
+  <div class="divider"></div>
+  <a href="#trouble">常见故障</a>
+  <a href="#accept">验收表</a>
+</nav>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
+  <h1>本章实验 · 继电器控制风扇</h1>
+  <p class="meta">整板接线 · 自己写 gpiod / 滞回 · temperature_fan 模拟温度控制 · 改阈值</p>
+</header>
+
+<section id="intro">
+<h2>说明</h2>
+
+<div class="info">
+  <strong>本实验要干什么：</strong>按表接好信号端与风扇负载；在脚手架里实现三个 C 函数；跑通模拟温度控制；再改阈值观察开/关点。<br>
+  <strong>你能学到什么：</strong>经内核申请并改 GPIO；用滞回把「决策」接到真继电器；用改宏证明控制点在软件。
+</div>
+
+<p>讲义已用 <code>gpioset</code> 跟做过信号链。本实验递进两步：接上风扇负载，并把讲义里的路径写成你自己的 C。</p>
+<ul>
+  <li><strong>工程：</strong><code>chapters/ch03/code/</code>（板上：<code>~/ruyi-riscv-embedded/ch03-lab/</code>）</li>
+  <li><strong>学生文件：</strong><code>temperature_fan.c</code>（默认 <code>make</code>）</li>
+  <li><strong>参考实现：</strong><code>temperature_fan-sol.c</code>（<code>make sol</code>；先自己写，过关后再对照）</li>
+  <li><strong>脚：</strong><code>gpiochip5</code> line 5 / 丝印 IO1_5</li>
+  <li><strong>输入：</strong>程序内部模拟温度（本章不接 DHT22）</li>
+</ul>
+<div class="ok">
+  <strong>成功时你能演示：</strong>你写的代码能 <code>make</code> 通过；终端模拟温度来回；超上限风扇转、低下限风扇停；改阈值后开/关点跟着变。
+</div>
+<div class="warn">
+  <strong>安全：</strong>风扇大电流经继电器触点；GPIO 只接信号端。板子上标着 Fan Power 的白色插座是板载散热风扇用的，与本实验风扇无关。接线时尽量断电。
+</div>
+</section>
+
+<section id="parts">
+<h2>实验器材</h2>
+<table>
+  <tr><th>东西</th><th>用途</th></tr>
+  <tr><td>荔枝派 4A</td><td>跑 Linux；排针接线</td></tr>
+  <tr><td>继电器模块（1 路，5V）</td><td>信号端受 GPIO 控制，触点通断风扇电源</td></tr>
+  <tr><td>5V 小风扇</td><td>负载；红线正极、黑线负极</td></tr>
+  <tr><td>面包板 + 杜邦线</td><td>搭接电源轨与信号线；不必每次焊接</td></tr>
+  <tr><td>电烙铁（约 40W）与焊锡</td><td>需要固定端子、延长线或补焊时使用；本章首次用到</td></tr>
+</table>
+<p>本章就这几样。真传感器第四章再接。</p>
+<div class="info">
+  <strong>参考资料：</strong>继电器模块说明见 <code>chapters/ch03/manuals/</code>（<code>0505单片机继电器模块说明.pdf</code>、<code>HW-221 产品说明书.pdf</code>）；排针插针方位见 <code>lpi4a-wiki-assets/io_map.png</code>。旧版 wiki 摘录已移入 <code>manuals/archive/</code>，不作为当前依据。
+</div>
+</section>
+
+<section id="breadboard">
+<h2>面包板怎么用</h2>
+<p>面包板用内部金属簧片把若干插孔连在一起，方便用杜邦线临时搭电路。本课用它把荔枝派排针上的电源、地和信号线接到继电器模块。</p>
+<figure>
+  <img src="assets/Figure_4.png" alt="面包板结构：电源轨、连接孔、隔离凹槽">
+  <figcaption>图 4　面包板内部连通关系：电源轨横向连通；中间区每列 5 孔纵向连通；中央隔离凹槽上下互不通</figcaption>
+</figure>
+<table>
+  <tr><th>部位</th><th>怎么通</th><th>本课怎么用</th></tr>
+  <tr><td><strong>电源轨</strong>（两侧红/蓝长条）</td><td>同一条「+」或「−」沿线横向连通</td><td>红线侧接排针 5V，蓝线侧接 GND；再从轨上分出多根线到模块</td></tr>
+  <tr><td><strong>连接孔</strong>（中间编号区）</td><td>同一列 a–e（或 f–j）五个孔纵向连通；相邻列不通</td><td>把模块某一脚与杜邦线插在<strong>同一列</strong>，即电气相连</td></tr>
+  <tr><td><strong>隔离凹槽</strong>（正中沟）</td><td>沟上下两区互不通</td><td>不要假设跨沟的孔已经连在一起；跨沟必须另用跳线</td></tr>
+</table>
+<ul>
+  <li>接线前断开开发板电源；插拔杜邦线时捏线帽，避免扯断芯线。</li>
+  <li>正极与负极不要在轨上短接；5V 与 GND 插反可能导致模块异常或损坏。</li>
+  <li>同一信号只占一列；乱插多列会造成意外并联。</li>
+</ul>
+<div class="warn">
+  <strong>连接要求：</strong>电源轨上的「+ / −」只是印刷标记，本身不带电；必须由排针 5V / GND 经杜邦线接入后，轨上才有电压。
+</div>
+</section>
+
+<section id="solder">
+<h2>电烙铁与安全（本章首次）</h2>
+<p>本章以面包板与杜邦线为主。若课程提供的线材需要补焊端子、延长线，或继电器螺丝端子需要焊环/焊片，会用到电烙铁。下图为常见的约 40W 直热式烙铁外形。</p>
+<figure>
+  <img src="assets/Figure_5.jpg" alt="电烙铁外形：手柄、发热芯、烙铁头与电源线">
+  <figcaption>图 5　电烙铁（示例约 40W）：使用前确认额定功率与电源规格符合实验室要求</figcaption>
+</figure>
+<table>
+  <tr><th>步骤</th><th>要求</th></tr>
+  <tr><td>通电前</td><td>烙铁头安装牢固；电源线无破损；工作台干燥、无易燃物；备好烙铁架与湿海绵/黄铜清洁丝</td></tr>
+  <tr><td>加热中</td><td>烙铁始终放在架子上，尖头朝外；勿触碰金属杆与烙铁头；手握隔热手柄</td></tr>
+  <tr><td>焊接时</td><td>先加热焊点再送锡，勿甩锡；通风或侧向排烟；避免长时间烫同一焊盘</td></tr>
+  <tr><td>结束后</td><td>断电，待完全冷却后再收纳；清洗烙铁头并镀一层薄锡防氧化</td></tr>
+</table>
+<div class="warn">
+  <strong>安全注意事项：</strong>烙铁头温度可达数百摄氏度，会造成烫伤并引燃桌面杂物。禁止用手试温；禁止把烙铁放在书本、塑料盒或杜邦线上；实验室内勿靠近易燃溶剂。皮肤接触焊锡烟气应尽量减少——保持通风。未成年人须在指导教师在场时使用。
+</div>
+<div class="info">
+  <strong>与本实验的关系：</strong>能用杜邦线插接完成的连接，不必焊接。只有课程明确要求补焊或端子固定时，才启用烙铁，并在焊接前再次确认开发板已断电。
+</div>
+</section>
+
+<section id="pinmap">
+<h2>荔枝派排针怎么认</h2>
+<p>板子侧面那排竖针是 <strong>20 针排针</strong>。信号脚高电平约 <strong>1.8V</strong>；本课光耦继电器可直连。</p>
+<table>
+  <tr><th>排针上的字</th><th>本课用途</th></tr>
+  <tr><td><strong>5V</strong></td><td>继电器线圈；经继电器给风扇供电</td></tr>
+  <tr><td><strong>GND</strong></td><td>共地</td></tr>
+  <tr><td><strong>IO1_5</strong></td><td>继电器信号脚（默认）</td></tr>
+  <tr><td><strong>IO1_6</strong></td><td>备用（第四章 DHT22）</td></tr>
+</table>
+<figure>
+  <img src="assets/Figure_1.jpg" alt="荔枝派 4A 排针与面包板接线">
+  <figcaption>图 1　荔枝派 4A 排针接到面包板（认脚以手册插针图与实物丝印为准；本图丝印不一定清晰）</figcaption>
+</figure>
+<div class="info">
+  插针方位图：仓库 <code>chapters/ch03/manuals/lpi4a-wiki-assets/io_map.png</code>。以文档图为准；早期板丝印可能不准。认脚认丝印；<code>(chip, line)</code> 用运行时核对。
+</div>
+</section>
+
+<section id="wire">
+<h2>接线总表</h2>
+<p>先认丝印，再接线。丝印与表不完全一致时，以实物丝印为准，逻辑按下表角色对应。</p>
+
+<h3>A. 继电器（信号 + 供电）</h3>
+<table>
+  <tr><th>从</th><th>到</th><th>说明</th></tr>
+  <tr><td>排针 <strong>IO1_5</strong></td><td>继电器信号脚 <strong>IN</strong> / X1</td><td>GPIO 直连</td></tr>
+  <tr><td>排针 <strong>5V</strong></td><td>继电器 <strong>V+</strong> / VCC</td><td>线圈要 5V</td></tr>
+  <tr><td>排针 <strong>GND</strong></td><td>继电器 <strong>V-</strong> / GND</td><td>共地，必接</td></tr>
+</table>
+<p>跳线帽拨到 <strong>H</strong>（高电平有效）。</p>
+<figure>
+  <img src="assets/Figure_2.jpg" alt="继电器模块接线，电源指示灯亮">
+  <figcaption>图 2　继电器模块：信号端接 GPIO，触点侧接风扇电源回路；上电后电源指示灯亮</figcaption>
+</figure>
+
+<h3>B. 风扇（走继电器触点）</h3>
+<table>
+  <tr><th>接法</th><th>说明</th></tr>
+  <tr><td>排针 <strong>5V</strong> → 继电器 <strong>NO</strong>（常开）</td><td>平时断开</td></tr>
+  <tr><td>继电器 <strong>COM</strong> → 风扇<strong>红线</strong></td><td>吸合后红线才有电</td></tr>
+  <tr><td>风扇<strong>黑线</strong> → 排针 <strong>GND</strong></td><td>负极回地</td></tr>
+</table>
+
+<pre class="diagram">排针 5V ──► [继电器 NO]──(吸合时接通)──[COM]──► 风扇红线
+排针 GND ──────────────────────────────────────► 风扇黑线
+排针 IO1_5 ──► 继电器 IN / X1（直连）
+排针 5V  ──► 继电器 V+      排针 GND ──► 继电器 V-</pre>
+</section>
+
+<section id="step-wire">
+<h2>步骤 1：接线</h2>
+<ol>
+  <li>接线前断开开发板电源。</li>
+  <li>按总表：先 GND（共地），再 5V，再信号线 IO1_5 → IN，最后接风扇。</li>
+  <li>确认跳线帽在 <strong>H</strong>；没碰到 Fan Power 白色插座。</li>
+  <li>再上电。</li>
+</ol>
+<p><strong>本步成功判据：</strong>继电器电源指示灯亮；未触发时风扇不转；能指着线说出「地 / 信号 / 风扇回路」。</p>
+</section>
+
+<section id="step-impl">
+<h2>步骤 2：实现三个函数</h2>
+<p>打开 <code>temperature_fan.c</code>。脚手架已给出宏、<code>main</code> 调用顺序、信号收尾；<strong>只改标了 <code>STUDENT TODO</code> 的区块</strong>——三个函数的原型与实现都写在 <code>main</code> 上方。</p>
+<p>先直接 <code>make</code>：应看到类似 <code>implicit declaration of function 'line_request'</code>——说明 <code>main</code> 在等你补函数。这是预期起点。</p>
+
+<h3>你要写的契约</h3>
+
+<pre><span class="c">/* 申请一根脚；direction 为 OUTPUT 时立刻置 val（0 或 1）
+ * 成功返回 request 指针；失败返回 NULL。
+ * 全局变量 chip 已由 main 打开，可直接用。
+ */</span>
+<span class="k">struct</span> gpiod_line_request *line_request(unsigned int offset,
+                                        int direction, int val);
+
+<span class="c">/* 写继电器信号端：on 非 0 → 吸合；on 为 0 → 释放。
+ * 用全局 fan_req 与宏 FAN_LINE；成功时打印 [INFO] fan ON/OFF。
+ */</span>
+<span class="k">void</span> fan_set(int on);
+
+<span class="c">/* 滞回决策：只改 *fan_on，不要在这里调 gpiod。
+ *   temp_c &gt; T_HIGH → *fan_on = 1
+ *   temp_c &lt; T_LOW  → *fan_on = 0
+ *   中间区间        → 保持 *fan_on 原值
+ * fan_on 为空指针时直接返回。
+ */</span>
+<span class="k">void</span> fan_decide(float temp_c, int *fan_on);</pre>
+
+<h3>写的时候要想清楚</h3>
+<ul>
+  <li><code>line_request</code>：为什么申请输出时要把初值设成 0，而不是先申请再随便写？</li>
+  <li><code>fan_set</code> 与 <code>fan_decide</code> 为什么拆开？决策函数里直接 <code>set_value</code> 会怎样？</li>
+  <li>中间区间「保持」时，<code>main</code> 为什么用 <code>prev</code> 比较后再调用 <code>fan_set</code>？</li>
+  <li>退出前脚手架已调用 <code>fan_set(0)</code>：若你的 <code>fan_set</code> 写错，Ctrl+C 后风扇可能一直转——现象会指回你的实现。</li>
+</ul>
+
+<div class="info">
+  <strong>libgpiod v2 线索：</strong>讲义 3.2 的片段已展示 settings → line_config → request_config → <code>gpiod_chip_request_lines</code> → <code>gpiod_line_request_set_value</code>。consumer 名字建议 <code>"temperature_fan"</code>，方便 <code>gpioinfo</code> 认人。
+</div>
+<div class="warn">
+  <strong>对照答案：</strong>同目录 <code>temperature_fan-sol.c</code>。建议过关后再打开；卡住超过一刻钟再对照某一函数即可。
+</div>
+</section>
+
+<section id="step-run">
+<h2>步骤 3：编译运行</h2>
+<p>主路径：在 <strong>x86 Linux</strong> 上激活第一章的 <code>venv-gnu-ruyisdk</code>，交叉编译后再拷到<strong>荔枝派</strong>运行。同一份 Makefile 在荔枝派上会自动改用板载 <code>gcc</code>（若主机交叉因缺少 <code>libgpiod</code> 失败，可直接在荔枝派上 <code>make</code>）。编译的是你自己写的 <code>temperature_fan.c</code>。</p>
+<pre><span class="c"># —— 在 x86 Linux 上 ——</span>
+<span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
+<span class="p">$</span> cd chapters/ch03/code
+<span class="p">$</span> make clean &amp;&amp; make
+<span class="p">$</span> file temperature_fan
+<span class="c"># 期望含 RISC-V；若报找不到 gpiod.h，改到荔枝派上编译（见下）</span>
+
+<span class="c"># —— 在荔枝派上（源码目录）——</span>
+<span class="p">$</span> cd ~/ruyi-riscv-embedded/ch03-lab
+<span class="p">$</span> make clean &amp;&amp; make
+<span class="p">$</span> sudo ./temperature_fan</pre>
+<p>若讲义跟做留下的 <code>gpioset</code> 仍占着 line 5，先 <code>sudo pkill -x gpioset</code>。</p>
+<div class="info">
+  <strong>为什么 <code>sudo</code>？</strong><code>/dev/gpiochip*</code> 默认归 root。
+</div>
+<p>对照参考实现（助教验收路径）：<code>make sol && sudo ./temperature_fan-sol</code>。图 3 即 <code>make sol</code> 的运行记录。</p>
+<figure>
+  <img src="assets/Figure_3.png" alt="荔枝派上编译运行 temperature_fan-sol：file 为 RISC-V，风扇按阈值开闭">
+  <figcaption>图 3　荔枝派上 <code>make sol</code>：产物为 RISC-V；温度过 29°C 风扇开，降到 25°C 风扇关，Ctrl+C 后拉低</figcaption>
+</figure>
+</section>
+
+<section id="step-accept">
+<h2>步骤 4：模拟温度控制验收</h2>
+<ul>
+  <li>启动打印 <code>[INFO] 模拟温度控制: T_HIGH=29.0 T_LOW=25.0</code>，并说明继电器在 IO1_5。</li>
+  <li>周期性打印 <code>[INFO] temp=…C fan=OFF|ON</code>，模拟温度在 24~30 之间来回。</li>
+  <li>升过 29°C → <code>[INFO] fan ON</code>，继电器吸合，<strong>风扇转</strong>。</li>
+  <li>降到 25°C 以下 → <code>[INFO] fan OFF</code>，风扇停。</li>
+  <li>中间区间（25~29）保持上一状态。</li>
+</ul>
+<p>停程序：SSH 里 <code>Ctrl+C</code>。</p>
+<div class="info">
+  <strong>退出与悬浮：</strong>只释放 GPIO 时脚可能悬浮；本继电器输入悬浮可能飘高 → 风扇一直转。脚手架在退出前调用 <code>fan_set(0)</code> 再释放。要退出后也更稳，可在 X1 到 GND 加 10kΩ 下拉。
+</div>
+<p><strong>本步成功判据：</strong>能演示超温开 / 降温关；Ctrl+C 后风扇停转（或靠下拉稳定关断）。</p>
+</section>
+
+<section id="step-threshold">
+<h2>步骤 5：改阈值</h2>
+<p>改 <code>temperature_fan.c</code> 顶部 <code>T_HIGH</code> / <code>T_LOW</code>（默认 29 / 25；例如改成 27 / 23），重新 <code>make</code> 再跑，观察开/关温度点变化。也可加大 <code>STEP_DELTA</code> 让扫温更快。把改后的数填进记录表即可；教材截图仍用默认 29 / 25 的图 3，不另拍改阈值终端。</p>
+<p><strong>本步要证明的：</strong>阈值是你程序里的常量；硬件只跟着高低电平走。改阈值前后的终端对照图见第四章实验的 <code>set temp</code>。</p>
+</section>
+
+<section id="trouble">
+<h2>常见故障</h2>
+<table>
+  <tr><th>现象</th><th>先查什么</th></tr>
+  <tr><td><code>implicit declaration</code> / 编译不过</td><td>三个函数是否写在 <code>main</code> 上方？签名是否与契约一致？</td></tr>
+  <tr><td>程序报 <code>Permission denied</code></td><td><code>sudo ./temperature_fan</code></td></tr>
+  <tr><td>busy / 打不开 gpiochip</td><td>残留 <code>gpioset</code>？<code>sudo pkill -x gpioset</code></td></tr>
+  <tr><td>程序在跑，风扇完全不动</td><td>共地？继电器 5V？跳帽 H？NO/COM？信号是否 IO1_5？</td></tr>
+  <tr><td>置 1 没反应</td><td>排针用 <code>gpiochip5</code>；<code>sudo cat /sys/kernel/debug/gpio</code> 看是否 <code>out hi</code></td></tr>
+  <tr><td>Ctrl+C 后风扇还在转</td><td><code>fan_set(0)</code> 是否真的写了低电平？</td></tr>
+  <tr><td>继电器灯亮，风扇不转</td><td>风扇 5V 回路：NO–COM–红线–黑线回 GND</td></tr>
+  <tr><td>中间区间乱抖</td><td><code>fan_decide</code> 是否在中间误改了 <code>*fan_on</code>？</td></tr>
+  <tr><td>file 显示 x86-64</td><td>检查 <code>CROSS_COMPILE</code> / PATH；或板端原生编译</td></tr>
+</table>
+<p>取证顺序：先看编译与你的三函数 → 再 chip/占用 → 再接线。</p>
+</section>
+
+<section id="accept">
+<h2>验收表</h2>
+<table>
+  <tr><th>验收项</th><th>通过条件</th><th>□</th></tr>
+  <tr><td>接线</td><td>IO1_5 直连继电器 IN；继电器 5V/GND；风扇走 NO–COM；跳帽 H；共地</td><td></td></tr>
+  <tr><td>自己写的函数</td><td><code>line_request</code> / <code>fan_set</code> / <code>fan_decide</code> 在学生文件中实现；<code>make</code> 通过</td><td></td></tr>
+  <tr><td>运行</td><td><code>sudo ./temperature_fan</code> 打印模拟温度</td><td></td></tr>
+  <tr><td>控制</td><td>超 29°C 开、低于 25°C 关，风扇启动或停止（与图 3 / 学生版默认常量一致）</td><td></td></tr>
+  <tr><td>改阈值</td><td>改过 T_HIGH/T_LOW（或 STEP_DELTA）并观察到开/关点变化。课程不另附第三章改阈值终端图；截图证据见第四章 <code>set temp</code></td><td></td></tr>
+</table>
+
+<h3>记录表（自填）</h3>
+<table>
+  <tr><th>项</th><th>你的结果</th></tr>
+  <tr><td>继电器脚（chip + line / 丝印）</td><td>gpiochip5 line 5 / IO1_5</td></tr>
+  <tr><td>T_HIGH / T_LOW（改后）</td><td></td></tr>
+  <tr><td>风扇转时继电器工作灯</td><td></td></tr>
+  <tr><td>实测哪根脚拉不高（若有）</td><td></td></tr>
+</table>
+
+<div class="ok">
+  <strong>完成标志：</strong>验收表该勾的都勾了；记录表填完。带着「自己写的 GPIO 输出能驱动执行器」进入第四章读传感器。
+</div>
+</section>
+
+<!-- course-nav-foot -->
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="lecture.html"><span class="dir">上一篇</span>第三章 · 讲义<br>GPIO 与执行器</a>
+  <a class="next" href="../ch04/lecture.html"><span class="dir">下一篇</span>第四章 · 讲义<br>串口对话与温控</a>
+</nav>
+</article>
+
+</body>
+</html>
