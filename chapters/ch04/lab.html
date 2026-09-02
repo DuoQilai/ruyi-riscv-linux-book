@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第四章 · 本章实验 · 串口命令温控</title>
+<title>第四章 · 本章实验 · 三个实验</title>
 <style>
   :root {
     --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -111,23 +111,105 @@
   <a class="course-rail" href="lecture.html">本章讲义</a>
   <a class="course-rail" href="../ch05/lecture.html">下一章 · 第五章</a>
   <div class="divider"></div>
-  <a href="#intro">说明</a>
-  <a href="#parts">实验器材</a>
-  <a href="#wire">接线与焊接</a>
-  <a href="#step-impl">实现命令与 select</a>
-  <a href="#step-run">编译运行</a>
-  <a href="#step-accept">联调验收</a>
-  <a href="#trouble">常见故障</a>
-  <a href="#accept">验收表</a>
+  <a href="#overview">本章三个实验一览</a>
+  <div class="divider"></div>
+  <a href="#exp1">实验一 · select 最小多路复用</a>
+  <a href="#exp2">实验二 · 温控命令 REPL</a>
+  <div class="divider"></div>
+  <a href="#exp3">实验三 · 串口命令温控（真 DHT22）</a>
+  <a href="#parts">　　实验器材</a>
+  <a href="#wire">　　接线与焊接</a>
+  <a href="#step-impl">　　实现命令与 select</a>
+  <a href="#step-run">　　编译运行</a>
+  <a href="#step-accept">　　联调验收</a>
+  <a href="#trouble">　　常见故障</a>
+  <a href="#accept">　　验收表</a>
 </nav>
 
 <article>
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第四章</div>
-  <h1>本章实验 · 串口命令温控</h1>
-  <p class="meta">焊 TXS · 接 DHT22 · 自己写命令与 select · SSH 终端联调</p>
+  <h1>本章实验 · 三个实验</h1>
+  <p class="meta">实验一 select 最小复用 · 实验二 温控命令 REPL · 实验三 串口命令温控（真 DHT22）</p>
 </header>
+
+<section id="overview">
+<h2>本章三个实验一览</h2>
+<p>第四章的收口实验要同时干很多事：焊 TXS、接 DHT22、写命令处理、写 <code>select</code> 主循环、还要联真硬件调风扇。为了不一把抓，拆成三个递进实验：实验一、实验二<strong>纯软件、无接线</strong>，把「<code>select</code> 并发」和「命令处理器」这两半单独练会；实验三再把它们加上真 DHT22 与真 GPIO 合起来。</p>
+<table>
+  <tr><th>实验</th><th>练什么</th><th>器材</th><th>源码目录</th></tr>
+  <tr>
+    <td><strong>实验一</strong><br>select 最小多路复用</td>
+    <td>用 <code>select</code> 同时等「定时 tick」和「stdin 输入」，打字时定时不丢</td>
+    <td>无</td>
+    <td><code>code/select-mini/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验二</strong><br>温控命令 REPL</td>
+    <td>写 <code>status</code> / <code>set temp</code> / <code>set humidity</code> 处理器（无传感器无 GPIO）</td>
+    <td>无</td>
+    <td><code>code/cmd-repl/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验三</strong><br>串口命令温控</td>
+    <td>焊 TXS · 接 DHT22 · 把实验一/二的并发与命令接到采样控温</td>
+    <td>DHT22、TXS、AMS1117、继电器风扇</td>
+    <td><code>cmd_thermo.c</code></td>
+  </tr>
+</table>
+<div class="info">
+  <strong>建议：</strong>先在板上把实验一、实验二跑通，再进实验三接线——那时你只剩「DHT 读取 + 把这些拼进 <code>select</code>」没写过。
+</div>
+</section>
+
+<section id="exp1">
+<h2>实验一 · select 最小多路复用（select-mini）</h2>
+<p>实验三卡人的往往是 <code>select</code> 本身：一边要每 2 秒采一次样，一边要立刻响应你敲的命令。本实验把并发机制剥到最小：每秒打一个 <code>[tick]</code>，同时 stdin 来一行就回显一行。源码 <code>chapters/ch04/code/select-mini/</code>，只实现 <code>run_repl_loop</code>。</p>
+
+<h3>步骤</h3>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch04/code/select-mini            # 板上：cd ~/select-mini</span>
+<span class="p">$</span> make
+<span class="c"># 手动试：./build/select-mini 然后敲几行，quit 退出</span></pre>
+<p>打开 <code>src/select.c</code>，用 <code>select(fd+1, &amp;rfds, NULL, NULL, &amp;tv)</code> 写主循环。判据看行为：没输入时每秒一个 <code>[tick N]</code>；打字时立刻回显且不丢 tick；<code>quit</code> 退出。自动演示（参考 <code>make sol</code>）：</p>
+<pre><span class="p">$</span> (sleep 2; echo hello; sleep 1; echo quit) | ./build/select-mini
+<span class="c"># 参考输出（时间轴示意）：
+#   [S] select demo: 1s tick, stdin echo, quit to exit
+#   [tick 1]
+#   echo: hello
+#   [tick 2]
+#   bye</span></pre>
+<p><strong>本实验成功判据：</strong>自动演示里 tick 与 echo 交替出现、不互相饿死；<code>quit</code> 正常退出；能口头说「<code>select</code> 返回 0 是超时，返回正数是 stdin 可读」。</p>
+</section>
+
+<section id="exp2">
+<h2>实验二 · 温控命令 REPL（cmd-repl）</h2>
+<p>实验三的另一半是命令处理：<code>status</code> 打印、<code>set temp &lt;数&gt;</code> / <code>set humidity &lt;数&gt;</code> 改阈值。本实验用纯 stdin/stdout 把这些处理器练会（没有传感器、没有 GPIO）。源码 <code>chapters/ch04/code/cmd-repl/</code>，只实现 <code>state_init</code> / <code>cmd_status</code> / <code>cmd_set</code>。</p>
+
+<h3>步骤</h3>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch04/code/cmd-repl              # 板上：cd ~/cmd-repl</span>
+<span class="p">$</span> make
+<span class="p">$</span> ./build/cmd-repl      <span class="c"># 未实现前：status 打不出、set 全报错 → 预期</span></pre>
+<p>主循环已给（读行 → 切首词 → 分发）。你只写三个函数：初始 30.0/95.0；<code>status</code> 打印当前 bar；<code>cmd_set</code> 用 <code>sscanf</code> 解析 <code>"temp 28.5"</code> / <code>"humidity 60"</code>。喂命令对照（参考 <code>make sol</code>）：</p>
+<pre><span class="p">$</span> printf 'status\nset temp 28.5\nstatus\nset humidity 60\nstatus\nset temp abc\nquit\n' | ./build/cmd-repl
+<span class="c"># 参考输出：
+#   [repl] status | set temp &lt;num&gt; | set humidity &lt;num&gt; | quit
+#   [status] temp_bar=30.0C hum_bar=95.0%
+#   [ok] temp_bar=28.5C
+#   [status] temp_bar=28.5C hum_bar=95.0%
+#   [ok] hum_bar=60.0%
+#   [status] temp_bar=28.5C hum_bar=60.0%
+#   [err] usage: set temp &lt;num&gt; | set humidity &lt;num&gt;
+#   bye</span></pre>
+<p><strong>本实验成功判据：</strong>喂命令输出与参考一致（含 <code>set temp abc</code> 报用法错）；能口头说这套处理器在实验三里改的是 <code>g_st</code>，而「会不会立刻生效」由主循环节奏决定。</p>
+</section>
+
+<section id="exp3">
+<h2>实验三 · 串口命令温控（真 DHT22）</h2>
+<p>实验一你练会了 <code>select</code> 并发，实验二练会了 <code>status</code> / <code>set</code> 处理器。实验三把它们焊进真硬件：接 DHT22 采真温湿度，用命令改阈值，<code>select</code> 让打字和采样同时及时。下面是原实验正文，器材、接线、实现契约、验收都从这里开始。</p>
+</section>
 
 <section id="intro">
 <h2>说明</h2>
