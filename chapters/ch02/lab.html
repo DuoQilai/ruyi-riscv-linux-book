@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第二章 够用的 C 语言基础 · 本章实验 — RISC-V Linux 课程</title>
+<title>第二章 够用的 C 语言基础 · 本章实验（三个实验） — RISC-V Linux 课程</title>
 <style>
   :root {
     --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -87,21 +87,108 @@
   <a class="course-rail" href="lecture.html">本章讲义</a>
   <a class="course-rail" href="../ch03/lecture.html">下一章 · 第三章</a>
   <div class="divider"></div>
-  <a href="#intro">说明</a>
+  <a href="#overview">本章三个实验一览</a>
   <div class="divider"></div>
-  <a href="#build-check">步骤 1：编译链接核对</a>
-  <a href="#write-decide">步骤 2：写出滞回</a>
-  <a href="#steps">步骤 3：改读数闯关</a>
-  <a href="#accept">验收表</a>
+  <a href="#exp1">实验一 · 位运算与字节拼装</a>
+  <a href="#exp2">实验二 · 切词与数值解析</a>
+  <div class="divider"></div>
+  <a href="#exp3">实验三 · 写滞回 · 改读数闯关</a>
+  <a href="#build-check">　　编译链接核对</a>
+  <a href="#write-decide">　　写出 thermo_decide</a>
+  <a href="#steps">　　改 thermo_read 闯关</a>
+  <a href="#accept">　　验收表</a>
 </nav>
 
 <article>
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第二章</div>
-  <h1>本章实验 · 写滞回 · 改读数闯关</h1>
-  <p class="meta">接讲义 2.1–2.4 · 先核对 project-template，再写 thermo_decide，最后改 thermo_read</p>
+  <h1>本章实验 · 三个实验</h1>
+  <p class="meta">实验一 位运算与字节拼装 · 实验二 切词与数值解析 · 实验三 写滞回 · 改读数闯关</p>
 </header>
+
+<section id="overview">
+<h2>本章三个实验一览</h2>
+<p>第二章打的是「够用的 C」。为了不在一页里囫囵吞枣，拆成三个纯软件实验：先练「位运算与字节拼装」（第四章读 DHT22 的底子），再练「切词与数值解析」（第四章 <code>set temp 28.5</code> 的底子），最后做本来的闯关实验——写滞回决策、改读失败分支。三个实验都只用 C 与标准输入，<strong>没有硬件器材</strong>，在主机或板端（<code>riscv64</code> gcc）都能跑。</p>
+<table>
+  <tr><th>实验</th><th>练什么</th><th>源码目录</th></tr>
+  <tr>
+    <td><strong>实验一</strong><br>位运算与字节拼装</td>
+    <td>移位、或、按字节求和校验（DHT22 式字节 → 温湿度数值）</td>
+    <td><code>chapters/ch02/code/bits-check/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验二</strong><br>切词与数值解析</td>
+    <td>把一行命令按空白切词，并用 <code>strtod</code> 认数字</td>
+    <td><code>chapters/ch02/code/cmd-parse/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验三</strong><br>写滞回 · 改读数闯关</td>
+    <td>从空写出 <code>thermo_decide</code>；修 <code>thermo_read</code> 的错误分支</td>
+    <td><code>chapters/ch02/code/project-template/</code> 与 <code>fake-thermostat/</code></td>
+  </tr>
+</table>
+<div class="info">
+  <strong>器材：</strong>无。实验一、实验二在主机或板上（板端原生 gcc）跑通即可；实验三沿用本来的工程。
+</div>
+</section>
+
+<section id="exp1">
+<h2>实验一 · 位运算与字节拼装</h2>
+<p>第四章的 DHT22 一次给 40 个 bit，拼起来是 5 个字节：湿度高/低字节、温度高/低字节、校验和。本实验先练这三件小事：把两个字节合成 <code>uint16</code>、把 4 个字节求和取低 8 位当校验和、把 0.1°C 单位的原码换算成摄氏度。源码目录 <code>chapters/ch02/code/bits-check/</code>。</p>
+
+<h3>步骤</h3>
+<pre><span class="c"># 主机，或先 scp 到板子（板端 gcc）再进目录
+$ scp -r chapters/ch02/code/bits-check user@board-ip:~/
+$ cd chapters/ch02/code/bits-check        # 板上：cd ~/bits-check</span>
+<span class="p">$</span> make
+<span class="p">$</span> ./build/bits-check      <span class="c"># 三个函数还是空返回，会打印 FAIL —— 预期现象</span></pre>
+<p>打开 <code>src/bits.c</code>，只实现标了 <code>STUDENT TODO</code> 的三个函数：</p>
+<table>
+  <tr><th>函数</th><th>契约（怎么算对）</th><th>关卡</th></tr>
+  <tr><td><code>dht_pack_u16(hi, lo)</code></td><td><code>hi</code> 移到高 8 位再 <code>| lo</code>；注意 <code>hi</code> 要先提升成 <code>uint16</code> 再 <code>&lt;&lt;8</code></td><td>[B1]</td></tr>
+  <tr><td><code>u8_sum(d, n)</code></td><td>前 <code>n</code> 字节求和，最后 <code>&amp; 0xFF</code> 只留低 8 位（溢出是特性不是 bug）</td><td>[B2]</td></tr>
+  <tr><td><code>tenths_to_c(raw)</code></td><td><code>raw</code> 每 1 单位 = 0.1°C：<code>(float)raw / 10.0f</code></td><td>[B3]</td></tr>
+</table>
+<p>实现后重新 <code>make</code> 再跑，直到测试驱动全绿：</p>
+<pre><span class="p">$</span> make
+<span class="p">$</span> ./build/bits-check
+<span class="c"># 期望结尾：ALL PASS（中间逐条 ok）</span>
+<span class="c"># 对照参考：make sol && ./build/bits-check-sol 应同样 ALL PASS</span></pre>
+<p><strong>本实验成功判据：</strong>三函数实现正确，<code>./build/bits-check</code> 打印 <code>ALL PASS</code>；能口头解释「为什么要 <code>&amp; 0xFF</code>」「为什么要先提升成 16 位再移位」。</p>
+</section>
+
+<section id="exp2">
+<h2>实验二 · 切词与数值解析</h2>
+<p>第四章要在命令行敲 <code>status</code>、<code>set temp 28.5</code>。这一步要先能把一行字符串按空白切成一串词，并认出哪个词是数字。源码目录 <code>chapters/ch02/code/cmd-parse/</code>，只实现 <code>src/parse.c</code> 里的 <code>split_tokens</code>。</p>
+
+<h3>步骤</h3>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch02/code/cmd-parse          # 板上：cd ~/cmd-parse</span>
+<span class="p">$</span> make
+<span class="p">$</span> ./build/cmd-parse      <span class="c"># split_tokens 还是空，样例词数全错 —— 预期现象</span></pre>
+<p>契约（看 <code>include/parse.h</code>）：每个 <code>Tok</code> 有 <code>word[24]</code>、<code>is_num</code>、<code>val</code>；<code>split_tokens</code> 把 <code>line</code> 按空白切进 <code>toks</code>，返回词数。建议逐字符写：跳过空白 → 复制到下一空白 → 用 <code>strtod</code> 判断是否「干净浮点数」（<code>endptr</code> 动了且 <code>*endptr=='\0'</code>）。</p>
+<pre><span class="c"># 实现正确后，参考输出（可对照 make sol）：</span>
+<span class="p">$</span> ./build/cmd-parse
+<span class="c"># == "set temp 28.5" -> 3 词
+#         'set'
+#         'temp'
+#         '28.5' = 28.50
+#     ok
+# == "set temp abc" -> 3 词      （abc 不是数字）
+#         'set'
+#         'temp'
+#         'abc'
+#     ok
+#     ...
+# ALL PASS</span></pre>
+<p><strong>本实验成功判据：</strong><code>./build/cmd-parse</code> 打印 <code>ALL PASS</code>；能口头说出「什么样的词才算数字」「<code>strtod</code> 的 <code>endptr</code> 为什么能用来判断干净与否」。</p>
+</section>
+
+<section id="exp3">
+<h2>实验三 · 写滞回 · 改读数闯关（fake-thermostat）</h2>
+<p>实验一、实验二分别练了「字节 → 数值」「字符串 → 命令」，实验三把它们收拢成这一章真正的主线：写出滞回决策 <code>thermo_decide</code>，并修好读温度失败的错误分支。这块逻辑第三、四章还会以 GPIO 形式再出现一次。</p>
+</section>
 
 <section id="intro">
 <h2>说明</h2>
@@ -114,7 +201,7 @@
   <li><strong>输出：</strong>每步打印温度与风扇 ON/OFF；读失败打印 <code>READ_FAIL</code> 并保持上一风扇状态</li>
 </ul>
 <div class="info">
-  <strong>前置：</strong>已读完讲义 2.1–2.4（含 <code>cmd-table</code> 跟做），且 <code>project-template</code> 已能 <code>make</code> 出 <code>./build/app</code>。本机 <code>gcc</code> / <code>make</code>；本章本机编译，不必上板。
+  <strong>前置：</strong>已读完讲义 2.1–2.4（含 <code>cmd-table</code> 跟做），且 <code>project-template</code> 已能 <code>make</code> 出 <code>./build/app</code>。实验一、实验二已在板端原生 <code>gcc</code> 验证过；实验三在本机编译即可，板端复跑输出应一致。
 </div>
 <div class="warn">
   <code>thermo_decide</code> 现在是空函数，不要去抄半成品里的「反了的 if」——那里已经没了。先按下方契约自己写；<code>thermo_read</code> 里的 L3/L4 一次只改一类。对照答案：<code>make sol</code>。脚手架 <code>README.md</code>。
@@ -220,7 +307,7 @@
 </table>
 
 <div class="info">
-  <strong>完成标志：</strong>验收表全部勾选。无需真 DHT、无需上板即可完成本章验收。
+  <strong>完成标志：</strong>验收表全部勾选。无需真 DHT；实验三在本机即可验收（板端复跑输出一致更佳）。
 </div>
 </section>
 
