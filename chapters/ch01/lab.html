@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第一章 · 本章实验 · 上板通道验收</title>
+<title>第一章 · 本章实验 · 三个实验</title>
 <style>
   :root {
     --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -105,20 +105,127 @@
   <a class="course-rail" href="lecture.html">本章讲义</a>
   <a class="course-rail" href="../ch02/lecture.html">下一章 · 第二章</a>
   <div class="divider"></div>
-  <a href="#intro">说明</a>
+  <a href="#overview">本章三个实验一览</a>
   <div class="divider"></div>
-  <a href="#prep">前提自检</a>
-  <a href="#steps">步骤</a>
-  <a href="#accept">验收表</a>
+  <a href="#exp1">实验一 · 板端原生：自己编、自己跑</a>
+  <a href="#exp2">实验二 · 架构陷阱：编错就上不了板</a>
+  <div class="divider"></div>
+  <a href="#exp3">实验三 · 上板通道验收（CoreMark）</a>
+  <a href="#prep">　　前提自检</a>
+  <a href="#steps">　　步骤</a>
+  <a href="#accept">　　验收表</a>
 </nav>
 
 <article>
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第一章</div>
-  <h1>本章实验 · 上板通道验收</h1>
-  <p class="meta">把交叉编好的 CoreMark 传到荔枝派 4A，跑出分数，留下可复查的证据</p>
+  <h1>本章实验 · 三个实验</h1>
+  <p class="meta">实验一 板端原生跑通 probe · 实验二 架构陷阱（编错就上不了板）· 实验三 上板通道验收（CoreMark）</p>
 </header>
+
+<section id="overview">
+<h2>本章三个实验一览</h2>
+<p>本章全部围绕「程序怎么到板子上跑起来」这一件事，拆成三个递进的实验。实验一、实验二只需要软件（板端 gcc），没有硬件器材；实验三是正式的通道验收。三个实验都必须在板上跑通、留下可复查证据才算过关。</p>
+<table>
+  <tr><th>实验</th><th>层次</th><th>一句话目标</th><th>跑在哪</th></tr>
+  <tr>
+    <td><strong>实验一</strong><br>板端原生：自己编、自己跑</td>
+    <td>软件</td>
+    <td>最小程序 <code>probe</code> 在板端用 <code>make</code> 编出 RISC-V 产物并跑通</td>
+    <td>荔枝派（原生）</td>
+  </tr>
+  <tr>
+    <td><strong>实验二</strong><br>架构陷阱：编错就上不了板</td>
+    <td>软件</td>
+    <td>把主机 gcc 编出的 x86 产物传上板，亲眼看到 <code>Exec format error</code>，理解为何要「对架构编译」</td>
+    <td>主机 + 荔枝派</td>
+  </tr>
+  <tr>
+    <td><strong>实验三</strong><br>上板通道验收（CoreMark）</td>
+    <td>通道验收</td>
+    <td>交叉编 CoreMark → SCP 上传 → 板端跑分，归档整套通道证据</td>
+    <td>主机交叉 + 荔枝派</td>
+  </tr>
+</table>
+<div class="info">
+  <strong>器材：</strong>实验一、实验二只需要「已能 SSH 登录的荔枝派 4A + 板端自带 gcc/make」（讲义 1.2 之后已具备），<strong>不需要任何外设或接线</strong>。
+</div>
+</section>
+
+<section id="exp1">
+<h2>实验一 · 板端原生：自己编、自己跑（probe）</h2>
+<p>荔枝派跑的是一套完整的 Linux，板子上自带 <code>gcc</code> 与 <code>make</code>（讲义 1.3「三条开发路径」中的板端原生路径）。本实验让板子「自己编、自己跑」一个最小程序，并用 <code>file</code> / <code>readelf</code> 认一认产物确实是 RISC-V。</p>
+
+<h3>步骤</h3>
+<p>源码在仓库 <code>chapters/ch01/code/probe/</code>（一个 <code>probe.c</code> + 一个 <code>Makefile</code>）。先把它传到板子：</p>
+<pre><span class="c"># 主机上执行：把 probe 目录整个传到板端家目录</span>
+<span class="p">$</span> scp -r chapters/ch01/code/probe user@board-ip:~/</pre>
+<p>然后登录板子，编译、认架构、运行：</p>
+<pre><span class="c"># 板端 shell</span>
+<span class="p">$</span> cd ~/probe
+<span class="p">$</span> make
+<span class="p">$</span> file probe
+<span class="c"># 期望输出里含 UCB RISC-V；若没有，说明 make 用的不是板端 gcc</span>
+<span class="p">$</span> readelf -h probe | grep Machine
+<span class="c"># 期望：Machine: RISC-V</span>
+<span class="p">$</span> ./probe
+<span class="c"># 期望：
+#   arch     = riscv
+#   ptr size = 8 bytes
+#   probe done.</span></pre>
+<p><strong>本实验成功判据：</strong><code>file probe</code> 出现 RISC-V；<code>readelf -h</code> 的 Machine 为 RISC-V；<code>./probe</code> 正常打印三行并退出。把三处输出抄进下表。</p>
+<table>
+  <tr><th>记录字段</th><th>你的记录</th></tr>
+  <tr><td>板端 <code>uname -m</code></td><td></td></tr>
+  <tr><td><code>file probe</code> 一行摘要</td><td></td></tr>
+  <tr><td><code>readelf -h probe | grep Machine</code> 输出</td><td></td></tr>
+  <tr><td><code>./probe</code> 输出（三行）</td><td></td></tr>
+</table>
+<p><strong>验收：</strong>上表字段齐全、值正确，即通过实验一。</p>
+</section>
+
+<section id="exp2">
+<h2>实验二 · 架构陷阱：编错就上不了板</h2>
+<p>实验一证明「板端原生 gcc 编的能跑」。现在反过来看：<strong>主机 gcc 编的程序</strong>，架构是 x86-64，直接传上板子会怎样？本实验把同一份 <code>probe.c</code> 在主机编一次、在板端编一次，两份都拿到板子上跑，亲自确认「对架构编译」这件事。</p>
+
+<h3>步骤</h3>
+<pre><span class="c"># 主机上执行（这台是 x86 Linux）：make 得到 x86-64 产物</span>
+<span class="p">$</span> cd chapters/ch01/code/probe
+<span class="p">$</span> make
+<span class="p">$</span> file probe
+<span class="c"># 期望：x86-64 / Advanced Micro Devices X86-64，而不是 RISC-V</span>
+<span class="p">$</span> readelf -h probe | grep Machine
+<span class="c"># 期望：Machine: Advanced Micro Devices X86-64</span>
+<span class="p">$</span> scp probe user@board-ip:/tmp/probe.x86</pre>
+<pre><span class="c"># 板端 shell：先确保自己有 riscv 版，再试跑传上来的 x86 版</span>
+<span class="p">$</span> cd ~/probe &amp;&amp; make          <span class="c"># 若实验一已编过，这步会跳过</span>
+<span class="p">$</span> file probe
+<span class="c"># 期望：UCB RISC-V</span>
+<span class="p">$</span> chmod +x /tmp/probe.x86
+<span class="p">$</span> /tmp/probe.x86
+<span class="c"># 期望：cannot execute binary file: Exec format error（退出码 126）</span>
+<span class="c">#       —— x86 程序在 RISC-V 板上跑不起来，而不是「程序崩溃」</span>
+<span class="p">$</span> ./probe
+<span class="c"># 期望：正常打印 arch = riscv —— 板端自己编的就能跑</span></pre>
+<div class="warn">
+  <strong>理解：</strong><code>Exec format error</code> 不是程序写错，而是<strong>产物架构和 CPU 对不上</strong>。要让板子跑，程序必须编成 RISC-V：要么在板端原生编，要么在主机用交叉工具链编（实验三用后者）。讲义 1.3 的反汇编对比，让你看到同一份 C 在不同架构下生成的指令根本不同。
+</div>
+<table>
+  <tr><th>记录字段</th><th>你的记录</th></tr>
+  <tr><td>主机 <code>file probe</code> 一行摘要（x86-64）</td><td></td></tr>
+  <tr><td>板端 <code>file probe</code> 一行摘要（RISC-V）</td><td></td></tr>
+  <tr><td>板端跑 <code>/tmp/probe.x86</code> 的错误行（<code>cannot execute binary file: Exec format error</code>）</td><td></td></tr>
+  <tr><td>板端跑 <code>./probe</code> 的输出首行</td><td></td></tr>
+  <tr><td>一句话结论（为什么 x86 产物上不了板）</td><td></td></tr>
+</table>
+<p><strong>验收：</strong>两张 <code>file</code> 摘要架构不同；x86 产物在板上报 <code>Exec format error</code>；riscv 产物正常跑；结论句写对。</p>
+</section>
+
+<section id="exp3">
+<h2>实验三 · 上板通道验收（CoreMark）</h2>
+<p>实验一、实验二已经证明：板端能原生编、能跑；主机默认 gcc 的产物上不了板。实验三把整条「主机交叉编译 → 传输 → 板端运行」通道用到正式程序 CoreMark 上，并留下可复查的分数与证据。</p>
+</section>
 
 <section id="intro">
 <h2>本实验要做什么</h2>

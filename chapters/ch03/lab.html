@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第三章 · 本章实验 · 继电器控制风扇（GPIO 输出）</title>
+<title>第三章 · 本章实验 · 三个实验</title>
 <style>
   :root {
     --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
@@ -118,30 +118,112 @@
   <a class="course-rail" href="lecture.html">本章讲义</a>
   <a class="course-rail" href="../ch04/lecture.html">下一章 · 第四章</a>
   <div class="divider"></div>
-  <a href="#intro">说明</a>
-  <a href="#parts">实验器材</a>
-  <a href="#breadboard">面包板怎么用</a>
-  <a href="#solder">电烙铁与安全</a>
+  <a href="#overview">本章三个实验一览</a>
   <div class="divider"></div>
-  <a href="#pinmap">荔枝派排针怎么认</a>
-  <a href="#wire">接线总表</a>
-  <a href="#step-wire">步骤 1：接线</a>
-  <a href="#step-impl">步骤 2：实现三个函数</a>
-  <a href="#step-run">步骤 3：编译运行</a>
-  <a href="#step-accept">步骤 4：模拟温度控制验收</a>
-  <a href="#step-threshold">步骤 5：改阈值</a>
+  <a href="#exp1">实验一 · 温度扫描边界</a>
+  <a href="#exp2">实验二 · 滞回决策与时间线</a>
   <div class="divider"></div>
-  <a href="#trouble">常见故障</a>
-  <a href="#accept">验收表</a>
+  <a href="#exp3">实验三 · 继电器控制风扇（真 GPIO）</a>
+  <a href="#parts">　　实验器材</a>
+  <a href="#breadboard">　　面包板怎么用</a>
+  <a href="#solder">　　电烙铁与安全</a>
+  <a href="#pinmap">　　荔枝派排针怎么认</a>
+  <a href="#wire">　　接线总表</a>
+  <a href="#step-wire">　　接线</a>
+  <a href="#step-impl">　　实现三个函数</a>
+  <a href="#step-run">　　编译运行</a>
+  <a href="#step-accept">　　模拟温度验收</a>
+  <a href="#step-threshold">　　改阈值</a>
+  <a href="#trouble">　　常见故障</a>
+  <a href="#accept">　　验收表</a>
 </nav>
 
 <article>
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第三章</div>
-  <h1>本章实验 · 继电器控制风扇</h1>
-  <p class="meta">整板接线 · 自己写 gpiod / 滞回 · temperature_fan 模拟温度控制 · 改阈值</p>
+  <h1>本章实验 · 三个实验</h1>
+  <p class="meta">实验一 温度扫描边界 · 实验二 滞回决策与时间线 · 实验三 继电器控制风扇（真 GPIO）</p>
 </header>
+
+<section id="overview">
+<h2>本章三个实验一览</h2>
+<p>第三章的主实验要接真继电器、真风扇，动的是 GPIO。为了让「决策和执行」分开练清楚，本章拆成三个实验：实验一、实验二<strong>不需要任何接线或器材</strong>，在主机或板端（<code>riscv64</code> gcc）就能跑；实验三才是原来的整板接线实验。实验一、实验二写出的两段逻辑，正是实验三里要平移到真 GPIO 上的那两段。</p>
+<table>
+  <tr><th>实验</th><th>练什么</th><th>器材</th><th>源码目录</th></tr>
+  <tr>
+    <td><strong>实验一</strong><br>温度扫描边界</td>
+    <td>让模拟温度在 24 ↔ 30 之间来回扫、不越界（到边界前反向）</td>
+    <td>无</td>
+    <td><code>code/sweep-ramp/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验二</strong><br>滞回决策与时间线</td>
+    <td>写 <code>fan_decide</code>（&gt;29 开 / &lt;25 关 / 中间保持），看时间线与开关统计</td>
+    <td>无</td>
+    <td><code>code/fan-timeline/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验三</strong><br>继电器控制风扇</td>
+    <td>接线 + 经 libgpiod 控真继电器，把实验一/二的逻辑接到执行端</td>
+    <td>继电器模块、风扇、面包板、杜邦线</td>
+    <td><code>code/temperature_fan.c</code></td>
+  </tr>
+</table>
+<div class="info">
+  <strong>建议：</strong>先在板上把实验一、实验二跑通，再进入实验三接线——那时你只剩「GPIO 申请/置位」没写过，风扇控制本身你已经会了。
+</div>
+</section>
+
+<section id="exp1">
+<h2>实验一 · 温度扫描边界（sweep-ramp）</h2>
+<p>实验三主程序里，模拟温度要 24 → 30 → 24 来回扫。最容易写错的是温度越界：曾有一个版本扫到 30.5 / 23.5 才回头，被审阅专门指出。本实验把这小段逻辑单独抽出来，用断言直接卡死越界。源码 <code>chapters/ch03/code/sweep-ramp/</code>，只实现 <code>ramp_next</code>。</p>
+
+<h3>步骤</h3>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch03/code/sweep-ramp         # 板上：cd ~/sweep-ramp</span>
+<span class="p">$</span> make
+<span class="p">$</span> ./build/sweep-ramp      <span class="c"># 未实现前：温度卡在 24 不动，到不了 30 → FAIL</span></pre>
+<p>打开 <code>src/ramp.c</code>，按头文件契约写 <code>ramp_next</code>：</p>
+<pre><span class="c">/* 从 t、方向 dir 走一步（RAMP_STEP=0.5），温度保持在 [lo, hi] 内。
+ * dir>0 且 t+0.5 &gt; hi → 返回 hi、方向改 -1；     （到上限前就钳住反向）
+ * dir&lt;0 且 t-0.5 &lt; lo → 返回 lo、方向改 +1；
+ * 否则平推一步，方向不变。 */</span></pre>
+<p>实现后重新 <code>make</code> 再跑：</p>
+<pre><span class="p">$</span> ./build/sweep-ramp
+<span class="c"># 期望：
+#   ok   200 步都在 [24, 30] 内
+#   ok   到达过上限 30
+#   ok   到达过下限 24
+#   ALL PASS</span>
+<span class="c"># 对照参考：make sol && ./build/sweep-ramp-sol（同样 ALL PASS）</span></pre>
+<p><strong>本实验成功判据：</strong><code>./build/sweep-ramp</code> 打印 <code>ALL PASS</code>；能口头说出「到边界是钳住反向，不是越过去再反」。</p>
+</section>
+
+<section id="exp2">
+<h2>实验二 · 滞回决策与时间线（fan-timeline）</h2>
+<p>实验二写这一章的决策函数 <code>fan_decide</code>，并跑一整天时间线看它的表现。注意：<strong>它的签名和实验三 temperature_fan 里要你写的 <code>fan_decide</code> 一模一样</strong>——本实验写对，实验三直接平移即可。源码 <code>chapters/ch03/code/fan-timeline/</code>，只实现 <code>decide.c</code>。</p>
+
+<h3>步骤</h3>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch03/code/fan-timeline       # 板上：cd ~/fan-timeline</span>
+<span class="p">$</span> make
+<span class="p">$</span> ./build/fan-timeline    <span class="c"># 未实现前：风扇一直 OFF，SUMMARY 三数全错 → 预期</span></pre>
+<p>打开 <code>src/decide.c</code> 写 <code>fan_decide</code>（阈值 <code>T_HIGH=29</code> / <code>T_LOW=25</code>，已在 <code>fan.h</code>）：</p>
+<pre><span class="c">/* temp_c &gt; T_HIGH → *fan_on = 1
+ * temp_c &lt; T_LOW  → *fan_on = 0
+ * 中间区间 → 保持 *fan_on（滞回！不要每步都跟着温度上下抖） */</span></pre>
+<p>驱动会扫 240 步温度并打印时间线（每行 <code>[步数] t=温度 fan=ON/OFF</code>），最后一行是统计：</p>
+<pre><span class="p">$</span> ./build/fan-timeline | tail -1
+<span class="c"># 参考（make sol 一致）：SUMMARY steps=240 on_steps=117 turn_ons=9</span></pre>
+<p>其中 <code>on_steps</code> 是风扇 ON 的总步数，<code>turn_ons</code> 是「关→开」的次数。如果写成「高于 29 开、一降到 29 以下就关」的抖法，<code>turn_ons</code> 会大得多——滞回的价值就在这：一次降温要跌破 25 才关，风扇不会在 28/29 之间反复开关。</p>
+<p><strong>本实验成功判据：</strong>自己写的 <code>./build/fan-timeline</code> 末行 <code>steps=240 on_steps=117 turn_ons=9</code>；能口头解释滞回如何避免抖动。</p>
+</section>
+
+<section id="exp3">
+<h2>实验三 · 继电器控制风扇（真 GPIO）</h2>
+<p>实验一你写好了「温度在 24↔30 扫描不越界」，实验二写好了「&gt;29 开 / &lt;25 关」的决策。实验三把它们接到真继电器上：把 <code>fan_decide</code> 平移到 <code>temperature_fan.c</code>（函数签名一致），再补上 GPIO 申请与置位，接上风扇负载验收。下面是原实验正文，器材、接线、编译、验收都从这里开始。</p>
+</section>
 
 <section id="intro">
 <h2>说明</h2>
