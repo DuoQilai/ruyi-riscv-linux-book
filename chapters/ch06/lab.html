@@ -92,11 +92,12 @@
   <a class="course-rail" href="../../docs/project.html">综合项目</a>
   <a class="course-rail" href="lecture.html">本章讲义</a>
   <div class="divider"></div>
-  <a href="#overview">本章两个实验一览</a>
+  <a href="#overview">本章三个实验一览</a>
   <div class="divider"></div>
   <a href="#exp1">实验一 · race-demo + TSan</a>
+  <a href="#exp2">实验二 · 成对快照 + 互斥锁</a>
   <div class="divider"></div>
-  <a href="#exp2">实验二 · 三线程协同（主实验）</a>
+  <a href="#exp3">实验三 · 三线程协同（主实验）</a>
   <a href="#accept">　　验收</a>
 </nav>
 
@@ -104,13 +105,13 @@
 
 <header class="chapter-header">
   <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第六章</div>
-  <h1>本章实验 · 两个实验</h1>
-  <p class="meta">实验一 race-demo + TSan · 实验二 三线程协同（主实验）</p>
+  <h1>本章实验 · 三个实验</h1>
+  <p class="meta">实验一 race-demo + TSan · 实验二 成对快照加锁 · 实验三 三线程协同（主实验）</p>
 </header>
 
 <section id="overview">
-<h2>本章两个实验一览</h2>
-<p>第六章只要两个实验：实验一纯软件，把「丢更新」和 ThreadSanitizer 报告练清楚；实验二是主实验，在荔枝派 4A 上跑三线程产品骨架（无锁必现 <code>[RACE]</code> → 加锁修好 → MQTT → 干净停）。</p>
+<h2>本章三个实验一览</h2>
+<p>第六章主实验要接 MQTT、风扇与三线程产品骨架。为了不一把抓，拆成三个递进实验：实验一、实验二<strong>纯软件、无接线、无 Broker</strong>，先看清「丢更新」和「成对快照不一致」；实验三再接到真硬件与 MQTT。</p>
 <table>
   <tr><th>实验</th><th>练什么</th><th>器材</th><th>源码目录</th></tr>
   <tr>
@@ -120,14 +121,20 @@
     <td><code>code/race-demo/</code></td>
   </tr>
   <tr>
-    <td><strong>实验二</strong><br>三线程协同</td>
-    <td>采集∥控制∥MQTT；<code>USE_LOCK 0→1</code>；Ctrl+C 关风扇</td>
+    <td><strong>实验二</strong><br>成对快照 + 互斥锁</td>
+    <td>写/读 <code>temp_a</code>/<code>temp_b</code>；无锁必现 <code>[RACE]</code>，加锁后 <code>race_hits=0</code></td>
+    <td>无</td>
+    <td><code>code/snapshot-lock/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验三</strong><br>三线程协同</td>
+    <td>采集∥控制∥MQTT；把实验二的成对加锁接到产品路径；Ctrl+C 关风扇</td>
     <td>风扇/继电器（SIMULATE 可先不接 DHT）</td>
     <td><code>code/tri-thread/</code></td>
   </tr>
 </table>
 <div class="info">
-  <strong>建议：</strong>先完成实验一并保存 TSan 报告，再进实验二。race-demo 故意无锁，不要抄进 tri-thread 的产品路径；板上验收以 <code>USE_LOCK 1</code> 为准。
+  <strong>建议：</strong>先完成实验一、实验二（soft），再进实验三。race-demo / snapshot-lock 脚手架故意无锁，不要抄进 tri-thread 的验收路径；板上验收以 <code>USE_LOCK 1</code> 为准。
 </div>
 </section>
 
@@ -153,8 +160,25 @@ SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
 </section>
 
 <section id="exp2">
-<h2>实验二 · 三线程协同（主实验）</h2>
-<p>打开 <code>chapters/ch06/code/tri-thread/</code>。Broker 用 <code>BROKER_HOST</code>（主机先 <code>hostname -I</code>）。脚手架默认 <code>USE_LOCK 0</code>：采集把同一次温度拆成 <code>temp_a</code>/<code>temp_b</code> 两步写并留空窗，控制线程读到不一致就打印 <code>[RACE]</code>。</p>
+<h2>实验二 · 成对快照 + 互斥锁（snapshot-lock）</h2>
+<p>实验三卡人的往往是「同一次温度拆成 <code>temp_a</code>/<code>temp_b</code>」：无锁时控制线程读到半截快照就打 <code>[RACE]</code>。本实验把这对写入/读出剥成纯软件：写线程 <code>pair_write</code>，读线程 <code>pair_read</code>。源码 <code>chapters/ch06/code/snapshot-lock/</code>，只实现这两个函数（脚手架已故意留空窗）。</p>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
+<span class="p">$</span> make && ./build/snapshot-lock
+<span class="c"># 未加锁 → 大量 [RACE]，race_hits 很多（预期）</span>
+<span class="p">$</span> make sol && ./build/snapshot-lock-sol
+<span class="c"># 参考：race_hits=0</span></pre>
+<p>打开 <code>src/pair.c</code>：用同一把 <code>pthread_mutex</code> 包住成对写与成对读；加锁后不要在中间 <code>usleep</code>。对照 <code>pair-sol.c</code>。</p>
+<p><strong>本实验成功判据：</strong>脚手架能打出 <code>[RACE]</code>；<code>make sol</code> 后 <code>race_hits=0</code>；能口头说这套成对加锁平移到实验三就是 <code>USE_LOCK 1</code>。</p>
+<figure>
+  <img src="assets/recordings/snapshot-lock-board.gif" alt="板上 snapshot-lock：脚手架现 RACE，sol 后 race_hits=0">
+  <figcaption>板端证据（SSH → snapshot-lock）：无锁 <code>[RACE]</code>；加锁版 <code>race_hits=0</code></figcaption>
+</figure>
+</section>
+
+<section id="exp3">
+<h2>实验三 · 三线程协同（主实验）</h2>
+<p>打开 <code>chapters/ch06/code/tri-thread/</code>。Broker 用 <code>BROKER_HOST</code>（主机先 <code>hostname -I</code>）。脚手架默认 <code>USE_LOCK 0</code>：采集把同一次温度拆成 <code>temp_a</code>/<code>temp_b</code> 两步写并留空窗（与实验二同一招），控制线程读到不一致就打印 <code>[RACE]</code>。</p>
 <ol>
   <li>
     <strong>先 <code>USE_LOCK 0</code></strong>，跑 10–20 秒，应反复出现：
@@ -202,10 +226,12 @@ SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
   <tr><th>实验</th><th>项</th><th>通过条件</th><th>□</th></tr>
   <tr><td>一</td><td>丢更新</td><td>race-demo 最终计数明显小于期望</td><td></td></tr>
   <tr><td>一</td><td>TSan</td><td>报告已保存，能指出抢变量的两行</td><td></td></tr>
-  <tr><td>二</td><td>无锁</td><td><code>USE_LOCK 0</code> 出现 <code>[RACE]</code> 且 <code>race_hits&gt;0</code></td><td></td></tr>
-  <tr><td>二</td><td>加锁</td><td><code>USE_LOCK 1</code> 无 <code>[RACE]</code>，风扇阈值正常</td><td></td></tr>
-  <tr><td>二</td><td>MQTT</td><td>下行或上行至少一项可演示</td><td></td></tr>
-  <tr><td>二</td><td>干净停</td><td>Ctrl+C 后风扇关，进程退出</td><td></td></tr>
+  <tr><td>二</td><td>无锁快照</td><td>snapshot-lock 脚手架出现 <code>[RACE]</code> 且 <code>race_hits&gt;0</code></td><td></td></tr>
+  <tr><td>二</td><td>加锁快照</td><td><code>make sol</code> 后 <code>race_hits=0</code></td><td></td></tr>
+  <tr><td>三</td><td>无锁</td><td><code>USE_LOCK 0</code> 出现 <code>[RACE]</code> 且 <code>race_hits&gt;0</code></td><td></td></tr>
+  <tr><td>三</td><td>加锁</td><td><code>USE_LOCK 1</code> 无 <code>[RACE]</code>，风扇阈值正常</td><td></td></tr>
+  <tr><td>三</td><td>MQTT</td><td>下行或上行至少一项可演示</td><td></td></tr>
+  <tr><td>三</td><td>干净停</td><td>Ctrl+C 后风扇关，进程退出</td><td></td></tr>
 </table>
 <div class="info">
   <strong>完成标志：</strong>上表全部勾选。本骨架供综合项目复用。
