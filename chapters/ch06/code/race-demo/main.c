@@ -1,11 +1,10 @@
 /*
- * ch06 race-demo — 确定性强制数据竞争（电脑本机跑）
+ * ch06 race-demo — 第六章实验一
  *
- * 两线程无锁对同一 counter 做「读 → 加一 → 写」；中间无原子、无锁。
+ * 两线程无锁对同一 counter 做「读 → 加一 → 写」。
  * 期望最终值 = 2*N；无锁时几乎必小于期望（丢更新）。
- * 用 make tsan 编译后，ThreadSanitizer 会指出抢变量的两行。
- *
- * 勿上板；勿把无锁写法用于产品代码。
+ * make tsan 后 ThreadSanitizer 指出抢变量的两行。
+ * 主机或板端均可；勿把无锁写法用于产品代码。
  */
 #include <pthread.h>
 #include <stdio.h>
