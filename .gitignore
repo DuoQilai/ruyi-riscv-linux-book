@@ -89,3 +89,10 @@ deck/videos/*.MOV
 deck/videos/*.mov
 deck/assets/*.MOV
 deck/assets/*.mov
+
+# local build artifacts
+chapters/**/build/
+chapters/**/race-demo/race-demo
+chapters/**/tri-thread/tri-thread
+chapters/**/mqtt-led/mqtt-led
+chapters/**/mqtt-led/mqtt-led-sol
