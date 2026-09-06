@@ -1,5 +1,5 @@
 /*
- * ch05 mqtt-led — MQTT 远程控灯（本章实验脚手架）
+ * ch05 mqtt-led — 第五章实验三：MQTT 远程控灯（主实验脚手架）
  *
  * 下行：订阅 TOPIC_CMD，payload on/off → GPIO LED
  * 上行：publish_status() 发到 TOPIC_STATUS（学生补全）

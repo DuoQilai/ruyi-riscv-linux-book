@@ -1,6 +1,7 @@
-# mqtt-led · MQTT 远程控灯
+# mqtt-led · 第五章实验三（主实验）
 
 荔枝派 4A：订阅命令主题驱动外接 LED，并向状态主题 publish。
+先完成实验一 `led-cmd-parse`、实验二 `virt-led-repl`，再做本实验。
 
 依赖：libmosquitto、libgpiod。板端原生 `make`；交叉：先激活 `venv-gnu-ruyisdk`，再 `make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-`。
 
