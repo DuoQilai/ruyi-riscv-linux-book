@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第六章 线程与协同 · 本章实验 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  section { margin-bottom: 48px; }
+  section h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+  section h3 { font-size: 22px; font-weight: 700; margin: 24px 0 12px; }
+  section p, section li { font-size: 18px; color: var(--muted); margin-bottom: 8px; }
+  section ol, section ul { padding-left: 24px; margin-bottom: 16px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7;
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { color: var(--accent); font-weight: 700; }
+  td { color: var(--muted); }
+  .warn { background: var(--warn-bg); border-left: 3px solid var(--warm); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440; }
+  .info { background: var(--info-bg); border-left: 3px solid var(--accent); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted); }
+  .arch-fig {
+    margin: 20px 0 24px; border: 1px solid var(--line-light);
+    background: #fff; padding: 16px 20px; overflow-x: auto;
+  }
+  .arch-fig svg, .arch-fig img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  .arch-fig figcaption { font-size: 14px; color: var(--faint); margin-top: 12px; text-align: center; line-height: 1.5; }
+  figure { margin: 16px 0 20px; }
+  figure img {
+    display: block; max-width: min(100%, 820px); width: auto; height: auto;
+    border: 1px solid var(--line-light);
+  }
+  figcaption { font-size: 14px; color: var(--faint); margin-top: 8px; line-height: 1.45; }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line); padding: 40px 20px;
+  }
+  .toc h4 { font-size: 14px; color: var(--accent); margin-bottom: 16px; }
+  .toc a { display: block; padding: 5px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+  body { padding-left: 220px; }
+  @media print { body { padding-left: 0; } .toc { display: none; } }
+/* course-nav-css */
+
+  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line, #d4cfc4);
+    font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
+    line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>本章实验</h4>
+<!-- course-nav-toc -->
+  <a class="course-rail" href="../../index.html">课程总览</a>
+  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
+  <a class="course-rail" href="../../docs/project.html">综合项目</a>
+  <a class="course-rail" href="lecture.html">本章讲义</a>
+  <div class="divider"></div>
+  <a href="#overview">本章三个实验一览</a>
+  <div class="divider"></div>
+  <a href="#exp1">实验一 · race-demo + TSan</a>
+  <a href="#exp2">实验二 · 成对快照 + 互斥锁</a>
+  <div class="divider"></div>
+  <a href="#exp3">实验三 · 三线程协同（主实验）</a>
+  <a href="#accept">　　验收</a>
+</nav>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第六章</div>
+  <h1>本章实验 · 三个实验</h1>
+  <p class="meta">实验一 race-demo + TSan · 实验二 成对快照加锁 · 实验三 三线程协同（主实验）</p>
+</header>
+
+<section id="overview">
+<h2>本章三个实验一览</h2>
+<p>第六章主实验要接 MQTT、风扇与三线程产品骨架。为了不一把抓，拆成三个递进实验：实验一、实验二<strong>纯软件、无接线、无 Broker</strong>，先看清「丢更新」和「成对快照不一致」；实验三再接到真硬件与 MQTT。</p>
+<table>
+  <tr><th>实验</th><th>练什么</th><th>器材</th><th>源码目录</th></tr>
+  <tr>
+    <td><strong>实验一</strong><br>race-demo + TSan</td>
+    <td>无锁计数丢更新；TSan 指出抢同一变量的两行</td>
+    <td>无</td>
+    <td><code>code/race-demo/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验二</strong><br>成对快照 + 互斥锁</td>
+    <td>写/读 <code>temp_a</code>/<code>temp_b</code>；无锁必现 <code>[RACE]</code>，加锁后 <code>race_hits=0</code></td>
+    <td>无</td>
+    <td><code>code/snapshot-lock/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验三</strong><br>三线程协同</td>
+    <td>采集∥控制∥MQTT；把实验二的成对加锁接到产品路径；Ctrl+C 关风扇</td>
+    <td>风扇/继电器（SIMULATE 可先不接 DHT）</td>
+    <td><code>code/tri-thread/</code></td>
+  </tr>
+</table>
+<div class="info">
+  <strong>建议：</strong>先完成实验一、实验二（soft），再进实验三。race-demo / snapshot-lock 脚手架故意无锁，不要抄进 tri-thread 的验收路径；板上验收以 <code>USE_LOCK 1</code> 为准。
+</div>
+</section>
+
+<section id="exp1">
+<h2>实验一 · race-demo + TSan</h2>
+<p>目的：用「很多线程同时给同一计数器加一」亲眼看到最终计数偏小，再用 TSan 指出具体是哪两行在抢。主机或板端均可；下面摘录来自板端。</p>
+<pre><span class="p">$</span> cd chapters/ch06/code/race-demo
+<span class="p">$</span> make && ./race-demo
+expect=400000  got=215946  RACE(lost updates)</pre>
+<p>主机跑 TSan 前若启动失败，先执行 <code>sudo sysctl vm.mmap_rnd_bits=28</code>（板端能直接跑则可跳过）。</p>
+<pre><span class="p">$</span> make tsan && ./race-demo
+WARNING: ThreadSanitizer: data race
+  Read of size 8 ... by thread T2:
+    #0 bump_racy .../main.c:24
+  Previous write of size 8 ... by thread T1:
+    #0 bump_racy .../main.c:26
+SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
+<p><strong>本实验成功判据：</strong>有「计数偏小」记录；有完整 TSan 报告；能指出抢变量的两行。</p>
+<figure>
+  <img src="assets/recordings/race-demo-board.gif" alt="板上 race-demo：expect 与 got 不一致，标出 RACE">
+  <figcaption>板端证据（SSH → race-demo）：最终计数偏小并标出 <code>RACE</code></figcaption>
+</figure>
+</section>
+
+<section id="exp2">
+<h2>实验二 · 成对快照 + 互斥锁（snapshot-lock）</h2>
+<p>实验三卡人的往往是「同一次温度拆成 <code>temp_a</code>/<code>temp_b</code>」：无锁时控制线程读到半截快照就打 <code>[RACE]</code>。本实验把这对写入/读出剥成纯软件：写线程 <code>pair_write</code>，读线程 <code>pair_read</code>。源码 <code>chapters/ch06/code/snapshot-lock/</code>，只实现这两个函数（脚手架已故意留空窗）。</p>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
+<span class="p">$</span> make && ./build/snapshot-lock
+<span class="c"># 未加锁 → 大量 [RACE]，race_hits 很多（预期）</span>
+<span class="p">$</span> make sol && ./build/snapshot-lock-sol
+<span class="c"># 参考：race_hits=0</span></pre>
+<p>打开 <code>src/pair.c</code>：用同一把 <code>pthread_mutex</code> 包住成对写与成对读；加锁后不要在中间 <code>usleep</code>。对照 <code>pair-sol.c</code>。</p>
+<p><strong>本实验成功判据：</strong>脚手架能打出 <code>[RACE]</code>；<code>make sol</code> 后 <code>race_hits=0</code>；能口头说这套成对加锁平移到实验三就是 <code>USE_LOCK 1</code>。</p>
+<figure>
+  <img src="assets/recordings/snapshot-lock-board.gif" alt="板上 snapshot-lock：脚手架现 RACE，sol 后 race_hits=0">
+  <figcaption>板端证据（SSH → snapshot-lock）：无锁 <code>[RACE]</code>；加锁版 <code>race_hits=0</code></figcaption>
+</figure>
+</section>
+
+<section id="exp3">
+<h2>实验三 · 三线程协同（主实验）</h2>
+<p>打开 <code>chapters/ch06/code/tri-thread/</code>。Broker 用 <code>BROKER_HOST</code>（主机先 <code>hostname -I</code>）。脚手架默认 <code>USE_LOCK 0</code>：采集把同一次温度拆成 <code>temp_a</code>/<code>temp_b</code> 两步写并留空窗（与实验二同一招），控制线程读到不一致就打印 <code>[RACE]</code>。</p>
+<ol>
+  <li>
+    <strong>先 <code>USE_LOCK 0</code></strong>，跑 10–20 秒，应反复出现：
+<pre>[RACE] inconsistent snapshot temp_a=275 temp_b=270</pre>
+    退出时 <code>race_hits</code> 远大于 0。
+  </li>
+  <li>
+    <strong>改为 <code>USE_LOCK 1</code></strong> 重编再跑：无 <code>[RACE]</code>，<code>race_hits=0</code>；风扇按阈值动作。
+  </li>
+  <li>
+    <strong>编译运行</strong>（板端原生或主机交叉）：
+<pre><span class="p">$</span> cd chapters/ch06/code/tri-thread
+<span class="p">$</span> make clean && make
+<span class="p">$</span> BROKER_HOST=&lt;主机局域网IP&gt; ./tri-thread
+<span class="c"># 或：make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu- && scp …</span></pre>
+  </li>
+  <li>
+    <strong>MQTT / 干净停</strong>：主机 <code>mosquitto_pub … -t course/thermo/cmd -m 'set high 30'</code>，板端见 <code>[MQTT] cmd payload=...</code>；Ctrl+C 后风扇关并 <code>exited cleanly</code>。
+  </li>
+</ol>
+<p>实机摘录（<code>USE_LOCK=1</code>）：</p>
+<pre>[INFO] USE_LOCK=1 SIMULATE_SENSOR=1
+[MQTT] subscribed course/thermo/cmd
+[INFO] fan ON
+[MQTT] cmd payload=set high 30
+[INFO] race_hits=0 (USE_LOCK=1；期望 0→很多，1→0)
+[INFO] exited cleanly</pre>
+<figure>
+  <img src="assets/recordings/tri-thread-board.gif" alt="板上 tri-thread：USE_LOCK 0 现 RACE，USE_LOCK 1 后 race_hits=0">
+  <figcaption>板端证据（SSH → tri-thread）：无锁出现 <code>[RACE]</code>；加锁后 <code>race_hits=0</code> 并干净退出</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/tri-thread-board-lock0-race.png" alt="USE_LOCK=0 时出现 RACE 的终端快照">
+  <figcaption>无锁快照：反复 <code>[RACE] inconsistent snapshot</code></figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/tri-thread-board-lock1-clean.png" alt="USE_LOCK=1 时 race_hits=0 的终端快照">
+  <figcaption>加锁快照：<code>race_hits=0</code>，Ctrl+C 干净停</figcaption>
+</figure>
+</section>
+
+<section id="accept">
+<h2>验收</h2>
+<table>
+  <tr><th>实验</th><th>项</th><th>通过条件</th><th>□</th></tr>
+  <tr><td>一</td><td>丢更新</td><td>race-demo 最终计数明显小于期望</td><td></td></tr>
+  <tr><td>一</td><td>TSan</td><td>报告已保存，能指出抢变量的两行</td><td></td></tr>
+  <tr><td>二</td><td>无锁快照</td><td>snapshot-lock 脚手架出现 <code>[RACE]</code> 且 <code>race_hits&gt;0</code></td><td></td></tr>
+  <tr><td>二</td><td>加锁快照</td><td><code>make sol</code> 后 <code>race_hits=0</code></td><td></td></tr>
+  <tr><td>三</td><td>无锁</td><td><code>USE_LOCK 0</code> 出现 <code>[RACE]</code> 且 <code>race_hits&gt;0</code></td><td></td></tr>
+  <tr><td>三</td><td>加锁</td><td><code>USE_LOCK 1</code> 无 <code>[RACE]</code>，风扇阈值正常</td><td></td></tr>
+  <tr><td>三</td><td>MQTT</td><td>下行或上行至少一项可演示</td><td></td></tr>
+  <tr><td>三</td><td>干净停</td><td>Ctrl+C 后风扇关，进程退出</td><td></td></tr>
+</table>
+<div class="info">
+  <strong>完成标志：</strong>上表全部勾选。本骨架供综合项目复用。
+</div>
+</section>
+
+<!-- course-nav-foot -->
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="lecture.html"><span class="dir">上一篇</span>第六章 · 讲义<br>线程与协同</a>
+  <a class="next" href="../../docs/project.html"><span class="dir">下一篇</span>综合项目 · 端侧 Agent 环境终端</a>
+</nav>
+</article>
+</body>
+</html>
