@@ -156,6 +156,10 @@ $ cd chapters/ch05/code/led-cmd-parse      # 板上：cd ~/led-cmd-parse</span>
 #   ALL PASS</span>
 <span class="c"># 对照：make sol && ./build/led-cmd-parse-sol</span></pre>
 <p><strong>本实验成功判据：</strong><code>ALL PASS</code>；能口头说「实验三里 payload 必须精确等于 on/off，大小写与尾空格都不算」。</p>
+<figure>
+  <img src="assets/recordings/led-cmd-parse-board.gif" alt="板上 led-cmd-parse-sol 输出 ALL PASS" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>板端证据（SSH → led-cmd-parse）：<code>ALL PASS</code></figcaption>
+</figure>
 </section>
 
 <section id="exp2">
@@ -177,6 +181,10 @@ $ cd chapters/ch05/code/virt-led-repl      # 板上：cd ~/virt-led-repl</span>
 #   [ERR] bad cmd
 #   bye led=OFF</span></pre>
 <p><strong>本实验成功判据：</strong>输出与参考一致；能口头说这套顺序平移到实验三就是 <code>led_set</code> 成功后再 <code>publish_status</code>。</p>
+<figure>
+  <img src="assets/recordings/virt-led-repl-board.gif" alt="板上 virt-led-repl-sol：on/off/bad 命令环" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>板端证据（SSH → virt-led-repl）：改灯后再打 <code>[STATUS]</code>；非法命令报错</figcaption>
+</figure>
 </section>
 
 <section id="exp3">
@@ -267,8 +275,12 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
 <span class="p">$</span> ssh user@board-ip 'BROKER_HOST=BROKER_IP ./mqtt-led'</pre>
 <p>把命令里的 <code>BROKER_IP</code> 换成你在第 1 步 <code>hostname -I</code> 记下的地址。可选：板端设 <code>MQTT_CLIENT_ID</code> 自定义客户端名（默认 <code>mqtt-led-&lt;主机名&gt;</code>）。启动后应看到正在连接 Broker、连接成功、以及已订阅命令主题的日志。</p>
 <figure>
-  <img src="assets/Figure_board-run.png" alt="板端 mqtt-led：连接 Broker、订阅 course/led/cmd、收到 on 后 LED ON 并发布 status" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
-  <figcaption>图 6　板端跑起来的样子：连上 Broker → 订阅 <code>course/led/cmd</code> → 收到 <code>on</code> → <code>LED ON</code> → 发布 <code>course/led/status = on</code></figcaption>
+  <img src="assets/recordings/mqtt-led-board.gif" alt="板上 SSH 跑 mqtt-led：订阅、on/off、拒绝 ON" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 6　板端证据（SSH → mqtt-led）：连 Broker → 订阅 → <code>on</code>/<code>off</code> 发布 status；非法 <code>ON</code> 被拒</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/mqtt-led-board-led-on.png" alt="mqtt-led 收到 on 后 published status=on" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>同一次联调快照：<code>published course/led/status = on</code></figcaption>
 </figure>
 
 <h3>4. 联调（固定顺序，全部要做）</h3>
