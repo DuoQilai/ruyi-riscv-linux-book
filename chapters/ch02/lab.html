@@ -156,6 +156,10 @@ $ cd chapters/ch02/code/bits-check        # 板上：cd ~/bits-check</span>
 <span class="c"># 期望结尾：ALL PASS（中间逐条 ok）</span>
 <span class="c"># 对照参考：make sol && ./build/bits-check-sol 应同样 ALL PASS</span></pre>
 <p><strong>本实验成功判据：</strong>三函数实现正确，<code>./build/bits-check</code> 打印 <code>ALL PASS</code>；能口头解释「为什么要 <code>&amp; 0xFF</code>」「为什么要先提升成 16 位再移位」。</p>
+<figure>
+  <img src="assets/recordings/bits-check-board.gif" alt="板上 bits-check-sol 输出 ALL PASS">
+  <figcaption>板端证据（SSH → bits-check）：<code>ALL PASS</code></figcaption>
+</figure>
 </section>
 
 <section id="exp2">
@@ -183,6 +187,10 @@ $ cd chapters/ch02/code/cmd-parse          # 板上：cd ~/cmd-parse</span>
 #     ...
 # ALL PASS</span></pre>
 <p><strong>本实验成功判据：</strong><code>./build/cmd-parse</code> 打印 <code>ALL PASS</code>；能口头说出「什么样的词才算数字」「<code>strtod</code> 的 <code>endptr</code> 为什么能用来判断干净与否」。</p>
+<figure>
+  <img src="assets/recordings/cmd-parse-board.gif" alt="板上 cmd-parse-sol 输出 ALL PASS">
+  <figcaption>板端证据（SSH → cmd-parse）：<code>ALL PASS</code></figcaption>
+</figure>
 </section>
 
 <section id="exp3">
@@ -285,8 +293,8 @@ $ cd chapters/ch02/code/cmd-parse          # 板上：cd ~/cmd-parse</span>
 </table>
 <p><strong>本步成功判据：</strong>六步输出与上表一致；能口头说明滞回是自己按契约写的，读失败路径是改出来的。</p>
 <figure>
-  <img src="assets/Figure_1.png" alt="x86 上 make sol 后 fake-thermo-sol 六步 OFF/ON/READ_FAIL">
-  <figcaption>图 1　参考实现 <code>make sol</code>：25 OFF、27 OFF、29 ON、27 ON、24 OFF、READ_FAIL 保持 OFF</figcaption>
+  <img src="assets/recordings/fake-thermo-board.gif" alt="板上 fake-thermo-sol：滞回 OFF/ON 与 READ_FAIL">
+  <figcaption>图 1　板端证据（SSH → fake-thermo-sol）：25 OFF → 29 ON → 24 OFF → READ_FAIL</figcaption>
 </figure>
 <figure>
   <img src="assets/Figure_2.png" alt="荔枝派上同样跑通 fake-thermo-sol 六步">
