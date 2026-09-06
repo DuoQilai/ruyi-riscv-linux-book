@@ -17,6 +17,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "led_cmd.h" /* 实验一写好的解析；本实验只接 GPIO + MQTT */
+
 /* 默认占位；运行前优先用环境变量 BROKER_HOST（见 lab / README） */
 #define DEFAULT_BROKER_HOST "192.168.1.10"
 #define BROKER_PORT         1883
@@ -151,9 +153,10 @@ static void on_connect(struct mosquitto *m, void *obj, int rc)
 }
 
 /*
- * TODO: 根据 payload 调用 led_set，成功后再 publish_status。
- * 约定：精确匹配 "on" / "off"；其他打印 [ERR] 且不改灯。
- * led_set 失败时不要发 status。
+ * TODO: 用实验一的 parse_led_cmd(buf)：
+ *   返回 1/0 → led_set 成功后再 publish_status(status_payload(...))
+ *   返回 -1 → 打 [ERR]，不改灯
+ * publish_status 仍用 mosquitto_publish（本文件下方桩）。
  */
 static void on_message(struct mosquitto *m, void *obj,
 		       const struct mosquitto_message *msg)
@@ -170,8 +173,8 @@ static void on_message(struct mosquitto *m, void *obj,
 	printf("[INFO] msg topic=%s payload=%s\n", msg->topic, buf);
 	fflush(stdout);
 
-	/* TODO: 解析 on/off → led_set → publish_status */
-	printf("[TODO] handle cmd payload in on_message\n");
+	/* TODO: parse_led_cmd → led_set → publish_status(status_payload) */
+	printf("[TODO] handle cmd with parse_led_cmd in on_message\n");
 	fflush(stdout);
 	(void)led_on;
 }
