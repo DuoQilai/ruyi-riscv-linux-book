@@ -161,6 +161,14 @@
 <div class="diagram">本课回路（对照上图，开关换成 GPIO）：
 IO1_4  →  限流电阻  →  LED 长脚（正极）
 电源轨「−」/ GND  →  LED 短脚（负极）</div>
+<figure>
+  <img src="assets/Figure_led-wiring-1.jpg" alt="荔枝派 4A 与面包板：外接红 LED、继电器、风扇与 DHT 同板联调（灯灭）" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 4　本课实机：荔枝派 4A + 面包板；外接红 LED 接在 IO1_4 一路；风扇/继电器与 DHT 仍沿用前几章</figcaption>
+</figure>
+<figure>
+  <img src="assets/Figure_led-wiring-2.jpg" alt="同上接线，外接红 LED 点亮" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 5　同一套接线：主机 pub <code>on</code> 后外接 LED 亮</figcaption>
+</figure>
 <div class="info">
   <strong>说明书摘录：</strong><code>chapters/ch05/manuals/LED_UR5202D摘录.md</code>（极性 / VF）、<code>电阻_100欧姆摘录.md</code>、<code>LED_串联并联示意.md</code>。
 </div>
@@ -212,7 +220,7 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
 <p>把命令里的 <code>BROKER_IP</code> 换成你在第 1 步 <code>hostname -I</code> 记下的地址。启动后应看到正在连接 Broker、连接成功、以及已订阅命令主题的日志。</p>
 <figure>
   <img src="assets/Figure_board-run.png" alt="板端 mqtt-led：连接 Broker、订阅 course/led/cmd、收到 on 后 LED ON 并发布 status" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
-  <figcaption>图 4　板端跑起来的样子：连上 Broker → 订阅 <code>course/led/cmd</code> → 收到 <code>on</code> → <code>LED ON</code> → 发布 <code>course/led/status = on</code></figcaption>
+  <figcaption>图 6　板端跑起来的样子：连上 Broker → 订阅 <code>course/led/cmd</code> → 收到 <code>on</code> → <code>LED ON</code> → 发布 <code>course/led/status = on</code></figcaption>
 </figure>
 
 <h3>4. 联调（固定顺序，全部要做）</h3>
@@ -223,7 +231,7 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
     <p><code>mosquitto_sub</code> 的意思：连上 Broker，一直听某个主题；有新消息就打印出来。<code>-v</code> 会把主题名和载荷一起打出来。</p>
 <figure>
   <img src="assets/Figure_host-sub.png" alt="主机 mosquitto_sub 收到 course/led/status on 与 off" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
-  <figcaption>图 5　主机订阅状态主题：先后收到 <code>course/led/status on</code> 与 <code>off</code>（上行验收）</figcaption>
+  <figcaption>图 7　主机订阅状态主题：先后收到 <code>course/led/status on</code> 与 <code>off</code>（上行验收）</figcaption>
 </figure>
   </li>
   <li>
@@ -234,7 +242,7 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
   <li>再发 <code>-m off</code>：灯灭，状态同步为 off。
 <figure>
   <img src="assets/Figure_host-pub.png" alt="主机 mosquitto_pub 向 course/led/cmd 发送 on 与 off" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
-  <figcaption>图 6　主机下行：向 <code>course/led/cmd</code> 发 <code>on</code> / <code>off</code></figcaption>
+  <figcaption>图 8　主机下行：向 <code>course/led/cmd</code> 发 <code>on</code> / <code>off</code></figcaption>
 </figure>
   </li>
   <li>另开一个电脑终端，用 <code>mosquitto_pub</code> 连<strong>同一 Broker</strong>，对同一命令主题再发一次 on/off，确认灯有动作。</li>
@@ -243,7 +251,7 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
 <pre><span class="p">$</span> sudo tcpdump -i any -nn -A port 1883 -c 20</pre>
 <figure>
   <img src="assets/Figure_tcpdump-listen.png" alt="tcpdump 在 port 1883 上 listening" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
-  <figcaption>图 7　先开 tcpdump，过滤 <code>port 1883</code>，再去 pub 一条命令</figcaption>
+  <figcaption>图 9　先开 tcpdump，过滤 <code>port 1883</code>，再去 pub 一条命令</figcaption>
 </figure>
     <p>成功时，摘要行里应能看到板子 IP 与 Broker IP、目的端口 <code>1883</code>，以及 TCP 标志。示例（本课联调实录，IP 按你的局域网会不同）：</p>
 <pre>19:12:32.626647 ens33 In  IP 192.168.31.179.47778 > 192.168.31.206.1883: Flags [P.], ... length 2
