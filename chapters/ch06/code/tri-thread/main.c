@@ -15,17 +15,36 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #define USE_LOCK         1 /* 实验：先改 0 看错乱，再改回 1 */
 #define SIMULATE_SENSOR  1
 
-#define BROKER_HOST      "192.168.1.10" /* TODO */
+#define DEFAULT_BROKER_HOST "192.168.1.10"
 #define BROKER_PORT      1883
 #define TOPIC_CMD        "course/thermo/cmd"
 #define TOPIC_STATUS     "course/thermo/status"
-#define CLIENT_ID        "licheepi4a-tri-thread"
+#define DEFAULT_CLIENT_ID "licheepi4a-tri-thread"
+
+static char client_id_buf[128];
+
+/* MQTT_CLIENT_ID 优先；否则 tri-thread-<hostname>，避免多板同 ID 互踢 */
+static const char *resolve_client_id(void)
+{
+	const char *env = getenv("MQTT_CLIENT_ID");
+	char host[64];
+
+	if (env && env[0])
+		return env;
+	if (gethostname(host, sizeof(host)) == 0 && host[0]) {
+		snprintf(client_id_buf, sizeof(client_id_buf),
+			 "tri-thread-%s", host);
+		return client_id_buf;
+	}
+	return DEFAULT_CLIENT_ID;
+}
 
 #define GPIO_CHIP_PATH   "/dev/gpiochip5"
 #define DHT_LINE         6  /* IO1_6 */
@@ -59,8 +78,15 @@ static struct gpiod_line_request *line_request(unsigned int offset,
 	struct gpiod_line_request *r;
 	unsigned int offs[1] = { offset };
 
-	if (!s || !lc || !rc)
+	if (!s || !lc || !rc) {
+		if (rc)
+			gpiod_request_config_free(rc);
+		if (lc)
+			gpiod_line_config_free(lc);
+		if (s)
+			gpiod_line_settings_free(s);
 		return NULL;
+	}
 	gpiod_line_settings_set_direction(s, direction);
 	gpiod_line_config_add_line_settings(lc, offs, 1, s);
 	gpiod_request_config_set_consumer(rc, "tri-thread");
@@ -244,7 +270,7 @@ static void *thread_comm(void *arg)
 	int rc;
 
 	mosquitto_lib_init();
-	mosq = mosquitto_new(CLIENT_ID, true, NULL);
+	mosq = mosquitto_new(resolve_client_id(), true, NULL);
 	if (!mosq) {
 		fprintf(stderr, "[ERR] mosquitto_new\n");
 		g_st.running = 0;
@@ -253,7 +279,16 @@ static void *thread_comm(void *arg)
 	mosquitto_connect_callback_set(mosq, on_connect);
 	mosquitto_message_callback_set(mosq, on_message);
 
-	rc = mosquitto_connect(mosq, BROKER_HOST, BROKER_PORT, 60);
+	{
+		const char *bh = getenv("BROKER_HOST");
+
+		if (!bh || !bh[0])
+			bh = DEFAULT_BROKER_HOST;
+		printf("[MQTT] broker %s:%d USE_LOCK=%d\n", bh, BROKER_PORT,
+		       USE_LOCK);
+		fflush(stdout);
+		rc = mosquitto_connect(mosq, bh, BROKER_PORT, 60);
+	}
 	if (rc != MOSQ_ERR_SUCCESS) {
 		fprintf(stderr, "[ERR] connect: %s\n", mosquitto_strerror(rc));
 		/* 无 Broker 时仍允许本地采集/控制演示 */

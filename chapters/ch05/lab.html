@@ -35,6 +35,12 @@
     padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
     font-family: var(--mono); font-size: 15px; line-height: 1.7;
   }
+  .diagram {
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
+    white-space: pre; overflow-x: auto;
+  }
   pre .c { color: #a09888; } pre .p { color: var(--warm); }
   code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
   table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
@@ -199,7 +205,7 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
 <ol>
   <li>
     <strong>在 <code>on_message</code> 中处理命令载荷</strong><br>
-    脚手架已把 payload 拷进字符串 <code>buf</code>。你要做：若精确等于 <code>on</code>，调用已有 <code>led_set(1)</code>，再调用 <code>publish_status("on")</code>（或与你约定一致的状态字符串）；若等于 <code>off</code>，则 <code>led_set(0)</code> 并 <code>publish_status("off")</code>。<br>
+    脚手架已把 payload 拷进字符串 <code>buf</code>。你要做：若精确等于 <code>on</code>，调用已有 <code>led_set(1)</code>，<strong>仅当返回成功</strong>再调用 <code>publish_status("on")</code>；若等于 <code>off</code>，则 <code>led_set(0)</code> 成功后再 <code>publish_status("off")</code>。<br>
     其他任意字符串：打印 <code>[ERR]</code>，保持当前 GPIO 电平。<br>
     <strong>成功样子：</strong>主机 pub <code>on</code> 后板端日志有收包记录，外接 LED 亮；pub <code>off</code> 后灯灭。
   </li>
@@ -210,14 +216,24 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
   </li>
 </ol>
 
-<h3>3. 交叉编译并部署</h3>
-<pre><span class="p">$</span> cd chapters/ch05/code/mqtt-led
+<h3>3. 编译并部署</h3>
+<p>两条路径任选其一（产物都须是 RISC-V ELF）：</p>
+<pre><span class="c"># 路径 A：在荔枝派上原生编译</span>
+<span class="p">$</span> cd chapters/ch05/code/mqtt-led
 <span class="p">$</span> make clean && make
+<span class="p">$</span> file mqtt-led
+<span class="c"># 应为 RISC-V ELF</span>
+<span class="p">$</span> BROKER_HOST=BROKER_IP ./mqtt-led
+
+<span class="c"># 路径 B：在 x86 主机交叉编译后再拷到板</span>
+<span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
+<span class="p">$</span> cd chapters/ch05/code/mqtt-led
+<span class="p">$</span> make clean && make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-
 <span class="p">$</span> file mqtt-led
 <span class="c"># 应为 RISC-V ELF</span>
 <span class="p">$</span> scp mqtt-led user@board-ip:~/
 <span class="p">$</span> ssh user@board-ip 'BROKER_HOST=BROKER_IP ./mqtt-led'</pre>
-<p>把命令里的 <code>BROKER_IP</code> 换成你在第 1 步 <code>hostname -I</code> 记下的地址。启动后应看到正在连接 Broker、连接成功、以及已订阅命令主题的日志。</p>
+<p>把命令里的 <code>BROKER_IP</code> 换成你在第 1 步 <code>hostname -I</code> 记下的地址。可选：板端设 <code>MQTT_CLIENT_ID</code> 自定义客户端名（默认 <code>mqtt-led-&lt;主机名&gt;</code>）。启动后应看到正在连接 Broker、连接成功、以及已订阅命令主题的日志。</p>
 <figure>
   <img src="assets/Figure_board-run.png" alt="板端 mqtt-led：连接 Broker、订阅 course/led/cmd、收到 on 后 LED ON 并发布 status" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
   <figcaption>图 6　板端跑起来的样子：连上 Broker → 订阅 <code>course/led/cmd</code> → 收到 <code>on</code> → <code>LED ON</code> → 发布 <code>course/led/status = on</code></figcaption>

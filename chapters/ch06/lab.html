@@ -100,15 +100,11 @@
   <p class="meta">采集∥控制∥通信 · 竞态必现并修好 · TSan · 干净停</p>
 </header>
 
-<div class="warn">
-  <strong>本章状态：待实机验证。</strong>实验步骤已编写完成，板端实机验证尚未补充；验证完成后补充实际接线、命令、输出与截图，并去掉本说明。
-</div>
-
 <section id="intro">
 <h2>说明</h2>
-<p>讲义 6.1 已说明：采样、控风扇和 MQTT 可以放在一条线程里按顺序做完；<code>mosquitto_loop_forever</code> 等待返回之后，才轮到采样和风扇判定。本章用三条线程让三件事按各自周期进行。采集线程写 <code>last_temp</code>，控制线程读同一个 <code>last_temp</code>，实验用 <code>USE_LOCK</code> 对照无锁交错与加锁后读到完整写入。本实验交付两份工程，顺序固定：先在电脑上看清「丢更新」与 ThreadSanitizer 报告，再在荔枝派 4A 上跑产品骨架并完成无锁→加锁对照。</p>
+<p>讲义 6.1 已说明：采样、控风扇和 MQTT 可以放在一条线程里按顺序做完；<code>mosquitto_loop_forever</code> 等待返回之后，才轮到采样和风扇判定。本章用三条线程让三件事按各自周期进行。采集线程写 <code>last_temp</code>，控制线程读同一个 <code>last_temp</code>，实验用 <code>USE_LOCK</code> 对照无锁交错与加锁后读到完整写入。本实验交付两份工程，顺序固定：先看清「丢更新」与 ThreadSanitizer 报告，再在荔枝派 4A 上跑产品骨架并完成无锁→加锁对照。race-demo 与 TSan、tri-thread 三线协同均已在板上实机验收。</p>
 <ul>
-  <li><code>chapters/ch06/code/race-demo/</code> — 在电脑上跑的强制竞态小程序；配合主机 <code>gcc -fsanitize=thread</code>（ThreadSanitizer，简称 TSan）指出谁在抢同一变量</li>
+  <li><code>chapters/ch06/code/race-demo/</code> — 强制竞态小程序；配合 <code>gcc -fsanitize=thread</code>（ThreadSanitizer，简称 TSan）指出谁在抢同一变量（主机或板端均可）</li>
   <li><code>chapters/ch06/code/tri-thread/</code> — 板上产品骨架：采集线程写温度、控制线程按阈值开/关风扇、通信线程跑 MQTT</li>
 </ul>
 <figure class="arch-fig">
@@ -149,7 +145,7 @@
 <figcaption>加锁心智：碰共享字段前先 lock，读写完毕 unlock，避免读到写到一半的值</figcaption>
 </figure>
 <div class="info">
-  <strong>前置：</strong>已读讲义 6.1–6.3；第五章控灯与 Broker 通路可用；温控相关接线可用。工具链分工：板上程序用 RuyiSDK 交叉编译；TSan 只用主机本机 <code>gcc</code>（交叉工具链通常不开 TSan）。
+  <strong>前置：</strong>已读讲义 6.1–6.3；第五章控灯与 Broker 通路可用；温控相关接线可用。板端可原生 <code>make</code>；主机交叉用 <code>make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-</code>。TSan 用板端或主机本机 <code>gcc -fsanitize=thread</code>（交叉工具链通常不开 TSan）。
 </div>
 <div class="warn">
   race-demo <strong>故意</strong>无锁，用来制造竞态；不要把无锁写法抄进 tri-thread 的产品路径。板上验收以加锁版本（<code>USE_LOCK 1</code>）为准。
@@ -159,27 +155,32 @@
 <section id="steps">
 <h2>步骤</h2>
 
-<h3>A. 电脑：race-demo + TSan（先做，固定顺序）</h3>
-<p>这部分不需要板子。目的：用一个「很多线程同时给同一计数器加一」的小程序，亲眼看到最终计数偏小（丢更新），再用 TSan 指出具体是哪两行源码在抢。</p>
+<h3>A. race-demo + TSan（先做，固定顺序）</h3>
+<p>目的：用一个「很多线程同时给同一计数器加一」的小程序，亲眼看到最终计数偏小（丢更新），再用 TSan 指出具体是哪两行源码在抢。主机或荔枝派 4A 板端均可；下面实机摘录来自板端。</p>
 <ol>
   <li>
     无锁跑一遍，记录最终计数（应明显小于「线程数 × 每线程循环次数」的期望值）：
 <pre><span class="p">$</span> cd chapters/ch06/code/race-demo
 <span class="p">$</span> make
 <span class="p">$</span> ./race-demo
-<span class="c"># 把打印的最终计数与期望值抄下来，证明丢更新</span></pre>
+expect=400000  got=215946  RACE(lost updates)</pre>
   </li>
   <li>
-    <strong>固定必做：</strong>在跑带 TSan 的版本之前，先执行：
+    <strong>主机上固定必做：</strong>跑带 TSan 的版本之前，先执行：
 <pre><span class="p">$</span> sudo sysctl vm.mmap_rnd_bits=28</pre>
-    <strong>为什么要做这一步：</strong>把内核的用户态地址空间随机化位数调到 ThreadSanitizer 当前工具链能稳定配合的范围；否则本机上 TSan 可能直接启动失败或行为异常，导致你看不到数据竞争报告。这是本实验的固定步骤，不是可跳过项。
+    把内核的用户态地址空间随机化位数调到 ThreadSanitizer 当前工具链能稳定配合的范围。板端若已能直接跑 TSan，可跳过本步。
   </li>
   <li>
     打开 TSan 再跑，保存完整报告：
 <pre><span class="p">$</span> make tsan
 <span class="p">$</span> ./race-demo
-<span class="c"># 终端会出现 ThreadSanitizer 的 data race 报告；全文保存</span></pre>
-    在报告里标出它指出的<strong>两处源码访问行</strong>（通常是两个线程对同一全局计数器的读写），对照源码确认。
+WARNING: ThreadSanitizer: data race
+  Read of size 8 ... by thread T2:
+    #0 bump_racy .../main.c:24
+  Previous write of size 8 ... by thread T1:
+    #0 bump_racy .../main.c:26
+SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
+    在报告里标出它指出的<strong>两处源码访问行</strong>（上例为 <code>bump_racy</code> 的读与写），对照源码确认。
   </li>
 </ol>
 <p><strong>本段成功判据：</strong>有「计数偏小」的记录；有完整 TSan 报告；能指出抢变量的两行。</p>
@@ -188,11 +189,11 @@
 <ol>
   <li>
     <strong>配置与补全三线程</strong><br>
-    打开 <code>chapters/ch06/code/tri-thread/</code>，按接线表与 Broker 地址改 GPIO / Broker 相关宏。补全三条线程的循环职责：
+    打开 <code>chapters/ch06/code/tri-thread/</code>。Broker 用环境变量 <code>BROKER_HOST</code>（先在主机 <code>hostname -I</code>）；可选 <code>MQTT_CLIENT_ID</code>。补全三条线程的循环职责与 <code>on_message</code> 里的 TODO（例如 <code>status</code> 上行）：
     <ul>
       <li>采集线程：周期读温度，写入共享状态；</li>
       <li>控制线程：读共享温度，按阈值开/关风扇；</li>
-      <li>通信线程：跑 MQTT 循环（下行命令 / 上行状态，主题约定与第五章一致）。</li>
+      <li>通信线程：跑 MQTT 循环（下行命令 / 上行状态，主题 <code>course/thermo/cmd</code> / <code>course/thermo/status</code>）。</li>
     </ul>
   </li>
   <li>
@@ -211,21 +212,37 @@
     所有对共享温度、风扇状态等字段的读写都放进同一把锁的加锁/解锁区间。重新编译部署，确认：阈值行为恢复正常；先前记录的那类错乱不再复现。
   </li>
   <li>
-    <strong>交叉编译部署命令</strong>
+    <strong>编译并部署</strong><br>
+    路径 A — 板端原生：
 <pre><span class="p">$</span> cd chapters/ch06/code/tri-thread
 <span class="p">$</span> make clean && make
+<span class="p">$</span> BROKER_HOST=&lt;主机局域网IP&gt; ./tri-thread</pre>
+    路径 B — 主机交叉后 scp：
+<pre><span class="p">$</span> make clean && make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-
 <span class="p">$</span> file tri-thread
 <span class="c"># 应为 RISC-V ELF</span>
 <span class="p">$</span> scp tri-thread user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip './tri-thread'</pre>
+<span class="p">$</span> ssh user@board-ip 'BROKER_HOST=&lt;主机局域网IP&gt; ./tri-thread'</pre>
   </li>
   <li>
     <strong>功能验证</strong><br>
-    风扇按阈值动作（超温开 / 降温关）；MQTT 下行或上行至少一项可演示（与第五章主题约定一致）。采集、控制、通信三条线的日志或行为均可观察。
+    风扇按阈值动作（超温开 / 降温关）；主机向 <code>course/thermo/cmd</code> 发下行（如 <code>set high 30</code>），板端日志出现 <code>[MQTT] cmd payload=...</code>。实机摘录（<code>USE_LOCK=1</code>）：
+<pre>[INFO] USE_LOCK=1 SIMULATE_SENSOR=1
+[INFO] Ctrl+C for clean stop
+[SENSE] temp=25.5
+[MQTT] broker 192.168.x.x:1883 USE_LOCK=1
+[MQTT] subscribed course/thermo/cmd
+[SENSE] temp=28.5
+[INFO] fan ON
+[MQTT] cmd payload=set high 30
+[MQTT] cmd payload=set low 25
+[INFO] fan OFF</pre>
   </li>
   <li>
     <strong>干净停</strong><br>
-    在板端按 Ctrl+C：期望风扇关断（安全落到 OFF），然后进程退出。不要留下风扇空转、进程僵死。
+    在板端按 Ctrl+C：风扇关断，然后进程退出。实机末尾：
+<pre>[INFO] fan OFF
+[INFO] exited cleanly</pre>
   </li>
 </ol>
 </section>
@@ -239,7 +256,7 @@
   <tr><td>MQTT 通信线</td><td>下行或上行至少一项可演示（与第五章主题约定一致）</td><td></td></tr>
   <tr><td>无锁错乱</td><td><code>USE_LOCK 0</code> 下有具体日志记录（温度跳变 / 风扇与温度矛盾等）</td><td></td></tr>
   <tr><td>加锁正确</td><td><code>USE_LOCK 1</code> 后行为正常，错乱不再复现</td><td></td></tr>
-  <tr><td>sysctl + TSan</td><td>已执行 <code>sudo sysctl vm.mmap_rnd_bits=28</code>；主机 race-demo 的 TSan 报告已保存，能指出抢变量的两行</td><td></td></tr>
+  <tr><td>sysctl + TSan</td><td>主机若需则已执行 <code>sudo sysctl vm.mmap_rnd_bits=28</code>；race-demo 的 TSan 报告已保存，能指出抢变量的两行</td><td></td></tr>
   <tr><td>干净停</td><td>Ctrl+C 后风扇关，进程退出</td><td></td></tr>
 </table>
 
