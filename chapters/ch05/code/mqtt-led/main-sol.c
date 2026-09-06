@@ -9,6 +9,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "led_cmd.h" /* 实验一：parse_led_cmd / status_payload */
+
 /* 默认占位；优先读环境变量 BROKER_HOST */
 #define DEFAULT_BROKER_HOST "192.168.1.10"
 #define BROKER_PORT         1883
@@ -161,16 +163,16 @@ static void on_message(struct mosquitto *m, void *obj,
 	printf("[INFO] msg topic=%s payload=%s\n", msg->topic, buf);
 	fflush(stdout);
 
-	if (strcmp(buf, "on") == 0) {
-		if (led_set(1) == 0)
-			publish_status("on");
-	} else if (strcmp(buf, "off") == 0) {
-		if (led_set(0) == 0)
-			publish_status("off");
-	} else {
-		fprintf(stderr, "[ERR] unknown payload (want on/off): %s\n",
-			buf);
-		fflush(stderr);
+	{
+		int cmd = parse_led_cmd(buf);
+
+		if (cmd < 0) {
+			fprintf(stderr, "[ERR] unknown payload (want on/off): %s\n",
+				buf);
+			fflush(stderr);
+		} else if (led_set(cmd) == 0) {
+			publish_status(status_payload(cmd));
+		}
 	}
 	(void)led_on;
 }

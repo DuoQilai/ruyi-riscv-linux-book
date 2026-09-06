@@ -181,7 +181,7 @@ $ cd chapters/ch05/code/virt-led-repl      # 板上：cd ~/virt-led-repl</span>
 
 <section id="exp3">
 <h2>实验三 · MQTT 远程控灯（真 GPIO + Broker）</h2>
-<p>把实验一的精确解析、实验二的「改灯→发 status」接到真 mosquitto 与真外接 LED。工程目录 <code>chapters/ch05/code/mqtt-led/</code>。连接、订阅与 <code>mosquitto_loop_forever</code> 骨架已给，你补 <code>on_message</code> 与 <code>publish_status</code>。</p>
+<p>把实验一的 <code>parse_led_cmd</code> / <code>status_payload</code>、实验二的「改灯→发 status」顺序接到真 mosquitto 与真外接 LED。工程 <code>chapters/ch05/code/mqtt-led/</code> 已通过 Makefile 链上实验一的源文件；你在 <code>on_message</code> 里调用它们，并实现 <code>publish_status</code>。</p>
 <section id="wiring">
 <h2>外接 LED 怎么接</h2>
 <p>默认脚位：丝印 <code>IO1_4</code>（<code>gpiochip5</code> line 4）。限流电阻串在 GPIO 与 LED 正极之间；LED 短脚回电源轨「−」（GND）。风扇与 DHT 仍占 <code>IO1_5</code> / <code>IO1_6</code>。</p>
@@ -238,9 +238,8 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
 <ol>
   <li>
     <strong>在 <code>on_message</code> 中处理命令载荷</strong><br>
-    脚手架已把 payload 拷进字符串 <code>buf</code>。你要做：若精确等于 <code>on</code>，调用已有 <code>led_set(1)</code>，<strong>仅当返回成功</strong>再调用 <code>publish_status("on")</code>；若等于 <code>off</code>，则 <code>led_set(0)</code> 成功后再 <code>publish_status("off")</code>。<br>
-    其他任意字符串：打印 <code>[ERR]</code>，保持当前 GPIO 电平。<br>
-    <strong>成功样子：</strong>主机 pub <code>on</code> 后板端日志有收包记录，外接 LED 亮；pub <code>off</code> 后灯灭。
+    脚手架已把 payload 拷进 <code>buf</code>。调用实验一的 <code>parse_led_cmd(buf)</code>：返回 1/0 时 <code>led_set</code>，成功后再 <code>publish_status(status_payload(...))</code>；返回 -1 打 <code>[ERR]</code> 不改灯。<br>
+    <strong>成功样子：</strong>主机 pub <code>on</code> 后板端日志有收包记录，外接 LED 亮；pub <code>off</code> 后灯灭；pub <code>ON</code> 应报错（精确匹配）。
   </li>
   <li>
     <strong>实现 <code>publish_status</code></strong><br>
