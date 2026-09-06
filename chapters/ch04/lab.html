@@ -181,6 +181,14 @@ $ cd chapters/ch04/code/select-mini            # 板上：cd ~/select-mini</span
 #   [tick 2]
 #   bye</span></pre>
 <p><strong>本实验成功判据：</strong>自动演示里 tick 与 echo 交替出现、不互相饿死；<code>quit</code> 正常退出；能口头说「<code>select</code> 返回 0 是超时，返回正数是 stdin 可读」。</p>
+<figure>
+  <img src="assets/recordings/select-mini-board.gif" alt="板上 SSH 运行 select-mini-sol：tick 与 echo 交替，quit 退出">
+  <figcaption>板端证据（SSH → select-mini）：tick 与 stdin echo 交替；<code>quit</code> 后 bye</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/select-mini-board-after-demo.png" alt="select-mini 演示结束后的终端快照">
+  <figcaption>同一次演示的终端快照（可归档进实验报告）</figcaption>
+</figure>
 </section>
 
 <section id="exp2">
@@ -204,6 +212,14 @@ $ cd chapters/ch04/code/cmd-repl              # 板上：cd ~/cmd-repl</span>
 #   [err] usage: set temp &lt;num&gt; | set humidity &lt;num&gt;
 #   bye</span></pre>
 <p><strong>本实验成功判据：</strong>喂命令输出与参考一致（含 <code>set temp abc</code> 报用法错）；能口头说这套处理器在实验三里改的是 <code>g_st</code>，而「会不会立刻生效」由主循环节奏决定。</p>
+<figure>
+  <img src="assets/recordings/cmd-repl-board.gif" alt="板上 SSH 运行 cmd-repl-sol：status/set 命令演示">
+  <figcaption>板端证据（SSH → cmd-repl）：status / set temp / set humidity / 非法用法</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/cmd-repl-board-after-demo.png" alt="cmd-repl 演示结束后的终端快照">
+  <figcaption>同一次演示的终端快照</figcaption>
+</figure>
 </section>
 
 <section id="exp3">
