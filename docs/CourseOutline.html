@@ -629,8 +629,8 @@
           <td>ch06</td>
           <td>Linux 应用篇</td>
           <td>线程与任务协同</td>
-          <td>两个实验：race-demo+TSan → 三线程协同；共享状态加锁；Ctrl+C 干净停</td>
-          <td>两个实验（主实验：三线程协同）</td>
+          <td>三个实验：race-demo+TSan → 成对快照加锁 → 三线程协同；共享状态加锁；Ctrl+C 干净停</td>
+          <td>三个实验（主实验：三线程协同）</td>
           <td>三线同时跑；风扇按阈值；MQTT 通信线工作；<code>[RACE]</code> 无锁必现、加锁消失；TSan 报告；Ctrl+C 关风扇后退出</td>
           <td>三线程骨架（供综合复用）</td>
         </tr>
@@ -765,7 +765,7 @@
           <td rowspan="4" class="merge">Linux 应用篇</td>
           <td class="section">6.1 从单线程过渡到多线程</td>
           <td rowspan="4" class="merge section">三线程骨架；共享状态加锁；竞态必现并修好；干净停</td>
-          <td rowspan="4" class="merge section"><strong>两个实验</strong>：① race-demo+TSan ② 三线程协同（主实验：无锁 <code>[RACE]</code>→加锁、<code>USE_LOCK</code>、MQTT、Ctrl+C 干净停）</td>
+          <td rowspan="4" class="merge section"><strong>三个实验</strong>：① race-demo+TSan ② snapshot-lock 成对快照加锁 ③ 三线程协同（主实验：无锁 <code>[RACE]</code>→加锁、<code>USE_LOCK</code>、MQTT、Ctrl+C 干净停）</td>
           <td rowspan="4" class="merge section">三线程骨架（供综合复用）</td>
           <td rowspan="4" class="merge glossary section"><dl>
             <dt>三线程</dt><dd>采集 ∥ 控制 ∥ 通信(MQTT)。</dd>

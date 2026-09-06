@@ -1,4 +1,4 @@
-# 第六章实验二 · tri-thread（板上：无锁现 race → 加锁清零）
+# 第六章实验三 · tri-thread（板上：无锁现 race → 加锁清零）
 # 录像用：不改实验源码。预编译 lock0/lock1；Ctrl+C 触发程序自带干净退出路径。
 #$ expect \$
 ssh -tt -o StrictHostKeyChecking=no -o PreferredAuthentications=publickey debian@192.168.31.179

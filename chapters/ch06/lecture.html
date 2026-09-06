@@ -160,7 +160,7 @@
   <div class="meta">
     <span>板卡：荔枝派 4A</span>
     <span>工具链：RuyiSDK</span>
-    <span>脚手架：tri-thread · race-demo</span>
+    <span>脚手架：race-demo · snapshot-lock · tri-thread</span>
   </div>
 </div>
 
@@ -178,7 +178,7 @@
 <div class="card-grid card-grid-3">
   <div class="card"><h4>荔枝派 4A</h4><p>DHT22（IO1_6）、继电器/风扇（IO1_5）、外接 LED（IO1_4）；MQTT Broker 可达。板端原生 gcc 或主机交叉工具链。</p></div>
   <div class="card"><h4>主机 gcc</h4><p>跑 <code>race-demo</code> 时用本机 <code>gcc -fsanitize=thread</code>（ThreadSanitizer，检查谁在抢同一变量）。</p></div>
-  <div class="card"><h4>代码</h4><p><code>tri-thread/</code> 产品骨架；<code>race-demo/</code> 故意抢数据的小程序。</p></div>
+  <div class="card"><h4>代码</h4><p><code>race-demo/</code> 丢更新；<code>snapshot-lock/</code> 成对快照加锁；<code>tri-thread/</code> 产品骨架。</p></div>
 </div>
 
 <h3>本章你会学到什么</h3>
@@ -190,7 +190,7 @@
 </div>
 
 <div class="info" style="margin-top:28px;">
-  <strong>讲义 vs 实验：</strong>讲义建立拆分与竞态心智；「深入理解」在板上必现错乱再修好，并在电脑上用 TSan 指出抢变量的行。本章实验交付三线程协同与 TSan 报告；骨架供综合项目复用（滞回继续跑，终端 Harness 经 MQTT 指挥）。
+  <strong>讲义 vs 实验：</strong>讲义建立拆分与竞态心智。本章实验三个递进：race-demo+TSan → 成对快照加锁 → 三线程主实验；骨架供综合项目复用。
 </div>
 </section>
 
