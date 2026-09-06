@@ -19,7 +19,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define USE_LOCK         1 /* 实验：先改 0 看错乱，再改回 1 */
+#define USE_LOCK         0 /* 实验：先 0 看 [RACE]，再改 1 验收 */
 #define SIMULATE_SENSOR  1
 
 #define DEFAULT_BROKER_HOST "192.168.1.10"
@@ -50,16 +50,20 @@ static const char *resolve_client_id(void)
 #define DHT_LINE         6  /* IO1_6 */
 #define FAN_LINE         5  /* IO1_5 */
 #define SAMPLE_MS        500
-#define CONTROL_MS       200
+#define CONTROL_MS       50
+/* USE_LOCK=0 时两字段之间故意拉开窗口，让控制线程必能抓到不一致快照 */
+#define RACE_WINDOW_US   80000
 
 struct shared_state {
 	pthread_mutex_t lock;
-	float last_temp;
-	float last_hum;
+	/* 同一次采样应写入相同的一对值；无锁时中间留空窗 → 控制线程读到不一致即 [RACE] */
+	int temp_a;
+	int temp_b;
 	float t_high;
 	float t_low;
 	int fan_on;
 	int has_sample;
+	int race_hits;
 	volatile int running;
 };
 
@@ -171,11 +175,23 @@ static void *thread_sense(void *arg)
 	while (g_st.running) {
 		float t = 0, h = 0;
 		if (dht22_read(&t, &h) == 0) {
+			int v = (int)(t * 10.0f); /* 0.1℃ 为单位，便于整数比对 */
+
 			state_lock();
-			g_st.last_temp = t;
-			g_st.last_hum = h;
+			g_st.temp_a = v;
+#if !USE_LOCK
+			/*
+			 * 故意不在同一临界区内完成成对写入：中间 sleep，
+			 * 让控制线程几乎必读到 temp_a != temp_b。
+			 */
+			state_unlock();
+			usleep(RACE_WINDOW_US);
+			state_lock();
+#endif
+			g_st.temp_b = v;
 			g_st.has_sample = 1;
 			state_unlock();
+			(void)h;
 			printf("[SENSE] temp=%.1f\n", t);
 			fflush(stdout);
 		} else {
@@ -191,18 +207,27 @@ static void *thread_control(void *arg)
 {
 	(void)arg;
 	while (g_st.running) {
-		float t, high, low;
-		int fan, has;
+		int a, b, fan, has;
+		float high, low, t;
 
 		state_lock();
-		t = g_st.last_temp;
+		a = g_st.temp_a;
+		b = g_st.temp_b;
 		high = g_st.t_high;
 		low = g_st.t_low;
 		fan = g_st.fan_on;
 		has = g_st.has_sample;
 		state_unlock();
 
-		if (has) {
+		if (has && a != b) {
+			g_st.race_hits++; /* 仅统计；打印是证据 */
+			printf("[RACE] inconsistent snapshot temp_a=%d temp_b=%d\n",
+			       a, b);
+			fflush(stdout);
+		}
+
+		if (has && a == b) {
+			t = (float)a / 10.0f;
 			if (t > high && !fan) {
 				state_lock();
 				fan_set_unlocked(1);
@@ -353,6 +378,8 @@ int main(void)
 		gpiod_line_request_release(fan_req);
 	gpiod_chip_close(chip);
 	pthread_mutex_destroy(&g_st.lock);
+	printf("[INFO] race_hits=%d (USE_LOCK=%d；期望 0→很多，1→0)\n",
+	       g_st.race_hits, USE_LOCK);
 	printf("[INFO] exited cleanly\n");
 	return 0;
 }

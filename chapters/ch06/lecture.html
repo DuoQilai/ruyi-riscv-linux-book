@@ -387,34 +387,33 @@ pthread_mutex_unlock(&amp;st-&gt;lock);</pre>
   (2) 板上加锁  → 行为正确（对照）
   (3) 电脑 TSan → 报告「这两行在抢同一变量」（机理）</div>
 
-<p>图说明：先记下一次温度和风扇开断对不上的日志，再加锁对照，再用 TSan 指出两行。</p>
+<p>图说明：先看 <code>[RACE]</code> 必现，再加锁对照，再用 TSan 指出两行。</p>
 
 <h3 id="s6-deep-board">(1)(2) 荔枝派 4A：无锁错乱 → 加锁正确</h3>
 
-<p><strong>原因：</strong>采集线程写 <code>last_temp</code>，控制线程读 <code>last_temp</code> 并写 <code>fan_on</code>，通信线程可能同时改 <code>t_high</code>。没有锁时，这些访问可以交错发生。</p>
+<p><strong>原因：</strong>采集线程写共享温度，控制线程读同一份并写 <code>fan_on</code>，通信线程可能同时改 <code>t_high</code>。没有锁时，这些访问可以交错发生。</p>
 
-<p><strong>机制（无锁时）：</strong>例如控制线程读到「写了一半」的浮点位型，温度跳成离谱值；或风扇状态与刚打印的温度互相矛盾。错乱可能间歇出现；实验记下一次对不上的日志。</p>
+<p><strong>机制（无锁时）：</strong>脚手架把同一次采样拆成 <code>temp_a</code> / <code>temp_b</code> 两步写，中间故意留空窗；控制线程读到两值不一致就打印 <code>[RACE]</code>。这是可稳定复现的证据。</p>
 
-<p><strong>机制（加锁后）：</strong>所有对共享字段的读改都包在 <code>pthread_mutex_lock</code> / <code>unlock</code> 之间。同一时刻只有一条线程在临界区里，交错消失，阈值控温与 MQTT 改阈值恢复一致。</p>
+<p><strong>机制（加锁后）：</strong>成对写入落在同一把锁里，空窗消失。<code>[RACE]</code> 不再出现，阈值控温与 MQTT 改阈值恢复一致。</p>
 
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>板上先关锁</strong><br>按实验说明设 <code>USE_LOCK 0</code>（或等价开关），跑一段时间，记录温度跳变、风扇状态与温度矛盾等错乱现象。</div></li>
-  <li><span class="step-num">2</span><div><strong>再开锁对照</strong><br>改为 <code>USE_LOCK 1</code>，所有共享读写进锁；错乱消失，风扇按阈值动作，MQTT 下行/上行仍正常。</div></li>
+  <li><span class="step-num">1</span><div><strong>板上先关锁</strong><br>脚手架默认 <code>USE_LOCK 0</code>，跑十几秒，日志应反复出现 <code>[RACE]</code>，退出时 <code>race_hits</code> 远大于 0。</div></li>
+  <li><span class="step-num">2</span><div><strong>再开锁对照</strong><br>改为 <code>USE_LOCK 1</code>；<code>[RACE]</code> 消失，<code>race_hits=0</code>，风扇按阈值动作，MQTT 下行仍正常。</div></li>
 </ol>
 
-<div class="diagram">无锁时可能交错（示意）：
+<div class="diagram">无锁时必现交错（脚手架）：
 
-  采集:  写 temp 高位 ──┐
-  控制:                 ├── 读到半新半旧 → 决策离谱
-  采集:  写 temp 低位 ──┘
+  采集:  写 temp_a ──┐
+  控制:               ├── 读到 a≠b → 打印 [RACE]
+  采集:  写 temp_b ──┘
 
 加锁后：
 
-  采集:  lock → 写完整 temp → unlock
-  控制:  lock → 读完整 temp → unlock
-  （中间不会插入另一条线的半截写）</div>
+  采集:  lock → 写 temp_a 与 temp_b → unlock
+  控制:  lock → 读完整一对 → unlock</div>
 
-<p>图说明：锁保证这一次写或这一次读完整结束；三线仍按各自周期运行，碰 <code>last_temp</code> 时排队。</p>
+<p>图说明：锁保证这一次成对写完整结束；三线仍按各自周期运行，碰共享温度时排队。</p>
 
 <h3 id="s6-deep-tsan">(3) 电脑：race-demo + ThreadSanitizer 指出两行</h3>
 
@@ -446,7 +445,7 @@ pthread_mutex_unlock(&amp;st-&gt;lock);</pre>
 <p>图说明：TSan 不替你「修」程序，它只把竞态从「感觉偶尔不对」变成「具体是这两行」。你回去加 mutex，再跑应不再报同一竞争。</p>
 
 <div class="info">
-  <strong>验收话术：</strong>「板上 <code>USE_LOCK 0</code> 时我记下温度和风扇开断对不上的日志；<code>USE_LOCK 1</code> 后读到完整写入、风扇按阈值动作；电脑上 race-demo 经 TSan 指出抢同一变量的两行。共享的 <code>last_temp</code> 进互斥锁。」
+  <strong>验收话术：</strong>「板上 <code>USE_LOCK 0</code> 时日志反复出现 <code>[RACE]</code>；<code>USE_LOCK 1</code> 后 <code>race_hits=0</code>、风扇按阈值动作；race-demo 经 TSan 指出抢同一变量的两行。共享温度成对写入进互斥锁。」
 </div>
 
 <div class="warn">

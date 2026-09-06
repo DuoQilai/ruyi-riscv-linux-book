@@ -2,8 +2,8 @@
 
 荔枝派 4A：采集 ∥ 控制 ∥ 通信(MQTT)。供本章实验与综合项目复用（滞回一直跑）。
 
-- `USE_LOCK 0`：故意不加锁，观察共享数据错乱  
-- `USE_LOCK 1`：加锁后行为应正确  
+- `USE_LOCK 0`：故意不加锁；日志应反复出现 `[RACE]`  
+- `USE_LOCK 1`：加锁后不应再出现 `[RACE]`，`race_hits=0`  
 - Ctrl+C：`running=0`，关风扇后退出  
 
 板端原生 `make`；交叉：先激活 `venv-gnu-ruyisdk`，再 `make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-`。依赖 libpthread、libmosquitto、libgpiod。

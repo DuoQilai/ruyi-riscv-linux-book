@@ -197,19 +197,14 @@ SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
     </ul>
   </li>
   <li>
-    <strong>先不加锁（脚手架提供 <code>USE_LOCK 0</code>）</strong><br>
-    编译部署后跑一段时间（建议至少 1–2 分钟，并在此期间用 MQTT 发几次命令或观察多轮采样）。<strong>必须记录错乱现象</strong>——下面是具体、可写入实验报告的例子（出现一类即可，多记更好）：
-    <ul>
-      <li>日志里温度在相邻两行之间无合理解释地大幅跳变（例如刚打印 27.1，下一行突然变成 0.0 或跳到 45，随后又跳回），而传感器并未被那样折腾；</li>
-      <li>风扇状态与温度矛盾：温度已明显高于 <code>T_HIGH</code>，日志却长时间显示 fan=OFF；或温度已低于 <code>T_LOW</code>，风扇却仍显示 ON；</li>
-      <li>同一时刻附近的日志互相打架：采集线程打印的温度与控制线程依据的温度明显不是同一份「当前值」；</li>
-      <li>MQTT 上报的状态与板端本地日志不一致（例如上行说灯/风扇 ON，本地日志却是 OFF）。</li>
-    </ul>
-    把原始日志片段粘贴进记录，不要只写「有点乱」三个字。
+    <strong>先不加锁（脚手架默认 <code>USE_LOCK 0</code>）</strong><br>
+    编译运行约 10–20 秒。采集线程写共享温度时故意拆成两步（先 <code>temp_a</code>，再 <code>temp_b</code>），中间留空窗；控制线程若读到两值不一致，会打印：
+<pre>[RACE] inconsistent snapshot temp_a=275 temp_b=270</pre>
+    <strong>验收证据：</strong>几秒内应反复出现 <code>[RACE]</code>；退出时 <code>race_hits</code> 远大于 0。把含 <code>[RACE]</code> 的日志片段贴进报告即可（不必再猜「温度跳变」这类偶发现象）。
   </li>
   <li>
     <strong>改为 <code>USE_LOCK 1</code></strong><br>
-    所有对共享温度、风扇状态等字段的读写都放进同一把锁的加锁/解锁区间。重新编译部署，确认：阈值行为恢复正常；先前记录的那类错乱不再复现。
+    成对写入落在同一把锁里，空窗消失。重新编译部署，跑同样时长：<strong>不应再出现 <code>[RACE]</code></strong>；退出时 <code>race_hits=0</code>。风扇仍按阈值动作。
   </li>
   <li>
     <strong>编译并部署</strong><br>
@@ -235,8 +230,10 @@ SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
 [SENSE] temp=28.5
 [INFO] fan ON
 [MQTT] cmd payload=set high 30
-[MQTT] cmd payload=set low 25
-[INFO] fan OFF</pre>
+[INFO] fan OFF
+[INFO] race_hits=0 (USE_LOCK=1；期望 0→很多，1→0)
+[INFO] exited cleanly</pre>
+    <code>USE_LOCK 0</code> 时同段日志会夹杂多行 <code>[RACE]</code>，退出 <code>race_hits</code> 远大于 0。
   </li>
   <li>
     <strong>干净停</strong><br>
@@ -254,8 +251,8 @@ SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
   <tr><td>三线同时跑</td><td>采集、控制、通信日志/行为均可观察</td><td></td></tr>
   <tr><td>风扇阈值</td><td>超温开 / 降温关</td><td></td></tr>
   <tr><td>MQTT 通信线</td><td>下行或上行至少一项可演示（与第五章主题约定一致）</td><td></td></tr>
-  <tr><td>无锁错乱</td><td><code>USE_LOCK 0</code> 下有具体日志记录（温度跳变 / 风扇与温度矛盾等）</td><td></td></tr>
-  <tr><td>加锁正确</td><td><code>USE_LOCK 1</code> 后行为正常，错乱不再复现</td><td></td></tr>
+  <tr><td>无锁错乱</td><td><code>USE_LOCK 0</code> 下日志出现 <code>[RACE]</code>，且 <code>race_hits&gt;0</code></td><td></td></tr>
+  <tr><td>加锁正确</td><td><code>USE_LOCK 1</code> 后无 <code>[RACE]</code>，<code>race_hits=0</code>；风扇阈值正常</td><td></td></tr>
   <tr><td>sysctl + TSan</td><td>主机若需则已执行 <code>sudo sysctl vm.mmap_rnd_bits=28</code>；race-demo 的 TSan 报告已保存，能指出抢变量的两行</td><td></td></tr>
   <tr><td>干净停</td><td>Ctrl+C 后风扇关，进程退出</td><td></td></tr>
 </table>
