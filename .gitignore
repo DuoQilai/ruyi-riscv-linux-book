@@ -83,12 +83,9 @@ chapters/*/code/**/build/
 chapters/ch02/code/hello/hello
 chapters/ch02/code/cmd-table/cmd-table
 
-# Internal deck recordings (keep placeholders only)
-deck/videos/*.mp4
-deck/videos/*.MOV
-deck/videos/*.mov
-deck/assets/*.MOV
-deck/assets/*.mov
+# asciinema expect raw artifacts (keep scripts + assets/recordings GIF/PNG)
+chapters/**/recordings/**/*.cast
+chapters/**/recordings/**/*.mp4
 
 # local build artifacts
 chapters/**/build/
@@ -96,3 +93,6 @@ chapters/**/race-demo/race-demo
 chapters/**/tri-thread/tri-thread
 chapters/**/mqtt-led/mqtt-led
 chapters/**/mqtt-led/mqtt-led-sol
+
+# generated expect outputs under recordings/ (HTML uses assets/recordings/)
+chapters/**/recordings/*/

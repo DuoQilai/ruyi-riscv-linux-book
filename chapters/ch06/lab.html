@@ -49,6 +49,12 @@
   }
   .arch-fig svg, .arch-fig img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
   .arch-fig figcaption { font-size: 14px; color: var(--faint); margin-top: 12px; text-align: center; line-height: 1.5; }
+  figure { margin: 16px 0 20px; }
+  figure img {
+    display: block; max-width: min(100%, 820px); width: auto; height: auto;
+    border: 1px solid var(--line-light);
+  }
+  figcaption { font-size: 14px; color: var(--faint); margin-top: 8px; line-height: 1.45; }
   .toc {
     position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
     overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line); padding: 40px 20px;
@@ -140,6 +146,10 @@ WARNING: ThreadSanitizer: data race
     #0 bump_racy .../main.c:26
 SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
 <p><strong>本实验成功判据：</strong>有「计数偏小」记录；有完整 TSan 报告；能指出抢变量的两行。</p>
+<figure>
+  <img src="assets/recordings/race-demo-board.gif" alt="板上 race-demo：expect 与 got 不一致，标出 RACE">
+  <figcaption>板端证据（SSH → race-demo）：最终计数偏小并标出 <code>RACE</code></figcaption>
+</figure>
 </section>
 
 <section id="exp2">
@@ -172,6 +182,18 @@ SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
 [MQTT] cmd payload=set high 30
 [INFO] race_hits=0 (USE_LOCK=1；期望 0→很多，1→0)
 [INFO] exited cleanly</pre>
+<figure>
+  <img src="assets/recordings/tri-thread-board.gif" alt="板上 tri-thread：USE_LOCK 0 现 RACE，USE_LOCK 1 后 race_hits=0">
+  <figcaption>板端证据（SSH → tri-thread）：无锁出现 <code>[RACE]</code>；加锁后 <code>race_hits=0</code> 并干净退出</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/tri-thread-board-lock0-race.png" alt="USE_LOCK=0 时出现 RACE 的终端快照">
+  <figcaption>无锁快照：反复 <code>[RACE] inconsistent snapshot</code></figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/tri-thread-board-lock1-clean.png" alt="USE_LOCK=1 时 race_hits=0 的终端快照">
+  <figcaption>加锁快照：<code>race_hits=0</code>，Ctrl+C 干净停</figcaption>
+</figure>
 </section>
 
 <section id="accept">
