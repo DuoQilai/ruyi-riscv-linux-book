@@ -268,15 +268,20 @@ $ cd chapters/ch03/code/fan-timeline       # 板上：cd ~/fan-timeline</span>
 <section id="breadboard">
 <h2>面包板怎么用</h2>
 <p>面包板用内部金属簧片把若干插孔连在一起，方便用杜邦线临时搭电路。本课用它把荔枝派排针上的电源、地和信号线接到继电器模块。</p>
+<p>说明书用语与商品详情一致，见 <code>chapters/ch03/manuals/面包板_MB102摘录.md</code> 与同目录结构图。</p>
 <figure>
-  <img src="assets/Figure_4.png" alt="面包板结构：电源轨、连接孔、隔离凹槽">
-  <figcaption>图 4　面包板内部连通关系：电源轨横向连通；中间区每列 5 孔纵向连通；中央隔离凹槽上下互不通</figcaption>
+  <img src="assets/Figure_4.png" alt="面包板：电源轨、连接孔、隔离凹槽">
+  <figcaption>图 4　电源轨（+ / − 横向连通）；连接孔（同一列纵向连通）；隔离凹槽（上下互不通）</figcaption>
+</figure>
+<figure>
+  <img src="manuals/面包板_MB102_结构图_商品详情.png" alt="面包板结构：电源轨、连接孔、隔离凹槽（商品详情）" style="max-width:min(100%,720px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>商品详情结构图：电源轨 / 连接孔 / 隔离凹槽标注</figcaption>
 </figure>
 <table>
-  <tr><th>部位</th><th>怎么通</th><th>本课怎么用</th></tr>
-  <tr><td><strong>电源轨</strong>（两侧红/蓝长条）</td><td>同一条「+」或「−」沿线横向连通</td><td>红线侧接排针 5V，蓝线侧接 GND；再从轨上分出多根线到模块</td></tr>
-  <tr><td><strong>连接孔</strong>（中间编号区）</td><td>同一列 a–e（或 f–j）五个孔纵向连通；相邻列不通</td><td>把模块某一脚与杜邦线插在<strong>同一列</strong>，即电气相连</td></tr>
-  <tr><td><strong>隔离凹槽</strong>（正中沟）</td><td>沟上下两区互不通</td><td>不要假设跨沟的孔已经连在一起；跨沟必须另用跳线</td></tr>
+  <tr><th>名称</th><th>怎么通</th><th>本课怎么用</th></tr>
+  <tr><td><strong>电源轨</strong></td><td>「+」与「−」各自沿线<strong>横向连通</strong></td><td>正极侧接排针 5V，负极侧接 GND；再从轨上分线到模块</td></tr>
+  <tr><td><strong>连接孔</strong></td><td>同一列 a–e（或 f–j）五个孔<strong>纵向连通</strong>；相邻列不通</td><td>模块某一脚与杜邦线插在<strong>同一列</strong>即相连</td></tr>
+  <tr><td><strong>隔离凹槽</strong></td><td>正中沟上下<strong>互不通</strong></td><td>跨沟必须另用跳线，不要默认已连通</td></tr>
 </table>
 <ul>
   <li>接线前断开开发板电源；插拔杜邦线时捏线帽，避免扯断芯线。</li>

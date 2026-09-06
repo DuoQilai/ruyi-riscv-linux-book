@@ -513,7 +513,7 @@ gpioget: unable to request lines: Device or resource busy</pre>
 <p>这一节把 GPIO 接到真实的继电器与风扇上：信号端怎么接、用 <code>gpioset</code> 跟做一次、以及继电器不动时怎么排查。动手前先弄清面包板怎么连通，以及本章首次可能用到的电烙铁安全要求；完整步骤与插图见本章实验。</p>
 
 <h3 id="s3.3-tools">面包板与电烙铁（首次）</h3>
-<p><strong>面包板</strong>：两侧电源轨沿红/蓝线横向连通；中间区同一列 5 个孔纵向连通；中央隔离凹槽上下互不通。把排针 5V / GND 接到电源轨后，再从轨上分线到继电器，可减少在排针上反复插拔。</p>
+<p><strong>面包板</strong>：用语与商品详情一致——<strong>电源轨</strong>（「+」「−」横向连通）、<strong>连接孔</strong>（同一列纵向连通）、<strong>隔离凹槽</strong>（上下互不通）。摘录与结构图见 <code>chapters/ch03/manuals/面包板_MB102摘录.md</code>。把排针 5V / GND 接到电源轨后，再从轨上分线到继电器，可减少在排针上反复插拔。完整步骤与插图见本章实验。</p>
 <figure>
   <img src="assets/Figure_4.png" alt="面包板结构示意：电源轨、连接孔、隔离凹槽" style="max-width:min(100%,720px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
   <figcaption style="font-size:15px;color:var(--faint);margin-bottom:20px">图：面包板连通关系（实验图 4）。接线前断开开发板电源；勿将 5V 与 GND 短接。</figcaption>
