@@ -198,6 +198,10 @@ $ cd chapters/ch03/code/sweep-ramp         # 板上：cd ~/sweep-ramp</span>
 #   ALL PASS</span>
 <span class="c"># 对照参考：make sol && ./build/sweep-ramp-sol（同样 ALL PASS）</span></pre>
 <p><strong>本实验成功判据：</strong><code>./build/sweep-ramp</code> 打印 <code>ALL PASS</code>；能口头说出「到边界是钳住反向，不是越过去再反」。</p>
+<figure>
+  <img src="assets/recordings/sweep-ramp-board.gif" alt="板上 sweep-ramp-sol 输出 ALL PASS">
+  <figcaption>板端证据（SSH → sweep-ramp）：<code>ALL PASS</code></figcaption>
+</figure>
 </section>
 
 <section id="exp2">
@@ -218,6 +222,10 @@ $ cd chapters/ch03/code/fan-timeline       # 板上：cd ~/fan-timeline</span>
 <span class="c"># 参考（make sol 一致）：SUMMARY steps=240 on_steps=117 turn_ons=9</span></pre>
 <p>其中 <code>on_steps</code> 是风扇 ON 的总步数，<code>turn_ons</code> 是「关→开」的次数。如果写成「高于 29 开、一降到 29 以下就关」的抖法，<code>turn_ons</code> 会大得多——滞回的价值就在这：一次降温要跌破 25 才关，风扇不会在 28/29 之间反复开关。</p>
 <p><strong>本实验成功判据：</strong>自己写的 <code>./build/fan-timeline</code> 末行 <code>steps=240 on_steps=117 turn_ons=9</code>；能口头解释滞回如何避免抖动。</p>
+<figure>
+  <img src="assets/recordings/fan-timeline-board.gif" alt="板上 fan-timeline-sol 输出 SUMMARY turn_ons=9">
+  <figcaption>板端证据（SSH → fan-timeline）：<code>SUMMARY … turn_ons=9</code></figcaption>
+</figure>
 </section>
 
 <section id="exp3">
@@ -439,8 +447,8 @@ $ cd chapters/ch03/code/fan-timeline       # 板上：cd ~/fan-timeline</span>
 </div>
 <p>对照参考实现（助教验收路径）：<code>make sol && sudo ./temperature_fan-sol</code>。图 3 即 <code>make sol</code> 的运行记录。</p>
 <figure>
-  <img src="assets/Figure_3.png" alt="荔枝派上编译运行 temperature_fan-sol：file 为 RISC-V，风扇按阈值开闭">
-  <figcaption>图 3　荔枝派上 <code>make sol</code>：产物为 RISC-V；温度过 29°C 风扇开，降到 25°C 风扇关，Ctrl+C 后拉低</figcaption>
+  <img src="assets/recordings/temperature-fan-board.gif" alt="板上 sudo temperature_fan-sol：模拟温度扫过阈值风扇开，Ctrl+C 清理">
+  <figcaption>图 3　板端证据（SSH → <code>make sol</code>）：模拟温度过 29°C 风扇开；Ctrl+C 后清理</figcaption>
 </figure>
 </section>
 
