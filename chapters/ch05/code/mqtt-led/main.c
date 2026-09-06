@@ -5,7 +5,8 @@
  * 上行：publish_status() 发到 TOPIC_STATUS（学生补全）
  *
  * 板：荔枝派 4A + RevyOS。libgpiod v2 API。依赖：libmosquitto、libgpiod。
- * 脚位：外接 LED 接 IO1_5（gpiochip5 line 5）。
+ * 脚位：外接 LED 接 IO1_4（gpiochip5 line 4）。
+ * IO1_5 / IO1_6 留给风扇与 DHT。板上实测 IO1_3 拉高读回异常，默认不用 3。
  *
  * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-
  */
@@ -22,7 +23,7 @@
 #define CLIENT_ID        "licheepi4a-mqtt-led"
 
 #define GPIO_CHIP_PATH   "/dev/gpiochip5"
-#define LED_LINE         5 /* IO1_5 */
+#define LED_LINE         4 /* IO1_4 */
 
 static struct gpiod_chip *chip;
 static struct gpiod_line_request *led_req;

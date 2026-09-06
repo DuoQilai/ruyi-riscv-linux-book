@@ -155,7 +155,7 @@
   <li><code>BROKER_HOST</code>：填 Broker 的<strong>局域网 IP</strong>（主机跑 Mosquitto 时，用主机在局域网中的地址）。不要写成板端的 <code>127.0.0.1</code>——那只指向板子自己，连不到主机上的 Broker。</li>
   <li><code>BROKER_PORT</code>：默认 <code>1883</code>（MQTT 明文常用端口）。</li>
   <li><code>TOPIC_CMD</code> / <code>TOPIC_STATUS</code>：默认 <code>course/led/cmd</code> 与 <code>course/led/status</code>；若课堂统一改了主题，以板书为准并保持发布端与订阅端一致。</li>
-  <li><code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>：与外接 LED 接线表一致。</li>
+  <li><code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>：与外接 LED 接线一致。默认 <code>LED_LINE=4</code>（丝印 <code>IO1_4</code>）；<code>IO1_5</code>/<code>IO1_6</code> 留给风扇与 DHT。</li>
 </ul>
 <p><strong>本步成功判据：</strong>宏已按课堂环境改好；你能说出 Broker IP 与两个主题名。</p>
 

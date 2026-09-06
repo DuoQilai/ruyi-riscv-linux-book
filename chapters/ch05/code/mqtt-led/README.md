@@ -18,3 +18,5 @@ ssh user@board-ip './mqtt-led'
 ```
 
 把 `BROKER_HOST` 改成 Broker 的局域网 IP。主题默认 `course/led/cmd` 与 `course/led/status`。
+
+默认脚位：`LED_LINE=4`（丝印 `IO1_4`）。
