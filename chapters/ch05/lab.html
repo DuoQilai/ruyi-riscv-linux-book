@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第五章 网络与 MQTT · 本章实验 — RISC-V Linux 课程</title>
+<style>
+  :root {
+    --bg: #fbfaf5; --text: #2d2a26; --muted: #5c5448; --faint: #8c8276;
+    --accent: #2e6b6e; --warm: #c46b4a; --line: #d4cfc4; --line-light: #e8e3d8;
+    --code-bg: #f2f0e8; --warn-bg: #fef8f2; --info-bg: #f2f0ea;
+    --mono: "SF Mono", "Menlo", "Cascadia Code", monospace;
+    --sans: "PingFang SC", "Noto Sans SC", -apple-system, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--sans); line-height: 1.7;
+    max-width: 920px; margin: 0 auto; padding: 64px 40px 120px;
+  }
+  .chapter-header {
+    text-align: center; padding: 60px 0 48px;
+    border-bottom: 1px solid var(--line); margin-bottom: 56px;
+  }
+  .chapter-tag { font-size: 15px; letter-spacing: 0.14em; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+  .chapter-header h1 { font-size: 44px; font-weight: 700; line-height: 1.25; margin-bottom: 8px; }
+  .chapter-header .meta { font-size: 17px; color: var(--faint); }
+  section { margin-bottom: 48px; }
+  section h2 { font-size: 28px; font-weight: 700; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid var(--line); }
+  section h3 { font-size: 22px; font-weight: 700; margin: 24px 0 12px; }
+  section p, section li { font-size: 18px; color: var(--muted); margin-bottom: 8px; }
+  section ol, section ul { padding-left: 24px; margin-bottom: 16px; }
+  pre {
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 18px 22px; margin: 14px 0 22px; overflow-x: auto;
+    font-family: var(--mono); font-size: 15px; line-height: 1.7;
+  }
+  .diagram {
+    font-family: var(--mono); font-size: 15px; color: var(--muted);
+    background: var(--code-bg); border: 1px solid var(--line-light);
+    padding: 28px 32px; margin: 24px 0 28px; line-height: 1.75;
+    white-space: pre; overflow-x: auto;
+  }
+  pre .c { color: #a09888; } pre .p { color: var(--warm); }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 16px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line-light); }
+  th { color: var(--accent); font-weight: 700; }
+  td { color: var(--muted); }
+  .warn { background: var(--warn-bg); border-left: 3px solid var(--warm); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: #8c5440; }
+  .info { background: var(--info-bg); border-left: 3px solid var(--accent); padding: 16px 20px; margin: 18px 0; font-size: 17px; color: var(--muted); }
+  .arch-fig {
+    margin: 20px 0 24px; border: 1px solid var(--line-light);
+    background: #fff; padding: 16px 20px; overflow-x: auto;
+  }
+  .arch-fig svg, .arch-fig img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+  .arch-fig figcaption { font-size: 14px; color: var(--faint); margin-top: 12px; text-align: center; line-height: 1.5; }
+  .toc {
+    position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+    overflow-y: auto; background: #f5f2eb; border-right: 1px solid var(--line); padding: 40px 20px;
+  }
+  .toc h4 { font-size: 14px; color: var(--accent); margin-bottom: 16px; }
+  .toc a { display: block; padding: 5px 0; font-size: 15px; color: var(--muted); text-decoration: none; }
+  .toc .divider { height: 1px; background: var(--line-light); margin: 16px 0; }
+  body { padding-left: 220px; }
+  @media print { body { padding-left: 0; } .toc { display: none; } }
+/* course-nav-css */
+
+  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .page-nav {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+    margin: 48px 0 24px; padding: 24px 0 8px;
+    border-top: 1px solid var(--line, #d4cfc4);
+    font-size: 16px;
+  }
+  .page-nav a {
+    color: var(--accent, #2e6b6e); text-decoration: none; max-width: 46%;
+    line-height: 1.45;
+  }
+  .page-nav a:hover { text-decoration: underline; }
+  .page-nav .dir { display: block; font-size: 13px; color: var(--faint, #8c8276); margin-bottom: 4px; font-weight: 400; }
+  .page-nav .next { text-align: right; margin-left: auto; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h4>本章实验</h4>
+<!-- course-nav-toc -->
+  <a class="course-rail" href="../../index.html">课程总览</a>
+  <a class="course-rail" href="../../docs/CourseOutline.html">Course Outline</a>
+  <a class="course-rail" href="lecture.html">本章讲义</a>
+  <a class="course-rail" href="../ch06/lecture.html">下一章 · 第六章</a>
+  <div class="divider"></div>
+  <a href="#overview">本章三个实验一览</a>
+  <div class="divider"></div>
+  <a href="#exp1">实验一 · on/off 精确解析</a>
+  <a href="#exp2">实验二 · 虚拟灯命令环</a>
+  <div class="divider"></div>
+  <a href="#exp3">实验三 · MQTT 远程控灯</a>
+  <a href="#wiring">　　外接 LED 怎么接</a>
+  <a href="#steps">　　步骤</a>
+  <a href="#accept">　　验收</a>
+</nav>
+
+<article>
+
+<header class="chapter-header">
+  <div class="chapter-tag">RISC-V Linux 嵌入式编程技术 · 第五章</div>
+  <h1>本章实验 · 三个实验</h1>
+  <p class="meta">实验一 on/off 解析 · 实验二 虚拟灯命令环 · 实验三 MQTT 远程控灯（真 GPIO）</p>
+</header>
+
+<section id="overview">
+<h2>本章三个实验一览</h2>
+<p>第五章的主实验要接真 LED、连 Broker、写 mosquitto 回调。为了不一把抓，拆成三个递进实验：实验一、实验二<strong>纯软件、无接线、无 Broker</strong>，把「精确匹配 on/off」和「改灯后再发 status」这两段先练会；实验三再接到真 GPIO 与真 MQTT。</p>
+<table>
+  <tr><th>实验</th><th>练什么</th><th>器材</th><th>源码目录</th></tr>
+  <tr>
+    <td><strong>实验一</strong><br>on/off 精确解析</td>
+    <td>写 <code>parse_led_cmd</code> / <code>status_payload</code>；断言卡死大小写与空格变体</td>
+    <td>无</td>
+    <td><code>code/led-cmd-parse/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验二</strong><br>虚拟灯命令环</td>
+    <td>stdin 模拟下行：<code>on</code>/<code>off</code> → 改虚拟灯 → 打印 <code>[STATUS]</code></td>
+    <td>无</td>
+    <td><code>code/virt-led-repl/</code></td>
+  </tr>
+  <tr>
+    <td><strong>实验三</strong><br>MQTT 远程控灯</td>
+    <td>接线 + libmosquitto + libgpiod；把实验一/二的逻辑接到真灯与 Broker</td>
+    <td>外接 LED、限流电阻、Broker</td>
+    <td><code>code/mqtt-led/</code></td>
+  </tr>
+</table>
+<div class="info">
+  <strong>建议：</strong>先在主机或板端把实验一、实验二跑到 ALL PASS / 参考输出一致，再进实验三接线——那时你只剩「mosquitto API + GPIO」没写过。
+</div>
+</section>
+
+<section id="exp1">
+<h2>实验一 · on/off 精确解析（led-cmd-parse）</h2>
+<p>实验三 <code>on_message</code> 里最容易写松的是载荷匹配：写成忽略大小写或带空格也能过，联调时却对不上课堂约定的精确 <code>on</code>/<code>off</code>。本实验把解析抽出来，用断言卡死。源码 <code>chapters/ch05/code/led-cmd-parse/</code>，只实现 <code>parse_led_cmd</code> 与 <code>status_payload</code>。</p>
+<h3>步骤</h3>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch05/code/led-cmd-parse      # 板上：cd ~/led-cmd-parse</span>
+<span class="p">$</span> make
+<span class="p">$</span> ./build/led-cmd-parse      <span class="c"># 未实现 → SOME FAIL（预期）</span></pre>
+<p>打开 <code>src/led_cmd.c</code>，按头文件契约实现：精确 <code>"on"</code>→1、<code>"off"</code>→0，其他→-1；<code>status_payload</code> 返回静态字符串 <code>"on"</code>/<code>"off"</code>。</p>
+<pre><span class="p">$</span> ./build/led-cmd-parse
+<span class="c"># 期望：
+#   ok   parse on/off 精确匹配
+#   ok   status_payload 返回 on/off
+#   ALL PASS</span>
+<span class="c"># 对照：make sol && ./build/led-cmd-parse-sol</span></pre>
+<p><strong>本实验成功判据：</strong><code>ALL PASS</code>；能口头说「实验三里 payload 必须精确等于 on/off，大小写与尾空格都不算」。</p>
+<figure>
+  <img src="assets/recordings/led-cmd-parse-board.gif" alt="板上 led-cmd-parse-sol 输出 ALL PASS" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>板端证据（SSH → led-cmd-parse）：<code>ALL PASS</code></figcaption>
+</figure>
+</section>
+
+<section id="exp2">
+<h2>实验二 · 虚拟灯命令环（virt-led-repl）</h2>
+<p>实验三的另一半是「先改灯、成功后再发 status」。本实验用 stdin 模拟 MQTT 下行，没有 Broker、没有 GPIO。源码 <code>chapters/ch05/code/virt-led-repl/</code>，只实现 <code>apply_cmd</code>——签名与实验三回调里的决策顺序一致。</p>
+<h3>步骤</h3>
+<pre><span class="c"># 主机，或先 scp 到板子再进目录
+$ cd chapters/ch05/code/virt-led-repl      # 板上：cd ~/virt-led-repl</span>
+<span class="p">$</span> make
+<span class="p">$</span> printf 'on\noff\nbad\nquit\n' | ./build/virt-led-repl
+<span class="c"># 未实现：全是 [TODO] → 预期</span></pre>
+<p>打开 <code>src/virt_led.c</code>：精确 <code>on</code>/<code>off</code> 时改 <code>*led_on</code>，打印 <code>[LED] ON/OFF</code> 与 <code>[STATUS] on/off</code>；其他打印 <code>[ERR] bad cmd</code>。</p>
+<pre><span class="p">$</span> printf 'on\noff\nbad\nquit\n' | ./build/virt-led-repl
+<span class="c"># 参考（make sol 一致）：
+#   [LED] ON
+#   [STATUS] on
+#   [LED] OFF
+#   [STATUS] off
+#   [ERR] bad cmd
+#   bye led=OFF</span></pre>
+<p><strong>本实验成功判据：</strong>输出与参考一致；能口头说这套顺序平移到实验三就是 <code>led_set</code> 成功后再 <code>publish_status</code>。</p>
+<figure>
+  <img src="assets/recordings/virt-led-repl-board.gif" alt="板上 virt-led-repl-sol：on/off/bad 命令环" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>板端证据（SSH → virt-led-repl）：改灯后再打 <code>[STATUS]</code>；非法命令报错</figcaption>
+</figure>
+</section>
+
+<section id="exp3">
+<h2>实验三 · MQTT 远程控灯（真 GPIO + Broker）</h2>
+<p>把实验一的 <code>parse_led_cmd</code> / <code>status_payload</code>、实验二的「改灯→发 status」顺序接到真 mosquitto 与真外接 LED。工程 <code>chapters/ch05/code/mqtt-led/</code> 已通过 Makefile 链上实验一的源文件；你在 <code>on_message</code> 里调用它们，并实现 <code>publish_status</code>。</p>
+<section id="wiring">
+<h2>外接 LED 怎么接</h2>
+<p>默认脚位：丝印 <code>IO1_4</code>（<code>gpiochip5</code> line 4）。限流电阻串在 GPIO 与 LED 正极之间；LED 短脚回电源轨「−」（GND）。风扇与 DHT 仍占 <code>IO1_5</code> / <code>IO1_6</code>。</p>
+<figure>
+  <img src="manuals/LED_串联链接图_面包板实物示意.png" alt="串联：电阻与 LED 在面包板上的接法示意" style="max-width:min(100%,720px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 1　商品详情：串联在面包板上的接法示意（建立电阻限流与正负极直觉）</figcaption>
+</figure>
+<figure>
+  <img src="manuals/LED_串联链接图_商品详情.png" alt="串联链接图：电池、电阻与 LED" style="max-width:min(100%,720px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 2　商品详情「串联链接图」：电阻与 LED 在同一回路</figcaption>
+</figure>
+<figure>
+  <img src="manuals/LED_并联链接图_商品详情.png" alt="并联链接图：多路 LED" style="max-width:min(100%,720px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 3　商品详情「并联链接图」：多路 LED 各有回负极的支路</figcaption>
+</figure>
+<div class="diagram">本课回路（对照上图，开关换成 GPIO）：
+IO1_4  →  限流电阻  →  LED 长脚（正极）
+电源轨「−」/ GND  →  LED 短脚（负极）</div>
+<figure>
+  <img src="assets/Figure_led-wiring-1.jpg" alt="荔枝派 4A 与面包板：外接红 LED、继电器、风扇与 DHT 同板联调（灯灭）" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 4　本课实机：荔枝派 4A + 面包板；外接红 LED 接在 IO1_4 一路；风扇/继电器与 DHT 仍沿用前几章</figcaption>
+</figure>
+<figure>
+  <img src="assets/Figure_led-wiring-2.jpg" alt="同上接线，外接红 LED 点亮" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 5　同一套接线：主机 pub <code>on</code> 后外接 LED 亮</figcaption>
+</figure>
+<div class="info">
+  <strong>说明书摘录：</strong><code>chapters/ch05/manuals/LED_UR5202D摘录.md</code>（极性 / VF）、<code>电阻_100欧姆摘录.md</code>、<code>LED_串联并联示意.md</code>。
+</div>
+</section>
+
+<section id="steps">
+<h2>步骤</h2>
+
+<h3>1. 查 Broker IP 并配置</h3>
+<p>在<strong>跑 Mosquitto 的主机</strong>上查本机局域网 IP（与板子同一网段的那个）：</p>
+<pre><span class="p">$</span> hostname -I
+<span class="c"># 记下该地址，下文记为 BROKER_IP</span></pre>
+<p>把地址交给板端程序（环境变量优先于源码默认值）：</p>
+<ul>
+  <li><strong>推荐：</strong>板端启动时写 <code>BROKER_HOST=BROKER_IP ./mqtt-led</code>。</li>
+  <li><strong>或</strong>编辑 <code>main.c</code> 里的 <code>DEFAULT_BROKER_HOST</code> 后重新 <code>make</code>。</li>
+</ul>
+<p>其余宏按需核对：</p>
+<ul>
+  <li><code>BROKER_PORT</code>：默认 <code>1883</code>（MQTT 明文常用端口）。</li>
+  <li><code>TOPIC_CMD</code> / <code>TOPIC_STATUS</code>：默认 <code>course/led/cmd</code> 与 <code>course/led/status</code>；若课堂统一改了主题，以板书为准并保持发布端与订阅端一致。</li>
+  <li><code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>：与外接 LED 接线一致。默认 <code>LED_LINE=4</code>（丝印 <code>IO1_4</code>）；<code>IO1_5</code>/<code>IO1_6</code> 留给风扇与 DHT。Broker 填主机局域网 IP；板上的 <code>127.0.0.1</code> 只指向板自己。</li>
+</ul>
+<p><strong>本步成功判据：</strong>你能说出本机查到的 Broker IP 与两个主题名；知道用环境变量或默认宏二选一配置。</p>
+
+<h3>2. 补全下行控灯与上行状态发布</h3>
+<p>术语提醒：<strong>下行</strong>指从电脑终端发命令到板子控硬件；<strong>上行</strong>指板子把当前状态发回 Broker，供别人订阅。</p>
+<ol>
+  <li>
+    <strong>在 <code>on_message</code> 中处理命令载荷</strong><br>
+    脚手架已把 payload 拷进 <code>buf</code>。调用实验一的 <code>parse_led_cmd(buf)</code>：返回 1/0 时 <code>led_set</code>，成功后再 <code>publish_status(status_payload(...))</code>；返回 -1 打 <code>[ERR]</code> 不改灯。<br>
+    <strong>成功样子：</strong>主机 pub <code>on</code> 后板端日志有收包记录，外接 LED 亮；pub <code>off</code> 后灯灭；pub <code>ON</code> 应报错（精确匹配）。
+  </li>
+  <li>
+    <strong>实现 <code>publish_status</code></strong><br>
+    用 <code>mosquitto_publish</code> 向 <code>TOPIC_STATUS</code> 发布当前灯态字符串。成功打 <code>[INFO]</code>，失败打 <code>[ERR]</code>（可参考 mosquitto 返回值与 <code>mosquitto_strerror</code>）。<br>
+    <strong>成功样子：</strong>另一台机器上 <code>mosquitto_sub -t course/led/status -v</code> 能看到与灯态一致的 payload。
+  </li>
+</ol>
+
+<h3>3. 编译并部署</h3>
+<p>两条路径任选其一（产物都须是 RISC-V ELF）：</p>
+<pre><span class="c"># 路径 A：在荔枝派上原生编译</span>
+<span class="p">$</span> cd chapters/ch05/code/mqtt-led
+<span class="p">$</span> make clean && make
+<span class="p">$</span> file mqtt-led
+<span class="c"># 应为 RISC-V ELF</span>
+<span class="p">$</span> BROKER_HOST=BROKER_IP ./mqtt-led
+
+<span class="c"># 路径 B：在 x86 主机交叉编译后再拷到板</span>
+<span class="p">$</span> . ~/venv-gnu-ruyisdk/bin/ruyi-activate
+<span class="p">$</span> cd chapters/ch05/code/mqtt-led
+<span class="p">$</span> make clean && make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-
+<span class="p">$</span> file mqtt-led
+<span class="c"># 应为 RISC-V ELF</span>
+<span class="p">$</span> scp mqtt-led user@board-ip:~/
+<span class="p">$</span> ssh user@board-ip 'BROKER_HOST=BROKER_IP ./mqtt-led'</pre>
+<p>把命令里的 <code>BROKER_IP</code> 换成你在第 1 步 <code>hostname -I</code> 记下的地址。可选：板端设 <code>MQTT_CLIENT_ID</code> 自定义客户端名（默认 <code>mqtt-led-&lt;主机名&gt;</code>）。启动后应看到正在连接 Broker、连接成功、以及已订阅命令主题的日志。</p>
+<figure>
+  <img src="assets/recordings/mqtt-led-board.gif" alt="板上 SSH 跑 mqtt-led：订阅、on/off、拒绝 ON" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 6　板端证据（SSH → mqtt-led）：连 Broker → 订阅 → <code>on</code>/<code>off</code> 发布 status；非法 <code>ON</code> 被拒</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/mqtt-led-board-led-on.png" alt="mqtt-led 收到 on 后 published status=on" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>同一次联调快照：<code>published course/led/status = on</code></figcaption>
+</figure>
+
+<h3>4. 联调（固定顺序，全部要做）</h3>
+<ol>
+  <li>
+    在主机开一个订阅窗口，盯住状态主题（<code>BROKER_IP</code> 仍用第 1 步查到的值）：
+<pre><span class="p">$</span> mosquitto_sub -h BROKER_IP -t 'course/led/status' -v</pre>
+    <p><code>mosquitto_sub</code> 的意思：连上 Broker，一直听某个主题；有新消息就打印出来。<code>-v</code> 会把主题名和载荷一起打出来。</p>
+<figure>
+  <img src="assets/Figure_host-sub.png" alt="主机 mosquitto_sub 收到 course/led/status on 与 off" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 7　主机订阅状态主题：先后收到 <code>course/led/status on</code> 与 <code>off</code>（上行验收）</figcaption>
+</figure>
+  </li>
+  <li>
+    再开一个窗口发下行命令：
+<pre><span class="p">$</span> mosquitto_pub -h BROKER_IP -t 'course/led/cmd' -m on</pre>
+    期望：外接 LED 亮；订阅窗口出现状态 payload（如 <code>on</code>）。
+  </li>
+  <li>再发 <code>-m off</code>：灯灭，状态同步为 off。
+<figure>
+  <img src="assets/Figure_host-pub.png" alt="主机 mosquitto_pub 向 course/led/cmd 发送 on 与 off" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 8　主机下行：向 <code>course/led/cmd</code> 发 <code>on</code> / <code>off</code></figcaption>
+</figure>
+  </li>
+  <li>另开一个电脑终端，用 <code>mosquitto_pub</code> 连<strong>同一 Broker</strong>，对同一命令主题再发一次 on/off，确认灯有动作。</li>
+  <li>
+    <strong>抓包（必做）：</strong>在主机或板端（以讲义 5.3 与课堂约定为准，通常在能看到板↔Broker 流量的那一侧）先开抓包，再触发一次 publish：
+<pre><span class="p">$</span> sudo tcpdump -i any -nn -A port 1883 -c 20</pre>
+<figure>
+  <img src="assets/Figure_tcpdump-listen.png" alt="tcpdump 在 port 1883 上 listening" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption>图 9　先开 tcpdump，过滤 <code>port 1883</code>，再去 pub 一条命令</figcaption>
+</figure>
+    <p>成功时，摘要行里应能看到板子 IP 与 Broker IP、目的端口 <code>1883</code>，以及 TCP 标志。示例（本课联调实录，IP 按你的局域网会不同）：</p>
+<pre>19:12:32.626647 ens33 In  IP 192.168.31.179.47778 > 192.168.31.206.1883: Flags [P.], ... length 2
+19:12:32.627119 ens33 Out IP 192.168.31.206.1883 > 192.168.31.179.47778: Flags [.], ack 2, ...
+19:12:32.627601 ens33 Out IP 192.168.31.206.1883 > 192.168.31.179.47778: Flags [P.], ... length 2</pre>
+    <div class="info">
+      <strong>你应当在 tcpdump 输出里看到什么：</strong>
+      <ul>
+        <li>过滤条件 <code>port 1883</code> 命中的包（MQTT 默认明文端口）；</li>
+        <li>用 <code>-nn</code> 看到的 IP 地址与端口，对应「这是 TCP 连接上的流量」；</li>
+        <li>用 <code>-A</code> 打印的 ASCII 区，有时能瞥到主题名或 <code>on</code>/<code>off</code> 一类载荷片段。</li>
+      </ul>
+      分层心智（口述即可）：应用层是 MQTT 的 publish 内容 → 装在传输层 TCP（端口 1883）里 → 再装在网络层 IP 里发出去。把含 1883 的片段保存下来作为验收证据。
+    </div>
+  </li>
+</ol>
+</section>
+</section>
+
+<section id="accept">
+<h2>验收</h2>
+<table>
+  <tr><th>实验</th><th>项</th><th>通过条件</th><th>□</th></tr>
+  <tr><td>一</td><td>解析</td><td><code>led-cmd-parse</code> 打印 <code>ALL PASS</code></td><td></td></tr>
+  <tr><td>二</td><td>虚拟灯</td><td>喂 <code>on/off/bad/quit</code> 输出与参考一致</td><td></td></tr>
+  <tr><td>三</td><td>编译</td><td>板端或交叉产物为 RISC-V ELF</td><td></td></tr>
+  <tr><td>三</td><td>下行</td><td>pub <code>on</code>/<code>off</code> 外接 LED 亮灭正确</td><td></td></tr>
+  <tr><td>三</td><td>上行</td><td>状态主题订阅端能看到对应 payload</td><td></td></tr>
+  <tr><td>三</td><td>抓包</td><td>保存含 1883 的 tcpdump 片段；能口述 MQTT→TCP→IP 分层</td><td></td></tr>
+</table>
+
+<div class="info">
+  <strong>完成标志：</strong>上表全部勾选；可进入第六章把 MQTT 放进独立通信线程。
+</div>
+</section>
+
+
+<!-- course-nav-foot -->
+<nav class="page-nav" aria-label="章节翻页">
+  <a class="prev" href="lecture.html"><span class="dir">上一篇</span>第五章 · 讲义<br>网络与 MQTT</a>
+  <a class="next" href="../ch06/lecture.html"><span class="dir">下一篇</span>第六章 · 讲义<br>线程与协同</a>
+</nav>
+</article>
+</body>
+</html>
