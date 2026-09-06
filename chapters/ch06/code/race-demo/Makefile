@@ -1,5 +1,7 @@
-# 本机 gcc（非交叉）。用于 ThreadSanitizer。
-CC      ?= gcc
+# 主机或板端 gcc。交叉：make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-
+# TSan 用本机/板端原生 gcc（交叉工具链通常不开 TSan）。
+CROSS_COMPILE ?=
+CC      := $(CROSS_COMPILE)gcc
 CFLAGS  := -Wall -Wextra -O2 -pthread
 LDFLAGS := -pthread
 TARGET  := race-demo
@@ -12,7 +14,6 @@ all: $(TARGET)
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-# 打开 ThreadSanitizer：跑 ./race-demo 会打印数据竞争报告
 tsan: clean
 	$(CC) -Wall -Wextra -O1 -pthread -fsanitize=thread -g -o $(TARGET) $(SRC) $(LDFLAGS)
 
