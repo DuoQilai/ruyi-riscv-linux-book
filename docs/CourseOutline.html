@@ -620,8 +620,8 @@
           <td>ch05</td>
           <td>Linux 应用篇</td>
           <td>网络通信与 MQTT</td>
-          <td>发布/订阅；电脑终端远程控外接 LED；板子发布状态；用 tcpdump 看一层层包装</td>
-          <td>MQTT 远程控灯</td>
+          <td>三个实验：on/off 解析 → 虚拟灯命令环 → MQTT 远程控灯；tcpdump 看分层</td>
+          <td>三个实验（主实验：MQTT 远程控灯）</td>
           <td>电脑终端控外接 LED；板子状态在订阅端可见；抓包能指出 MQTT 落在哪一层</td>
           <td>可复用 MQTT 模块（下行控灯 + 上行状态）</td>
         </tr>
@@ -629,9 +629,9 @@
           <td>ch06</td>
           <td>Linux 应用篇</td>
           <td>线程与任务协同</td>
-          <td>采集∥控制∥通信 三线程；共享状态加锁；Ctrl+C 干净停；竞态必现并修好</td>
-          <td>三线程协同</td>
-          <td>三线同时跑；风扇按阈值；MQTT 通信线工作；不加锁数据错乱、加锁正确；电脑上 ThreadSanitizer 打出抢变量报告；Ctrl+C 关风扇后退出</td>
+          <td>三个实验：race-demo+TSan → 成对快照加锁 → 三线程协同；共享状态加锁；Ctrl+C 干净停</td>
+          <td>三个实验（主实验：三线程协同）</td>
+          <td>三线同时跑；风扇按阈值；MQTT 通信线工作；<code>[RACE]</code> 无锁必现、加锁消失；TSan 报告；Ctrl+C 关风扇后退出</td>
           <td>三线程骨架（供综合复用）</td>
         </tr>
         <tr class="mod-cap">
@@ -747,7 +747,7 @@
           <td rowspan="4" class="merge">Linux 应用篇</td>
           <td class="section">5.1 联网发消息：Broker、主题、发布订阅</td>
           <td rowspan="4" class="merge section">电脑终端远程控外接 LED；板子发布状态；tcpdump 看分层包装</td>
-          <td rowspan="4" class="merge section"><strong>MQTT 远程控灯</strong>：订阅主题驱动外接 LED；板子 publish 状态；电脑终端联调；按讲义步骤抓一条 publish</td>
+          <td rowspan="4" class="merge section"><strong>三个实验</strong>：① on/off 精确解析 ② 虚拟灯命令环 ③ MQTT 远程控灯（真 GPIO+Broker）；联调与 tcpdump 抓 publish</td>
           <td rowspan="4" class="merge section">可复用 MQTT：下行控灯 + 上行状态</td>
           <td rowspan="4" class="merge glossary section"><dl>
             <dt>Broker</dt><dd>消息中转站（Mosquitto）。</dd>
@@ -765,7 +765,7 @@
           <td rowspan="4" class="merge">Linux 应用篇</td>
           <td class="section">6.1 从单线程过渡到多线程</td>
           <td rowspan="4" class="merge section">三线程骨架；共享状态加锁；竞态必现并修好；干净停</td>
-          <td rowspan="4" class="merge section"><strong>三线程协同</strong>：采集、控制、通信三条线脚手架；阈值控风扇；MQTT 通信线工作；板上先不加锁看数据错乱，再加锁修好；电脑上用 ThreadSanitizer 跑同一抢数据小程序并保存报告；Ctrl+C 关风扇后退出</td>
+          <td rowspan="4" class="merge section"><strong>三个实验</strong>：① race-demo+TSan ② snapshot-lock 成对快照加锁 ③ 三线程协同（主实验：无锁 <code>[RACE]</code>→加锁、<code>USE_LOCK</code>、MQTT、Ctrl+C 干净停）</td>
           <td rowspan="4" class="merge section">三线程骨架（供综合复用）</td>
           <td rowspan="4" class="merge glossary section"><dl>
             <dt>三线程</dt><dd>采集 ∥ 控制 ∥ 通信(MQTT)。</dd>
