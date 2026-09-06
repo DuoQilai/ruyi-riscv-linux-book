@@ -67,6 +67,14 @@ chapters/**/manuals/**/*.jpeg
 chapters/**/manuals/**/*.PNG
 chapters/**/manuals/**/*.png
 !chapters/**/manuals/**/lpi4a-wiki-assets/**
+# Course-embedded diagrams referenced from manuals/*.md
+!chapters/ch03/manuals/面包板_MB102_*.png
+!chapters/ch05/manuals/LED_*.png
+
+# Teacher-local helpers (not student-facing; keep untracked)
+chapters/ch05/code/mqtt-led/host-*.sh
+chapters/ch05/code/gpio-hold4.c
+chapters/ch05/code/led-stay-on.c
 
 # Regenerated chapter printouts (not source of truth)
 chapters/*/lab.pdf

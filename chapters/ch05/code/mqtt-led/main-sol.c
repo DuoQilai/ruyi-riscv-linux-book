@@ -1,14 +1,6 @@
 /*
- * ch05 mqtt-led — MQTT 远程控灯（本章实验脚手架）
- *
- * 下行：订阅 TOPIC_CMD，payload on/off → GPIO LED
- * 上行：publish_status() 发到 TOPIC_STATUS（学生补全）
- *
- * 板：荔枝派 4A + RevyOS。libgpiod v2 API。依赖：libmosquitto、libgpiod。
- * 脚位：外接 LED 接 IO1_4（gpiochip5 line 4）。
- * IO1_5 / IO1_6 留给风扇与 DHT。板上实测 IO1_3 拉高读回异常，默认不用 3。
- *
- * 编译（板端原生）：make ；交叉：make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu-
+ * mqtt-led-sol.c — 第五章参考实现（验证用）
+ * 学生版见 main.c（保留 TODO）。脚位 IO1_4；Broker 填主机局域网 IP。
  */
 #include <gpiod.h>
 #include <mosquitto.h>
@@ -17,7 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 
-/* 默认占位；运行前优先用环境变量 BROKER_HOST（见 lab / README） */
+/* 默认占位；优先读环境变量 BROKER_HOST */
 #define DEFAULT_BROKER_HOST "192.168.1.10"
 #define BROKER_PORT         1883
 #define TOPIC_CMD           "course/led/cmd"
@@ -44,9 +36,8 @@ static void log_err(const char *msg)
 	fflush(stderr);
 }
 
-/* libgpiod v2：申请一根输出线，初始置 val */
 static struct gpiod_line_request *line_request(unsigned int offset,
-                                               int direction, int val)
+					       int direction, int val)
 {
 	struct gpiod_line_settings *s = gpiod_line_settings_new();
 	struct gpiod_line_config *lc = gpiod_line_config_new();
@@ -94,20 +85,24 @@ static void led_set(int on)
 	fflush(stdout);
 }
 
-/*
- * TODO: 用 mosquitto_publish 向 TOPIC_STATUS 发布 payload（如 "on"/"off"）。
- * 成功打 [INFO]，失败打 [ERR]。
- */
 static void publish_status(const char *payload)
 {
-	(void)payload;
-	(void)mosq;
-	printf("[TODO] publish_status(\"%s\") not implemented\n",
-	       payload ? payload : "");
+	int rc;
+
+	if (!mosq || !payload)
+		return;
+	rc = mosquitto_publish(mosq, NULL, TOPIC_STATUS,
+			       (int)strlen(payload), payload, 0, false);
+	if (rc != MOSQ_ERR_SUCCESS) {
+		fprintf(stderr, "[ERR] publish_status: %s\n",
+			mosquitto_strerror(rc));
+		fflush(stderr);
+		return;
+	}
+	printf("[INFO] published %s = %s\n", TOPIC_STATUS, payload);
 	fflush(stdout);
 }
 
-/* 连接成功后订阅命令主题 */
 static void on_connect(struct mosquitto *m, void *obj, int rc)
 {
 	(void)obj;
@@ -122,10 +117,6 @@ static void on_connect(struct mosquitto *m, void *obj, int rc)
 		printf("[INFO] subscribed %s\n", TOPIC_CMD);
 }
 
-/*
- * TODO: 根据 payload 调用 led_set，再 publish_status。
- * 约定：精确匹配 "on" / "off"；其他打印 [ERR] 且不改灯。
- */
 static void on_message(struct mosquitto *m, void *obj,
 		       const struct mosquitto_message *msg)
 {
@@ -141,10 +132,17 @@ static void on_message(struct mosquitto *m, void *obj,
 	printf("[INFO] msg topic=%s payload=%s\n", msg->topic, buf);
 	fflush(stdout);
 
-	/* TODO: 解析 on/off → led_set → publish_status */
-	printf("[TODO] handle cmd payload in on_message\n");
-	fflush(stdout);
-	(void)led_on;
+	if (strcmp(buf, "on") == 0) {
+		led_set(1);
+		publish_status("on");
+	} else if (strcmp(buf, "off") == 0) {
+		led_set(0);
+		publish_status("off");
+	} else {
+		fprintf(stderr, "[ERR] unknown payload (want on/off): %s\n",
+			buf);
+		fflush(stderr);
+	}
 }
 
 int main(void)
@@ -187,7 +185,6 @@ int main(void)
 	}
 
 	log_info("loop start (Ctrl+C to stop)");
-	/* 阻塞循环；综合项目可改为 mosquitto_loop_start 线程模式 */
 	mosquitto_loop_forever(mosq, -1, 1);
 
 	mosquitto_destroy(mosq);

@@ -158,6 +158,7 @@
   <div class="divider"></div>
   <a href="#s5.2">5.2 下行：订阅命令控 LED</a>
   <a class="sub" href="#s5.2-down">主题与 payload</a>
+  <a class="sub" href="#s5.2-wiring">外接 LED 接线</a>
   <a class="sub" href="#s5.2-steps">跟做下行</a>
   <div class="divider"></div>
   <a href="#s5.3">5.3 上行：发布状态</a>
@@ -180,10 +181,6 @@
 </div>
 
 <div class="content">
-
-<div class="warn" style="margin-bottom:32px;">
-  <strong>本章状态：待实机验证。</strong>讲义与实验内容已编写完成，但板端实机验证（MQTT Broker 联调、外接 LED、tcpdump 抓包）尚未补充。验证完成后会补充实际接线、命令、输出与截图，并去掉本说明。
-</div>
 
 <section id="overview">
 <h2>开始之前</h2>
@@ -296,7 +293,10 @@ Broker（Mosquitto）
 <span class="p">$</span> mosquitto_pub -h 127.0.0.1 -t 'course/led/cmd' -m 'on'</pre>
 
 <div class="warn">
-  <strong>网络：</strong>板子上的 <code>BROKER_HOST</code> 填<strong>主机的局域网 IP</strong>。板上的 <code>127.0.0.1</code> 指向板自己，连到的是板上的端口。防火墙放行 1883。课堂若提供统一 Broker 地址，以当堂板书为准。
+  <strong>网络：</strong>在跑 Mosquitto 的主机上查本机局域网 IP：
+<pre style="margin:12px 0 0"><span class="p">$</span> hostname -I
+<span class="c"># 或：ip -4 addr show | grep inet</span></pre>
+  板端把该 IP 交给程序：改源码里的 <code>DEFAULT_BROKER_HOST</code>，或运行时 <code>BROKER_HOST=&lt;该IP&gt; ./mqtt-led</code>（环境变量优先）。板上的 <code>127.0.0.1</code> 只指向板自己。防火墙放行 1883。课堂若提供统一 Broker，以当堂板书为准。
 </div>
 
 <div class="info" style="margin-top:32px;">
@@ -314,7 +314,7 @@ Broker（Mosquitto）
 <ul>
   <li>命令主题：<code>course/led/cmd</code></li>
   <li>payload：<code>on</code> → 灯亮；<code>off</code> → 灯灭</li>
-  <li>未知 payload → 打 <code>[ERR]</code>，不改变当前电平</li>
+  <li>未知 payload → 打 <code>[ERR]</code>，保持当前电平</li>
 </ul>
 
 <div class="diagram">电脑终端 mosquitto_pub
@@ -348,20 +348,37 @@ gpiod_line_set_value(LED, 1 或 0)</div>
 
 <p>脚手架 <code>chapters/ch05/code/mqtt-led/</code> 用 <strong>libmosquitto</strong>（Mosquitto 的 C 客户端库）提供连接与消息处理骨架；点灯逻辑标为 TODO。交叉编译需链接 <code>-lmosquitto -lgpiod</code>；板端安装对应运行库。</p>
 
+<h3 id="s5.2-wiring">外接 LED 接线</h3>
+<p>默认脚位：丝印 <code>IO1_4</code>。限流电阻串在 GPIO 与 LED 正极之间；短脚回 GND。完整摘录见 <code>chapters/ch05/manuals/</code>。</p>
+<figure>
+  <img src="manuals/LED_串联链接图_面包板实物示意.png" alt="串联：电阻与 LED 在面包板上的接法示意" style="max-width:min(100%,720px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption style="font-size:15px;color:var(--faint);margin-bottom:20px">商品详情：串联在面包板上的接法示意</figcaption>
+</figure>
+<figure>
+  <img src="manuals/LED_串联链接图_商品详情.png" alt="串联链接图" style="max-width:min(100%,560px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
+  <figcaption style="font-size:15px;color:var(--faint);margin-bottom:20px">商品详情「串联链接图」</figcaption>
+</figure>
+<div class="diagram">本课回路：
+IO1_4  →  限流电阻  →  LED 长脚（正极）
+GND / 电源轨「−」  →  LED 短脚（负极）</div>
+
 <h3 id="s5.2-steps">跟做步骤</h3>
 <ol class="steps">
-  <li><span class="step-num">1</span><div><strong>改宏</strong><br><code>BROKER_HOST</code> 填主机局域网 IP；<code>LED_LINE</code> 按接线表；主题名与课堂一致。</div></li>
+  <li><span class="step-num">1</span><div><strong>接线与配置</strong><br>外接 LED 默认 <code>IO1_4</code>（限流电阻串在 GPIO 与 LED 正极之间，短脚回 GND）。极性与串/并联对照见 <code>chapters/ch05/manuals/</code>。主机上 <code>hostname -I</code> 得到 Broker IP；板端用环境变量 <code>BROKER_HOST</code> 或改 <code>DEFAULT_BROKER_HOST</code>。</div></li>
   <li><span class="step-num">2</span><div><strong>交叉编译并部署</strong><br>见下方命令；<code>file</code> 确认 RISC-V。</div></li>
   <li><span class="step-num">3</span><div><strong>主机发布</strong><br><code>mosquitto_pub -h &lt;broker&gt; -t course/led/cmd -m on</code>，板端 LED 应亮；再发 <code>off</code> 应灭。</div></li>
 </ol>
 
-<pre><span class="p">$</span> cd chapters/ch05/code/mqtt-led
+<pre><span class="c"># 主机：记下局域网 IP</span>
+<span class="p">$</span> hostname -I
+
+<span class="p">$</span> cd chapters/ch05/code/mqtt-led
 <span class="p">$</span> make clean && make
 <span class="p">$</span> file mqtt-led
 <span class="p">$</span> scp mqtt-led user@board-ip:~/
-<span class="p">$</span> ssh user@board-ip './mqtt-led'
+<span class="p">$</span> ssh user@board-ip 'BROKER_HOST=&lt;主机局域网IP&gt; ./mqtt-led'
 
-<span class="c"># 主机另一终端</span>
+<span class="c"># 主机另一终端（BROKER_IP 用上面 hostname -I 的结果）</span>
 <span class="p">$</span> mosquitto_pub -h BROKER_IP -t 'course/led/cmd' -m 'on'
 <span class="p">$</span> mosquitto_pub -h BROKER_IP -t 'course/led/cmd' -m 'off'</pre>
 
