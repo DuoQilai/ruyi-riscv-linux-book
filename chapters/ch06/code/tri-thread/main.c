@@ -14,6 +14,7 @@
 #include <mosquitto.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,7 +65,8 @@ struct shared_state {
 	int fan_on;
 	int has_sample;
 	int race_hits;
-	volatile int running;
+	/* 退出标志：信号与各线程共享；用原子避免 TSan/数据竞争 */
+	atomic_int running;
 };
 
 static struct shared_state g_st;
@@ -122,7 +124,13 @@ static void state_unlock(void)
 static void on_sigint(int sig)
 {
 	(void)sig;
-	g_st.running = 0;
+	/* 信号处理器内仅做无锁原子写；各线程用 load 观察 */
+	atomic_store_explicit(&g_st.running, 0, memory_order_relaxed);
+}
+
+static int running_load(void)
+{
+	return atomic_load_explicit(&g_st.running, memory_order_relaxed);
 }
 
 static int fan_init(void)
@@ -133,14 +141,26 @@ static int fan_init(void)
 	return 0;
 }
 
-static void fan_set_unlocked(int on)
+/* 返回 0 成功；写入失败不改 fan_on，避免误报已关风扇 */
+static int fan_set_unlocked(int on)
 {
-	if (!fan_req)
-		return;
-	gpiod_line_request_set_value(fan_req, FAN_LINE, on ? 1 : 0);
+	int rc;
+
+	if (!fan_req) {
+		fprintf(stderr, "[ERR] fan_set: no GPIO request\n");
+		return -1;
+	}
+	rc = gpiod_line_request_set_value(fan_req, FAN_LINE,
+					  on ? GPIOD_LINE_VALUE_ACTIVE
+					     : GPIOD_LINE_VALUE_INACTIVE);
+	if (rc < 0) {
+		fprintf(stderr, "[ERR] fan_set: GPIO write failed (on=%d)\n", on);
+		return -1;
+	}
 	g_st.fan_on = on;
 	printf("[INFO] fan %s\n", on ? "ON" : "OFF");
 	fflush(stdout);
+	return 0;
 }
 
 #if SIMULATE_SENSOR
@@ -172,7 +192,7 @@ static int dht22_read(float *t, float *h)
 static void *thread_sense(void *arg)
 {
 	(void)arg;
-	while (g_st.running) {
+	while (running_load()) {
 		float t = 0, h = 0;
 		if (dht22_read(&t, &h) == 0) {
 			int v = (int)(t * 10.0f); /* 0.1℃ 为单位，便于整数比对 */
@@ -206,7 +226,7 @@ static void *thread_sense(void *arg)
 static void *thread_control(void *arg)
 {
 	(void)arg;
-	while (g_st.running) {
+	while (running_load()) {
 		int a, b, fan, has;
 		float high, low, t;
 
@@ -298,7 +318,7 @@ static void *thread_comm(void *arg)
 	mosq = mosquitto_new(resolve_client_id(), true, NULL);
 	if (!mosq) {
 		fprintf(stderr, "[ERR] mosquitto_new\n");
-		g_st.running = 0;
+		atomic_store_explicit(&g_st.running, 0, memory_order_relaxed);
 		return NULL;
 	}
 	mosquitto_connect_callback_set(mosq, on_connect);
@@ -319,7 +339,7 @@ static void *thread_comm(void *arg)
 		/* 无 Broker 时仍允许本地采集/控制演示 */
 	}
 
-	while (g_st.running) {
+	while (running_load()) {
 		if (mosq)
 			mosquitto_loop(mosq, 100, 1);
 		else
@@ -342,7 +362,7 @@ int main(void)
 	memset(&g_st, 0, sizeof(g_st));
 	g_st.t_high = 28.0f;
 	g_st.t_low = 26.0f;
-	g_st.running = 1;
+	atomic_init(&g_st.running, 1);
 	pthread_mutex_init(&g_st.lock, NULL);
 
 	signal(SIGINT, on_sigint);
@@ -369,9 +389,10 @@ int main(void)
 	pthread_join(th_c, NULL);
 	pthread_join(th_m, NULL);
 
-	/* 干净停：关风扇 */
+	/* 干净停：关风扇（写入失败要报错，不假装已关） */
 	state_lock();
-	fan_set_unlocked(0);
+	if (fan_set_unlocked(0) < 0)
+		fprintf(stderr, "[ERR] cleanup: fan OFF write failed\n");
 	state_unlock();
 
 	if (fan_req)

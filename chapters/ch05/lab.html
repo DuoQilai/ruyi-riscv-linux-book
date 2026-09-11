@@ -66,7 +66,7 @@
   @media print { body { padding-left: 0; } .toc { display: none; } }
 /* course-nav-css */
 
-  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .course-rail { font-weight: 600; color: var(--accent, #2e6b6e); }
   .page-nav {
     display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
     margin: 48px 0 24px; padding: 24px 0 8px;
@@ -225,9 +225,11 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
 <h2>步骤</h2>
 
 <h3>1. 查 Broker IP 并配置</h3>
+<p>实验三要求板子能连上局域网里的 Mosquitto。先确认主机 Broker 已按<strong>讲义 5.1</strong>配好：<code>listener 1883</code>（监听局域网，不是只绑 <code>127.0.0.1</code>）、本课默认 <code>allow_anonymous true</code>，并已 <code>systemctl restart</code> / 重启容器使配置生效。课堂若统一提供 Broker，记下板书上的 IP、端口与是否匿名即可，跳过自装。</p>
 <p>在<strong>跑 Mosquitto 的主机</strong>上查本机局域网 IP（与板子同一网段的那个）：</p>
 <pre><span class="p">$</span> hostname -I
-<span class="c"># 记下该地址，下文记为 BROKER_IP</span></pre>
+<span class="c"># 记下该地址，下文记为 BROKER_IP</span>
+<span class="c"># 可选自检：本机 ss -lntp | grep 1883 应见 0.0.0.0:1883</span></pre>
 <p>把地址交给板端程序（环境变量优先于源码默认值）：</p>
 <ul>
   <li><strong>推荐：</strong>板端启动时写 <code>BROKER_HOST=BROKER_IP ./mqtt-led</code>。</li>
@@ -239,7 +241,7 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
   <li><code>TOPIC_CMD</code> / <code>TOPIC_STATUS</code>：默认 <code>course/led/cmd</code> 与 <code>course/led/status</code>；若课堂统一改了主题，以板书为准并保持发布端与订阅端一致。</li>
   <li><code>GPIO_CHIP_PATH</code>、<code>LED_LINE</code>：与外接 LED 接线一致。默认 <code>LED_LINE=4</code>（丝印 <code>IO1_4</code>）；<code>IO1_5</code>/<code>IO1_6</code> 留给风扇与 DHT。Broker 填主机局域网 IP；板上的 <code>127.0.0.1</code> 只指向板自己。</li>
 </ul>
-<p><strong>本步成功判据：</strong>你能说出本机查到的 Broker IP 与两个主题名；知道用环境变量或默认宏二选一配置。</p>
+<p><strong>本步成功判据：</strong>你能说出本机查到的 Broker IP、端口 <code>1883</code>、是否匿名；知道用环境变量或默认宏二选一配置；板端能连上（日志出现连接成功）。</p>
 
 <h3>2. 补全下行控灯与上行状态发布</h3>
 <p>术语提醒：<strong>下行</strong>指从电脑终端发命令到板子控硬件；<strong>上行</strong>指板子把当前状态发回 Broker，供别人订阅。</p>

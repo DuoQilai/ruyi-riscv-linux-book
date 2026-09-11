@@ -110,7 +110,7 @@
   body { padding-left: 240px; }
 /* course-nav-css */
 
-  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .course-rail { font-weight: 600; color: var(--accent, #2e6b6e); }
   .page-nav {
     display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
     margin: 48px 0 24px; padding: 24px 0 8px;
@@ -323,14 +323,14 @@
 </table>
 
 <h3 id="s6.2-skeleton">骨架一览</h3>
-<p><code>chapters/ch06/code/tri-thread/</code> 给出 pthread 创建、共享结构、三线程函数空壳与信号退出标志。实验中补全各线程循环与加锁读写。</p>
+<p><code>chapters/ch06/code/tri-thread/</code> 给出 pthread 创建、共享结构、三线程函数空壳与信号退出标志。实验中补全各线程循环与加锁读写。退出标志请用 <code>#include &lt;stdatomic.h&gt;</code> 的 <code>atomic_int</code>（勿只写 <code>volatile int</code>）。</p>
 
 <pre><span class="k">struct</span> shared_state {
     pthread_mutex_t lock;   <span class="c">/* 互斥锁：同一时刻只许一条线改关键字段 */</span>
     float last_temp;
     float t_high, t_low;
     int fan_on;
-    volatile int running;   <span class="c">/* Ctrl+C 置 0，各线程退出 */</span>
+    atomic_int running;   <span class="c">/* Ctrl+C 原子置 0；各线程 load 后退出（勿只用 volatile） */</span>
 };</pre>
 
 <pre><span class="p">$</span> cd chapters/ch06/code/tri-thread
@@ -365,7 +365,7 @@ pthread_mutex_unlock(&amp;st-&gt;lock);</pre>
 <figcaption>互斥锁：同一时刻只有一条线程进入临界区访问 <code>last_temp</code>；其他线程在锁外等待</figcaption>
 </figure>
 
-<p><strong>干净停：</strong>注册 <code>SIGINT</code>（Ctrl+C）处理函数，把 <code>running=0</code>；各线程循环判断该标志后退出；主线程 join 完毕后关风扇、释放 GPIO、断开 MQTT。验收时必须看到风扇停转再进程结束。</p>
+<p><strong>干净停：</strong>注册 <code>SIGINT</code>（Ctrl+C）处理函数，用 <code>atomic_store</code> 把 <code>running</code> 置 0（信号与各线程并发读写退出标志时，<code>volatile</code> 不够，TSan 仍会报 race）；各线程 <code>atomic_load</code> 判断后退出；主线程 join 完毕后关风扇（GPIO 写入失败要报错，勿误报已关）、释放 GPIO、断开 MQTT。验收时必须看到风扇停转再进程结束。</p>
 
 <p>「同一 <code>last_temp</code> 上一写一读如何交错、加锁后如何读到完整写入」，完整步骤在下一节「深入理解」。</p>
 

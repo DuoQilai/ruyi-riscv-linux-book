@@ -124,7 +124,7 @@
   body { padding-left: 240px; }
 /* course-nav-css */
 
-  .course-rail a { font-weight: 600; color: var(--accent, #2e6b6e); }
+  .course-rail { font-weight: 600; color: var(--accent, #2e6b6e); }
   .page-nav {
     display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
     margin: 48px 0 24px; padding: 24px 0 8px;
@@ -283,12 +283,36 @@ Broker（Mosquitto）
 </table>
 
 <h3 id="s5.1-mosquitto">启动 Mosquitto（主机示例）</h3>
+<p>板端要连上 Broker，主机上的 Mosquitto 必须<strong>监听局域网</strong>（不能只绑 <code>127.0.0.1</code>），并按课堂约定决定是否允许匿名。本课实机联调采用：端口 <code>1883</code>、监听所有网卡、允许匿名（无用户名密码）。</p>
+
 <pre><span class="c"># Debian/Ubuntu 示例；以你发行版包名为准</span>
 <span class="p">$</span> sudo apt update
 <span class="p">$</span> sudo apt install -y mosquitto mosquitto-clients
-<span class="p">$</span> sudo systemctl enable --now mosquitto
+<span class="p">$</span> sudo systemctl enable --now mosquitto</pre>
 
-<span class="c"># 本机自测：一终端订阅，另一终端发布</span>
+<h4>局域网监听与匿名（必配，否则板连不上）</h4>
+<p>默认安装后，部分发行版只允许本机访问。在跑 Broker 的主机上新建（或编辑）片段配置，例如：</p>
+<pre><span class="p">$</span> sudo tee /etc/mosquitto/conf.d/course-lan.conf &lt;&lt;'EOF'
+<span class="c"># 监听所有网卡的 1883（板子用主机局域网 IP 连接）</span>
+listener 1883
+<span class="c"># 本课实验允许匿名；生产环境请改用账号密码并关闭此项</span>
+allow_anonymous true
+EOF
+<span class="p">$</span> sudo systemctl restart mosquitto
+<span class="p">$</span> sudo ss -lntp | grep 1883
+<span class="c"># 应看到 0.0.0.0:1883 或 *:1883（不要只有 127.0.0.1:1883）</span></pre>
+
+<p>若用 Docker（本课联调实录）：</p>
+<pre><span class="p">$</span> cat &gt; /tmp/mosquitto-course.conf &lt;&lt;'EOF'
+listener 1883
+allow_anonymous true
+EOF
+<span class="p">$</span> docker run -d --name course-mosquitto --restart unless-stopped \
+    -p 1883:1883 \
+    -v /tmp/mosquitto-course.conf:/mosquitto/config/mosquitto.conf:ro \
+    eclipse-mosquitto:2</pre>
+
+<pre><span class="c"># 本机自测：一终端订阅，另一终端发布（先确认本机通）</span>
 <span class="p">$</span> mosquitto_sub -h 127.0.0.1 -t 'course/led/cmd' -v
 <span class="p">$</span> mosquitto_pub -h 127.0.0.1 -t 'course/led/cmd' -m 'on'</pre>
 
@@ -296,7 +320,9 @@ Broker（Mosquitto）
   <strong>网络：</strong>在跑 Mosquitto 的主机上查本机局域网 IP：
 <pre style="margin:12px 0 0"><span class="p">$</span> hostname -I
 <span class="c"># 或：ip -4 addr show | grep inet</span></pre>
-  板端把该 IP 交给程序：改源码里的 <code>DEFAULT_BROKER_HOST</code>，或运行时 <code>BROKER_HOST=&lt;该IP&gt; ./mqtt-led</code>（环境变量优先）。板上的 <code>127.0.0.1</code> 只指向板自己。防火墙放行 1883。课堂若提供统一 Broker，以当堂板书为准。
+  板端把该 IP 交给程序：改源码里的 <code>DEFAULT_BROKER_HOST</code>，或运行时 <code>BROKER_HOST=&lt;该IP&gt; ./mqtt-led</code>（环境变量优先）。板上的 <code>127.0.0.1</code> 只指向板自己。防火墙放行 1883（如 <code>sudo ufw allow 1883/tcp</code>，以你主机防火墙为准）。
+  <br><br>
+  <strong>课堂若统一提供 Broker：</strong>不必自装；记下老师给出的 <code>BROKER_IP</code>、<code>1883</code>（或当堂端口）、是否匿名/账号密码，板端用同一套参数连接即可。
 </div>
 
 <div class="info" style="margin-top:32px;">
