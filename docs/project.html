@@ -38,6 +38,9 @@
   section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
   section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
   section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+  figure { margin: 28px 0 8px; }
+  figure img { width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+  figcaption { font-size: 15px; color: var(--faint); margin-top: 8px; }
   section li strong { color: var(--text); }
   pre {
     background: var(--code-bg); border: 1px solid var(--line-light);
@@ -272,6 +275,28 @@ llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
 <div class="info">
   规划条目也写在 <a href="CourseOutline.html">Course Outline</a>。本文是综合项目的正文。
 </div>
+</section>
+
+<section id="ran">
+<div class="section-num">实测</div>
+<h2>2026-09-21，两块板都跑过</h2>
+<p>量化用的是 Qwen2.5-1.5B-Instruct 的 FP16 GGUF。K3 上 <code>llama.cpp-tools-spacemit</code> 自带的 <code>llama-quantize</code> 把它压成 Q4_0。主机没有这份量化程序，所以这一步在 K3 上做。Q8 不能再压，工具会拒绝。</p>
+<table>
+  <tr><th>文件</th><th>体积</th></tr>
+  <tr><td>FP16</td><td>3 560 416 288 字节（量化日志 3389.80 MiB，16.00 BPW）</td></tr>
+  <tr><td>Q4_0</td><td>1 066 227 232 字节（1011.16 MiB，4.77 BPW）</td></tr>
+</table>
+<p>服务是 <code>llama-server -m …q4_0.gguf -t 4 --host 0.0.0.0 --port 8080</code>。启动日志里 <code>use_ime2: 1</code>，<code>/v1/models</code> 的量化档是 Q4_0。云端用 <code>deepseek-flash</code>，<code>thinking: disabled</code>。密钥只放在 K3 的环境变量里。</p>
+<p>同一句「现在热不热？先调用 read_status…」：本地 Q4 和云端 flash 都叫了 <code>read_status</code>。板上日志的温度和回答一致。接着 <code>set_fan off</code> 把风扇打到 force-off；再发 <code>fan auto</code> 之后，终端已经关掉，风扇仍按 28/26 的阈值自己开关。</p>
+<figure>
+  <img src="assets/recordings/k3-local-dsh.gif" alt="K3 上 llama-server 显示 use_ime2，dsh 调 read_status 后回答温度">
+  <figcaption>K3：IME2 开着，本地 Q4 通过 dsh 调 read_status。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/board-hysteresis.gif" alt="荔枝派日志：fan auto 之后风扇按温度开关">
+  <figcaption>荔枝派：回到 auto 之后，风扇继续跟温度走。</figcaption>
+</figure>
+<p>工具在 <code>project/course-board/</code>。它们只发 MQTT：<code>course/thermo/cmd</code> 上的 <code>status</code> / <code>fan on|off|auto</code> / <code>set high|low</code>，灯仍走第五章的 <code>course/led/cmd</code>。<code>@dsh-tui/dsh-tui@0.1.2</code> 会重复插入 <code>storage</code>，和 dsh 0.1.5-rc.2 冲突；headless 配置和修法写在该目录的 README。</p>
 </section>
 
 <nav class="page-nav" aria-label="章节翻页">

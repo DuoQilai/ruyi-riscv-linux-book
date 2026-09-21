@@ -20,7 +20,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifndef USE_LOCK
 #define USE_LOCK         0 /* 实验：先 0 看 [RACE]，再改 1 验收 */
+#endif
 #define SIMULATE_SENSOR  1
 
 #define DEFAULT_BROKER_HOST "192.168.1.10"
@@ -62,7 +64,10 @@ struct shared_state {
 	int temp_b;
 	float t_high;
 	float t_low;
+	float hum;
 	int fan_on;
+	/* 0 滞回自动控制；1 强制开；2 强制关。综合项目 set_fan 用后两种。 */
+	int fan_mode;
 	int has_sample;
 	int race_hits;
 	/* 退出标志：信号与各线程共享；用原子避免 TSan/数据竞争 */
@@ -209,9 +214,9 @@ static void *thread_sense(void *arg)
 			state_lock();
 #endif
 			g_st.temp_b = v;
+			g_st.hum = h;
 			g_st.has_sample = 1;
 			state_unlock();
-			(void)h;
 			printf("[SENSE] temp=%.1f\n", t);
 			fflush(stdout);
 		} else {
@@ -227,7 +232,7 @@ static void *thread_control(void *arg)
 {
 	(void)arg;
 	while (running_load()) {
-		int a, b, fan, has;
+		int a, b, fan, has, mode;
 		float high, low, t;
 
 		state_lock();
@@ -236,6 +241,7 @@ static void *thread_control(void *arg)
 		high = g_st.t_high;
 		low = g_st.t_low;
 		fan = g_st.fan_on;
+		mode = g_st.fan_mode;
 		has = g_st.has_sample;
 		state_unlock();
 
@@ -248,11 +254,19 @@ static void *thread_control(void *arg)
 
 		if (has && a == b) {
 			t = (float)a / 10.0f;
-			if (t > high && !fan) {
+			if (mode == 1 && !fan) {
 				state_lock();
 				fan_set_unlocked(1);
 				state_unlock();
-			} else if (t < low && fan) {
+			} else if (mode == 2 && fan) {
+				state_lock();
+				fan_set_unlocked(0);
+				state_unlock();
+			} else if (mode == 0 && t > high && !fan) {
+				state_lock();
+				fan_set_unlocked(1);
+				state_unlock();
+			} else if (mode == 0 && t < low && fan) {
 				state_lock();
 				fan_set_unlocked(0);
 				state_unlock();
@@ -291,12 +305,59 @@ static void on_message(struct mosquitto *m, void *obj,
 	fflush(stdout);
 
 	/*
-	 * TODO: 解析简单命令，例如：
-	 *   set high 30
-	 *   set low 25
-	 *   status   → 读共享状态并 mosquitto_publish 到 TOPIC_STATUS
+	 * 命令（综合项目工具只转发这些字符串，不直接碰 GPIO）：
+	 *   set high 30 / set low 25
+	 *   fan on / fan off / fan auto
+	 *   status → 发布到 TOPIC_STATUS
 	 */
-	if (sscanf(buf, "set high %f", &v) == 1) {
+	if (strcmp(buf, "status") == 0) {
+		int ta, tb, fan, mode, has;
+		float high, low, hum;
+		char line[160];
+		const char *fan_s;
+		const char *mode_s;
+
+		state_lock();
+		ta = g_st.temp_a;
+		tb = g_st.temp_b;
+		hum = g_st.hum;
+		high = g_st.t_high;
+		low = g_st.t_low;
+		fan = g_st.fan_on;
+		mode = g_st.fan_mode;
+		has = g_st.has_sample;
+		state_unlock();
+		fan_s = fan ? "on" : "off";
+		mode_s = mode == 1 ? "force-on" : mode == 2 ? "force-off" : "auto";
+		if (has && ta == tb) {
+			snprintf(line, sizeof(line),
+				 "temp=%.1f hum=%.1f fan=%s mode=%s high=%.1f low=%.1f",
+				 (float)ta / 10.0f, hum, fan_s, mode_s, high, low);
+		} else {
+			snprintf(line, sizeof(line),
+				 "temp=na hum=%.1f fan=%s mode=%s high=%.1f low=%.1f",
+				 hum, fan_s, mode_s, high, low);
+		}
+		mosquitto_publish(m, NULL, TOPIC_STATUS, (int)strlen(line), line, 0, false);
+		printf("[MQTT] status %s\n", line);
+		fflush(stdout);
+	} else if (strcmp(buf, "fan on") == 0) {
+		state_lock();
+		g_st.fan_mode = 1;
+		fan_set_unlocked(1);
+		state_unlock();
+	} else if (strcmp(buf, "fan off") == 0) {
+		state_lock();
+		g_st.fan_mode = 2;
+		fan_set_unlocked(0);
+		state_unlock();
+	} else if (strcmp(buf, "fan auto") == 0) {
+		state_lock();
+		g_st.fan_mode = 0;
+		state_unlock();
+		printf("[MQTT] fan mode auto\n");
+		fflush(stdout);
+	} else if (sscanf(buf, "set high %f", &v) == 1) {
 		state_lock();
 		if (v > g_st.t_low)
 			g_st.t_high = v;

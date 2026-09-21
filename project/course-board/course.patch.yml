@@ -1,0 +1,67 @@
+# Course tools only. Other harness tools stay installed but disabled so the
+# model has to call the board.
+- id: llm-deepseek
+  config:
+    thinking: disabled
+    reasoningEffort: off
+- id: system-prompt
+  config:
+    personaPrefix: 你通过 MQTT 工具控制荔枝派。问温度必须调用 read_status，不要编造数字。
+    personaSuffix: ""
+- id: llm-pi-ai
+  config:
+    providers:
+      k3-llama:
+        apiKeyEnv: LOCAL_LLAMA_KEY
+        api: openai-completions
+        baseURL: http://127.0.0.1:8080/v1
+        models:
+          - id: qwen2.5-1.5b
+            contextWindow: 8192
+            maxTokens: 256
+            reasoningEfforts: false
+- id: tool-bash
+  disabled: true
+- id: tool-pwsh
+  disabled: true
+- id: tool-jobs
+  disabled: true
+- id: tool-fs
+  disabled: true
+- id: tool-fs-search
+  disabled: true
+- id: tool-skill
+  disabled: true
+- id: tool-subagent-control
+  disabled: true
+- id: tool-subagent-list-agents
+  disabled: true
+- id: tool-subagent
+  disabled: true
+- id: tool-subagent-fork
+  disabled: true
+- id: tool-workflow
+  disabled: true
+- id: tool-todo
+  disabled: true
+- id: tool-goal
+  disabled: true
+- id: tool-ralph
+  disabled: true
+- id: tool-web
+  disabled: true
+- id: plan-mode
+  disabled: true
+- id: fs-sandbox
+  disabled: true
+- id: sandbox-policy
+  disabled: true
+- id: sandbox-local
+  disabled: true
+- id: bash-sandbox
+  disabled: true
+- id: permission
+  disabled: true
+- insert:
+    - id: course-board
+      name: /home/fengde/course-board/src/index.mjs
