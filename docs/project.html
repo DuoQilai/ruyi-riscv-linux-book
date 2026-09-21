@@ -287,11 +287,16 @@ llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
   <tr><td>Q4_0</td><td>1 066 227 232 字节（1011.16 MiB，4.77 BPW）</td></tr>
 </table>
 <p>服务是 <code>llama-server -m …q4_0.gguf -t 4 --host 0.0.0.0 --port 8080</code>。启动日志里 <code>use_ime2: 1</code>，<code>/v1/models</code> 的量化档是 Q4_0。云端用 <code>deepseek-flash</code>，<code>thinking: disabled</code>。密钥只放在 K3 的环境变量里。</p>
-<p>同一句「现在热不热？先调用 read_status…」：本地 Q4 和云端 flash 都叫了 <code>read_status</code>。板上日志的温度和回答一致。接着 <code>set_fan off</code> 把风扇打到 force-off；再发 <code>fan auto</code> 之后，终端已经关掉，风扇仍按 28/26 的阈值自己开关。</p>
+<p>同一句「现在热不热？先调用 read_status…」：本地 Q4 和云端 flash 都叫了 <code>read_status</code>。板上日志的温度和回答一致。接着在 K3 终端里再打一句，让它把风扇关掉。</p>
+<figure>
+  <img src="assets/recordings/k3-dsh-chat.png" alt="SSH 到 K3 后，用 dsh 问现在热不热，再让它关风扇">
+  <figcaption>K3 终端里的两句：先问温度，再让 dsh 关风扇。</figcaption>
+</figure>
 <figure>
   <img src="assets/recordings/k3-local-dsh.gif" alt="K3 上 llama-server 显示 use_ime2，dsh 调 read_status 后回答温度">
   <figcaption>K3：IME2 开着，本地 Q4 通过 dsh 调 read_status。</figcaption>
 </figure>
+<p>回到 <code>fan auto</code> 之后，终端可以关掉，荔枝派上的风扇仍按阈值自己开关。</p>
 <figure>
   <img src="assets/recordings/board-hysteresis.gif" alt="荔枝派日志：fan auto 之后风扇按温度开关">
   <figcaption>荔枝派：回到 auto 之后，风扇继续跟温度走。</figcaption>
