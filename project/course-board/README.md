@@ -34,34 +34,48 @@ npx node-gyp rebuild        # 依据 binding.gyp 编译 system.c
 ls build/Release/system.node
 ```
 
-编出的 `system.node` 要放到 dsh 解析该包的位置（覆盖上游那个空包）：
+编出的 `system.node` 要放到平台包 `bin/glibc/` 下（上游那个包在 riscv64 上是空的）：
 
 ```bash
 # 路径按你机器上 dsh 的安装位置为准（`npm root -g` 帮助定位）
 DEST=$(npm root -g)/@deepseek-ai/dsh/node_modules/@deepseek-ai/node-addon-system-linux-riscv64
-mkdir -p "$DEST"
-cp build/Release/system.node "$DEST/"
+mkdir -p "$DEST/bin/glibc"
+cp build/Release/system.node "$DEST/bin/glibc/system.node"
+
+# 自检（在 dsh 包目录里跑，才能解析到 @deepseek-ai/node-addon-system）
+cd "$(npm root -g)/@deepseek-ai/dsh"
+node -e 'import("@deepseek-ai/node-addon-system/flock").then(async m=>{const fs=require("fs");const fd=fs.openSync("/tmp/locktest","w");await m.tryLockExclusive(fd);console.log("flock OK")})'
 ```
 
 > 该步必须在 riscv64 的 K3 上做（交叉编译 N-API 附件不在本课程范围）。
 
 ## 运行
 
-**在仓库的 `project/` 目录下**启动（补丁里的插件路径是相对路径，不写死任何绝对路径）：
+插件目录需要能解析到 dsh 的依赖，先建软链（只做一次）。补丁里的插件路径写在 `course.patch.yml`
+里、**相对补丁文件所在目录**（`./src/index.mjs`），因此不写死任何主机路径：
 
 ```bash
-export DEEPSEEK_API_KEY=...
-export LOCAL_LLAMA_KEY=local
-export BROKER_HOST=192.168.31.206
+cd ~/course-board
+ln -sfn "$(npm root -g)/@deepseek-ai/dsh/node_modules" node_modules
+```
 
-cd project
+密钥放 `~/.dsh/course.env`（不要进仓库），运行时 source：
+
+```bash
+export PATH="$HOME/.npm-global/bin:$PATH"
+set -a; source ~/.dsh/course.env; set +a
+
+# 本地小模型：先起 llama-server（Q4_0）
+nohup llama-server -m ~/.cache/models/llm/qwen2.5-1.5b-instruct-q4_0.gguf \
+  -t 4 --host 0.0.0.0 --port 8080 > /tmp/llama-server.log 2>&1 &
+
 dsh --profile headless \
-  --patch course-board/course.patch.yml \
-  --patch course-board/model-cloud.patch.yml \
+  --patch ~/course-board/course.patch.yml \
+  --patch ~/course-board/model-local.patch.yml \
   "现在热不热？必须调用 read_status，再根据工具结果用一句话回答。"
 ```
 
-本地小模型把 `model-cloud.patch.yml` 换成 `model-local.patch.yml` 即可。
+云端把 `model-local.patch.yml` 换成 `model-cloud.patch.yml`（需要 `DEEPSEEK_API_KEY`）。
 
 ## 连接与错误处理
 

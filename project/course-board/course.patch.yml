@@ -64,5 +64,5 @@
   disabled: true
 - insert:
     - id: course-board
-      # 相对路径：在 project/ 目录下启动 dsh 时解析到 project/course-board/src/index.mjs
-      name: course-board/src/index.mjs
+      # 相对「本补丁文件所在目录」解析，落到 course-board/src/index.mjs；不写死主机路径
+      name: ./src/index.mjs
