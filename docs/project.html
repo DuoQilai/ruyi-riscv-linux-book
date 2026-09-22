@@ -296,6 +296,10 @@ llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
   <img src="assets/recordings/k3-local-dsh.gif" alt="K3 上 llama-server 显示 use_ime2，dsh 调 read_status 后回答温度">
   <figcaption>K3：IME2 开着，本地 Q4 通过 dsh 调 read_status。</figcaption>
 </figure>
+<figure>
+  <img src="assets/recordings/k3-cloud-dsh.gif" alt="K3 用云端 deepseek-flash 通过 dsh 调 read_status 并回答温度">
+  <figcaption>K3：同一套工具换云端 <code>deepseek-flash</code>，调用 <code>read_status</code> 后按返回值作答。</figcaption>
+</figure>
 <p>回到 <code>fan auto</code> 之后，终端可以关掉，荔枝派上的风扇仍按阈值自己开关。</p>
 <figure>
   <img src="assets/recordings/board-hysteresis.gif" alt="荔枝派日志：fan auto 之后风扇按温度开关">
