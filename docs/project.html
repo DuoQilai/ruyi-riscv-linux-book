@@ -305,6 +305,19 @@ llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
   <img src="assets/recordings/board-hysteresis.gif" alt="荔枝派日志：fan auto 之后风扇按温度开关">
   <figcaption>荔枝派：回到 auto 之后，风扇继续跟温度走。</figcaption>
 </figure>
+<p>综合项目用的就是前面几章那套硬件，实物接线沿用第三、四、五章的实拍：</p>
+<figure>
+  <img src="assets/recordings/project-rig-fan.jpg" alt="荔枝派 + 继电器 + 风扇 + 面包板实物接线">
+  <figcaption>整板 + 继电器 + 风扇（复用第三章实拍）：项目的 <code>fan on|off|auto</code> 就是驱动这条信号链。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/project-rig-board.jpg" alt="荔枝派整板联调：DHT22、电平转换、继电器与风扇">
+  <figcaption>整板联调（复用第四章实拍）：DHT22 经电平转换接 IO1_6，风扇走继电器——<code>read_status</code> 读的就是它。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/project-led-wiring.jpg" alt="面包板上的 LED 接线（IO1_4）">
+  <figcaption>外接 LED 接线（复用第五章实拍）：<code>course/led/cmd</code> 控的就是这颗灯。</figcaption>
+</figure>
 <p>工具在 <code>project/course-board/</code>。它们只发 MQTT：<code>course/thermo/cmd</code> 上的 <code>status</code> / <code>fan on|off|auto</code> / <code>set high|low</code>，灯仍走第五章的 <code>course/led/cmd</code>。<code>@dsh-tui/dsh-tui@0.1.2</code> 会重复插入 <code>storage</code>，和 dsh 0.1.5-rc.2 冲突；headless 配置和修法写在该目录的 README。</p>
 </section>
 
