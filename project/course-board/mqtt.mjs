@@ -42,7 +42,9 @@ export function mqttExchange({ publishes, subscribe, timeoutMs = 4000 }) {
       if (done) return
       done = true
       clearTimeout(timer)
-      sock.destroy()
+      // 出错直接断；成功走优雅关闭，保证已写入的包发得出去
+      if (err) sock.destroy()
+      else sock.end()
       if (err) reject(err)
       else resolve(value)
     }
@@ -84,6 +86,12 @@ export function mqttExchange({ publishes, subscribe, timeoutMs = 4000 }) {
         buf = buf.subarray(i + rem)
         if (type === 2 && !connack) {
           connack = true
+          // CONNACK 第 2 字节是返回码：0 才算连上，其余一律当失败，别假装成功
+          const code = body.length >= 2 ? body[1] : 255
+          if (code !== 0) {
+            finish(new Error(`mqtt connect refused (CONNACK code ${code})`))
+            return
+          }
           if (subscribe) {
             const sub = Buffer.concat([
               Buffer.from([0, 1]),
@@ -92,11 +100,24 @@ export function mqttExchange({ publishes, subscribe, timeoutMs = 4000 }) {
             ])
             sock.write(packet(0x82, sub))
           }
-          for (const pub of publishes) {
-            const payload = Buffer.from(pub.payload)
-            sock.write(packet(0x30, Buffer.concat([str(pub.topic), payload])))
+          const pubPacket = (pub) =>
+            packet(0x30, Buffer.concat([str(pub.topic), Buffer.from(pub.payload)]))
+          if (!subscribe) {
+            // 只发不收：等最后一包真正写出去再收尾，否则可能被
+            // sock.destroy() 掐掉，命令发不到 broker 却报成功
+            const last = publishes.length - 1
+            if (last < 0) {
+              finish(null, '')
+            } else {
+              publishes.forEach((pub, k) => {
+                if (k === last) sock.write(pubPacket(pub), () => finish(null, ''))
+                else sock.write(pubPacket(pub))
+              })
+            }
+          } else {
+            for (const pub of publishes)
+              sock.write(pubPacket(pub))
           }
-          if (!subscribe) finish(null, '')
         } else if (type === 3) {
           const tlen = body.readUInt16BE(0)
           const payload = body.subarray(2 + tlen).toString()
@@ -116,14 +137,21 @@ export async function readStatus() {
   return line
 }
 
+const FAN_CMD = { on: 'fan on', off: 'fan off', auto: 'fan auto' }
+
 export async function setFan(state) {
-  const cmd = state === 'on' ? 'fan on' : state === 'off' ? 'fan off' : 'fan auto'
+  // 只认 on/off/auto：非法值直接报错，不要悄悄退回 fan auto 解除强制控制
+  if (!Object.hasOwn(FAN_CMD, state))
+    throw new Error(`invalid fan state: ${state} (expected on|off|auto)`)
+  const cmd = FAN_CMD[state]
   await mqttExchange({ publishes: [{ topic: THERMO_CMD, payload: cmd }] })
   return cmd
 }
 
 export async function setLed(state) {
-  const payload = state === 'on' ? 'on' : 'off'
+  if (state !== 'on' && state !== 'off')
+    throw new Error(`invalid led state: ${state} (expected on|off)`)
+  const payload = state
   const line = await mqttExchange({
     publishes: [{ topic: LED_CMD, payload }],
     subscribe: LED_STATUS,

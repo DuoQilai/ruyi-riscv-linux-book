@@ -26,7 +26,15 @@ static void complete(napi_env env, napi_status status, void *data)
 {
 	job_t *j = data;
 	napi_value cb, global, arg, result;
-	(void)status;
+
+	/* 异步任务被取消时不要再回调 JS，只清理自己 */
+	if (status == napi_cancelled) {
+		napi_delete_reference(env, j->cbref);
+		napi_delete_async_work(env, j->work);
+		free(j);
+		return;
+	}
+
 	napi_get_reference_value(env, j->cbref, &cb);
 	napi_get_global(env, &global);
 	napi_create_int32(env, j->err, &arg);
@@ -40,19 +48,33 @@ static napi_value try_lock(napi_env env, napi_callback_info info)
 {
 	size_t argc = 2;
 	napi_value args[2];
-	napi_value name;
+	napi_value name, undef;
 	int32_t fd;
 	job_t *j;
+
+	/* 原生回调必须返回一个合法 napi_value；返回 NULL 会让 JS 侧拿不到结果 */
+	napi_get_undefined(env, &undef);
 
 	napi_get_cb_info(env, info, &argc, args, NULL, NULL);
 	napi_get_value_int32(env, args[0], &fd);
 	j = calloc(1, sizeof *j);
+	if (!j) {
+		napi_throw_error(env, NULL, "flock: out of memory");
+		return undef;
+	}
 	j->fd = (int)fd;
-	napi_create_reference(env, args[1], 1, &j->cbref);
-	napi_create_string_utf8(env, "flock", NAPI_AUTO_LENGTH, &name);
-	napi_create_async_work(env, NULL, name, execute, complete, j, &j->work);
-	napi_queue_async_work(env, j->work);
-	return NULL;
+	if (napi_create_reference(env, args[1], 1, &j->cbref) != napi_ok ||
+	    napi_create_string_utf8(env, "flock", NAPI_AUTO_LENGTH, &name) != napi_ok ||
+	    napi_create_async_work(env, NULL, name, execute, complete, j, &j->work) != napi_ok ||
+	    napi_queue_async_work(env, j->work) != napi_ok) {
+		napi_delete_reference(env, j->cbref);
+		if (j->work)
+			napi_delete_async_work(env, j->work);
+		free(j);
+		napi_throw_error(env, NULL, "flock: failed to queue async work");
+		return undef;
+	}
+	return undef;
 }
 
 static napi_value init(napi_env env, napi_value exports)

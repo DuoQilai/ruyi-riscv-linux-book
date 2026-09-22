@@ -64,4 +64,5 @@
   disabled: true
 - insert:
     - id: course-board
-      name: /home/fengde/course-board/src/index.mjs
+      # 相对路径：在 project/ 目录下启动 dsh 时解析到 project/course-board/src/index.mjs
+      name: course-board/src/index.mjs

@@ -39,6 +39,7 @@ export function apply(ctx: Context) {
       state: {
         type: 'string',
         required: true,
+        enum: ['on', 'off', 'auto'],
         description: 'on, off, or auto',
       },
     },
@@ -51,6 +52,7 @@ export function apply(ctx: Context) {
       state: {
         type: 'string',
         required: true,
+        enum: ['on', 'off'],
         description: 'on or off',
       },
     },
