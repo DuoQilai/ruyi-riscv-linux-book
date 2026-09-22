@@ -15,3 +15,11 @@ scp tri-thread user@board-ip:~/
 Broker 用环境变量 `BROKER_HOST`（优先于源码默认值）。可选 `MQTT_CLIENT_ID`；默认 `tri-thread-<主机名>`。
 
 默认 `USE_LOCK 0` 必现 `[RACE]`；验收改为 `USE_LOCK 1`（与实验二成对加锁同一思路）。
+
+## 并发与 MQTT 行为
+
+- **控制线程**：读状态、判断、写 GPIO 都在同一把锁内完成。MQTT 刚下发的 `fan on` / `fan off`
+  不会被基于旧快照的自动控制覆盖。
+- **通信线程**：`mosquitto_loop` 的返回值会被检查。断线类错误（`CONN_LOST` / `NO_CONN` /
+  `CONN_REFUSED` / `PROTOCOL`）会重连，连续失败 `MQTT_MAX_RETRY`（5）次后该线程退出并置停，
+  程序不再空转。

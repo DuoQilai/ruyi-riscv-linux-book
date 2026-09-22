@@ -3,10 +3,11 @@
  */
 #include "led_cmd.h"
 
-/* STUDENT TODO：精确匹配 on/off。 */
-int parse_led_cmd(const char *payload)
+/* STUDENT TODO：按 payloadlen 精确匹配 on/off（用 memcmp，别用 strcmp）。 */
+int parse_led_cmd(const char *payload, int payloadlen)
 {
 	(void)payload;
+	(void)payloadlen;
 	return -1; /* ← 这里实现 */
 }
 

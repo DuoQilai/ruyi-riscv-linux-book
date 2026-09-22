@@ -142,20 +142,26 @@
 
 <section id="exp1">
 <h2>实验一 · on/off 精确解析（led-cmd-parse）</h2>
-<p>实验三 <code>on_message</code> 里最容易写松的是载荷匹配：写成忽略大小写或带空格也能过，联调时却对不上课堂约定的精确 <code>on</code>/<code>off</code>。本实验把解析抽出来，用断言卡死。源码 <code>chapters/ch05/code/led-cmd-parse/</code>，只实现 <code>parse_led_cmd</code> 与 <code>status_payload</code>。</p>
+<p>实验三 <code>on_message</code> 里最容易写松的是载荷匹配：写成忽略大小写、带空格也能过，甚至用 <code>strcmp</code> 把 <code>on\0x</code> 当成合法 <code>on</code>。MQTT 载荷不保证以 <code>'\0'</code> 结尾，所以<strong>必须连着长度一起比较</strong>。本实验把解析抽出来，用断言卡死。源码 <code>chapters/ch05/code/led-cmd-parse/</code>，只实现 <code>parse_led_cmd</code> 与 <code>status_payload</code>。</p>
 <h3>步骤</h3>
 <pre><span class="c"># 主机，或先 scp 到板子再进目录
 $ cd chapters/ch05/code/led-cmd-parse      # 板上：cd ~/led-cmd-parse</span>
 <span class="p">$</span> make
 <span class="p">$</span> ./build/led-cmd-parse      <span class="c"># 未实现 → SOME FAIL（预期）</span></pre>
-<p>打开 <code>src/led_cmd.c</code>，按头文件契约实现：精确 <code>"on"</code>→1、<code>"off"</code>→0，其他→-1；<code>status_payload</code> 返回静态字符串 <code>"on"</code>/<code>"off"</code>。</p>
+<p>打开 <code>src/led_cmd.c</code>，按头文件契约实现：<strong>按 <code>payloadlen</code> 用 <code>memcmp</code> 精确匹配</strong>——长度 2 且字节等于 <code>"on"</code>→1；长度 3 且等于 <code>"off"</code>→0；其他（含 <code>"on\0x"</code>、<code>"ON"</code>、<code>"on "</code>）→-1。<code>status_payload</code> 返回静态字符串 <code>"on"</code>/<code>"off"</code>。</p>
+<pre><span class="c">/* 契约（include/led_cmd.h）：
+ *   payloadlen == 2 且 memcmp(payload, "on",  2) == 0 → 1
+ *   payloadlen == 3 且 memcmp(payload, "off", 3) == 0 → 0
+ *   其他 → -1（含内嵌 '\0' 的伪造载荷）
+ */</span>
+int parse_led_cmd(<span class="k">const char</span> *payload, <span class="k">int</span> payloadlen);</pre>
 <pre><span class="p">$</span> ./build/led-cmd-parse
 <span class="c"># 期望：
-#   ok   parse on/off 精确匹配
+#   ok   parse 按 payloadlen 精确匹配（含 on\0x 伪造载荷被拒）
 #   ok   status_payload 返回 on/off
 #   ALL PASS</span>
 <span class="c"># 对照：make sol && ./build/led-cmd-parse-sol</span></pre>
-<p><strong>本实验成功判据：</strong><code>ALL PASS</code>；能口头说「实验三里 payload 必须精确等于 on/off，大小写与尾空格都不算」。</p>
+<p><strong>本实验成功判据：</strong><code>ALL PASS</code>；能口头说「为什么必须传长度、为什么 <code>strcmp</code> 在这里会放过 <code>on\0x</code>」。</p>
 <figure>
   <img src="assets/recordings/led-cmd-parse-board.gif" alt="板上 led-cmd-parse-sol 输出 ALL PASS" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
   <figcaption>板端证据（SSH → led-cmd-parse）：<code>ALL PASS</code></figcaption>
@@ -248,7 +254,7 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
 <ol>
   <li>
     <strong>在 <code>on_message</code> 中处理命令载荷</strong><br>
-    脚手架已把 payload 拷进 <code>buf</code>。调用实验一的 <code>parse_led_cmd(buf)</code>：返回 1/0 时 <code>led_set</code>，成功后再 <code>publish_status(status_payload(...))</code>；返回 -1 打 <code>[ERR]</code> 不改灯。<br>
+    调用实验一的 <code>parse_led_cmd(msg-&gt;payload, msg-&gt;payloadlen)</code>（<strong>要把长度一起传进去</strong>，别只按字符串比）：返回 1/0 时 <code>led_set</code>，成功后再 <code>publish_status(status_payload(...))</code>；返回 -1 打 <code>[ERR]</code>，不改灯、不发 status。<br>
     <strong>成功样子：</strong>主机 pub <code>on</code> 后板端日志有收包记录，外接 LED 亮；pub <code>off</code> 后灯灭；pub <code>ON</code> 应报错（精确匹配）。
   </li>
   <li>

@@ -56,6 +56,8 @@ static const char *resolve_client_id(void)
 #define CONTROL_MS       50
 /* USE_LOCK=0 时两字段之间故意拉开窗口，让控制线程必能抓到不一致快照 */
 #define RACE_WINDOW_US   80000
+/* MQTT 断线重连的连续失败上限：到顶就收线程，避免无限空转 */
+#define MQTT_MAX_RETRY   5
 
 struct shared_state {
 	pthread_mutex_t lock;
@@ -136,6 +138,23 @@ static void on_sigint(int sig)
 static int running_load(void)
 {
 	return atomic_load_explicit(&g_st.running, memory_order_relaxed);
+}
+
+static char g_broker_host[64];
+
+/* 重连 Broker；成功返回 0 */
+static int mqtt_reconnect(void)
+{
+	int rc;
+
+	if (!mosq)
+		return -1;
+	rc = mosquitto_reconnect(mosq);
+	if (rc != MOSQ_ERR_SUCCESS)
+		fprintf(stderr, "[ERR] reconnect: %s\n", mosquitto_strerror(rc));
+	else
+		printf("[MQTT] reconnected %s\n", g_broker_host);
+	return rc == MOSQ_ERR_SUCCESS ? 0 : -1;
 }
 
 static int fan_init(void)
@@ -232,45 +251,43 @@ static void *thread_control(void *arg)
 {
 	(void)arg;
 	while (running_load()) {
-		int a, b, fan, has, mode;
-		float high, low, t;
+		int a, b, has, raced = 0;
 
 		state_lock();
 		a = g_st.temp_a;
 		b = g_st.temp_b;
-		high = g_st.t_high;
-		low = g_st.t_low;
-		fan = g_st.fan_on;
-		mode = g_st.fan_mode;
 		has = g_st.has_sample;
-		state_unlock();
 
 		if (has && a != b) {
-			g_st.race_hits++; /* 仅统计；打印是证据 */
+			g_st.race_hits++; /* 仅统计；打印在锁外当证据 */
+			raced = 1;
+		} else if (has && a == b) {
+			/*
+			 * 判定与执行必须同处一把锁：若先读快照、解锁、再按旧值动作，
+			 * MQTT 刚下发的 fan on/off（改 fan_mode/fan_on）会被这一步
+			 * 基于旧状态的自动控制覆盖掉。
+			 */
+			int fan = g_st.fan_on;
+			int mode = g_st.fan_mode;
+			float high = g_st.t_high;
+			float low = g_st.t_low;
+			float t = (float)a / 10.0f;
+
+			if (mode == 1 && !fan)
+				fan_set_unlocked(1);
+			else if (mode == 2 && fan)
+				fan_set_unlocked(0);
+			else if (mode == 0 && t > high && !fan)
+				fan_set_unlocked(1);
+			else if (mode == 0 && t < low && fan)
+				fan_set_unlocked(0);
+		}
+		state_unlock();
+
+		if (raced) {
 			printf("[RACE] inconsistent snapshot temp_a=%d temp_b=%d\n",
 			       a, b);
 			fflush(stdout);
-		}
-
-		if (has && a == b) {
-			t = (float)a / 10.0f;
-			if (mode == 1 && !fan) {
-				state_lock();
-				fan_set_unlocked(1);
-				state_unlock();
-			} else if (mode == 2 && fan) {
-				state_lock();
-				fan_set_unlocked(0);
-				state_unlock();
-			} else if (mode == 0 && t > high && !fan) {
-				state_lock();
-				fan_set_unlocked(1);
-				state_unlock();
-			} else if (mode == 0 && t < low && fan) {
-				state_lock();
-				fan_set_unlocked(0);
-				state_unlock();
-			}
 		}
 		usleep((useconds_t)CONTROL_MS * 1000);
 	}
@@ -390,6 +407,7 @@ static void *thread_comm(void *arg)
 
 		if (!bh || !bh[0])
 			bh = DEFAULT_BROKER_HOST;
+		snprintf(g_broker_host, sizeof(g_broker_host), "%s", bh);
 		printf("[MQTT] broker %s:%d USE_LOCK=%d\n", bh, BROKER_PORT,
 		       USE_LOCK);
 		fflush(stdout);
@@ -400,11 +418,52 @@ static void *thread_comm(void *arg)
 		/* 无 Broker 时仍允许本地采集/控制演示 */
 	}
 
-	while (running_load()) {
-		if (mosq)
-			mosquitto_loop(mosq, 100, 1);
-		else
-			usleep(100000);
+	{
+		int loop_fails = 0;
+
+		while (running_load()) {
+			int lrc;
+
+			if (!mosq) {
+				usleep(100000);
+				continue;
+			}
+
+			lrc = mosquitto_loop(mosq, 100, 1);
+			if (lrc == MOSQ_ERR_SUCCESS) {
+				loop_fails = 0;
+				continue;
+			}
+
+			if (lrc == MOSQ_ERR_CONN_LOST || lrc == MOSQ_ERR_NO_CONN ||
+			    lrc == MOSQ_ERR_CONN_REFUSED ||
+			    lrc == MOSQ_ERR_PROTOCOL) {
+				/* 断线类错误：重连，连续失败到上限就收摊，别空转 */
+				loop_fails++;
+				fprintf(stderr, "[ERR] mqtt loop: %s (retry %d/%d)\n",
+					mosquitto_strerror(lrc), loop_fails,
+					MQTT_MAX_RETRY);
+				fflush(stderr);
+				if (loop_fails >= MQTT_MAX_RETRY) {
+					fprintf(stderr,
+						"[ERR] broker unreachable, stopping MQTT thread\n");
+					fflush(stderr);
+					atomic_store_explicit(&g_st.running, 0,
+							      memory_order_relaxed);
+					break;
+				}
+				if (mqtt_reconnect() != 0)
+					fprintf(stderr, "[ERR] reconnect failed\n");
+				usleep(500000);
+				continue;
+			}
+
+			/* 其它错误：记一行、短暂退避，避免刷屏空转 */
+			fprintf(stderr, "[ERR] mqtt loop: %s\n",
+				mosquitto_strerror(lrc));
+			fflush(stderr);
+			usleep(200000);
+		}
 	}
 
 	if (mosq) {

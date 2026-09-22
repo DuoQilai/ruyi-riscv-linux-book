@@ -7,7 +7,7 @@
 
 ## 你要补全
 
-1. `on_message`：用 `parse_led_cmd` → `led_set` 成功后再 `publish_status(status_payload(...))`  
+1. `on_message`：用 `parse_led_cmd(msg->payload, msg->payloadlen)`（**连长度一起传**）→ `led_set` 成功后再 `publish_status(status_payload(...))`；解析失败不改灯、不发 status  
 2. `publish_status()`：`mosquitto_publish` 发到状态主题  
 
 ## Broker 与 Client ID

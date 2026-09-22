@@ -164,11 +164,13 @@ static void on_message(struct mosquitto *m, void *obj,
 	fflush(stdout);
 
 	{
-		int cmd = parse_led_cmd(buf);
+		/* 按 payloadlen 精确匹配：拒绝 "on\0x"、"off\0" 这类伪造载荷 */
+		int cmd = parse_led_cmd((const char *)msg->payload, msg->payloadlen);
 
 		if (cmd < 0) {
-			fprintf(stderr, "[ERR] unknown payload (want on/off): %s\n",
-				buf);
+			fprintf(stderr,
+				"[ERR] unknown payload (want on/off): len=%d %s\n",
+				(int)msg->payloadlen, buf);
 			fflush(stderr);
 		} else if (led_set(cmd) == 0) {
 			publish_status(status_payload(cmd));

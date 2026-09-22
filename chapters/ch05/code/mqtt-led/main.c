@@ -153,10 +153,13 @@ static void on_connect(struct mosquitto *m, void *obj, int rc)
 }
 
 /*
- * TODO: 用实验一的 parse_led_cmd(buf)：
+ * TODO: 用实验一的 parse_led_cmd(msg->payload, msg->payloadlen)：
  *   返回 1/0 → led_set 成功后再 publish_status(status_payload(...))
- *   返回 -1 → 打 [ERR]，不改灯
+ *   返回 -1 → 打 [ERR]，不改灯、不发 status
  * publish_status 仍用 mosquitto_publish（本文件下方桩）。
+ *
+ * 注意载荷不保证以 '\0' 结尾，也不保证没有内嵌空字节，
+ * 必须把 msg->payloadlen 一起传进 parse_led_cmd，别只按字符串比较。
  */
 static void on_message(struct mosquitto *m, void *obj,
 		       const struct mosquitto_message *msg)
@@ -167,13 +170,15 @@ static void on_message(struct mosquitto *m, void *obj,
 
 	if (!msg || !msg->topic)
 		return;
+	/* 仅用于打印：截断到 63 字节，便于看清收到了什么 */
 	snprintf(buf, sizeof(buf), "%.*s",
 		 msg->payloadlen > 63 ? 63 : msg->payloadlen,
 		 msg->payload ? (const char *)msg->payload : "");
-	printf("[INFO] msg topic=%s payload=%s\n", msg->topic, buf);
+	printf("[INFO] msg topic=%s len=%d payload=%s\n",
+	       msg->topic, (int)msg->payloadlen, buf);
 	fflush(stdout);
 
-	/* TODO: parse_led_cmd → led_set → publish_status(status_payload) */
+	/* TODO: parse_led_cmd(msg->payload, msg->payloadlen) → led_set → publish_status */
 	printf("[TODO] handle cmd with parse_led_cmd in on_message\n");
 	fflush(stdout);
 	(void)led_on;
