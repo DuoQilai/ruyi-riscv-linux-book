@@ -287,6 +287,14 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
   <figcaption>图 6　板端证据（SSH → mqtt-led）：连 Broker → 订阅 → <code>on</code>/<code>off</code> 发布 status；非法 <code>ON</code> 被拒</figcaption>
 </figure>
 <figure>
+  <img src="assets/recordings/mqtt-led-board-host-publish.png" alt="主机侧用仓库 MQTT 工具发 led on/off 并读回状态">
+  <figcaption>图 7　主机侧收发：主机用仓库的 MQTT 工具发 <code>led on</code> / <code>led off</code>，读回状态 <code>on</code> / <code>off</code>；非法 <code>ON</code> 被拒（同时验证 <code>setLed</code> 参数校验）</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/mqtt-led-board-captured-packets.png" alt="板端 mosquitto_sub 抓到的实际报文">
+  <figcaption>图 8　实际报文：板端 <code>mosquitto_sub -t 'course/led/#' -v</code> 抓到经过 Broker 的 <code>course/led/cmd</code> 与 <code>course/led/status</code> 报文（板端未装 tcpdump，用订阅侧抓包代替）</figcaption>
+</figure>
+<figure>
   <img src="assets/recordings/mqtt-led-board-led-on.png" alt="mqtt-led 收到 on 后 published status=on" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">
   <figcaption>同一次联调快照：<code>published course/led/status = on</code></figcaption>
 </figure>

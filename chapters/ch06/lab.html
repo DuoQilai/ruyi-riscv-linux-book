@@ -144,7 +144,7 @@
 <pre><span class="p">$</span> cd chapters/ch06/code/race-demo
 <span class="p">$</span> make && ./race-demo
 expect=400000  got=215946  RACE(lost updates)</pre>
-<p>主机跑 TSan 前若启动失败，先执行 <code>sudo sysctl vm.mmap_rnd_bits=28</code>（板端能直接跑则可跳过）。</p>
+<p>主机跑 TSan 若报 <code>FATAL: ThreadSanitizer: unexpected memory mapping</code>，用下面任一种方式规避 ASLR：<code>sudo sysctl -w vm.mmap_rnd_bits=28</code>，或直接用 <code>setarch $(uname -m) -R ./race-demo</code>（无需 root；板端可直接跑，不用处理）。</p>
 <pre><span class="p">$</span> make tsan && ./race-demo
 WARNING: ThreadSanitizer: data race
   Read of size 8 ... by thread T2:
@@ -156,6 +156,10 @@ SUMMARY: ThreadSanitizer: data race .../main.c:24 in bump_racy</pre>
 <figure>
   <img src="assets/recordings/race-demo-board.gif" alt="板上 race-demo：expect 与 got 不一致，标出 RACE">
   <figcaption>板端证据（SSH → race-demo）：最终计数偏小并标出 <code>RACE</code></figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/race-demo-board-tsan-report.png" alt="板上 make tsan 后 race-demo 的 ThreadSanitizer 报告">
+  <figcaption>TSan 证据：<code>make tsan</code> 后 <code>./race-demo</code> 给出 <code>WARNING: ThreadSanitizer: data race</code>，指出 <code>bump_racy</code> 里读/写同一全局计数的两行</figcaption>
 </figure>
 </section>
 
@@ -173,6 +177,14 @@ $ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
 <figure>
   <img src="assets/recordings/snapshot-lock-board.gif" alt="板上 snapshot-lock：脚手架现 RACE，sol 后 race_hits=0">
   <figcaption>板端证据（SSH → snapshot-lock）：无锁 <code>[RACE]</code>；加锁版 <code>race_hits=0</code></figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/snapshot-lock-board-sol-clean.png" alt="加锁版跑完打印 race_hits=0">
+  <figcaption>加锁版快照：跑完打印 <code>race_hits=0</code></figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/snapshot-lock-board-scaffold-race.png" alt="无锁脚手架完整跑完打印最终 race_hits">
+  <figcaption>无锁快照：脚手架<strong>完整跑完</strong>（不再截断输出），末行给出最终 <code>race_hits</code></figcaption>
 </figure>
 </section>
 
@@ -196,7 +208,7 @@ $ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
 <span class="c"># 或：make CROSS_COMPILE=riscv64-ruyisdk-linux-gnu- && scp …</span></pre>
   </li>
   <li>
-    <strong>MQTT / 干净停</strong>：主机 <code>mosquitto_pub … -t course/thermo/cmd -m 'set high 30'</code>，板端见 <code>[MQTT] cmd payload=...</code>；Ctrl+C 后风扇关并 <code>exited cleanly</code>。
+    <strong>MQTT / 干净停</strong>：主机 <code>mosquitto_pub … -t course/thermo/cmd -m 'status'</code>（还有 <code>fan on</code> / <code>fan off</code> / <code>fan auto</code>、<code>set high 30</code>），板端见 <code>[MQTT] cmd payload=...</code>；Ctrl+C 后风扇关并 <code>exited cleanly</code>。<strong>强制开关不会被自动控制覆盖</strong>：下发 <code>fan off</code> 后即使温度高于上限，状态仍是 <code>fan=off mode=force-off</code>。
   </li>
 </ol>
 <p>实机摘录（<code>USE_LOCK=1</code>）：</p>
@@ -206,6 +218,16 @@ $ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
 [MQTT] cmd payload=set high 30
 [INFO] race_hits=0 (USE_LOCK=1；期望 0→很多，1→0)
 [INFO] exited cleanly</pre>
+<p>MQTT 命令与并发的实机转录（<code>USE_LOCK=1</code>，主机侧发命令）。注意 <code>fan off</code> 那次温度 28.5 °C 已高于上限 28，自动控制<strong>没有</strong>把它翻回 ON——读、判、写在同一把锁内完成：</p>
+<pre>[MQTT] cmd payload=fan on
+[INFO] fan ON
+[MQTT] status temp=30.5 hum=55.0 fan=on mode=force-on high=28.0 low=26.0
+[MQTT] cmd payload=fan off
+[INFO] fan OFF
+[MQTT] status temp=28.5 hum=55.0 fan=off mode=force-off high=28.0 low=26.0
+[MQTT] cmd payload=fan auto
+[MQTT] fan mode auto
+[MQTT] status temp=25.0 hum=55.0 fan=off mode=auto high=27.0 low=26.0</pre>
 <figure>
   <img src="assets/recordings/tri-thread-board.gif" alt="板上 tri-thread：USE_LOCK 0 现 RACE，USE_LOCK 1 后 race_hits=0">
   <figcaption>板端证据（SSH → tri-thread）：无锁出现 <code>[RACE]</code>；加锁后 <code>race_hits=0</code> 并干净退出</figcaption>
