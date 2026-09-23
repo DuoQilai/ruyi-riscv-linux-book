@@ -38,6 +38,9 @@
   section p { font-size: 19px; color: var(--muted); margin-bottom: 18px; line-height: 1.75; }
   section ul, section ol { padding-left: 24px; margin-bottom: 18px; }
   section li { font-size: 19px; color: var(--muted); margin-bottom: 8px; line-height: 1.65; }
+  figure { margin: 28px 0 8px; }
+  figure img { width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+  figcaption { font-size: 15px; color: var(--faint); margin-top: 8px; }
   section li strong { color: var(--text); }
   pre {
     background: var(--code-bg); border: 1px solid var(--line-light);
@@ -272,6 +275,88 @@ llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
 <div class="info">
   规划条目也写在 <a href="CourseOutline.html">Course Outline</a>。本文是综合项目的正文。
 </div>
+</section>
+
+<section id="ran">
+<div class="section-num">实测</div>
+<h2>2026-09-21，两块板都跑过</h2>
+<p>量化用的是 Qwen2.5-1.5B-Instruct 的 FP16 GGUF。K3 上 <code>llama.cpp-tools-spacemit</code> 自带的 <code>llama-quantize</code> 把它压成 Q4_0。主机没有这份量化程序，所以这一步在 K3 上做。Q8 不能再压，工具会拒绝。</p>
+<table>
+  <tr><th>文件</th><th>体积</th></tr>
+  <tr><td>FP16</td><td>3 560 416 288 字节（量化日志 3389.80 MiB，16.00 BPW）</td></tr>
+  <tr><td>Q4_0</td><td>1 066 227 232 字节（1011.16 MiB，4.77 BPW）</td></tr>
+</table>
+<p>服务是 <code>llama-server -m …q4_0.gguf -t 4 --host 0.0.0.0 --port 8080</code>。启动日志里 <code>use_ime2: 1</code>，<code>/v1/models</code> 的量化档是 Q4_0。云端用 <code>deepseek-flash</code>，<code>thinking: disabled</code>。密钥只放在 K3 的环境变量里。</p>
+<p>同一句「现在热不热？先调用 read_status…」：本地 Q4 和云端 flash 都叫了 <code>read_status</code>。板上日志的温度和回答一致。接着在 K3 终端里再打一句，让它把风扇关掉。</p>
+<figure>
+  <img src="assets/recordings/k3-dsh-chat.png" alt="SSH 到 K3 后，用 dsh 问现在热不热，再让它关风扇">
+  <figcaption>K3 终端里的两句：先问温度，再让 dsh 关风扇。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/k3-local-dsh.gif" alt="K3 上 llama-server 显示 use_ime2，dsh 调 read_status 后回答温度">
+  <figcaption>K3：IME2 开着，本地 Q4 通过 dsh 调 read_status。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/k3-cloud-dsh.gif" alt="K3 用云端 deepseek-flash 通过 dsh 调 read_status 并回答温度">
+  <figcaption>K3：同一套工具换云端 <code>deepseek-flash</code>，调用 <code>read_status</code> 后按返回值作答。</figcaption>
+</figure>
+<p>回到 <code>fan auto</code> 之后，终端可以关掉，荔枝派上的风扇仍按阈值自己开关。</p>
+<figure>
+  <img src="assets/recordings/board-hysteresis.gif" alt="荔枝派日志：fan auto 之后风扇按温度开关">
+  <figcaption>荔枝派：回到 auto 之后，风扇继续跟温度走。</figcaption>
+</figure>
+<p>除了上面章节实验时的实拍，本项目还有一条**主机侧驱动实录**：本机直接往 <code>course/thermo/cmd</code> 与 <code>course/led/cmd</code> 发命令，荔枝派上的继电器与 LED 跟着动（风扇转/停、灯亮/灭）。</p>
+<figure>
+  <img src="assets/recordings/host-driven-fan.gif" alt="主机侧发 fan on/off/auto 与 led on/off，板端日志同步响应">
+  <figcaption>主机侧驱动（录像）：一轮 <code>fan on</code> → <code>fan off</code> → <code>fan auto</code> 加 <code>led on/off</code>，板端日志逐条对应。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/host-driven-fan-board.png" alt="荔枝派日志：fan on/off/auto 与风扇动作">
+  <figcaption>板端证据：<code>[MQTT] cmd payload=fan on|off|auto</code> 与 <code>[INFO] fan ON/OFF</code> 一一对应。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/host-driven-fan-led.png" alt="荔枝派日志：led on/off 与 LED 动作">
+  <figcaption>板端证据：<code>course/led/cmd</code> 的 <code>on</code>/<code>off</code> 分别打出 <code>[INFO] LED ON/OFF</code>。</figcaption>
+</figure>
+<p>把整条链路摊开看一遍：主机侧发命令、Broker 中转、荔枝派抓包与执行、K3 侧也能驱动同一套工具。</p>
+<figure>
+  <img src="assets/recordings/net-trace-demo.gif" alt="三处同看：主机发命令、Broker 中转、荔枝派 tcpdump 抓包、K3 侧驱动">
+  <figcaption>链路全程（录像）：主机发 <code>fan on/off/auto</code> + <code>led on/off</code>，K3 侧再发一条 <code>fan auto</code>，同时看 Broker 与板端抓包。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/net-trace-broker.png" alt="Broker 侧订阅 course/# 看到的中转报文">
+  <figcaption>Broker 侧：订阅 <code>course/#</code> 看到 <code>course/thermo/cmd</code>、<code>course/led/cmd</code> 与状态主题的完整中转。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/net-trace-tcpdump.png" alt="荔枝派 tcpdump 抓到的 MQTT TCP 报文">
+  <figcaption>荔枝派侧：<code>tcpdump -i wlan0 'tcp port 1883'</code> 抓到与 Broker <code>192.168.31.206:1883</code> 的真实 TCP 报文（不是 mock）。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/net-trace-k3.png" alt="K3 侧用同一套工具发命令">
+  <figcaption>K3 侧：同一套工具（<code>course-board</code>）发 <code>fan auto</code>，说明两台板子共用一条 MQTT 通道。</figcaption>
+</figure>
+<p>综合项目用的就是前面几章那套硬件，实物接线沿用第三、四、五章的实拍：</p>
+<figure>
+  <img src="assets/recordings/project-rig-fan.jpg" alt="荔枝派 + 继电器 + 风扇 + 面包板实物接线">
+  <figcaption>整板 + 继电器 + 风扇（复用第三章实拍）：项目的 <code>fan on|off|auto</code> 就是驱动这条信号链。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/project-rig-board.jpg" alt="荔枝派整板联调：DHT22、电平转换、继电器与风扇">
+  <figcaption>整板联调（复用第四章实拍）：DHT22 经电平转换接 IO1_6，风扇走继电器——<code>read_status</code> 读的就是它。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/project-led-wiring.jpg" alt="面包板上的 LED 接线（IO1_4）">
+  <figcaption>外接 LED 接线（复用第五章实拍）：<code>course/led/cmd</code> 控的就是这颗灯。</figcaption>
+</figure>
+<p>实物动作录像（手机拍摄）：由本机发 <code>fan on/off/auto</code> 与 <code>led on/off</code>，可看到继电器吸合、风扇转停与 LED 亮灭。</p>
+<figure>
+  <video controls preload="metadata" poster="assets/recordings/project-physical-demo-poster.jpg" style="display:block;max-width:min(100%,720px);width:auto;border:1px solid var(--line-light,#e8e3d8)">
+    <source src="assets/recordings/project-physical-demo.mp4" type="video/mp4">
+    你的浏览器不支持 video 标签，可直接下载：<a href="assets/recordings/project-physical-demo.mp4">project-physical-demo.mp4</a>
+  </video>
+  <figcaption>实物录像：风扇与 LED 跟随 MQTT 命令动作（同一段还包含三轮开/关循环）。</figcaption>
+</figure>
+<p>工具在 <code>project/course-board/</code>。它们只发 MQTT：<code>course/thermo/cmd</code> 上的 <code>status</code> / <code>fan on|off|auto</code> / <code>set high|low</code>，灯仍走第五章的 <code>course/led/cmd</code>。<code>@dsh-tui/dsh-tui@0.1.2</code> 会重复插入 <code>storage</code>，和 dsh 0.1.5-rc.2 冲突；headless 配置和修法写在该目录的 README。</p>
 </section>
 
 <nav class="page-nav" aria-label="章节翻页">
