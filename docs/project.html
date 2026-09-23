@@ -305,6 +305,19 @@ llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
   <img src="assets/recordings/board-hysteresis.gif" alt="荔枝派日志：fan auto 之后风扇按温度开关">
   <figcaption>荔枝派：回到 auto 之后，风扇继续跟温度走。</figcaption>
 </figure>
+<p>除了上面章节实验时的实拍，本项目还有一条**主机侧驱动实录**：本机直接往 <code>course/thermo/cmd</code> 与 <code>course/led/cmd</code> 发命令，荔枝派上的继电器与 LED 跟着动（风扇转/停、灯亮/灭）。</p>
+<figure>
+  <img src="assets/recordings/host-driven-fan.gif" alt="主机侧发 fan on/off/auto 与 led on/off，板端日志同步响应">
+  <figcaption>主机侧驱动（录像）：一轮 <code>fan on</code> → <code>fan off</code> → <code>fan auto</code> 加 <code>led on/off</code>，板端日志逐条对应。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/host-driven-fan-board.png" alt="荔枝派日志：fan on/off/auto 与风扇动作">
+  <figcaption>板端证据：<code>[MQTT] cmd payload=fan on|off|auto</code> 与 <code>[INFO] fan ON/OFF</code> 一一对应。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/host-driven-fan-led.png" alt="荔枝派日志：led on/off 与 LED 动作">
+  <figcaption>板端证据：<code>course/led/cmd</code> 的 <code>on</code>/<code>off</code> 分别打出 <code>[INFO] LED ON/OFF</code>。</figcaption>
+</figure>
 <p>综合项目用的就是前面几章那套硬件，实物接线沿用第三、四、五章的实拍：</p>
 <figure>
   <img src="assets/recordings/project-rig-fan.jpg" alt="荔枝派 + 继电器 + 风扇 + 面包板实物接线">
