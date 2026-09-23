@@ -292,7 +292,11 @@ IO1_4  →  限流电阻  →  LED 长脚（正极）
 </figure>
 <figure>
   <img src="assets/recordings/mqtt-led-board-captured-packets.png" alt="板端 mosquitto_sub 抓到的实际报文">
-  <figcaption>图 8　实际报文：板端 <code>mosquitto_sub -t 'course/led/#' -v</code> 抓到经过 Broker 的 <code>course/led/cmd</code> 与 <code>course/led/status</code> 报文（板端未装 tcpdump，用订阅侧抓包代替）</figcaption>
+  <figcaption>图 8　应用层视角：板端 <code>mosquitto_sub -t 'course/led/#' -v</code> 看到经过 Broker 的 <code>course/led/cmd</code> 与 <code>course/led/status</code> 报文</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/mqtt-led-board-tcpdump.png" alt="板端 tcpdump 抓到的 MQTT TCP 报文">
+  <figcaption>图 9　链路层视角：板端 <code>tcpdump -i wlan0 -n 'tcp port 1883'</code> 抓到与 Broker <code>192.168.31.206:1883</code> 的实际 TCP 报文（若板端未装 tcpdump：<code>sudo apt-get install -y tcpdump</code>，源不通可换镜像）</figcaption>
 </figure>
 <figure>
   <img src="assets/recordings/mqtt-led-board-led-on.png" alt="mqtt-led 收到 on 后 published status=on" style="max-width:min(100%,820px);width:auto;height:auto;border:1px solid var(--line-light);display:block;margin:16px 0 8px">

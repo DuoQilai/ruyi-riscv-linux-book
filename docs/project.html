@@ -318,6 +318,23 @@ llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
   <img src="assets/recordings/host-driven-fan-led.png" alt="荔枝派日志：led on/off 与 LED 动作">
   <figcaption>板端证据：<code>course/led/cmd</code> 的 <code>on</code>/<code>off</code> 分别打出 <code>[INFO] LED ON/OFF</code>。</figcaption>
 </figure>
+<p>把整条链路摊开看一遍：主机侧发命令、Broker 中转、荔枝派抓包与执行、K3 侧也能驱动同一套工具。</p>
+<figure>
+  <img src="assets/recordings/net-trace-demo.gif" alt="三处同看：主机发命令、Broker 中转、荔枝派 tcpdump 抓包、K3 侧驱动">
+  <figcaption>链路全程（录像）：主机发 <code>fan on/off/auto</code> + <code>led on/off</code>，K3 侧再发一条 <code>fan auto</code>，同时看 Broker 与板端抓包。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/net-trace-broker.png" alt="Broker 侧订阅 course/# 看到的中转报文">
+  <figcaption>Broker 侧：订阅 <code>course/#</code> 看到 <code>course/thermo/cmd</code>、<code>course/led/cmd</code> 与状态主题的完整中转。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/net-trace-tcpdump.png" alt="荔枝派 tcpdump 抓到的 MQTT TCP 报文">
+  <figcaption>荔枝派侧：<code>tcpdump -i wlan0 'tcp port 1883'</code> 抓到与 Broker <code>192.168.31.206:1883</code> 的真实 TCP 报文（不是 mock）。</figcaption>
+</figure>
+<figure>
+  <img src="assets/recordings/net-trace-k3.png" alt="K3 侧用同一套工具发命令">
+  <figcaption>K3 侧：同一套工具（<code>course-board</code>）发 <code>fan auto</code>，说明两台板子共用一条 MQTT 通道。</figcaption>
+</figure>
 <p>综合项目用的就是前面几章那套硬件，实物接线沿用第三、四、五章的实拍：</p>
 <figure>
   <img src="assets/recordings/project-rig-fan.jpg" alt="荔枝派 + 继电器 + 风扇 + 面包板实物接线">
