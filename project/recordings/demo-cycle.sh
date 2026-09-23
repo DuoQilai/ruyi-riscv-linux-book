@@ -1,11 +1,11 @@
 #!/bin/bash
-# 实物录像驱动：本机(docker broker) → 荔枝派 风扇 + LED 循环
+# 实物录像驱动（同时版）：风扇与 LED 同开同关
 # 用法: ./demo-cycle.sh [轮数]  0/不填=无限循环，Ctrl+C 停
 B=course-mosquitto
 pub() { docker exec "$B" mosquitto_pub -h 127.0.0.1 -t "$1" -m "$2"; }
 FAN=course/thermo/cmd; LED=course/led/cmd
 N=${1:-0}; i=0
-echo "[demo] broker=$B  轮数=$N（0=无限）"
+echo "[demo] 同时模式：风扇 + LED 同开(8s) → 同关(8s) → 回 auto(4s)"
 while :; do
   i=$((i+1))
   echo "===== 第 $i 轮：风扇 ON + LED ON ====="

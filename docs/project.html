@@ -348,6 +348,14 @@ llama-server -m ~/.cache/models/llm/model-q4_0.gguf -t 4 --port 8080</pre>
   <img src="assets/recordings/project-led-wiring.jpg" alt="面包板上的 LED 接线（IO1_4）">
   <figcaption>外接 LED 接线（复用第五章实拍）：<code>course/led/cmd</code> 控的就是这颗灯。</figcaption>
 </figure>
+<p>实物动作录像（手机拍摄）：由本机发 <code>fan on/off/auto</code> 与 <code>led on/off</code>，可看到继电器吸合、风扇转停与 LED 亮灭。</p>
+<figure>
+  <video controls preload="metadata" poster="assets/recordings/project-physical-demo-poster.jpg" style="display:block;max-width:min(100%,720px);width:auto;border:1px solid var(--line-light,#e8e3d8)">
+    <source src="assets/recordings/project-physical-demo.mp4" type="video/mp4">
+    你的浏览器不支持 video 标签，可直接下载：<a href="assets/recordings/project-physical-demo.mp4">project-physical-demo.mp4</a>
+  </video>
+  <figcaption>实物录像：风扇与 LED 跟随 MQTT 命令动作（同一段还包含三轮开/关循环）。</figcaption>
+</figure>
 <p>工具在 <code>project/course-board/</code>。它们只发 MQTT：<code>course/thermo/cmd</code> 上的 <code>status</code> / <code>fan on|off|auto</code> / <code>set high|low</code>，灯仍走第五章的 <code>course/led/cmd</code>。<code>@dsh-tui/dsh-tui@0.1.2</code> 会重复插入 <code>storage</code>，和 dsh 0.1.5-rc.2 冲突；headless 配置和修法写在该目录的 README。</p>
 </section>
 
