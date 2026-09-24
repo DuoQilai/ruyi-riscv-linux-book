@@ -96,4 +96,7 @@ chapters/**/mqtt-led/mqtt-led-sol
 
 # generated expect outputs under recordings/ (HTML uses assets/recordings/)
 chapters/**/recordings/*/
+project/recordings/**/*.cast
+project/recordings/**/*.mp4
+project/recordings/*/
 chapters/ch01/code/probe/probe
