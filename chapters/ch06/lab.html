@@ -243,6 +243,13 @@ $ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
   <img src="assets/recordings/tri-thread-board-lock1-clean.png" alt="USE_LOCK=1 时 race_hits=0 的终端快照">
   <figcaption>加锁快照：<code>race_hits=0</code>，Ctrl+C 干净停</figcaption>
 </figure>
+<figure>
+  <video controls preload="metadata" poster="assets/recordings/tri-thread-fan-demo-poster.jpg" style="display:block;max-width:min(100%,560px);width:auto;border:1px solid var(--line-light,#e8e3d8)">
+    <source src="assets/recordings/tri-thread-fan-demo.mp4" type="video/mp4">
+    你的浏览器不支持 video 标签，可直接下载：<a href="assets/recordings/tri-thread-fan-demo.mp4">tri-thread-fan-demo.mp4</a>
+  </video>
+  <figcaption>实物对照（手机拍摄）：主机发 <code>fan on/off/auto</code> 与 <code>led on/off</code>，画面里继电器吸合、风扇转停、LED 亮灭——三线程的控制线程驱动的就是这条信号链。同一段接线在综合项目页复用。</figcaption>
+</figure>
 </section>
 
 <section id="accept">
@@ -257,6 +264,7 @@ $ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
   <tr><td>三</td><td>加锁</td><td><code>USE_LOCK 1</code> 无 <code>[RACE]</code>，风扇阈值正常</td><td></td></tr>
   <tr><td>三</td><td>MQTT</td><td>下行或上行至少一项可演示</td><td></td></tr>
   <tr><td>三</td><td>干净停</td><td>Ctrl+C 后风扇关，进程退出</td><td></td></tr>
+  <tr><td>三</td><td>实物</td><td>命令与实物动作对得上：继电器吸合、风扇转停、LED 亮灭</td><td></td></tr>
 </table>
 <div class="info">
   <strong>完成标志：</strong>上表全部勾选。本骨架供综合项目复用。
