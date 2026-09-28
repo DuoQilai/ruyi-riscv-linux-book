@@ -198,7 +198,10 @@ $ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
     退出时 <code>race_hits</code> 远大于 0。
   </li>
   <li>
-    <strong>改为 <code>USE_LOCK 1</code></strong> 重编再跑：无 <code>[RACE]</code>，<code>race_hits=0</code>；风扇按阈值动作。
+    <strong>改为 <code>USE_LOCK 1</code></strong> 重编再跑——改宏后必须 <code>clean</code>，否则目标文件不会重编：
+<pre><span class="p">$</span> make clean && make USE_LOCK=1
+<span class="p">$</span> BROKER_HOST=&lt;主机局域网IP&gt; ./tri-thread</pre>
+    无 <code>[RACE]</code>，<code>race_hits=0</code>；风扇按阈值动作。
   </li>
   <li>
     <strong>编译运行</strong>（板端原生或主机交叉）：

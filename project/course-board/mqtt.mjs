@@ -163,10 +163,53 @@ export async function setLed(state) {
   return line
 }
 
+const THRESHOLD_KEY = { high: true, low: true }
+
+// "temp=30.5 hum=55.0 fan=on mode=force-on high=28.0 low=26.0" → { temp:'30.5', low:'26.0', ... }
+function parseStatusFields(line) {
+  const out = {}
+  for (const tok of String(line || '').trim().split(/\s+/)) {
+    const m = /^([a-z_]+)=(.+)$/.exec(tok)
+    if (m) out[m[1]] = m[2]
+  }
+  return out
+}
+
 export async function setThreshold(which, value) {
-  const cmd = `set ${which} ${value}`
+  const key = String(which ?? '').toLowerCase()
+  if (!Object.hasOwn(THRESHOLD_KEY, key))
+    throw new Error(`invalid threshold: ${which} (expected high|low)`)
+
+  const v = Number(value)
+  if (!Number.isFinite(v))
+    throw new Error(`invalid threshold value: ${value} (expected a number)`)
+  // 板端以 %.1f 回报，比较精度只能是 0.1 °C；过细的值直接拒，别静默取整
+  const want = Math.round(v * 10) / 10
+  if (want !== v)
+    throw new Error(`threshold value out of range: ${v} (use 0.1 °C resolution)`)
+
+  const otherKey = key === 'high' ? 'low' : 'high'
+  const before = parseStatusFields(await readStatus())
+  const other = Number(before[otherKey])
+  if (!Number.isFinite(other))
+    throw new Error(`cannot read current ${otherKey} from board (status: ${JSON.stringify(before)})`)
+
+  // 关系不合法就先拦下：板端会忽略这类命令（不会报错），工具不能假装成功
+  if (key === 'high' && !(want > other))
+    throw new Error(`invalid threshold relation: high=${want} must be > low=${other}`)
+  if (key === 'low' && !(want < other))
+    throw new Error(`invalid threshold relation: low=${want} must be < high=${other}`)
+
+  const cmd = `set ${key} ${want}`
   await mqttExchange({ publishes: [{ topic: THERMO_CMD, payload: cmd }] })
-  return cmd
+
+  // 执行结果确认：读回状态，值没变就是没生效
+  const after = parseStatusFields(await readStatus())
+  const got = Number(after[key])
+  if (got !== want)
+    throw new Error(`threshold not applied: requested ${key}=${want}, board reports ${key}=${after[key]}`)
+
+  return `${cmd} (confirmed ${key}=${want})`
 }
 
 import { pathToFileURL } from 'node:url'

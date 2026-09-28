@@ -14,7 +14,17 @@ scp tri-thread user@board-ip:~/
 
 Broker 用环境变量 `BROKER_HOST`（优先于源码默认值）。可选 `MQTT_CLIENT_ID`；默认 `tri-thread-<主机名>`。
 
-默认 `USE_LOCK 0` 必现 `[RACE]`；验收改为 `USE_LOCK 1`（与实验二成对加锁同一思路）。
+默认 `USE_LOCK 0` 必现 `[RACE]`；验收改为 `USE_LOCK 1`（与实验二成对加锁同一思路）：
+
+```bash
+# 先看无锁：默认即 USE_LOCK 0
+make clean && make
+BROKER_HOST=<主机局域网IP> ./tri-thread
+
+# 再加锁重编（改 USE_LOCK 后必须 clean，否则目标文件不会重编）
+make clean && make USE_LOCK=1
+BROKER_HOST=<主机局域网IP> ./tri-thread   # 无 [RACE]，race_hits=0
+```
 
 ## 并发与 MQTT 行为
 

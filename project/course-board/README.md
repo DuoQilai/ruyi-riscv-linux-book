@@ -83,6 +83,11 @@ dsh --profile headless \
   `set_fan` / `set_threshold` 不再假装成功返回 `fan on`。
 - `set_fan` 只接受 `on` / `off` / `auto`，其它值（如 `OFF`）会报错而不是悄悄退回 `fan auto`
   解除强制控制；工具 schema 同步用 `enum` 约束了合法值。
+- `set_threshold` 做三重校验后才算成功：① `which` 只认 `high` / `low`，`value` 必须是 0.1 °C
+  精度的数字；② 关系不合法（`high` 不大于当前 `low`，或 `low` 不小于当前 `high`）先报错——
+  板端对这类命令是**静默忽略**的，工具不能替它假装成功；③ 发完命令**读回状态确认**，值没变
+  就报 `threshold not applied`。所以「下限 26 时设上限 20」会直接返回
+  `invalid threshold relation: high=20 must be > low=26`，而不是像以前那样当成功返回。
 
 ## 已知坑
 

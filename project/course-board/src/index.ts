@@ -60,17 +60,19 @@ export function apply(ctx: Context) {
   }))
   ctx.tools.register(textTool({
     name: 'set_threshold',
-    description: 'Set the high or low temperature threshold used by the hysteresis loop.',
+    description:
+      'Set the high or low temperature threshold used by the hysteresis loop. Rejects values that break the relation (high must be above low) and errors if the board did not apply the change.',
     parameters: {
       which: {
         type: 'string',
         required: true,
+        enum: ['high', 'low'],
         description: 'high or low',
       },
       value: {
         type: 'string',
         required: true,
-        description: 'Temperature in Celsius, for example 30',
+        description: 'Temperature in Celsius with 0.1 resolution, for example 30',
       },
     },
     run: async (args) => setThreshold(args.which, args.value),
