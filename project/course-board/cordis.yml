@@ -1,0 +1,3 @@
+- insert:
+    - id: course-board
+      name: course-board/src/index.mjs

@@ -1,0 +1,4 @@
+- id: agent-default-model
+  config:
+    provider: k3-llama
+    model: qwen2.5-1.5b
