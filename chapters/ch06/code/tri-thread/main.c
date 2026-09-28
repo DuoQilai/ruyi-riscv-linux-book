@@ -109,8 +109,14 @@ static struct gpiod_line_request *line_request(unsigned int offset,
 	gpiod_line_config_free(lc);
 	gpiod_line_settings_free(s);
 
-	if (r && direction == GPIOD_LINE_DIRECTION_OUTPUT)
-		gpiod_line_request_set_value(r, offset, val);
+	if (r && direction == GPIOD_LINE_DIRECTION_OUTPUT) {
+		/* 初次置值失败就把请求还回去：否则调用方以为线已经拉到 val */
+		if (gpiod_line_request_set_value(r, offset, val) < 0) {
+			fprintf(stderr, "[ERR] line_request: initial set_value failed\n");
+			gpiod_line_request_release(r);
+			return NULL;
+		}
+	}
 	return r;
 }
 
@@ -295,14 +301,67 @@ static void *thread_control(void *arg)
 }
 
 /* ---------- 通信线程（MQTT） ---------- */
+
+/*
+ * 订阅失败只置标志，不在这里重连：on_connect 是在 mosquitto_loop() 里被回调的，
+ * 重入 libmosquitto 的重连路径不安全。通信线程看到标志后走断线重连那条路。
+ */
+static int g_sub_failed;
+
 static void on_connect(struct mosquitto *m, void *obj, int rc)
 {
+	int src;
+
 	(void)obj;
-	if (rc != 0)
+	if (rc != 0) {
+		fprintf(stderr, "[ERR] CONNACK rc=%d (broker refused)\n", rc);
+		fflush(stderr);
 		return;
-	mosquitto_subscribe(m, NULL, TOPIC_CMD, 0);
+	}
+	src = mosquitto_subscribe(m, NULL, TOPIC_CMD, 0);
+	if (src != MOSQ_ERR_SUCCESS) {
+		/* 不能只打一行「subscribed」就完事：那样板子看着连上了，命令却永远收不到 */
+		fprintf(stderr, "[ERR] subscribe %s: %s\n", TOPIC_CMD,
+			mosquitto_strerror(src));
+		fflush(stderr);
+		g_sub_failed = 1;
+		return;
+	}
 	printf("[MQTT] subscribed %s\n", TOPIC_CMD);
 	fflush(stdout);
+}
+
+/*
+ * 按 payloadlen 精确比较：载荷必须与命令等长且逐字节相同。
+ * 不能先把载荷当 C 字符串再 strcmp —— "fan on\0junk" 会被截断成合法的 "fan on"，
+ * 于是带尾巴的伪造载荷能绕过命令格式（第五章 mqtt-led 修过同一个洞）。
+ */
+static int payload_is(const struct mosquitto_message *msg, const char *cmd)
+{
+	size_t n = strlen(cmd);
+
+	return msg->payloadlen == (int)n && memcmp(msg->payload, cmd, n) == 0;
+}
+
+/* 取 "set high "/"set low " 之后的数值：做有界副本，含内嵌 NUL 或超长一律判非法 */
+static int payload_number(const struct mosquitto_message *msg, size_t off,
+			  double *out)
+{
+	size_t n;
+	char tail[32];
+	char *end;
+
+	if (off >= (size_t)msg->payloadlen)
+		return -1;
+	n = (size_t)msg->payloadlen - off;
+	if (n + 1 > sizeof(tail))
+		return -1;
+	if (memchr((const char *)msg->payload + off, '\0', n))
+		return -1;
+	memcpy(tail, (const char *)msg->payload + off, n);
+	tail[n] = '\0';
+	*out = strtod(tail, &end);
+	return (*end == '\0' && end != tail) ? 0 : -1;
 }
 
 static void on_message(struct mosquitto *m, void *obj,
@@ -311,14 +370,14 @@ static void on_message(struct mosquitto *m, void *obj,
 	(void)m;
 	(void)obj;
 	char buf[64];
-	float v;
+	double v;
 
 	if (!msg || !msg->payload)
 		return;
 	snprintf(buf, sizeof(buf), "%.*s",
 		 msg->payloadlen > 63 ? 63 : msg->payloadlen,
 		 (const char *)msg->payload);
-	printf("[MQTT] cmd payload=%s\n", buf);
+	printf("[MQTT] cmd payload=%s (len=%d)\n", buf, msg->payloadlen);
 	fflush(stdout);
 
 	/*
@@ -327,7 +386,7 @@ static void on_message(struct mosquitto *m, void *obj,
 	 *   fan on / fan off / fan auto
 	 *   status → 发布到 TOPIC_STATUS
 	 */
-	if (strcmp(buf, "status") == 0) {
+	if (payload_is(msg, "status")) {
 		int ta, tb, fan, mode, has;
 		float high, low, hum;
 		char line[160];
@@ -355,35 +414,66 @@ static void on_message(struct mosquitto *m, void *obj,
 				 "temp=na hum=%.1f fan=%s mode=%s high=%.1f low=%.1f",
 				 hum, fan_s, mode_s, high, low);
 		}
-		mosquitto_publish(m, NULL, TOPIC_STATUS, (int)strlen(line), line, 0, false);
-		printf("[MQTT] status %s\n", line);
-		fflush(stdout);
-	} else if (strcmp(buf, "fan on") == 0) {
+		{
+			int prc = mosquitto_publish(m, NULL, TOPIC_STATUS,
+						    (int)strlen(line), line, 0,
+						    false);
+
+			/* 发失败就别打成功行：状态没出去却报 [MQTT] status 是假证据 */
+			if (prc != MOSQ_ERR_SUCCESS) {
+				fprintf(stderr, "[ERR] status publish: %s\n",
+					mosquitto_strerror(prc));
+				fflush(stderr);
+			} else {
+				printf("[MQTT] status %s\n", line);
+				fflush(stdout);
+			}
+		}
+	} else if (payload_is(msg, "fan on")) {
 		state_lock();
 		g_st.fan_mode = 1;
 		fan_set_unlocked(1);
 		state_unlock();
-	} else if (strcmp(buf, "fan off") == 0) {
+	} else if (payload_is(msg, "fan off")) {
 		state_lock();
 		g_st.fan_mode = 2;
 		fan_set_unlocked(0);
 		state_unlock();
-	} else if (strcmp(buf, "fan auto") == 0) {
+	} else if (payload_is(msg, "fan auto")) {
 		state_lock();
 		g_st.fan_mode = 0;
 		state_unlock();
 		printf("[MQTT] fan mode auto\n");
 		fflush(stdout);
-	} else if (sscanf(buf, "set high %f", &v) == 1) {
+	} else if (msg->payloadlen > 9 &&
+		   memcmp(msg->payload, "set high ", 9) == 0) {
+		if (payload_number(msg, 9, &v) != 0) {
+			fprintf(stderr, "[ERR] bad set high payload (len=%d)\n",
+				msg->payloadlen);
+			fflush(stderr);
+			return;
+		}
 		state_lock();
 		if (v > g_st.t_low)
-			g_st.t_high = v;
+			g_st.t_high = (float)v;
 		state_unlock();
-	} else if (sscanf(buf, "set low %f", &v) == 1) {
+	} else if (msg->payloadlen > 8 &&
+		   memcmp(msg->payload, "set low ", 8) == 0) {
+		if (payload_number(msg, 8, &v) != 0) {
+			fprintf(stderr, "[ERR] bad set low payload (len=%d)\n",
+				msg->payloadlen);
+			fflush(stderr);
+			return;
+		}
 		state_lock();
 		if (v < g_st.t_high)
-			g_st.t_low = v;
+			g_st.t_low = (float)v;
 		state_unlock();
+	} else {
+		/* 非法载荷一律不改灯/不改风扇/不发 status（含内嵌 NUL 的伪造载荷） */
+		fprintf(stderr, "[ERR] unknown command payload (len=%d), ignored\n",
+			msg->payloadlen);
+		fflush(stderr);
 	}
 }
 
@@ -429,7 +519,13 @@ static void *thread_comm(void *arg)
 				continue;
 			}
 
-			lrc = mosquitto_loop(mosq, 100, 1);
+			if (g_sub_failed) {
+				/* 订阅失败：当一次断线处理，走下面的重连路径重订 */
+				g_sub_failed = 0;
+				lrc = MOSQ_ERR_CONN_LOST;
+			} else {
+				lrc = mosquitto_loop(mosq, 100, 1);
+			}
 			if (lrc == MOSQ_ERR_SUCCESS) {
 				loop_fails = 0;
 				continue;
@@ -445,11 +541,15 @@ static void *thread_comm(void *arg)
 					MQTT_MAX_RETRY);
 				fflush(stderr);
 				if (loop_fails >= MQTT_MAX_RETRY) {
+					/*
+					 * 只收 MQTT 这一条腿：采集/控制线程继续跑本地
+					 * 演示，与上面 connect 失败那句注释一致。以前
+					 * 这里置 running=0，把整个程序一起带走了。
+					 */
 					fprintf(stderr,
-						"[ERR] broker unreachable, stopping MQTT thread\n");
+						"[ERR] broker unreachable, MQTT disabled; "
+						"sense/control keep running (Ctrl+C to stop)\n");
 					fflush(stderr);
-					atomic_store_explicit(&g_st.running, 0,
-							      memory_order_relaxed);
 					break;
 				}
 				if (mqtt_reconnect() != 0)
@@ -501,13 +601,34 @@ int main(void)
 	printf("[INFO] USE_LOCK=%d SIMULATE_SENSOR=%d\n", USE_LOCK, SIMULATE_SENSOR);
 	printf("[INFO] Ctrl+C for clean stop\n");
 
-	pthread_create(&th_s, NULL, thread_sense, NULL);
-	pthread_create(&th_c, NULL, thread_control, NULL);
-	pthread_create(&th_m, NULL, thread_comm, NULL);
+	{
+		int s_ok, c_ok, m_ok;
 
-	pthread_join(th_s, NULL);
-	pthread_join(th_c, NULL);
-	pthread_join(th_m, NULL);
+		/* 起不全就整体收摊：join 未创建的 pthread_t 是未定义行为 */
+		s_ok = pthread_create(&th_s, NULL, thread_sense, NULL) == 0;
+		if (!s_ok)
+			perror("pthread_create sense");
+		c_ok = s_ok &&
+		       pthread_create(&th_c, NULL, thread_control, NULL) == 0;
+		if (s_ok && !c_ok)
+			perror("pthread_create control");
+		m_ok = c_ok && pthread_create(&th_m, NULL, thread_comm, NULL) == 0;
+		if (c_ok && !m_ok)
+			perror("pthread_create comm");
+		if (!m_ok) {
+			fprintf(stderr, "[ERR] thread create failed, stopping\n");
+			fflush(stderr);
+			atomic_store_explicit(&g_st.running, 0,
+					      memory_order_relaxed);
+		}
+
+		if (m_ok)
+			pthread_join(th_m, NULL);
+		if (c_ok)
+			pthread_join(th_c, NULL);
+		if (s_ok)
+			pthread_join(th_s, NULL);
+	}
 
 	/* 干净停：关风扇（写入失败要报错，不假装已关） */
 	state_lock();

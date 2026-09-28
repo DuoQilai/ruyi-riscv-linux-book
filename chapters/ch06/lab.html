@@ -218,19 +218,25 @@ $ cd chapters/ch06/code/snapshot-lock      # 板上：cd ~/snapshot-lock</span>
 <pre>[INFO] USE_LOCK=1 SIMULATE_SENSOR=1
 [MQTT] subscribed course/thermo/cmd
 [INFO] fan ON
-[MQTT] cmd payload=set high 30
+[MQTT] cmd payload=set high 30 (len=11)
 [INFO] race_hits=0 (USE_LOCK=1；期望 0→很多，1→0)
 [INFO] exited cleanly</pre>
-<p>MQTT 命令与并发的实机转录（<code>USE_LOCK=1</code>，主机侧发命令）。注意 <code>fan off</code> 那次温度 28.5 °C 已高于上限 28，自动控制<strong>没有</strong>把它翻回 ON——读、判、写在同一把锁内完成：</p>
-<pre>[MQTT] cmd payload=fan on
+<p>MQTT 命令与并发的实机转录（<code>USE_LOCK=1</code>，主机侧发命令）。注意 <code>fan off</code> 那次温度已高于上限，自动控制<strong>没有</strong>把它翻回 ON——读、判、写在同一把锁内完成；最后一条 <code>fan on</code> 长度是 11 而不是 6，那是带内嵌 NUL 的伪造载荷 <code>fan on\0junk</code>，被拒且不改状态：</p>
+<pre>[MQTT] cmd payload=fan on (len=6)
 [INFO] fan ON
 [MQTT] status temp=30.5 hum=55.0 fan=on mode=force-on high=28.0 low=26.0
-[MQTT] cmd payload=fan off
+[MQTT] cmd payload=fan off (len=7)
 [INFO] fan OFF
-[MQTT] status temp=28.5 hum=55.0 fan=off mode=force-off high=28.0 low=26.0
-[MQTT] cmd payload=fan auto
-[MQTT] fan mode auto
-[MQTT] status temp=25.0 hum=55.0 fan=off mode=auto high=27.0 low=26.0</pre>
+[MQTT] status temp=30.5 hum=55.0 fan=off mode=force-off high=28.0 low=26.0
+[MQTT] cmd payload=set high 30 (len=11)
+[MQTT] status temp=28.5 hum=55.0 fan=off mode=force-off high=30.0 low=26.0
+[MQTT] cmd payload=fan on (len=11)
+[ERR] unknown command payload (len=11), ignored
+[MQTT] status temp=26.5 hum=55.0 fan=off mode=force-off high=30.0 low=26.0
+[MQTT] cmd payload=fan auto (len=8)
+[MQTT] fan mode auto</pre>
+<p><strong>命令按 <code>payloadlen</code> 精确匹配</strong>（与第五章同一个坑）：载荷必须与命令<strong>等长且逐字节相同</strong>，不能先当 C 字符串再 <code>strcmp</code>——否则 <code>fan on\0junk</code> 会被截断成合法的 <code>fan on</code>。实测被拒的还有 <code>status\0</code>、<code>set high 30\0x</code>、<code>fan autoo</code>，板端一律打印 <code>[ERR] unknown command payload</code>，不改风扇、不发 status。</p>
+<p>另外两处「不假装成功」：订阅失败会报错并按断线重连（不会只打一行 <code>subscribed</code> 就算连上）；<code>status</code> 的发布失败会报 <code>[ERR] status publish</code>，不再打出假的成功行。Broker 连续不可达达上限后<strong>只收 MQTT 这一条腿</strong>，采集/控制线程继续跑本地演示（<code>MQTT disabled; sense/control keep running</code>），不再把整个程序带走。</p>
 <figure>
   <img src="assets/recordings/tri-thread-board.gif" alt="板上 tri-thread：USE_LOCK 0 现 RACE，USE_LOCK 1 后 race_hits=0">
   <figcaption>板端证据（SSH → tri-thread）：无锁出现 <code>[RACE]</code>；加锁后 <code>race_hits=0</code> 并干净退出</figcaption>
