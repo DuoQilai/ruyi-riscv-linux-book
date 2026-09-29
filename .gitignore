@@ -83,9 +83,11 @@ chapters/*/code/**/build/
 chapters/ch02/code/hello/hello
 chapters/ch02/code/cmd-table/cmd-table
 
-# asciinema expect raw artifacts (keep scripts + assets/recordings GIF/PNG)
+# asciinema expect raw artifacts (keep scripts + assets/recordings GIF/PNG/MP4)
 chapters/**/recordings/**/*.cast
 chapters/**/recordings/**/*.mp4
+# 例外：ch06 实物动作录像（手机拍摄，asset 而非 expect 原始产物）
+!chapters/ch06/assets/recordings/*.mp4
 
 # local build artifacts
 chapters/**/build/
@@ -96,4 +98,7 @@ chapters/**/mqtt-led/mqtt-led-sol
 
 # generated expect outputs under recordings/ (HTML uses assets/recordings/)
 chapters/**/recordings/*/
+project/recordings/**/*.cast
+project/recordings/**/*.mp4
+project/recordings/*/
 chapters/ch01/code/probe/probe
